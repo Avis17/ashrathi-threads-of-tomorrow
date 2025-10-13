@@ -49,7 +49,7 @@ const Contact = () => {
                   <div>
                     <h3 className="font-semibold text-lg mb-1">Our Location</h3>
                     <p className="text-muted-foreground text-sm">
-                      Tamil Nadu, India
+                      Tirupur, Tamil Nadu, India
                     </p>
                   </div>
                 </div>
@@ -60,7 +60,7 @@ const Contact = () => {
                   </div>
                   <div>
                     <h3 className="font-semibold text-lg mb-1">Phone</h3>
-                    <p className="text-muted-foreground text-sm">+91 XXXX XXXXXX</p>
+                    <p className="text-muted-foreground text-sm">+91 9789225510</p>
                   </div>
                 </div>
 
@@ -71,7 +71,7 @@ const Contact = () => {
                   <div>
                     <h3 className="font-semibold text-lg mb-1">Email</h3>
                     <p className="text-muted-foreground text-sm break-all">
-                      info@ashrathiapparels.com
+                      ashrathiapparels@gmail.com
                     </p>
                   </div>
                 </div>
@@ -190,12 +190,17 @@ const Contact = () => {
         {/* Map Section */}
         <Card className="overflow-hidden">
           <CardContent className="p-0">
-            <div className="bg-muted h-96 flex items-center justify-center">
-              <div className="text-center">
-                <MapPin className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">Map integration available</p>
-                <p className="text-sm text-muted-foreground">Embed your Google Maps location here</p>
-              </div>
+            <div className="w-full h-96">
+              <iframe 
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d254.16454346298983!2d77.15303385699188!3d11.187924053040138!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ba8fdbe78c36eb5%3A0xf0b370a24b23230e!2sGlobal%20city%20Entrance%2C%20Kaduvettipalayam!5e1!3m2!1sen!2sin!4v1760357543042!5m2!1sen!2sin" 
+                width="100%" 
+                height="100%" 
+                style={{ border: 0 }} 
+                allowFullScreen 
+                loading="lazy" 
+                referrerPolicy="no-referrer-when-downgrade"
+                title="Ashrathi Apparels Location"
+              />
             </div>
           </CardContent>
         </Card>

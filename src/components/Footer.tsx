@@ -9,7 +9,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand */}
           <div>
-            <img src={logo} alt="Ashrathi Apparels" className="h-12 mb-4 brightness-0 invert" />
+            <img src={logo} alt="Ashrathi Apparels" className="h-32 mb-4 brightness-0 invert" />
             <p className="text-sm text-primary-foreground/80 leading-relaxed">
               Threads of Quality. Designs of Tomorrow. Your trusted partner in premium garment manufacturing.
             </p>
@@ -50,15 +50,15 @@ const Footer = () => {
             <ul className="space-y-3">
               <li className="flex items-start gap-2 text-sm text-primary-foreground/80">
                 <Mail className="h-4 w-4 mt-0.5 text-secondary" />
-                <span>info@ashrathiapparels.com</span>
+                <span>ashrathiapparels@gmail.com</span>
               </li>
               <li className="flex items-start gap-2 text-sm text-primary-foreground/80">
                 <Phone className="h-4 w-4 mt-0.5 text-secondary" />
-                <span>+91 XXXX XXXXXX</span>
+                <span>+91 9789225510</span>
               </li>
               <li className="flex items-start gap-2 text-sm text-primary-foreground/80">
                 <MapPin className="h-4 w-4 mt-0.5 text-secondary" />
-                <span>Tamil Nadu, India</span>
+                <span>Tirupur, Tamil Nadu, India</span>
               </li>
             </ul>
             

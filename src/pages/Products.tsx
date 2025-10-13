@@ -2,9 +2,12 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
+import { Maximize } from "lucide-react";
+import ImageZoomDialog from "@/components/ImageZoomDialog";
 
 const Products = () => {
   const [activeCategory, setActiveCategory] = useState("All");
+  const [selectedImage, setSelectedImage] = useState<{ src: string; alt: string } | null>(null);
   
   const categories = ["All", "Men", "Women", "Kids", "Custom Orders"];
   
@@ -57,11 +60,25 @@ const Products = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-16">
           {filteredProducts.map((product, idx) => (
             <Card key={idx} className="overflow-hidden card-hover">
-              <div className="h-72 bg-gradient-to-br from-primary/5 via-secondary/10 to-accent/5 relative flex items-center justify-center">
+              <div 
+                className="h-72 bg-gradient-to-br from-primary/5 via-secondary/10 to-accent/5 relative flex items-center justify-center group cursor-pointer"
+                onClick={() => setSelectedImage({ src: "", alt: product.name })}
+              >
                 <span className="text-8xl opacity-10">👔</span>
                 <div className="absolute top-4 left-4 bg-primary text-primary-foreground px-3 py-1 rounded-full text-xs font-accent font-semibold">
                   {product.category}
                 </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-4 right-4 bg-white/80 hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedImage({ src: "", alt: product.name });
+                  }}
+                >
+                  <Maximize className="h-4 w-4" />
+                </Button>
               </div>
               <CardContent className="p-5">
                 <h3 className="font-semibold text-lg mb-2">{product.name}</h3>
@@ -87,6 +104,14 @@ const Products = () => {
             <Link to="/contact">Get in Touch</Link>
           </Button>
         </Card>
+
+        {/* Image Zoom Dialog */}
+        <ImageZoomDialog
+          imageSrc={selectedImage?.src || ""}
+          imageAlt={selectedImage?.alt || ""}
+          isOpen={!!selectedImage}
+          onClose={() => setSelectedImage(null)}
+        />
       </div>
     </div>
   );

@@ -1,9 +1,13 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
+import { Maximize } from "lucide-react";
+import ImageZoomDialog from "@/components/ImageZoomDialog";
 
 const Collections = () => {
+  const [selectedImage, setSelectedImage] = useState<{ src: string; alt: string } | null>(null);
   const newArrivals = [
     { name: "Piping Shorts", design: "1079", category: "Kids", color: "Navy & Teal" },
     { name: "Premium Track Pants", design: "2180", category: "Men", color: "Charcoal Grey" },
@@ -34,11 +38,25 @@ const Collections = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-16">
           {newArrivals.map((item, idx) => (
             <Card key={idx} className="overflow-hidden card-hover group">
-              <div className="relative h-80 bg-gradient-to-br from-primary/10 via-secondary/15 to-accent/10 flex items-center justify-center">
+              <div 
+                className="relative h-80 bg-gradient-to-br from-primary/10 via-secondary/15 to-accent/10 flex items-center justify-center cursor-pointer"
+                onClick={() => setSelectedImage({ src: "", alt: item.name })}
+              >
                 <span className="text-9xl opacity-10 group-hover:scale-110 transition-transform">🧥</span>
                 <Badge className="absolute top-4 left-4 bg-accent text-accent-foreground font-accent">
                   New Arrival
                 </Badge>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-4 right-4 bg-white/80 hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedImage({ src: "", alt: item.name });
+                  }}
+                >
+                  <Maximize className="h-4 w-4" />
+                </Button>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
                   <div className="text-white">
                     <p className="text-sm mb-1">Design #{item.design}</p>
@@ -104,6 +122,14 @@ const Collections = () => {
             </Button>
           </div>
         </Card>
+
+        {/* Image Zoom Dialog */}
+        <ImageZoomDialog
+          imageSrc={selectedImage?.src || ""}
+          imageAlt={selectedImage?.alt || ""}
+          isOpen={!!selectedImage}
+          onClose={() => setSelectedImage(null)}
+        />
       </div>
     </div>
   );

@@ -4,6 +4,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Award, Clock, Sparkles, Users } from "lucide-react";
 import heroImage from "@/assets/hero-manufacturing.jpg";
 import productsImage from "@/assets/products-showcase.jpg";
+import product1 from "@/assets/products/kids-clothing-1.jpg";
+import product2 from "@/assets/products/boys-shorts-1.jpg";
+import product3 from "@/assets/products/track-pants-1.jpg";
+import product4 from "@/assets/products/girls-leggings-1.jpg";
 
 const Home = () => {
   const features = [
@@ -88,23 +92,25 @@ const Home = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
             {[
-              { name: "Boys Super Poly Shorts", tag: "Premium Quality" },
-              { name: "Girls Printed 3/4th", tag: "Trending Design" },
-              { name: "Teenage HOS Pant", tag: "Comfortable Fit" },
-              { name: "SR Boys Poly Track Pant", tag: "Durable Fabric" },
+              { name: "Boys Super Poly Shorts", tag: "Premium Quality", image: product1 },
+              { name: "Girls Printed 3/4th", tag: "Trending Design", image: product2 },
+              { name: "Teenage HOS Pant", tag: "Comfortable Fit", image: product3 },
+              { name: "SR Boys Poly Track Pant", tag: "Durable Fabric", image: product4 },
             ].map((product, idx) => (
               <Card key={idx} className="overflow-hidden card-hover">
-                <div className="h-64 bg-gradient-to-br from-secondary/20 to-accent/20 relative">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-6xl text-primary/10">👕</span>
-                  </div>
-                  <span className="absolute top-4 right-4 bg-accent text-accent-foreground px-3 py-1 rounded-full text-xs font-accent font-semibold">
+                <div className="h-64 bg-muted relative overflow-hidden">
+                  <img 
+                    src={product.image} 
+                    alt={product.name}
+                    className="w-full h-full object-cover"
+                  />
+                  <span className="absolute top-4 right-4 bg-accent text-accent-foreground px-3 py-1 rounded-full text-xs font-accent font-semibold shadow-lg">
                     {product.tag}
                   </span>
                 </div>
                 <CardContent className="p-4">
                   <h3 className="font-semibold text-lg mb-2">{product.name}</h3>
-                  <Button asChild variant="outline" className="w-full">
+                  <Button asChild variant="outline" className="w-full hover:bg-secondary hover:text-secondary-foreground">
                     <Link to="/contact">Request Quote</Link>
                   </Button>
                 </CardContent>
