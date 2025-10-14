@@ -1,17 +1,41 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
-import { Maximize } from "lucide-react";
+import { Maximize, ShoppingCart, Plus, Minus } from "lucide-react";
 import ImageZoomDialog from "@/components/ImageZoomDialog";
 import { useProducts } from "@/hooks/useProducts";
+import { useCart } from "@/hooks/useCart";
+import { useAuth } from "@/hooks/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const Products = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { addToCart } = useCart();
   const [activeCategory, setActiveCategory] = useState("All");
   const [selectedImage, setSelectedImage] = useState<{ src: string; alt: string } | null>(null);
+  const [quantities, setQuantities] = useState<Record<string, number>>({});
   const { data: products = [], isLoading, error } = useProducts();
+
+  const handleQuantityChange = (productId: string, delta: number) => {
+    setQuantities((prev) => ({
+      ...prev,
+      [productId]: Math.max(1, (prev[productId] || 1) + delta),
+    }));
+  };
+
+  const handleAddToCart = (productId: string) => {
+    if (!user) {
+      navigate('/auth?redirect=/products');
+      return;
+    }
+    const quantity = quantities[productId] || 1;
+    addToCart({ productId, quantity });
+    setQuantities((prev) => ({ ...prev, [productId]: 1 }));
+  };
   
   const categories = ["All", ...Array.from(new Set(products.map(p => p.category)))];
   const filteredProducts = activeCategory === "All" ? products : products.filter(p => p.category === activeCategory);
@@ -70,9 +94,34 @@ const Products = () => {
                   <h3 className="font-semibold text-lg mb-2">{product.name}</h3>
                   <p className="text-sm text-muted-foreground mb-2">{product.description}</p>
                   <p className="text-sm font-medium text-primary mb-4">Fabric: {product.fabric}</p>
-                <Button asChild variant="outline" className="w-full hover:bg-secondary hover:text-secondary-foreground border-2">
-                  <Link to="/contact">Request Quote</Link>
-                </Button>
+                  
+                  <div className="flex items-center gap-2 mb-3">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => handleQuantityChange(product.id, -1)}
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                    <span className="w-12 text-center font-medium">{quantities[product.id] || 1}</span>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => handleQuantityChange(product.id, 1)}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  <Button 
+                    onClick={() => handleAddToCart(product.id)}
+                    className="w-full"
+                  >
+                    <ShoppingCart className="mr-2 h-4 w-4" />
+                    {user ? 'Add to Cart' : 'Login to Add'}
+                  </Button>
                 </CardContent>
               </Card>
             ))}

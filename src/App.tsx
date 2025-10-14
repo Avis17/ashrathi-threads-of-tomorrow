@@ -15,6 +15,10 @@ import Contact from "./pages/Contact";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
 import BulkOrder from "./pages/BulkOrder";
+import Checkout from "./pages/Checkout";
+import MyOrders from "./pages/MyOrders";
+import OrderDetails from "./pages/OrderDetails";
+import CustomerProfile from "./pages/CustomerProfile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -46,6 +50,10 @@ const App = () => (
                       <Route path="/contact" element={<Contact />} />
                       <Route path="/auth" element={<Auth />} />
                       <Route path="/bulk-order" element={<BulkOrder />} />
+                      <Route path="/checkout" element={<Checkout />} />
+                      <Route path="/my-orders" element={<MyOrders />} />
+                      <Route path="/my-orders/:orderId" element={<OrderDetails />} />
+                      <Route path="/profile" element={<CustomerProfile />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </main>
