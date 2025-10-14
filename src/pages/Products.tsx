@@ -14,6 +14,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 
+const PLACEHOLDER_IMAGE = '/placeholder.svg';
+
 const Products = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -132,8 +134,15 @@ const Products = () => {
               const isUnavailable = !product.is_active;
               return (
                 <Card key={product.id} className={`overflow-hidden card-hover group ${isUnavailable ? 'opacity-60 grayscale' : ''}`}>
-                  <div className="h-96 bg-muted relative cursor-pointer overflow-hidden" onClick={() => setSelectedImage({ src: product.image_url, alt: product.name })}>
-                    <img src={product.image_url} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <div className="h-96 bg-muted relative cursor-pointer overflow-hidden" onClick={() => setSelectedImage({ src: product.image_url || PLACEHOLDER_IMAGE, alt: product.name })}>
+                    <img 
+                      src={product.image_url || PLACEHOLDER_IMAGE} 
+                      alt={product.name} 
+                      onError={(e) => {
+                        e.currentTarget.src = PLACEHOLDER_IMAGE;
+                      }}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                    />
                   <Badge className="absolute top-4 left-4 bg-secondary text-secondary-foreground">{product.category}</Badge>
                   {isUnavailable && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/40">

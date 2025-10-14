@@ -22,21 +22,7 @@ const productSchema = z.object({
   category: z.string().min(1, 'Category is required'),
   fabric: z.string().min(1, 'Fabric is required').max(100),
   description: z.string().optional().nullable(),
-  image_url: z.string().min(1, 'Image URL is required').refine(
-    (val) => {
-      // Allow local file paths or valid URLs
-      if (val.startsWith('/') || val.startsWith('./') || val.startsWith('../')) {
-        return true;
-      }
-      try {
-        new URL(val);
-        return true;
-      } catch {
-        return false;
-      }
-    },
-    { message: 'Must be a valid URL or local file path' }
-  ),
+  image_url: z.string().optional().nullable(),
   hsn_code: z.string()
     .regex(/^\d{4,8}$/, 'HSN must be 4-8 digits')
     .optional()
@@ -86,7 +72,7 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
       category: initialData?.category || '',
       fabric: initialData?.fabric || '',
       description: initialData?.description || '',
-      image_url: initialData?.image_url || '',
+      image_url: initialData?.image_url || null,
       hsn_code: initialData?.hsn_code || '',
       product_code: initialData?.product_code || '',
       available_sizes: initialData?.available_sizes || [],
@@ -146,8 +132,8 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="image_url">Image URL *</Label>
-          <Input id="image_url" type="url" {...register('image_url')} />
+          <Label htmlFor="image_url">Image URL (Optional)</Label>
+          <Input id="image_url" type="text" {...register('image_url')} />
           {errors.image_url && (
             <p className="text-sm text-destructive">{errors.image_url.message}</p>
           )}

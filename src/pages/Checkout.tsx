@@ -91,6 +91,8 @@ export default function Checkout() {
         quantity: item.quantity,
         unit_price: item.products.price || 0,
         total_price: (item.products.price || 0) * item.quantity,
+        selected_size: item.selected_size,
+        selected_color: item.selected_color,
       }));
 
       const { error: itemsError } = await supabase

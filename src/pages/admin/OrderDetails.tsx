@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { OrderStatusBadge } from '@/components/customer/OrderStatusBadge';
 import { OrderTimeline } from '@/components/customer/OrderTimeline';
+import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { ArrowLeft, Package, MapPin, Phone, User, Save } from 'lucide-react';
 import { toast } from 'sonner';
@@ -44,7 +45,7 @@ export default function AdminOrderDetails() {
         .from('profiles')
         .select('email, full_name')
         .eq('id', data.user_id)
-        .single();
+        .maybeSingle();
 
       setAdminNotes(data.admin_notes || '');
       return { ...data, profile };
@@ -193,6 +194,14 @@ export default function AdminOrderDetails() {
                     {item.product_code && (
                       <p className="text-sm text-muted-foreground">{item.product_code}</p>
                     )}
+                    <div className="flex gap-1 mt-1">
+                      {item.selected_size && (
+                        <Badge variant="secondary" className="text-xs">Size: {item.selected_size}</Badge>
+                      )}
+                      {item.selected_color && (
+                        <Badge variant="secondary" className="text-xs">{item.selected_color}</Badge>
+                      )}
+                    </div>
                     <div className="flex items-center justify-between mt-2">
                       <span className="text-sm">Quantity: {item.quantity}</span>
                       <span className="font-semibold">₹{typeof item.total_price === 'string' ? parseFloat(item.total_price).toFixed(2) : item.total_price.toFixed(2)}</span>
