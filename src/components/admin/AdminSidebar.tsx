@@ -48,7 +48,7 @@ export function AdminSidebar() {
                       to={item.url}
                       className={({ isActive }) =>
                         isActive 
-                          ? 'bg-accent text-accent-foreground font-medium' 
+                          ? 'bg-accent/50' 
                           : 'hover:bg-accent/50'
                       }
                     >
