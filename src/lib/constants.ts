@@ -41,3 +41,13 @@ export const TAX_TYPES = {
   INTRA_STATE: 'intra', // CGST + SGST
   INTER_STATE: 'inter', // IGST
 } as const;
+
+export const PRODUCT_CATEGORIES = [
+  "Men's Wear",
+  "Women's Wear",
+  "Kids Wear",
+  "Unisex",
+  "Loungewear",
+  "Sleepwear",
+  "Activewear",
+] as const;

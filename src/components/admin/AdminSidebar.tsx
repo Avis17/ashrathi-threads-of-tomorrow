@@ -34,15 +34,12 @@ const menuItems = [
 ];
 
 export function AdminSidebar() {
-  const { state } = useSidebar();
-  const collapsed = state === 'collapsed';
-
   return (
     <Sidebar collapsible="icon" className="border-r">
       <SidebarContent>
         <SidebarGroup>
           <div className="flex items-center justify-between px-4 py-2">
-            {!collapsed && <SidebarGroupLabel>Admin Dashboard</SidebarGroupLabel>}
+            <SidebarGroupLabel>Admin</SidebarGroupLabel>
             <SidebarTrigger />
           </div>
           <SidebarGroupContent>
@@ -58,8 +55,8 @@ export function AdminSidebar() {
                           : 'hover:bg-accent/50'
                       }
                     >
-                      <item.icon className="h-4 w-4" />
-                      {!collapsed && <span>{item.title}</span>}
+                      <item.icon />
+                      <span>{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
