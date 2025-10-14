@@ -53,6 +53,41 @@ export type Database = {
         }
         Relationships: []
       }
+      cart_items: {
+        Row: {
+          created_at: string | null
+          id: string
+          product_id: string
+          quantity: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          product_id: string
+          quantity?: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          product_id?: string
+          quantity?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cart_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contact_inquiries: {
         Row: {
           admin_notes: string | null
@@ -83,6 +118,51 @@ export type Database = {
           name?: string
           phone?: string | null
           status?: string | null
+        }
+        Relationships: []
+      }
+      customer_addresses: {
+        Row: {
+          address_line_1: string
+          address_line_2: string | null
+          city: string
+          created_at: string | null
+          full_name: string
+          id: string
+          is_default: boolean | null
+          phone: string
+          pincode: string
+          state: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          address_line_1: string
+          address_line_2?: string | null
+          city: string
+          created_at?: string | null
+          full_name: string
+          id?: string
+          is_default?: boolean | null
+          phone: string
+          pincode: string
+          state: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          address_line_1?: string
+          address_line_2?: string | null
+          city?: string
+          created_at?: string | null
+          full_name?: string
+          id?: string
+          is_default?: boolean | null
+          phone?: string
+          pincode?: string
+          state?: string
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -298,6 +378,135 @@ export type Database = {
         }
         Relationships: []
       }
+      order_items: {
+        Row: {
+          created_at: string | null
+          id: string
+          order_id: string
+          product_code: string | null
+          product_id: string
+          product_image_url: string
+          product_name: string
+          quantity: number
+          total_price: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          order_id: string
+          product_code?: string | null
+          product_id: string
+          product_image_url: string
+          product_name: string
+          quantity: number
+          total_price: number
+          unit_price: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          order_id?: string
+          product_code?: string | null
+          product_id?: string
+          product_image_url?: string
+          product_name?: string
+          quantity?: number
+          total_price?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          admin_notes: string | null
+          cancelled_at: string | null
+          confirmed_at: string | null
+          created_at: string | null
+          customer_notes: string | null
+          delivered_at: string | null
+          delivery_address_line_1: string
+          delivery_address_line_2: string | null
+          delivery_city: string
+          delivery_name: string
+          delivery_phone: string
+          delivery_pincode: string
+          delivery_state: string
+          id: string
+          order_number: string
+          payment_method: string
+          shipped_at: string | null
+          shipping_charges: number | null
+          status: string
+          subtotal: number
+          total_amount: number
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          cancelled_at?: string | null
+          confirmed_at?: string | null
+          created_at?: string | null
+          customer_notes?: string | null
+          delivered_at?: string | null
+          delivery_address_line_1: string
+          delivery_address_line_2?: string | null
+          delivery_city: string
+          delivery_name: string
+          delivery_phone: string
+          delivery_pincode: string
+          delivery_state: string
+          id?: string
+          order_number?: string
+          payment_method?: string
+          shipped_at?: string | null
+          shipping_charges?: number | null
+          status?: string
+          subtotal: number
+          total_amount: number
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          cancelled_at?: string | null
+          confirmed_at?: string | null
+          created_at?: string | null
+          customer_notes?: string | null
+          delivered_at?: string | null
+          delivery_address_line_1?: string
+          delivery_address_line_2?: string | null
+          delivery_city?: string
+          delivery_name?: string
+          delivery_phone?: string
+          delivery_pincode?: string
+          delivery_state?: string
+          id?: string
+          order_number?: string
+          payment_method?: string
+          shipped_at?: string | null
+          shipping_charges?: number | null
+          status?: string
+          subtotal?: number
+          total_amount?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           additional_images: Json | null
@@ -402,6 +611,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_order_number: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
