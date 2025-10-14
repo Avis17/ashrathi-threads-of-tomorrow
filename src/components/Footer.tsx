@@ -9,9 +9,9 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand */}
           <div>
-            <img src={logo} alt="Ashrathi Apparels" className="h-32 mb-4 brightness-0 invert" />
+            <img src={logo} alt="Feather Fashions" className="h-32 mb-4 brightness-0 invert" />
             <p className="text-sm text-primary-foreground/80 leading-relaxed">
-              Threads of Quality. Designs of Tomorrow. Your trusted partner in premium garment manufacturing.
+              Premium sustainable fashion crafted with ultra-soft fabrics. Where comfort meets style and innovation.
             </p>
           </div>
 
@@ -34,13 +34,13 @@ const Footer = () => {
 
           {/* Products */}
           <div>
-            <h3 className="font-accent font-semibold text-lg mb-4">Our Products</h3>
+            <h3 className="font-accent font-semibold text-lg mb-4">Our Collections</h3>
             <ul className="space-y-2 text-sm text-primary-foreground/80">
-              <li>T-Shirts & Tops</li>
-              <li>Track Pants & Shorts</li>
-              <li>Leggings & Tights</li>
-              <li>Cotton Pants</li>
-              <li>Custom Orders</li>
+              <li>Lounge Sets</li>
+              <li>Sleepwear</li>
+              <li>Everyday T-Shirts</li>
+              <li>Kids Wear</li>
+              <li>Co-ord Sets</li>
             </ul>
           </div>
 
@@ -80,7 +80,7 @@ const Footer = () => {
         {/* Bottom Bar */}
         <div className="border-t border-primary-foreground/20 mt-8 pt-6 text-center">
           <p className="text-sm text-primary-foreground/60">
-            © {new Date().getFullYear()} Ashrathi Apparels. All rights reserved.
+            © {new Date().getFullYear()} Feather Fashions. All rights reserved.
           </p>
         </div>
       </div>

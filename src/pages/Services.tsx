@@ -48,7 +48,7 @@ const Services = () => {
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-16">
-          <div className="divider-gold mb-6" />
+          <div className="divider-accent mb-6" />
           <h1 className="text-5xl md:text-6xl font-bold mb-4">What We Do Best</h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Comprehensive apparel manufacturing solutions tailored to your business needs.
