@@ -37,10 +37,10 @@ const Admin = () => {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex flex-col w-full">
-        <AdminHeader />
-        <div className="flex flex-1">
-          <AdminSidebar />
+      <div className="min-h-screen flex w-full">
+        <AdminSidebar />
+        <div className="flex-1 flex flex-col">
+          <AdminHeader />
           <main className="flex-1 p-6 overflow-auto">
             <Routes>
               <Route path="/" element={<Navigate to="/admin/invoice" replace />} />

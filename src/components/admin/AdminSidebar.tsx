@@ -18,8 +18,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarTrigger,
-  useSidebar,
 } from '@/components/ui/sidebar';
 
 const menuItems = [
@@ -35,12 +33,11 @@ const menuItems = [
 
 export function AdminSidebar() {
   return (
-    <Sidebar collapsible="icon" className="border-r">
+    <Sidebar collapsible="icon" className="border-r bg-sidebar text-sidebar-foreground">
       <SidebarContent>
         <SidebarGroup>
           <div className="flex items-center justify-between px-4 py-2">
             <SidebarGroupLabel>Admin</SidebarGroupLabel>
-            <SidebarTrigger />
           </div>
           <SidebarGroupContent>
             <SidebarMenu>

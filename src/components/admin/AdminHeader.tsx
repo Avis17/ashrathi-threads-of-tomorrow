@@ -2,6 +2,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 import logo from '@/assets/logo.png';
 
 export function AdminHeader() {
@@ -15,8 +16,9 @@ export function AdminHeader() {
 
   return (
     <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex h-16 items-center justify-between px-6">
-        <div className="flex items-center gap-4">
+      <div className="flex h-16 items-center justify-between pl-2 pr-6 md:pl-4">
+        <div className="flex items-center gap-3">
+          <SidebarTrigger className="mr-1" />
           <img src={logo} alt="Feather Fashions" className="h-10 w-auto" />
           <div>
             <h1 className="text-xl font-semibold">Admin Dashboard</h1>
