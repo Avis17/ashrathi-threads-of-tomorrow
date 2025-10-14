@@ -576,7 +576,7 @@ export type Database = {
         }
         Insert: {
           actual_quantity?: number
-          batch_number: string
+          batch_number?: string
           completed_at?: string | null
           cost_per_piece?: number
           created_at?: string
