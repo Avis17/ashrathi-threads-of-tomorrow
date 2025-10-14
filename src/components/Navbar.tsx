@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Menu, X, User, LogOut, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
 import logo from "@/assets/logo.png";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const { user, isAdmin, signOut } = useAuth();
 
   const navLinks = [
     { name: "Home", path: "/" },
@@ -45,8 +47,35 @@ const Navbar = () => {
             ))}
           </div>
 
-          {/* CTA Button */}
-          <div className="hidden lg:block">
+          {/* Auth & CTA Buttons */}
+          <div className="hidden lg:flex items-center gap-2">
+            {user ? (
+              <>
+                {isAdmin && (
+                  <Button asChild variant="outline" size="sm">
+                    <Link to="/admin">
+                      <Shield className="h-4 w-4 mr-2" />
+                      Admin
+                    </Link>
+                  </Button>
+                )}
+                <Button variant="ghost" size="sm">
+                  <User className="h-4 w-4 mr-2" />
+                  {user.email}
+                </Button>
+                <Button onClick={signOut} variant="outline" size="sm">
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Logout
+                </Button>
+              </>
+            ) : (
+              <Button asChild variant="outline" size="sm">
+                <Link to="/auth">
+                  <User className="h-4 w-4 mr-2" />
+                  Sign In
+                </Link>
+              </Button>
+            )}
             <Button asChild variant="default" className="bg-secondary hover:bg-secondary/90">
               <Link to="/contact">Get in Touch</Link>
             </Button>
@@ -79,6 +108,29 @@ const Navbar = () => {
                   {link.name}
                 </Link>
               ))}
+              {user ? (
+                <>
+                  {isAdmin && (
+                    <Button asChild variant="outline" className="mx-4">
+                      <Link to="/admin" onClick={() => setIsOpen(false)}>
+                        <Shield className="h-4 w-4 mr-2" />
+                        Admin Dashboard
+                      </Link>
+                    </Button>
+                  )}
+                  <Button onClick={() => { signOut(); setIsOpen(false); }} variant="outline" className="mx-4">
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Logout
+                  </Button>
+                </>
+              ) : (
+                <Button asChild variant="outline" className="mx-4">
+                  <Link to="/auth" onClick={() => setIsOpen(false)}>
+                    <User className="h-4 w-4 mr-2" />
+                    Sign In
+                  </Link>
+                </Button>
+              )}
               <Button asChild variant="default" className="bg-secondary hover:bg-secondary/90 mx-4 mt-2">
                 <Link to="/contact" onClick={() => setIsOpen(false)}>Get in Touch</Link>
               </Button>

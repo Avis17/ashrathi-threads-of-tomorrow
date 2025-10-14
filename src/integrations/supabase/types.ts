@@ -14,16 +14,198 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      bulk_order_requests: {
+        Row: {
+          company_name: string | null
+          created_at: string | null
+          email: string
+          id: string
+          name: string
+          phone: string
+          product_interest: string
+          quantity: number
+          requirements: string | null
+          status: string | null
+        }
+        Insert: {
+          company_name?: string | null
+          created_at?: string | null
+          email: string
+          id?: string
+          name: string
+          phone: string
+          product_interest: string
+          quantity: number
+          requirements?: string | null
+          status?: string | null
+        }
+        Update: {
+          company_name?: string | null
+          created_at?: string | null
+          email?: string
+          id?: string
+          name?: string
+          phone?: string
+          product_interest?: string
+          quantity?: number
+          requirements?: string | null
+          status?: string | null
+        }
+        Relationships: []
+      }
+      contact_inquiries: {
+        Row: {
+          admin_notes: string | null
+          created_at: string | null
+          email: string
+          id: string
+          message: string
+          name: string
+          phone: string | null
+          status: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string | null
+          email: string
+          id?: string
+          message: string
+          name: string
+          phone?: string | null
+          status?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string | null
+          email?: string
+          id?: string
+          message?: string
+          name?: string
+          phone?: string | null
+          status?: string | null
+        }
+        Relationships: []
+      }
+      newsletter_subscribers: {
+        Row: {
+          email: string
+          id: string
+          is_active: boolean | null
+          subscribed_at: string | null
+        }
+        Insert: {
+          email: string
+          id?: string
+          is_active?: boolean | null
+          subscribed_at?: string | null
+        }
+        Update: {
+          email?: string
+          id?: string
+          is_active?: boolean | null
+          subscribed_at?: string | null
+        }
+        Relationships: []
+      }
+      products: {
+        Row: {
+          additional_images: Json | null
+          category: string
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          fabric: string
+          id: string
+          image_url: string
+          is_active: boolean | null
+          is_featured: boolean | null
+          name: string
+        }
+        Insert: {
+          additional_images?: Json | null
+          category: string
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          fabric: string
+          id?: string
+          image_url: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          name: string
+        }
+        Update: {
+          additional_images?: Json | null
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          fabric?: string
+          id?: string
+          image_url?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          name?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          email: string
+          full_name: string | null
+          id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          full_name?: string | null
+          id: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          full_name?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +332,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+    },
   },
 } as const

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,6 +7,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { MapPin, Phone, Mail, Clock, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
+import { z } from "zod";
+
+const contactSchema = z.object({
+  name: z.string().min(1, 'Name is required').max(100),
+  email: z.string().email('Invalid email address').max(255),
+  message: z.string().min(1, 'Message is required').max(1000),
+});
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -15,10 +23,32 @@ const Contact = () => {
     message: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success("Thank you for reaching out! We'll get back to you soon.");
-    setFormData({ name: "", email: "", phone: "", message: "" });
+
+    try {
+      contactSchema.parse({
+        name: formData.name,
+        email: formData.email,
+        message: formData.message,
+      });
+
+      const { error } = await supabase.from('contact_inquiries').insert([
+        {
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone || null,
+          message: formData.message,
+        },
+      ]);
+
+      if (error) throw error;
+
+      toast.success("Thank you for reaching out! We'll get back to you soon.");
+      setFormData({ name: "", email: "", phone: "", message: "" });
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to send message');
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {

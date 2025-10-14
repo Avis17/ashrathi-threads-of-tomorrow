@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { Maximize } from "lucide-react";
 import ImageZoomDialog from "@/components/ImageZoomDialog";
+import { useProducts } from "@/hooks/useProducts";
+import { Skeleton } from "@/components/ui/skeleton";
 import product1 from "@/assets/products/cloud-whisper-lounge-set.jpg";
 import product1b from "@/assets/products/cloud-whisper-lounge-set-2.png";
 import product2 from "@/assets/products/dream-weaver-kids-set.jpg";
@@ -43,46 +45,9 @@ import mensCoordSetBW from "@/assets/products/mens-coord-set-bw.jpg";
 const Products = () => {
   const [activeCategory, setActiveCategory] = useState("All");
   const [selectedImage, setSelectedImage] = useState<{ src: string; alt: string } | null>(null);
+  const { data: products = [], isLoading, error } = useProducts();
   
-  const categories = ["All", "Women", "Men", "Kids", "Loungewear", "Sleepwear"];
-  
-  const products = [
-    { name: "Cloud Whisper Lounge Set", category: "Loungewear", fabric: "50% Modal, 50% Cotton", description: "Luxurious two-piece with wide-leg pants", image: product1 },
-    { name: "Cloud Whisper Lounge Set - Grey", category: "Loungewear", fabric: "50% Modal, 50% Cotton", description: "Premium feather-print loungewear", image: product1b },
-    { name: "Dream Weaver Sleep Set", category: "Kids", fabric: "100% Organic Cotton", description: "Cozy sleep tee and leggings", image: product2 },
-    { name: "Dream Weaver Kids Set - Blue", category: "Kids", fabric: "100% Organic Cotton", description: "Adorable feathered friends design", image: product2b },
-    { name: "Free Spirit T-Shirt", category: "Women", fabric: "Premium Slub Cotton", description: "Draped oversized tee", image: product3 },
-    { name: "Little Explorer Set", category: "Kids", fabric: "100% Durable Cotton", description: "Adventure shorts and tee", image: product4 },
-    { name: "Serenity Cardigan", category: "Women", fabric: "Lightweight Knit", description: "Flowing elegant cardigan", image: product5 },
-    { name: "Serenity Wrap Cardigan - Beige", category: "Women", fabric: "Soft Knit Blend", description: "Cozy open-front layering piece", image: product5b },
-    { name: "FeatherSoft Lounge Tee", category: "Loungewear", fabric: "95% Bamboo, 5% Spandex", description: "Ultra-soft relaxed fit", image: product6 },
-    { name: "FeatherSoft Lounge Tee - Horse Print", category: "Loungewear", fabric: "95% Bamboo, 5% Spandex", description: "Playful pattern for comfort", image: product6b },
-    { name: "FeatherSoft Lounge Tee - Cat Print", category: "Loungewear", fabric: "95% Bamboo, 5% Spandex", description: "Whimsical and ultra-soft", image: product6c },
-    { name: "DreamEase Night Pants", category: "Sleepwear", fabric: "Modal Cotton", description: "Breathable with side pockets", image: product7 },
-    { name: "DreamEase Night Pants - Floral", category: "Sleepwear", fabric: "Modal Cotton Blend", description: "Elegant polka dot sleepwear", image: product7b },
-    { name: "FeatherFlow Co-ord Set", category: "Women", fabric: "French Terry", description: "Chic matching set", image: product8 },
-    { name: "FeatherFlow Kids Set - Koala", category: "Kids", fabric: "100% Organic Cotton", description: "Adorable koala print for kids", image: product8b },
-    { name: "CloudyDay Cotton Set", category: "Kids", fabric: "100% Organic Cotton", description: "Feather print tee and shorts", image: product9 },
-    { name: "CloudyDay Set - Sweet Dreams", category: "Kids", fabric: "100% Organic Cotton", description: "Navy sleep set with bear print", image: product9b },
-    { name: "CloudyDay Set - Bunny Bliss", category: "Kids", fabric: "100% Organic Cotton", description: "Charming bunny and floral design", image: product9c },
-    { name: "CloudyDay Set - Moon Rabbit", category: "Kids", fabric: "100% Organic Cotton", description: "Dreamy moon and star pattern", image: product9d },
-    { name: "DreamNest Pyjama Set", category: "Sleepwear", fabric: "Soft Muslin", description: "Feather-patterned nightwear", image: product10 },
-    { name: "Men's Track Pants - Teal", category: "Men", fabric: "Premium Cotton", description: "Comfortable joggers with feather logo", image: mensTrackPantsTeal },
-    { name: "Men's Shorts - Teal", category: "Men", fabric: "Performance Cotton", description: "Athletic shorts with feather detail", image: mensShortsTeal },
-    { name: "Men's Polo - Orange", category: "Men", fabric: "Pique Cotton", description: "Classic polo for casual wear", image: mensPoloOrange },
-    { name: "FeatherSoft Lounge Tee - Sage", category: "Loungewear", fabric: "95% Bamboo, 5% Spandex", description: "Women's relaxed fit with feather logo", image: feathersoftSage },
-    { name: "Free Spirit Tee - White", category: "Women", fabric: "Premium Slub Cotton", description: "V-neck with subtle feather detail", image: freeSpiritWhite },
-    { name: "Little Explorer - Feather Print", category: "Kids", fabric: "100% Organic Cotton", description: "Vibrant blue feather pattern tee", image: littleExplorerBlue },
-    { name: "DreamNest Set - Teal Feather", category: "Sleepwear", fabric: "Soft Cotton Jersey", description: "Bold feather graphic sleepwear", image: dreamnestTeal },
-    { name: "FeatherFlow Kids - Stars", category: "Kids", fabric: "100% Organic Cotton", description: "Sleep Under the Stars set", image: featherflowKidsGreen },
-    { name: "Men's Track Pants - Navy", category: "Men", fabric: "100% Cotton", description: "Classic joggers with feather embroidery", image: mensTrackPantsNavy },
-    { name: "Men's Tee - Charcoal", category: "Men", fabric: "Premium Cotton", description: "Minimal design with chest logo", image: mensTshirtCharcoal },
-    { name: "Men's Lounge Set - Sage", category: "Men", fabric: "Bamboo Cotton Blend", description: "Complete comfort set with feather print", image: mensLoungeSetSage },
-    { name: "Men's Track Pants - Beige", category: "Men", fabric: "Organic Cotton", description: "Tapered fit with ankle detail", image: mensTrackPantsBeige },
-    { name: "Men's Henley - Moss", category: "Men", fabric: "Premium Cotton", description: "Long sleeve with feather embroidery", image: mensHenleyMoss },
-    { name: "Men's Co-ord Set - B&W", category: "Men", fabric: "Cotton Jersey", description: "Modern streetwear with large feather graphic", image: mensCoordSetBW },
-  ];
-
+  const categories = ["All", ...Array.from(new Set(products.map(p => p.category)))];
   const filteredProducts = activeCategory === "All" ? products : products.filter(p => p.category === activeCategory);
 
   return (
@@ -102,27 +67,51 @@ const Products = () => {
           ))}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-16">
-          {filteredProducts.map((product, idx) => (
-            <Card key={idx} className="overflow-hidden card-hover group">
-              <div className="h-96 bg-muted relative cursor-pointer overflow-hidden" onClick={() => setSelectedImage({ src: product.image, alt: product.name })}>
-                <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+        {isLoading && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-16">
+            {[...Array(8)].map((_, i) => (
+              <Card key={i} className="overflow-hidden">
+                <Skeleton className="h-96 w-full" />
+                <CardContent className="p-5 space-y-2">
+                  <Skeleton className="h-6 w-3/4" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-1/2" />
+                  <Skeleton className="h-10 w-full" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        {error && (
+          <div className="text-center py-12">
+            <p className="text-destructive">Failed to load products. Please try again later.</p>
+          </div>
+        )}
+
+        {!isLoading && !error && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-16">
+            {filteredProducts.map((product) => (
+              <Card key={product.id} className="overflow-hidden card-hover group">
+                <div className="h-96 bg-muted relative cursor-pointer overflow-hidden" onClick={() => setSelectedImage({ src: product.image_url, alt: product.name })}>
+                  <img src={product.image_url} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 <Badge className="absolute top-4 left-4 bg-secondary text-secondary-foreground">{product.category}</Badge>
-                <Button variant="ghost" size="icon" className="absolute top-4 right-4 bg-white/90 hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => { e.stopPropagation(); setSelectedImage({ src: product.image, alt: product.name }); }}>
-                  <Maximize className="h-4 w-4" />
-                </Button>
-              </div>
-              <CardContent className="p-5">
-                <h3 className="font-semibold text-lg mb-2">{product.name}</h3>
-                <p className="text-sm text-muted-foreground mb-2">{product.description}</p>
-                <p className="text-sm font-medium text-primary mb-4">Fabric: {product.fabric}</p>
+                  <Button variant="ghost" size="icon" className="absolute top-4 right-4 bg-white/90 hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => { e.stopPropagation(); setSelectedImage({ src: product.image_url, alt: product.name }); }}>
+                    <Maximize className="h-4 w-4" />
+                  </Button>
+                </div>
+                <CardContent className="p-5">
+                  <h3 className="font-semibold text-lg mb-2">{product.name}</h3>
+                  <p className="text-sm text-muted-foreground mb-2">{product.description}</p>
+                  <p className="text-sm font-medium text-primary mb-4">Fabric: {product.fabric}</p>
                 <Button asChild variant="outline" className="w-full hover:bg-secondary hover:text-secondary-foreground border-2">
                   <Link to="/contact">Request Quote</Link>
                 </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
 
         <Card className="bg-gradient-to-r from-primary via-secondary to-accent text-white p-8 md:p-12 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Need Custom Manufacturing?</h2>

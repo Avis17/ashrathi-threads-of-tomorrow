@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Mail, Phone, MapPin, Facebook, Instagram, Linkedin } from "lucide-react";
 import logo from "@/assets/logo.png";
+import NewsletterSignup from "./NewsletterSignup";
 
 const Footer = () => {
   return (
@@ -74,6 +75,17 @@ const Footer = () => {
                 <Linkedin className="h-4 w-4" />
               </a>
             </div>
+          </div>
+        </div>
+
+        {/* Newsletter */}
+        <div className="border-t border-primary-foreground/20 mt-8 pt-8">
+          <div className="max-w-2xl mx-auto text-center">
+            <h3 className="font-accent font-semibold text-xl mb-2">Stay Updated</h3>
+            <p className="text-sm text-primary-foreground/80 mb-4">
+              Subscribe to our newsletter for exclusive offers and sustainable fashion tips
+            </p>
+            <NewsletterSignup />
           </div>
         </div>
 
