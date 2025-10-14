@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
 import { OrderStatusBadge } from '@/components/customer/OrderStatusBadge';
 import { OrderTimeline } from '@/components/customer/OrderTimeline';
 import { format } from 'date-fns';
@@ -129,6 +130,14 @@ export default function OrderDetails() {
                     {item.product_code && (
                       <p className="text-sm text-muted-foreground">{item.product_code}</p>
                     )}
+                    <div className="flex gap-1 mt-1">
+                      {item.selected_size && (
+                        <Badge variant="secondary" className="text-xs">Size: {item.selected_size}</Badge>
+                      )}
+                      {item.selected_color && (
+                        <Badge variant="secondary" className="text-xs">{item.selected_color}</Badge>
+                      )}
+                    </div>
                     <div className="flex items-center justify-between mt-2">
                       <span className="text-sm">Quantity: {item.quantity}</span>
                       <span className="font-semibold">₹{typeof item.total_price === 'string' ? parseFloat(item.total_price).toFixed(2) : item.total_price.toFixed(2)}</span>

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,9 +8,10 @@ import { CartDrawer } from './CartDrawer';
 
 export const CartButton = () => {
   const { cartCount } = useCart();
+  const [open, setOpen] = useState(false);
 
   return (
-    <Sheet>
+    <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
           <ShoppingCart className="h-5 w-5" />
@@ -23,7 +25,7 @@ export const CartButton = () => {
           )}
         </Button>
       </SheetTrigger>
-      <CartDrawer />
+      <CartDrawer onClose={() => setOpen(false)} />
     </Sheet>
   );
 };

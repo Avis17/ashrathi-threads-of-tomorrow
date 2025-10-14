@@ -128,28 +128,35 @@ const Products = () => {
 
         {!isLoading && !error && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-16">
-            {filteredProducts.map((product) => (
-              <Card key={product.id} className="overflow-hidden card-hover group">
-                <div className="h-96 bg-muted relative cursor-pointer overflow-hidden" onClick={() => setSelectedImage({ src: product.image_url, alt: product.name })}>
-                  <img src={product.image_url} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                <Badge className="absolute top-4 left-4 bg-secondary text-secondary-foreground">{product.category}</Badge>
-                  <Button variant="ghost" size="icon" className="absolute top-4 right-4 bg-white/90 hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => { e.stopPropagation(); setSelectedImage({ src: product.image_url, alt: product.name }); }}>
-                    <Maximize className="h-4 w-4" />
-                  </Button>
-                </div>
-                <CardContent className="p-5">
-                  <h3 className="font-semibold text-lg mb-2">{product.name}</h3>
-                  <p className="text-sm text-muted-foreground mb-2">{product.description}</p>
-                  <p className="text-sm font-medium text-primary mb-2">Fabric: {product.fabric}</p>
-                  
-                  {/* Price */}
-                  <div className="mb-4">
-                    {product.price ? (
-                      <p className="text-2xl font-bold text-foreground">₹{product.price.toLocaleString()}</p>
-                    ) : (
-                      <p className="text-sm text-muted-foreground italic">Contact for Price</p>
-                    )}
+            {filteredProducts.map((product) => {
+              const isUnavailable = !product.is_active;
+              return (
+                <Card key={product.id} className={`overflow-hidden card-hover group ${isUnavailable ? 'opacity-60 grayscale' : ''}`}>
+                  <div className="h-96 bg-muted relative cursor-pointer overflow-hidden" onClick={() => setSelectedImage({ src: product.image_url, alt: product.name })}>
+                    <img src={product.image_url} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <Badge className="absolute top-4 left-4 bg-secondary text-secondary-foreground">{product.category}</Badge>
+                  {isUnavailable && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                      <Badge variant="secondary" className="text-sm font-semibold">Not Available</Badge>
+                    </div>
+                  )}
+                    <Button variant="ghost" size="icon" className="absolute top-4 right-4 bg-white/90 hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => { e.stopPropagation(); setSelectedImage({ src: product.image_url, alt: product.name }); }}>
+                      <Maximize className="h-4 w-4" />
+                    </Button>
                   </div>
+                  <CardContent className="p-5">
+                    <h3 className="font-semibold text-lg mb-2">{product.name}</h3>
+                    <p className="text-sm text-muted-foreground mb-2">{product.description}</p>
+                    <p className="text-sm font-medium text-primary mb-2">Fabric: {product.fabric}</p>
+                    
+                    {/* Price */}
+                    <div className="mb-4">
+                      {product.price ? (
+                        <p className="text-2xl font-bold text-foreground">₹{product.price.toLocaleString()}</p>
+                      ) : (
+                        <p className="text-sm text-muted-foreground italic">Contact for Price</p>
+                      )}
+                    </div>
 
                   {/* Size Selection */}
                   {product.available_sizes && product.available_sizes.length > 0 && (
@@ -227,13 +234,15 @@ const Products = () => {
                   <Button 
                     onClick={() => handleAddToCart(product.id, product)}
                     className="w-full"
+                    disabled={isUnavailable}
                   >
                     <ShoppingCart className="mr-2 h-4 w-4" />
-                    {user ? 'Add to Cart' : 'Login to Add'}
+                    {isUnavailable ? 'Unavailable' : (user ? 'Add to Cart' : 'Login to Add')}
                   </Button>
                 </CardContent>
               </Card>
-            ))}
+            );
+            })}
           </div>
         )}
 

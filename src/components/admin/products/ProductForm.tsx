@@ -22,7 +22,21 @@ const productSchema = z.object({
   category: z.string().min(1, 'Category is required'),
   fabric: z.string().min(1, 'Fabric is required').max(100),
   description: z.string().optional().nullable(),
-  image_url: z.string().min(1, 'Image URL is required'),
+  image_url: z.string().min(1, 'Image URL is required').refine(
+    (val) => {
+      // Allow local file paths or valid URLs
+      if (val.startsWith('/') || val.startsWith('./') || val.startsWith('../')) {
+        return true;
+      }
+      try {
+        new URL(val);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    { message: 'Must be a valid URL or local file path' }
+  ),
   hsn_code: z.string()
     .regex(/^\d{4,8}$/, 'HSN must be 4-8 digits')
     .optional()

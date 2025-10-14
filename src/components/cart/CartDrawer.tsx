@@ -12,12 +12,17 @@ import { useCart } from '@/hooks/useCart';
 import { CartItem } from './CartItem';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-export const CartDrawer = () => {
+interface CartDrawerProps {
+  onClose?: () => void;
+}
+
+export const CartDrawer = ({ onClose }: CartDrawerProps) => {
   const navigate = useNavigate();
   const { cartItems, cartTotal, cartCount } = useCart();
 
   const handleCheckout = () => {
     navigate('/checkout');
+    onClose?.();
   };
 
   if (cartItems.length === 0) {
