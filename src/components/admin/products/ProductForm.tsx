@@ -36,6 +36,8 @@ const productSchema = z.object({
     .refine((val) => Number.isInteger(val), 'Must be a whole number'),
   is_active: z.boolean().default(true),
   is_featured: z.boolean().default(false),
+  is_new_arrival: z.boolean().default(false),
+  is_signature: z.boolean().default(false),
 });
 
 export type ProductFormData = z.infer<typeof productSchema>;
@@ -52,6 +54,8 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
     defaultValues: {
       is_active: initialData?.is_active ?? true,
       is_featured: initialData?.is_featured ?? false,
+      is_new_arrival: initialData?.is_new_arrival ?? false,
+      is_signature: initialData?.is_signature ?? false,
       display_order: initialData?.display_order?.toString() || '0',
       price: initialData?.price?.toString() || '',
       name: initialData?.name || '',
@@ -67,6 +71,8 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
   const selectedCategory = watch('category');
   const isActive = watch('is_active');
   const isFeatured = watch('is_featured');
+  const isNewArrival = watch('is_new_arrival');
+  const isSignature = watch('is_signature');
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -158,7 +164,7 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
         )}
       </div>
 
-      <div className="flex gap-6">
+      <div className="flex flex-wrap gap-6">
         <div className="flex items-center space-x-2">
           <Switch
             id="is_active"
@@ -175,6 +181,24 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
             onCheckedChange={(checked) => setValue('is_featured', checked)}
           />
           <Label htmlFor="is_featured">Featured</Label>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="is_new_arrival"
+            checked={isNewArrival}
+            onCheckedChange={(checked) => setValue('is_new_arrival', checked)}
+          />
+          <Label htmlFor="is_new_arrival">New Arrival</Label>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="is_signature"
+            checked={isSignature}
+            onCheckedChange={(checked) => setValue('is_signature', checked)}
+          />
+          <Label htmlFor="is_signature">Signature Collection</Label>
         </div>
       </div>
 

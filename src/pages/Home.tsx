@@ -2,13 +2,13 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Leaf, Heart, Sparkles, Shield } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import heroImage from "@/assets/hero-feather-fashions.jpg";
-import product1 from "@/assets/products/cloud-whisper-lounge-set.jpg";
-import product2 from "@/assets/products/free-spirit-tshirt.jpg";
-import product3 from "@/assets/products/feathersoft-lounge-tee.jpg";
-import product4 from "@/assets/products/featherflow-coord-set.jpg";
+import { useSignatureProducts } from "@/hooks/useCollections";
 
 const Home = () => {
+  const { data: signatureProducts = [], isLoading } = useSignatureProducts();
+  
   const features = [
     {
       icon: Leaf,
@@ -89,36 +89,44 @@ const Home = () => {
             <p className="text-lg text-muted-foreground">Discover pieces designed for comfort and crafted for style</p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-            {[
-              { name: "Cloud Whisper Lounge Set", tag: "Bestseller", image: product1, category: "Women" },
-              { name: "Free Spirit T-Shirt", tag: "New", image: product2, category: "Women" },
-              { name: "FeatherSoft Lounge Tee", tag: "Premium", image: product3, category: "Unisex" },
-              { name: "FeatherFlow Co-ord Set", tag: "Trending", image: product4, category: "Women" },
-            ].map((product, idx) => (
-              <Card key={idx} className="overflow-hidden group card-hover">
-                <div className="h-80 bg-muted relative overflow-hidden">
-                  <img 
-                    src={product.image} 
-                    alt={product.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <span className="absolute top-4 left-4 bg-secondary text-secondary-foreground px-3 py-1.5 rounded-full text-xs font-accent font-semibold shadow-lg">
-                    {product.tag}
-                  </span>
-                  <span className="absolute top-4 right-4 bg-background/90 text-foreground px-3 py-1 rounded-full text-xs font-medium">
-                    {product.category}
-                  </span>
-                </div>
-                <CardContent className="p-5">
-                  <h3 className="font-semibold text-lg mb-3">{product.name}</h3>
-                  <Button asChild variant="outline" className="w-full hover:bg-secondary hover:text-secondary-foreground border-2">
-                    <Link to="/contact">Inquire Now</Link>
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          {isLoading && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+              {[...Array(4)].map((_, i) => (
+                <Card key={i} className="overflow-hidden">
+                  <Skeleton className="h-80 w-full" />
+                  <CardContent className="p-5 space-y-2">
+                    <Skeleton className="h-6 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+
+          {!isLoading && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+              {signatureProducts.map((product) => (
+                <Card key={product.id} className="overflow-hidden group card-hover">
+                  <div className="h-80 bg-muted relative overflow-hidden">
+                    <img 
+                      src={product.image_url} 
+                      alt={product.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <span className="absolute top-4 left-4 bg-secondary text-secondary-foreground px-3 py-1.5 rounded-full text-xs font-accent font-semibold shadow-lg">
+                      {product.category}
+                    </span>
+                  </div>
+                  <CardContent className="p-5">
+                    <h3 className="font-semibold text-lg mb-3">{product.name}</h3>
+                    <Button asChild variant="outline" className="w-full hover:bg-secondary hover:text-secondary-foreground border-2">
+                      <Link to="/contact">Inquire Now</Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
 
           <div className="text-center">
             <Button asChild size="lg" className="bg-primary hover:bg-primary/90">
