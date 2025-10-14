@@ -26,24 +26,34 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <div className="flex flex-col min-h-screen">
-            <Navbar />
-            <main className="flex-1">
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/products" element={<Products />} />
-                <Route path="/services" element={<Services />} />
-                <Route path="/collections" element={<Collections />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/contact" element={<Contact />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/admin/*" element={<Admin />} />
-          <Route path="/bulk-order" element={<BulkOrder />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </main>
-            <Footer />
-          </div>
+          <Routes>
+            {/* Admin Routes - No Navbar/Footer */}
+            <Route path="/admin/*" element={<Admin />} />
+            
+            {/* Public Routes - With Navbar/Footer */}
+            <Route
+              path="*"
+              element={
+                <div className="flex flex-col min-h-screen">
+                  <Navbar />
+                  <main className="flex-1">
+                    <Routes>
+                      <Route path="/" element={<Home />} />
+                      <Route path="/products" element={<Products />} />
+                      <Route path="/services" element={<Services />} />
+                      <Route path="/collections" element={<Collections />} />
+                      <Route path="/about" element={<About />} />
+                      <Route path="/contact" element={<Contact />} />
+                      <Route path="/auth" element={<Auth />} />
+                      <Route path="/bulk-order" element={<BulkOrder />} />
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </main>
+                  <Footer />
+                </div>
+              }
+            />
+          </Routes>
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>

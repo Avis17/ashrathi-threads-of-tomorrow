@@ -17,12 +17,12 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn, signUp, user } = useAuth();
+  const { signIn, signUp, user, isAdmin } = useAuth();
   const navigate = useNavigate();
 
   // Redirect if already logged in
   if (user) {
-    navigate('/');
+    navigate(isAdmin ? '/admin/invoice' : '/');
     return null;
   }
 
@@ -44,9 +44,10 @@ const Auth = () => {
       const { error } = await signIn(email, password);
       if (error) {
         toast.error(error.message);
+        setLoading(false);
       } else {
         toast.success('Logged in successfully!');
-        navigate('/');
+        // Will be redirected by the useEffect that checks user status
       }
     } else {
       if (!fullName.trim()) {
@@ -57,12 +58,12 @@ const Auth = () => {
       const { error } = await signUp(email, password, fullName);
       if (error) {
         toast.error(error.message);
+        setLoading(false);
       } else {
         toast.success('Account created successfully!');
-        navigate('/');
+        // Will be redirected by the useEffect that checks user status
       }
     }
-    setLoading(false);
   };
 
   return (
