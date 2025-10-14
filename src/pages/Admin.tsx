@@ -9,6 +9,7 @@ import ProductsManager from '@/components/admin/ProductsManager';
 import BulkOrdersManager from '@/components/admin/BulkOrdersManager';
 import NewsletterManager from '@/components/admin/NewsletterManager';
 import CustomersManager from '@/components/admin/CustomersManager';
+import { OrdersManager } from '@/components/admin/OrdersManager';
 import InvoiceGenerator from './admin/InvoiceGenerator';
 import InvoiceHistory from './admin/InvoiceHistory';
 import InvoiceReset from './admin/InvoiceReset';
@@ -46,6 +47,7 @@ const Admin = () => {
             <Routes>
               <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/orders" element={<OrdersManager />} />
               <Route path="/invoice" element={<InvoiceGenerator />} />
               <Route path="/customers" element={<CustomersManager />} />
               <Route path="/products" element={<ProductsManager />} />
