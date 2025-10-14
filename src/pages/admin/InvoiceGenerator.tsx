@@ -1,0 +1,513 @@
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Plus, Trash2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { TAX_TYPES } from '@/lib/constants';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { format } from 'date-fns';
+
+interface InvoiceItem {
+  product_id: string;
+  hsn_code: string;
+  product_code: string;
+  price: number;
+  quantity: number;
+  amount: number;
+}
+
+export default function InvoiceGenerator() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [invoiceDate, setInvoiceDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [invoiceType, setInvoiceType] = useState('Feather Fashions');
+  const [customerId, setCustomerId] = useState('');
+  const [deliveryAddress, setDeliveryAddress] = useState('');
+  const [purchaseOrderNo, setPurchaseOrderNo] = useState('');
+  const [numberOfPackages, setNumberOfPackages] = useState('1');
+  const [taxType, setTaxType] = useState<'intra' | 'inter'>('intra');
+  const [cgstRate, setCgstRate] = useState('9');
+  const [sgstRate, setSgstRate] = useState('9');
+  const [igstRate, setIgstRate] = useState('18');
+  const [items, setItems] = useState<InvoiceItem[]>([{
+    product_id: '',
+    hsn_code: '',
+    product_code: '',
+    price: 0,
+    quantity: 1,
+    amount: 0,
+  }]);
+
+  const { data: customers } = useQuery({
+    queryKey: ['customers'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('customers')
+        .select('*')
+        .eq('is_active', true)
+        .order('company_name');
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: products } = useQuery({
+    queryKey: ['products-with-price'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('is_active', true)
+        .not('price', 'is', null);
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: invoiceSettings } = useQuery({
+    queryKey: ['invoice-settings'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('invoice_settings')
+        .select('*')
+        .single();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const selectedCustomer = customers?.find(c => c.id === customerId);
+
+  const handleCustomerChange = (value: string) => {
+    setCustomerId(value);
+    const customer = customers?.find(c => c.id === value);
+    if (customer) {
+      setDeliveryAddress(`${customer.address_1}${customer.address_2 ? ', ' + customer.address_2 : ''}, ${customer.city}, ${customer.state} - ${customer.pincode}`);
+    }
+  };
+
+  const handleProductChange = (index: number, productId: string) => {
+    const product = products?.find(p => p.id === productId);
+    if (product) {
+      const newItems = [...items];
+      newItems[index] = {
+        ...newItems[index],
+        product_id: productId,
+        hsn_code: product.hsn_code || '',
+        product_code: product.product_code || '',
+        price: Number(product.price) || 0,
+        amount: Number(product.price) * newItems[index].quantity,
+      };
+      setItems(newItems);
+    }
+  };
+
+  const handleQuantityChange = (index: number, quantity: number) => {
+    const newItems = [...items];
+    newItems[index].quantity = quantity;
+    newItems[index].amount = newItems[index].price * quantity;
+    setItems(newItems);
+  };
+
+  const addItem = () => {
+    setItems([...items, {
+      product_id: '',
+      hsn_code: '',
+      product_code: '',
+      price: 0,
+      quantity: 1,
+      amount: 0,
+    }]);
+  };
+
+  const removeItem = (index: number) => {
+    if (items.length > 1) {
+      setItems(items.filter((_, i) => i !== index));
+    }
+  };
+
+  const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
+  const cgstAmount = taxType === 'intra' ? (subtotal * Number(cgstRate)) / 100 : 0;
+  const sgstAmount = taxType === 'intra' ? (subtotal * Number(sgstRate)) / 100 : 0;
+  const igstAmount = taxType === 'inter' ? (subtotal * Number(igstRate)) / 100 : 0;
+  const total = subtotal + cgstAmount + sgstAmount + igstAmount;
+
+  const createInvoiceMutation = useMutation({
+    mutationFn: async () => {
+      if (!customerId || items.some(i => !i.product_id)) {
+        throw new Error('Please fill all required fields');
+      }
+
+      const invoiceNumber = invoiceSettings?.current_invoice_number || 1;
+
+      const { data: invoice, error: invoiceError } = await supabase
+        .from('invoices')
+        .insert([{
+          invoice_number: invoiceNumber,
+          invoice_date: invoiceDate,
+          invoice_type: invoiceType,
+          customer_id: customerId,
+          delivery_address: deliveryAddress,
+          purchase_order_no: purchaseOrderNo || null,
+          number_of_packages: Number(numberOfPackages),
+          subtotal,
+          cgst_rate: Number(cgstRate),
+          cgst_amount: cgstAmount,
+          sgst_rate: Number(sgstRate),
+          sgst_amount: sgstAmount,
+          igst_rate: Number(igstRate),
+          igst_amount: igstAmount,
+          total_amount: total,
+        }])
+        .select()
+        .single();
+
+      if (invoiceError) throw invoiceError;
+
+      const { error: itemsError } = await supabase
+        .from('invoice_items')
+        .insert(items.map(item => ({
+          invoice_id: invoice.id,
+          ...item,
+        })));
+
+      if (itemsError) throw itemsError;
+
+      const { error: settingsError } = await supabase
+        .from('invoice_settings')
+        .update({ current_invoice_number: invoiceNumber + 1, updated_at: new Date().toISOString() })
+        .eq('id', invoiceSettings?.id);
+
+      if (settingsError) throw settingsError;
+
+      return { invoice, items };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['invoice-settings'] });
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      toast({ title: 'Invoice created successfully' });
+    },
+    onError: (error: Error) => {
+      toast({ title: error.message || 'Failed to create invoice', variant: 'destructive' });
+    },
+  });
+
+  const generatePDF = () => {
+    if (!selectedCustomer) {
+      toast({ title: 'Please select a customer', variant: 'destructive' });
+      return;
+    }
+
+    const doc = new jsPDF();
+    const invoiceNumber = invoiceSettings?.current_invoice_number || 1;
+
+    doc.setFontSize(20);
+    doc.text('FEATHER FASHIONS', 105, 20, { align: 'center' });
+    doc.setFontSize(10);
+    doc.text('TAX INVOICE', 105, 28, { align: 'center' });
+
+    doc.setFontSize(10);
+    doc.text(`Invoice No: ${invoiceNumber}`, 20, 45);
+    doc.text(`Date: ${format(new Date(invoiceDate), 'dd/MM/yyyy')}`, 20, 52);
+
+    doc.text('Bill To:', 20, 65);
+    doc.text(selectedCustomer.company_name, 20, 72);
+    doc.text(selectedCustomer.email, 20, 79);
+    doc.text(selectedCustomer.phone, 20, 86);
+    if (selectedCustomer.gst_number) {
+      doc.text(`GST: ${selectedCustomer.gst_number}`, 20, 93);
+    }
+
+    doc.text('Delivery Address:', 120, 65);
+    const addressLines = doc.splitTextToSize(deliveryAddress, 70);
+    doc.text(addressLines, 120, 72);
+
+    autoTable(doc, {
+      startY: 105,
+      head: [['S.No', 'HSN Code', 'Product Code', 'Price', 'Qty', 'Amount']],
+      body: items.map((item, index) => [
+        index + 1,
+        item.hsn_code,
+        item.product_code,
+        item.price.toFixed(2),
+        item.quantity,
+        item.amount.toFixed(2),
+      ]),
+      foot: [
+        ['', '', '', '', 'Subtotal:', subtotal.toFixed(2)],
+        ...(taxType === 'intra' ? [
+          ['', '', '', '', `CGST (${cgstRate}%):`, cgstAmount.toFixed(2)],
+          ['', '', '', '', `SGST (${sgstRate}%):`, sgstAmount.toFixed(2)],
+        ] : [
+          ['', '', '', '', `IGST (${igstRate}%):`, igstAmount.toFixed(2)],
+        ]),
+        ['', '', '', '', 'Total:', total.toFixed(2)],
+      ],
+    });
+
+    doc.save(`Invoice_${invoiceNumber}.pdf`);
+  };
+
+  const handleVerifyAndPrint = async () => {
+    await createInvoiceMutation.mutateAsync();
+    generatePDF();
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold">Generate Invoice</h2>
+        <p className="text-muted-foreground">Create a new invoice for your customers</p>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Invoice Details</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label>Invoice Date</Label>
+              <Input
+                type="date"
+                value={invoiceDate}
+                onChange={(e) => setInvoiceDate(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Invoice Type</Label>
+              <RadioGroup value={invoiceType} onValueChange={setInvoiceType}>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="Feather Fashions" id="ff" />
+                  <Label htmlFor="ff" className="font-normal">Feather Fashions</Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Invoice Number</Label>
+              <Input value={invoiceSettings?.current_invoice_number || ''} disabled />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Select Customer *</Label>
+              <Select value={customerId} onValueChange={handleCustomerChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select customer" />
+                </SelectTrigger>
+                <SelectContent>
+                  {customers?.map((customer) => (
+                    <SelectItem key={customer.id} value={customer.id}>
+                      {customer.company_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Number of Packages</Label>
+              <Input
+                type="number"
+                min="1"
+                value={numberOfPackages}
+                onChange={(e) => setNumberOfPackages(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Delivery Address</Label>
+            <Input
+              value={deliveryAddress}
+              onChange={(e) => setDeliveryAddress(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Purchase Order Number</Label>
+            <Input
+              value={purchaseOrderNo}
+              onChange={(e) => setPurchaseOrderNo(e.target.value)}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Products</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {items.map((item, index) => (
+            <div key={index} className="grid grid-cols-12 gap-2 items-end">
+              <div className="col-span-3 space-y-2">
+                <Label>Product *</Label>
+                <Select
+                  value={item.product_id}
+                  onValueChange={(value) => handleProductChange(index, value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select product" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {products?.map((product) => (
+                      <SelectItem key={product.id} value={product.id}>
+                        {product.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="col-span-2 space-y-2">
+                <Label>HSN Code</Label>
+                <Input value={item.hsn_code} disabled />
+              </div>
+
+              <div className="col-span-2 space-y-2">
+                <Label>Product Code</Label>
+                <Input value={item.product_code} disabled />
+              </div>
+
+              <div className="col-span-2 space-y-2">
+                <Label>Price</Label>
+                <Input value={item.price} disabled />
+              </div>
+
+              <div className="col-span-1 space-y-2">
+                <Label>Qty</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  value={item.quantity}
+                  onChange={(e) => handleQuantityChange(index, Number(e.target.value))}
+                />
+              </div>
+
+              <div className="col-span-1 space-y-2">
+                <Label>Amount</Label>
+                <Input value={item.amount.toFixed(2)} disabled />
+              </div>
+
+              <div className="col-span-1">
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  onClick={() => removeItem(index)}
+                  disabled={items.length === 1}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          ))}
+
+          <Button type="button" variant="outline" onClick={addItem} className="w-full">
+            <Plus className="h-4 w-4 mr-2" />
+            Add Item
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Tax Calculation</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <RadioGroup value={taxType} onValueChange={(v) => setTaxType(v as 'intra' | 'inter')}>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="intra" id="intra" />
+              <Label htmlFor="intra" className="font-normal">Intra-State (CGST + SGST)</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="inter" id="inter" />
+              <Label htmlFor="inter" className="font-normal">Inter-State (IGST)</Label>
+            </div>
+          </RadioGroup>
+
+          {taxType === 'intra' ? (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>CGST Rate (%)</Label>
+                <Input
+                  type="number"
+                  value={cgstRate}
+                  onChange={(e) => setCgstRate(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>SGST Rate (%)</Label>
+                <Input
+                  type="number"
+                  value={sgstRate}
+                  onChange={(e) => setSgstRate(e.target.value)}
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Label>IGST Rate (%)</Label>
+              <Input
+                type="number"
+                value={igstRate}
+                onChange={(e) => setIgstRate(e.target.value)}
+              />
+            </div>
+          )}
+
+          <div className="border-t pt-4 space-y-2">
+            <div className="flex justify-between">
+              <span>Subtotal:</span>
+              <span className="font-semibold">₹{subtotal.toFixed(2)}</span>
+            </div>
+            {taxType === 'intra' ? (
+              <>
+                <div className="flex justify-between">
+                  <span>CGST ({cgstRate}%):</span>
+                  <span>₹{cgstAmount.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>SGST ({sgstRate}%):</span>
+                  <span>₹{sgstAmount.toFixed(2)}</span>
+                </div>
+              </>
+            ) : (
+              <div className="flex justify-between">
+                <span>IGST ({igstRate}%):</span>
+                <span>₹{igstAmount.toFixed(2)}</span>
+              </div>
+            )}
+            <div className="flex justify-between text-lg font-bold border-t pt-2">
+              <span>Total:</span>
+              <span>₹{total.toFixed(2)}</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="flex gap-4">
+        <Button onClick={handleVerifyAndPrint} disabled={createInvoiceMutation.isPending}>
+          {createInvoiceMutation.isPending ? 'Processing...' : 'Verify & Print Invoice'}
+        </Button>
+      </div>
+    </div>
+  );
+}

@@ -13,6 +13,9 @@ interface Product {
   image_url: string;
   is_featured: boolean;
   is_active: boolean;
+  hsn_code?: string | null;
+  product_code?: string | null;
+  price?: number | null;
 }
 
 const ProductsManager = () => {
@@ -87,6 +90,9 @@ const ProductsManager = () => {
                 <h3 className="font-semibold">{product.name}</h3>
                 <p className="text-sm text-muted-foreground">{product.category}</p>
                 <p className="text-sm text-muted-foreground">{product.fabric}</p>
+                {product.hsn_code && <p className="text-sm">HSN: {product.hsn_code}</p>}
+                {product.product_code && <p className="text-sm">Code: {product.product_code}</p>}
+                {product.price && <p className="text-sm font-semibold">₹{product.price}</p>}
               </div>
               <div className="flex gap-2">
                 <Badge variant={product.is_active ? 'default' : 'secondary'}>

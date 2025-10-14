@@ -86,6 +86,194 @@ export type Database = {
         }
         Relationships: []
       }
+      customers: {
+        Row: {
+          address_1: string
+          address_2: string | null
+          alt_phone: string | null
+          city: string
+          company_name: string
+          country: string
+          created_at: string
+          email: string
+          gst_number: string | null
+          id: string
+          is_active: boolean
+          phone: string
+          pincode: string
+          state: string
+        }
+        Insert: {
+          address_1: string
+          address_2?: string | null
+          alt_phone?: string | null
+          city: string
+          company_name: string
+          country?: string
+          created_at?: string
+          email: string
+          gst_number?: string | null
+          id?: string
+          is_active?: boolean
+          phone: string
+          pincode: string
+          state: string
+        }
+        Update: {
+          address_1?: string
+          address_2?: string | null
+          alt_phone?: string | null
+          city?: string
+          company_name?: string
+          country?: string
+          created_at?: string
+          email?: string
+          gst_number?: string | null
+          id?: string
+          is_active?: boolean
+          phone?: string
+          pincode?: string
+          state?: string
+        }
+        Relationships: []
+      }
+      invoice_items: {
+        Row: {
+          amount: number
+          hsn_code: string
+          id: string
+          invoice_id: string
+          price: number
+          product_code: string
+          product_id: string
+          quantity: number
+        }
+        Insert: {
+          amount: number
+          hsn_code: string
+          id?: string
+          invoice_id: string
+          price: number
+          product_code: string
+          product_id: string
+          quantity: number
+        }
+        Update: {
+          amount?: number
+          hsn_code?: string
+          id?: string
+          invoice_id?: string
+          price?: number
+          product_code?: string
+          product_id?: string
+          quantity?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoice_settings: {
+        Row: {
+          current_invoice_number: number
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          current_invoice_number?: number
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          current_invoice_number?: number
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      invoices: {
+        Row: {
+          cgst_amount: number
+          cgst_rate: number
+          created_at: string
+          customer_id: string
+          delivery_address: string
+          id: string
+          igst_amount: number
+          igst_rate: number
+          invoice_date: string
+          invoice_number: number
+          invoice_type: string
+          number_of_packages: number
+          purchase_order_no: string | null
+          sgst_amount: number
+          sgst_rate: number
+          status: string
+          subtotal: number
+          total_amount: number
+        }
+        Insert: {
+          cgst_amount?: number
+          cgst_rate?: number
+          created_at?: string
+          customer_id: string
+          delivery_address: string
+          id?: string
+          igst_amount?: number
+          igst_rate?: number
+          invoice_date: string
+          invoice_number: number
+          invoice_type: string
+          number_of_packages: number
+          purchase_order_no?: string | null
+          sgst_amount?: number
+          sgst_rate?: number
+          status?: string
+          subtotal: number
+          total_amount: number
+        }
+        Update: {
+          cgst_amount?: number
+          cgst_rate?: number
+          created_at?: string
+          customer_id?: string
+          delivery_address?: string
+          id?: string
+          igst_amount?: number
+          igst_rate?: number
+          invoice_date?: string
+          invoice_number?: number
+          invoice_type?: string
+          number_of_packages?: number
+          purchase_order_no?: string | null
+          sgst_amount?: number
+          sgst_rate?: number
+          status?: string
+          subtotal?: number
+          total_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       newsletter_subscribers: {
         Row: {
           email: string
@@ -115,11 +303,14 @@ export type Database = {
           description: string | null
           display_order: number | null
           fabric: string
+          hsn_code: string | null
           id: string
           image_url: string
           is_active: boolean | null
           is_featured: boolean | null
           name: string
+          price: number | null
+          product_code: string | null
         }
         Insert: {
           additional_images?: Json | null
@@ -128,11 +319,14 @@ export type Database = {
           description?: string | null
           display_order?: number | null
           fabric: string
+          hsn_code?: string | null
           id?: string
           image_url: string
           is_active?: boolean | null
           is_featured?: boolean | null
           name: string
+          price?: number | null
+          product_code?: string | null
         }
         Update: {
           additional_images?: Json | null
@@ -141,11 +335,14 @@ export type Database = {
           description?: string | null
           display_order?: number | null
           fabric?: string
+          hsn_code?: string | null
           id?: string
           image_url?: string
           is_active?: boolean | null
           is_featured?: boolean | null
           name?: string
+          price?: number | null
+          product_code?: string | null
         }
         Relationships: []
       }

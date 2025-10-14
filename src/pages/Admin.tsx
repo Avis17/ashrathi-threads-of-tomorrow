@@ -1,11 +1,16 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { SidebarProvider } from '@/components/ui/sidebar';
+import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import ContactInquiries from '@/components/admin/ContactInquiries';
 import ProductsManager from '@/components/admin/ProductsManager';
 import BulkOrdersManager from '@/components/admin/BulkOrdersManager';
 import NewsletterManager from '@/components/admin/NewsletterManager';
+import CustomersManager from '@/components/admin/CustomersManager';
+import InvoiceGenerator from './admin/InvoiceGenerator';
+import InvoiceHistory from './admin/InvoiceHistory';
+import InvoiceReset from './admin/InvoiceReset';
 
 const Admin = () => {
   const { isAdmin, loading } = useAuth();
@@ -30,29 +35,24 @@ const Admin = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-12">
-      <h1 className="text-4xl font-bold mb-8">Admin Dashboard</h1>
-      <Tabs defaultValue="inquiries" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="inquiries">Contact Inquiries</TabsTrigger>
-          <TabsTrigger value="products">Products</TabsTrigger>
-          <TabsTrigger value="bulk-orders">Bulk Orders</TabsTrigger>
-          <TabsTrigger value="newsletter">Newsletter</TabsTrigger>
-        </TabsList>
-        <TabsContent value="inquiries">
-          <ContactInquiries />
-        </TabsContent>
-        <TabsContent value="products">
-          <ProductsManager />
-        </TabsContent>
-        <TabsContent value="bulk-orders">
-          <BulkOrdersManager />
-        </TabsContent>
-        <TabsContent value="newsletter">
-          <NewsletterManager />
-        </TabsContent>
-      </Tabs>
-    </div>
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full">
+        <AdminSidebar />
+        <main className="flex-1 p-6 overflow-auto">
+          <Routes>
+            <Route path="/" element={<Navigate to="/admin/invoice" replace />} />
+            <Route path="/invoice" element={<InvoiceGenerator />} />
+            <Route path="/customers" element={<CustomersManager />} />
+            <Route path="/products" element={<ProductsManager />} />
+            <Route path="/history" element={<InvoiceHistory />} />
+            <Route path="/inquiries" element={<ContactInquiries />} />
+            <Route path="/bulk-orders" element={<BulkOrdersManager />} />
+            <Route path="/newsletter" element={<NewsletterManager />} />
+            <Route path="/invoice-reset" element={<InvoiceReset />} />
+          </Routes>
+        </main>
+      </div>
+    </SidebarProvider>
   );
 };
 

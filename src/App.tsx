@@ -36,9 +36,9 @@ const App = () => (
                 <Route path="/collections" element={<Collections />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/contact" element={<Contact />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/admin" element={<Admin />} />
-                <Route path="/bulk-order" element={<BulkOrder />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/admin/*" element={<Admin />} />
+          <Route path="/bulk-order" element={<BulkOrder />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </main>
