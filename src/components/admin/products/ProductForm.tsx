@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -14,6 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { PRODUCT_CATEGORIES } from '@/lib/constants';
+import { SizeColorManager } from './SizeColorManager';
 
 const productSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters').max(200),
@@ -38,6 +40,11 @@ const productSchema = z.object({
   is_featured: z.boolean().default(false),
   is_new_arrival: z.boolean().default(false),
   is_signature: z.boolean().default(false),
+  available_sizes: z.array(z.string()).default([]),
+  available_colors: z.array(z.object({
+    name: z.string(),
+    hex: z.string(),
+  })).default([]),
 });
 
 export type ProductFormData = z.infer<typeof productSchema>;
@@ -49,6 +56,9 @@ interface ProductFormProps {
 }
 
 export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormProps) {
+  const [sizes, setSizes] = useState<string[]>(initialData?.available_sizes || []);
+  const [colors, setColors] = useState<Array<{ name: string; hex: string }>>(initialData?.available_colors || []);
+
   const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
     defaultValues: {
@@ -65,6 +75,8 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
       image_url: initialData?.image_url || '',
       hsn_code: initialData?.hsn_code || '',
       product_code: initialData?.product_code || '',
+      available_sizes: initialData?.available_sizes || [],
+      available_colors: initialData?.available_colors || [],
     },
   });
 
@@ -74,8 +86,12 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
   const isNewArrival = watch('is_new_arrival');
   const isSignature = watch('is_signature');
 
+  const handleFormSubmit = (data: ProductFormData) => {
+    onSubmit({ ...data, available_sizes: sizes, available_colors: colors });
+  };
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="name">Product Name *</Label>
@@ -163,6 +179,13 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
           <p className="text-sm text-destructive">{errors.description.message}</p>
         )}
       </div>
+
+      <SizeColorManager
+        sizes={sizes}
+        colors={colors}
+        onSizesChange={setSizes}
+        onColorsChange={setColors}
+      />
 
       <div className="flex flex-wrap gap-6">
         <div className="flex items-center space-x-2">

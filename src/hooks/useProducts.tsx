@@ -12,6 +12,9 @@ export interface Product {
   is_featured: boolean;
   is_active: boolean;
   display_order: number;
+  price: number | null;
+  available_sizes: string[];
+  available_colors: Array<{ name: string; hex: string }>;
 }
 
 export const useProducts = () => {
@@ -25,7 +28,7 @@ export const useProducts = () => {
         .order('display_order', { ascending: true });
 
       if (error) throw error;
-      return data as Product[];
+      return data as unknown as Product[];
     },
   });
 };

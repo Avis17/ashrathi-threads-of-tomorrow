@@ -1,11 +1,14 @@
 import { Minus, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/hooks/useCart';
 
 interface CartItemProps {
   item: {
     id: string;
     quantity: number;
+    selected_size: string | null;
+    selected_color: string | null;
     products: {
       id: string;
       name: string;
@@ -36,6 +39,14 @@ export const CartItem = ({ item }: CartItemProps) => {
                 {item.products.product_code}
               </p>
             )}
+            <div className="flex gap-1 mt-1">
+              {item.selected_size && (
+                <Badge variant="secondary" className="text-xs">Size: {item.selected_size}</Badge>
+              )}
+              {item.selected_color && (
+                <Badge variant="secondary" className="text-xs">{item.selected_color}</Badge>
+              )}
+            </div>
           </div>
           <Button
             variant="ghost"

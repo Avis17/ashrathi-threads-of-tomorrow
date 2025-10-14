@@ -119,6 +119,21 @@ const Navbar = () => {
         {isOpen && (
           <div className="lg:hidden py-4 border-t border-border animate-fade-in">
             <div className="flex flex-col space-y-2">
+              {user && (
+                <div className="mx-4 mb-2 flex items-center gap-2">
+                  <CartButton />
+                  <Button asChild variant="ghost" size="sm" className="flex-1">
+                    <Link to="/my-orders" onClick={() => setIsOpen(false)}>
+                      My Orders
+                    </Link>
+                  </Button>
+                  <Button asChild variant="ghost" size="sm" className="flex-1">
+                    <Link to="/profile" onClick={() => setIsOpen(false)}>
+                      My Profile
+                    </Link>
+                  </Button>
+                </div>
+              )}
               {navLinks.map((link) => (
                 <Link
                   key={link.path}

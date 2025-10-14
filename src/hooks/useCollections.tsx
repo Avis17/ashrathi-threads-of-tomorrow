@@ -14,7 +14,7 @@ export const useNewArrivals = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as Product[];
+      return data as unknown as Product[];
     },
   });
 };
@@ -32,7 +32,7 @@ export const useSignatureProducts = () => {
         .limit(4);
 
       if (error) throw error;
-      return data as Product[];
+      return data as unknown as Product[];
     },
   });
 };

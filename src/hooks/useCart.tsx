@@ -8,6 +8,8 @@ interface CartItemWithProduct {
   user_id: string;
   product_id: string;
   quantity: number;
+  selected_size: string | null;
+  selected_color: string | null;
   products: {
     id: string;
     name: string;
@@ -49,15 +51,17 @@ export const useCart = () => {
 
   // Add to cart mutation
   const addToCart = useMutation({
-    mutationFn: async ({ productId, quantity }: { productId: string; quantity: number }) => {
+    mutationFn: async ({ productId, quantity, size, color }: { productId: string; quantity: number; size?: string; color?: string }) => {
       if (!user) throw new Error('User not authenticated');
 
-      // Check if item already exists
+      // Check if item with same variant already exists
       const { data: existing } = await supabase
         .from('cart_items')
         .select('*')
         .eq('user_id', user.id)
         .eq('product_id', productId)
+        .eq('selected_size', size || null)
+        .eq('selected_color', color || null)
         .maybeSingle();
 
       if (existing) {
@@ -76,6 +80,8 @@ export const useCart = () => {
             user_id: user.id,
             product_id: productId,
             quantity,
+            selected_size: size || null,
+            selected_color: color || null,
           });
 
         if (error) throw error;

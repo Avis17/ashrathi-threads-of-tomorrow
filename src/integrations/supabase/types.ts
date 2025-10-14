@@ -59,6 +59,8 @@ export type Database = {
           id: string
           product_id: string
           quantity: number
+          selected_color: string | null
+          selected_size: string | null
           updated_at: string | null
           user_id: string
         }
@@ -67,6 +69,8 @@ export type Database = {
           id?: string
           product_id: string
           quantity?: number
+          selected_color?: string | null
+          selected_size?: string | null
           updated_at?: string | null
           user_id: string
         }
@@ -75,6 +79,8 @@ export type Database = {
           id?: string
           product_id?: string
           quantity?: number
+          selected_color?: string | null
+          selected_size?: string | null
           updated_at?: string | null
           user_id?: string
         }
@@ -388,6 +394,8 @@ export type Database = {
           product_image_url: string
           product_name: string
           quantity: number
+          selected_color: string | null
+          selected_size: string | null
           total_price: number
           unit_price: number
         }
@@ -400,6 +408,8 @@ export type Database = {
           product_image_url: string
           product_name: string
           quantity: number
+          selected_color?: string | null
+          selected_size?: string | null
           total_price: number
           unit_price: number
         }
@@ -412,6 +422,8 @@ export type Database = {
           product_image_url?: string
           product_name?: string
           quantity?: number
+          selected_color?: string | null
+          selected_size?: string | null
           total_price?: number
           unit_price?: number
         }
@@ -750,6 +762,8 @@ export type Database = {
       products: {
         Row: {
           additional_images: Json | null
+          available_colors: Json | null
+          available_sizes: Json | null
           category: string
           created_at: string | null
           description: string | null
@@ -768,6 +782,8 @@ export type Database = {
         }
         Insert: {
           additional_images?: Json | null
+          available_colors?: Json | null
+          available_sizes?: Json | null
           category: string
           created_at?: string | null
           description?: string | null
@@ -786,6 +802,8 @@ export type Database = {
         }
         Update: {
           additional_images?: Json | null
+          available_colors?: Json | null
+          available_sizes?: Json | null
           category?: string
           created_at?: string | null
           description?: string | null

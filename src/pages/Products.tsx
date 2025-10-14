@@ -4,12 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
-import { Maximize, ShoppingCart, Plus, Minus } from "lucide-react";
+import { Maximize, ShoppingCart, Plus, Minus, Check } from "lucide-react";
 import ImageZoomDialog from "@/components/ImageZoomDialog";
 import { useProducts } from "@/hooks/useProducts";
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/hooks/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { toast } from "@/hooks/use-toast";
 
 const Products = () => {
   const navigate = useNavigate();
@@ -18,6 +21,7 @@ const Products = () => {
   const [activeCategory, setActiveCategory] = useState("All");
   const [selectedImage, setSelectedImage] = useState<{ src: string; alt: string } | null>(null);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
+  const [selectedVariants, setSelectedVariants] = useState<Record<string, { size?: string; color?: string }>>({});
   const { data: products = [], isLoading, error } = useProducts();
 
   const handleQuantityChange = (productId: string, delta: number) => {
@@ -27,14 +31,57 @@ const Products = () => {
     }));
   };
 
-  const handleAddToCart = (productId: string) => {
+  const handleSizeSelect = (productId: string, size: string) => {
+    setSelectedVariants((prev) => ({
+      ...prev,
+      [productId]: { ...prev[productId], size },
+    }));
+  };
+
+  const handleColorSelect = (productId: string, color: string) => {
+    setSelectedVariants((prev) => ({
+      ...prev,
+      [productId]: { ...prev[productId], color },
+    }));
+  };
+
+  const handleAddToCart = (productId: string, product: any) => {
     if (!user) {
       navigate('/auth?redirect=/products');
       return;
     }
+    
+    const variants = selectedVariants[productId];
+    const hasAvailableSizes = product.available_sizes && product.available_sizes.length > 0;
+    const hasAvailableColors = product.available_colors && product.available_colors.length > 0;
+    
+    // Validate size selection
+    if (hasAvailableSizes && !variants?.size) {
+      toast({
+        title: 'Please select a size',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    // Validate color selection
+    if (hasAvailableColors && !variants?.color) {
+      toast({
+        title: 'Please select a color',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
     const quantity = quantities[productId] || 1;
-    addToCart({ productId, quantity });
+    addToCart({ 
+      productId, 
+      quantity,
+      size: variants?.size,
+      color: variants?.color,
+    });
     setQuantities((prev) => ({ ...prev, [productId]: 1 }));
+    setSelectedVariants((prev) => ({ ...prev, [productId]: {} }));
   };
   
   const categories = ["All", ...Array.from(new Set(products.map(p => p.category)))];
@@ -93,7 +140,69 @@ const Products = () => {
                 <CardContent className="p-5">
                   <h3 className="font-semibold text-lg mb-2">{product.name}</h3>
                   <p className="text-sm text-muted-foreground mb-2">{product.description}</p>
-                  <p className="text-sm font-medium text-primary mb-4">Fabric: {product.fabric}</p>
+                  <p className="text-sm font-medium text-primary mb-2">Fabric: {product.fabric}</p>
+                  
+                  {/* Price */}
+                  <div className="mb-4">
+                    {product.price ? (
+                      <p className="text-2xl font-bold text-foreground">₹{product.price.toLocaleString()}</p>
+                    ) : (
+                      <p className="text-sm text-muted-foreground italic">Contact for Price</p>
+                    )}
+                  </div>
+
+                  {/* Size Selection */}
+                  {product.available_sizes && product.available_sizes.length > 0 && (
+                    <div className="mb-4">
+                      <Label className="text-sm font-medium mb-2 block">Size</Label>
+                      <RadioGroup
+                        value={selectedVariants[product.id]?.size || ""}
+                        onValueChange={(value) => handleSizeSelect(product.id, value)}
+                        className="flex flex-wrap gap-2"
+                      >
+                        {product.available_sizes.map((size) => (
+                          <div key={size} className="flex items-center">
+                            <RadioGroupItem value={size} id={`${product.id}-${size}`} className="peer sr-only" />
+                            <Label
+                              htmlFor={`${product.id}-${size}`}
+                              className="flex items-center justify-center px-4 py-2 border-2 rounded-md cursor-pointer transition-all peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/10 hover:border-primary/50 min-w-[3rem]"
+                            >
+                              {size}
+                            </Label>
+                          </div>
+                        ))}
+                      </RadioGroup>
+                    </div>
+                  )}
+
+                  {/* Color Selection */}
+                  {product.available_colors && product.available_colors.length > 0 && (
+                    <div className="mb-4">
+                      <Label className="text-sm font-medium mb-2 block">Color</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {product.available_colors.map((color) => (
+                          <button
+                            key={color.name}
+                            onClick={() => handleColorSelect(product.id, color.name)}
+                            className={`relative w-10 h-10 rounded-full border-2 transition-all hover:scale-110 ${
+                              selectedVariants[product.id]?.color === color.name
+                                ? 'border-primary ring-2 ring-primary ring-offset-2'
+                                : 'border-border hover:border-primary/50'
+                            }`}
+                            style={{ backgroundColor: color.hex }}
+                            title={color.name}
+                          >
+                            {selectedVariants[product.id]?.color === color.name && (
+                              <Check className="h-5 w-5 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white drop-shadow-md" strokeWidth={3} />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                      {selectedVariants[product.id]?.color && (
+                        <p className="text-xs text-muted-foreground mt-1">Selected: {selectedVariants[product.id].color}</p>
+                      )}
+                    </div>
+                  )}
                   
                   <div className="flex items-center gap-2 mb-3">
                     <Button
@@ -116,7 +225,7 @@ const Products = () => {
                   </div>
 
                   <Button 
-                    onClick={() => handleAddToCart(product.id)}
+                    onClick={() => handleAddToCart(product.id, product)}
                     className="w-full"
                   >
                     <ShoppingCart className="mr-2 h-4 w-4" />
