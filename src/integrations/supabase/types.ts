@@ -507,6 +507,246 @@ export type Database = {
         }
         Relationships: []
       }
+      product_materials: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          product_id: string
+          quantity_required: number
+          raw_material_id: string
+          updated_at: string
+          wastage_percentage: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          product_id: string
+          quantity_required?: number
+          raw_material_id: string
+          updated_at?: string
+          wastage_percentage?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          product_id?: string
+          quantity_required?: number
+          raw_material_id?: string
+          updated_at?: string
+          wastage_percentage?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_materials_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_materials_raw_material_id_fkey"
+            columns: ["raw_material_id"]
+            isOneToOne: false
+            referencedRelation: "raw_materials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      production_batches: {
+        Row: {
+          actual_quantity: number
+          batch_number: string
+          completed_at: string | null
+          cost_per_piece: number
+          created_at: string
+          id: string
+          notes: string | null
+          product_id: string
+          started_at: string
+          status: string
+          target_quantity: number
+          total_cost: number
+          total_labor_cost: number
+          total_material_cost: number
+          total_overhead_cost: number
+          updated_at: string
+        }
+        Insert: {
+          actual_quantity?: number
+          batch_number: string
+          completed_at?: string | null
+          cost_per_piece?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          product_id: string
+          started_at?: string
+          status?: string
+          target_quantity?: number
+          total_cost?: number
+          total_labor_cost?: number
+          total_material_cost?: number
+          total_overhead_cost?: number
+          updated_at?: string
+        }
+        Update: {
+          actual_quantity?: number
+          batch_number?: string
+          completed_at?: string | null
+          cost_per_piece?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          product_id?: string
+          started_at?: string
+          status?: string
+          target_quantity?: number
+          total_cost?: number
+          total_labor_cost?: number
+          total_material_cost?: number
+          total_overhead_cost?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_batches_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      production_labor_costs: {
+        Row: {
+          cost_per_hour: number
+          hours_spent: number
+          id: string
+          labor_type: string
+          notes: string | null
+          production_batch_id: string
+          recorded_at: string
+          total_cost: number
+          worker_name: string | null
+        }
+        Insert: {
+          cost_per_hour?: number
+          hours_spent?: number
+          id?: string
+          labor_type: string
+          notes?: string | null
+          production_batch_id: string
+          recorded_at?: string
+          total_cost?: number
+          worker_name?: string | null
+        }
+        Update: {
+          cost_per_hour?: number
+          hours_spent?: number
+          id?: string
+          labor_type?: string
+          notes?: string | null
+          production_batch_id?: string
+          recorded_at?: string
+          total_cost?: number
+          worker_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_labor_costs_production_batch_id_fkey"
+            columns: ["production_batch_id"]
+            isOneToOne: false
+            referencedRelation: "production_batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      production_material_usage: {
+        Row: {
+          cost_at_time: number
+          id: string
+          notes: string | null
+          production_batch_id: string
+          quantity_used: number
+          raw_material_id: string
+          recorded_at: string
+          total_cost: number
+        }
+        Insert: {
+          cost_at_time?: number
+          id?: string
+          notes?: string | null
+          production_batch_id: string
+          quantity_used?: number
+          raw_material_id: string
+          recorded_at?: string
+          total_cost?: number
+        }
+        Update: {
+          cost_at_time?: number
+          id?: string
+          notes?: string | null
+          production_batch_id?: string
+          quantity_used?: number
+          raw_material_id?: string
+          recorded_at?: string
+          total_cost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_material_usage_production_batch_id_fkey"
+            columns: ["production_batch_id"]
+            isOneToOne: false
+            referencedRelation: "production_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "production_material_usage_raw_material_id_fkey"
+            columns: ["raw_material_id"]
+            isOneToOne: false
+            referencedRelation: "raw_materials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      production_overhead_costs: {
+        Row: {
+          amount: number
+          cost_type: string
+          description: string | null
+          id: string
+          production_batch_id: string
+          recorded_at: string
+        }
+        Insert: {
+          amount?: number
+          cost_type: string
+          description?: string | null
+          id?: string
+          production_batch_id: string
+          recorded_at?: string
+        }
+        Update: {
+          amount?: number
+          cost_type?: string
+          description?: string | null
+          id?: string
+          production_batch_id?: string
+          recorded_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_overhead_costs_production_batch_id_fkey"
+            columns: ["production_batch_id"]
+            isOneToOne: false
+            referencedRelation: "production_batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           additional_images: Json | null
@@ -585,6 +825,51 @@ export type Database = {
         }
         Relationships: []
       }
+      raw_materials: {
+        Row: {
+          cost_per_unit: number
+          created_at: string
+          current_stock: number
+          id: string
+          is_active: boolean
+          name: string
+          notes: string | null
+          reorder_level: number
+          supplier_contact: string | null
+          supplier_name: string | null
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          cost_per_unit?: number
+          created_at?: string
+          current_stock?: number
+          id?: string
+          is_active?: boolean
+          name: string
+          notes?: string | null
+          reorder_level?: number
+          supplier_contact?: string | null
+          supplier_name?: string | null
+          unit: string
+          updated_at?: string
+        }
+        Update: {
+          cost_per_unit?: number
+          created_at?: string
+          current_stock?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          notes?: string | null
+          reorder_level?: number
+          supplier_contact?: string | null
+          supplier_name?: string | null
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -611,6 +896,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_batch_costs: {
+        Args: { batch_id: string }
+        Returns: undefined
+      }
+      generate_batch_number: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       generate_order_number: {
         Args: Record<PropertyKey, never>
         Returns: string

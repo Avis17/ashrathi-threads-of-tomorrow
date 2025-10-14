@@ -8,7 +8,8 @@ import {
   Newspaper,
   RotateCcw,
   LayoutDashboard,
-  ClipboardList
+  ClipboardList,
+  Factory
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import {
@@ -25,6 +26,7 @@ import {
 const menuItems = [
   { title: 'Dashboard', url: '/admin/dashboard', icon: LayoutDashboard },
   { title: 'Orders', url: '/admin/orders', icon: ClipboardList },
+  { title: 'Production', url: '/admin/production', icon: Factory },
   { title: 'Generate Invoice', url: '/admin/invoice', icon: FileText },
   { title: 'Customers', url: '/admin/customers', icon: Users },
   { title: 'Products', url: '/admin/products', icon: Package },
