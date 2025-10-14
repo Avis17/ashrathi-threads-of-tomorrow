@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { CustomerForm, CustomerFormData } from './CustomerForm';
@@ -8,6 +9,8 @@ export function AddCustomer() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  const [formKey, setFormKey] = useState(0);
+
   const createMutation = useMutation({
     mutationFn: async (data: CustomerFormData) => {
       const { error } = await supabase.from('customers').insert(data as any);
@@ -16,6 +19,7 @@ export function AddCustomer() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['customers'] });
       toast({ title: 'Customer added successfully' });
+      setFormKey(prev => prev + 1); // Reset form
     },
     onError: () => {
       toast({ title: 'Failed to add customer', variant: 'destructive' });
@@ -30,6 +34,7 @@ export function AddCustomer() {
       </CardHeader>
       <CardContent>
         <CustomerForm
+          key={formKey}
           onSubmit={(data) => createMutation.mutate(data)}
           isLoading={createMutation.isPending}
         />

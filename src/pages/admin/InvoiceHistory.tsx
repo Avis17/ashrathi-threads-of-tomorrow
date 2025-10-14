@@ -35,6 +35,8 @@ import {
 import { format } from 'date-fns';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import logo from '@/assets/logo.png';
+import signature from '@/assets/signature.png';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -86,22 +88,40 @@ export default function InvoiceHistory() {
   const downloadInvoice = async (invoice: any) => {
     const doc = new jsPDF();
 
+    // Add logo
+    doc.addImage(logo, 'PNG', 15, 10, 30, 30);
+
+    // Header
     doc.setFontSize(20);
+    doc.setTextColor(41, 128, 185);
     doc.text('FEATHER FASHIONS', 105, 20, { align: 'center' });
-    doc.setFontSize(10);
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
     doc.text('TAX INVOICE', 105, 28, { align: 'center' });
 
+    // Invoice details
     doc.setFontSize(10);
-    doc.text(`Invoice No: ${invoice.invoice_number}`, 20, 45);
-    doc.text(`Date: ${format(new Date(invoice.invoice_date), 'dd/MM/yyyy')}`, 20, 52);
+    doc.text(`Invoice No: ${invoice.invoice_number}`, 20, 48);
+    doc.text(`Date: ${format(new Date(invoice.invoice_date), 'dd/MM/yyyy')}`, 20, 55);
 
-    doc.text('Bill To:', 20, 65);
-    doc.text(invoice.customers.company_name, 20, 72);
+    // Bill To
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Bill To:', 20, 68);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.text(invoice.customers.company_name, 20, 75);
 
-    doc.text('Delivery Address:', 120, 65);
+    // Delivery Address
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Delivery Address:', 120, 68);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
     const addressLines = doc.splitTextToSize(invoice.delivery_address, 70);
-    doc.text(addressLines, 120, 72);
+    doc.text(addressLines, 120, 75);
 
+    // Products table
     autoTable(doc, {
       startY: 95,
       head: [['S.No', 'Product', 'HSN Code', 'Price', 'Qty', 'Amount']],
@@ -123,7 +143,29 @@ export default function InvoiceHistory() {
         ]),
         ['', '', '', '', 'Total:', invoice.total_amount.toFixed(2)],
       ],
+      headStyles: { fillColor: [41, 128, 185], textColor: 255 },
+      footStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: [245, 245, 245] },
     });
+
+    const finalY = (doc as any).lastAutoTable.finalY || 160;
+
+    // Terms and Conditions
+    if (invoice.terms_and_conditions && invoice.terms_and_conditions.length > 0) {
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Terms and Conditions:', 20, finalY + 15);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      invoice.terms_and_conditions.forEach((term: string, index: number) => {
+        doc.text(`${index + 1}. ${term}`, 20, finalY + 22 + (index * 6));
+      });
+    }
+
+    // Signature
+    doc.addImage(signature, 'PNG', 140, finalY + 25, 50, 20);
+    doc.setFontSize(9);
+    doc.text('Authorized Signatory', 150, finalY + 50);
 
     doc.save(`Invoice_${invoice.invoice_number}.pdf`);
   };

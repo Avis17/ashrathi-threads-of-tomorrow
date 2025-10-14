@@ -20,7 +20,7 @@ const productSchema = z.object({
   category: z.string().min(1, 'Category is required'),
   fabric: z.string().min(1, 'Fabric is required').max(100),
   description: z.string().optional().nullable(),
-  image_url: z.string().url('Must be a valid URL'),
+  image_url: z.string().min(1, 'Image URL is required'),
   hsn_code: z.string()
     .regex(/^\d{4,8}$/, 'HSN must be 4-8 digits')
     .optional()

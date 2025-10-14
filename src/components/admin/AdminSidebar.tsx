@@ -6,7 +6,8 @@ import {
   Mail, 
   ShoppingCart, 
   Newspaper,
-  RotateCcw
+  RotateCcw,
+  LayoutDashboard
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import {
@@ -21,6 +22,7 @@ import {
 } from '@/components/ui/sidebar';
 
 const menuItems = [
+  { title: 'Dashboard', url: '/admin/dashboard', icon: LayoutDashboard },
   { title: 'Generate Invoice', url: '/admin/invoice', icon: FileText },
   { title: 'Customers', url: '/admin/customers', icon: Users },
   { title: 'Products', url: '/admin/products', icon: Package },

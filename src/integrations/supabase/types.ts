@@ -222,6 +222,7 @@ export type Database = {
           sgst_rate: number
           status: string
           subtotal: number
+          terms_and_conditions: string[] | null
           total_amount: number
         }
         Insert: {
@@ -242,6 +243,7 @@ export type Database = {
           sgst_rate?: number
           status?: string
           subtotal: number
+          terms_and_conditions?: string[] | null
           total_amount: number
         }
         Update: {
@@ -262,6 +264,7 @@ export type Database = {
           sgst_rate?: number
           status?: string
           subtotal?: number
+          terms_and_conditions?: string[] | null
           total_amount?: number
         }
         Relationships: [

@@ -12,6 +12,7 @@ import CustomersManager from '@/components/admin/CustomersManager';
 import InvoiceGenerator from './admin/InvoiceGenerator';
 import InvoiceHistory from './admin/InvoiceHistory';
 import InvoiceReset from './admin/InvoiceReset';
+import Dashboard from './admin/Dashboard';
 
 const Admin = () => {
   const { isAdmin, loading } = useAuth();
@@ -43,7 +44,8 @@ const Admin = () => {
           <AdminHeader />
           <main className="flex-1 p-6 overflow-auto">
             <Routes>
-              <Route path="/" element={<Navigate to="/admin/invoice" replace />} />
+              <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
+              <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/invoice" element={<InvoiceGenerator />} />
               <Route path="/customers" element={<CustomersManager />} />
               <Route path="/products" element={<ProductsManager />} />

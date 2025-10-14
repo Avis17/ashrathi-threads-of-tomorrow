@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -19,6 +20,8 @@ import { TAX_TYPES } from '@/lib/constants';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
+import logo from '@/assets/logo.png';
+import signature from '@/assets/signature.png';
 
 interface InvoiceItem {
   product_id: string;
@@ -42,6 +45,11 @@ export default function InvoiceGenerator() {
   const [cgstRate, setCgstRate] = useState('9');
   const [sgstRate, setSgstRate] = useState('9');
   const [igstRate, setIgstRate] = useState('18');
+  const [termsAndConditions, setTermsAndConditions] = useState([
+    'Payment is due within 30 days of invoice date.',
+    'Goods once sold will not be taken back or exchanged.',
+    'All disputes are subject to Tirupur jurisdiction only.',
+  ]);
   const [items, setItems] = useState<InvoiceItem[]>([{
     product_id: '',
     hsn_code: '',
@@ -171,6 +179,7 @@ export default function InvoiceGenerator() {
           igst_rate: Number(igstRate),
           igst_amount: igstAmount,
           total_amount: total,
+          terms_and_conditions: termsAndConditions,
         }])
         .select()
         .single();
@@ -214,29 +223,47 @@ export default function InvoiceGenerator() {
     const doc = new jsPDF();
     const invoiceNumber = invoiceSettings?.current_invoice_number || 1;
 
+    // Add logo
+    doc.addImage(logo, 'PNG', 15, 10, 30, 30);
+
+    // Header
     doc.setFontSize(20);
+    doc.setTextColor(41, 128, 185);
     doc.text('FEATHER FASHIONS', 105, 20, { align: 'center' });
-    doc.setFontSize(10);
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
     doc.text('TAX INVOICE', 105, 28, { align: 'center' });
 
+    // Invoice details
     doc.setFontSize(10);
-    doc.text(`Invoice No: ${invoiceNumber}`, 20, 45);
-    doc.text(`Date: ${format(new Date(invoiceDate), 'dd/MM/yyyy')}`, 20, 52);
+    doc.text(`Invoice No: ${invoiceNumber}`, 20, 48);
+    doc.text(`Date: ${format(new Date(invoiceDate), 'dd/MM/yyyy')}`, 20, 55);
 
-    doc.text('Bill To:', 20, 65);
-    doc.text(selectedCustomer.company_name, 20, 72);
-    doc.text(selectedCustomer.email, 20, 79);
-    doc.text(selectedCustomer.phone, 20, 86);
+    // Bill To
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Bill To:', 20, 68);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.text(selectedCustomer.company_name, 20, 75);
+    doc.text(selectedCustomer.email, 20, 82);
+    doc.text(selectedCustomer.phone, 20, 89);
     if (selectedCustomer.gst_number) {
-      doc.text(`GST: ${selectedCustomer.gst_number}`, 20, 93);
+      doc.text(`GST: ${selectedCustomer.gst_number}`, 20, 96);
     }
 
-    doc.text('Delivery Address:', 120, 65);
+    // Delivery Address
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Delivery Address:', 120, 68);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
     const addressLines = doc.splitTextToSize(deliveryAddress, 70);
-    doc.text(addressLines, 120, 72);
+    doc.text(addressLines, 120, 75);
 
+    // Products table
     autoTable(doc, {
-      startY: 105,
+      startY: 110,
       head: [['S.No', 'HSN Code', 'Product Code', 'Price', 'Qty', 'Amount']],
       body: items.map((item, index) => [
         index + 1,
@@ -256,7 +283,27 @@ export default function InvoiceGenerator() {
         ]),
         ['', '', '', '', 'Total:', total.toFixed(2)],
       ],
+      headStyles: { fillColor: [41, 128, 185], textColor: 255 },
+      footStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: [245, 245, 245] },
     });
+
+    const finalY = (doc as any).lastAutoTable.finalY || 160;
+
+    // Terms and Conditions
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Terms and Conditions:', 20, finalY + 15);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    termsAndConditions.forEach((term, index) => {
+      doc.text(`${index + 1}. ${term}`, 20, finalY + 22 + (index * 6));
+    });
+
+    // Signature
+    doc.addImage(signature, 'PNG', 140, finalY + 25, 50, 20);
+    doc.setFontSize(9);
+    doc.text('Authorized Signatory', 150, finalY + 50);
 
     doc.save(`Invoice_${invoiceNumber}.pdf`);
   };
@@ -345,6 +392,16 @@ export default function InvoiceGenerator() {
             <Input
               value={purchaseOrderNo}
               onChange={(e) => setPurchaseOrderNo(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Terms and Conditions</Label>
+            <Textarea
+              value={termsAndConditions.join('\n')}
+              onChange={(e) => setTermsAndConditions(e.target.value.split('\n').filter(Boolean))}
+              rows={5}
+              placeholder="Enter terms and conditions (one per line)"
             />
           </div>
         </CardContent>
