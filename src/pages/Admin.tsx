@@ -14,6 +14,7 @@ import InvoiceGenerator from './admin/InvoiceGenerator';
 import InvoiceHistory from './admin/InvoiceHistory';
 import InvoiceReset from './admin/InvoiceReset';
 import Dashboard from './admin/Dashboard';
+import AdminOrderDetails from './admin/OrderDetails';
 
 const Admin = () => {
   const { isAdmin, loading } = useAuth();
@@ -48,6 +49,7 @@ const Admin = () => {
               <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/orders" element={<OrdersManager />} />
+              <Route path="/orders/:orderId" element={<AdminOrderDetails />} />
               <Route path="/invoice" element={<InvoiceGenerator />} />
               <Route path="/customers" element={<CustomersManager />} />
               <Route path="/products" element={<ProductsManager />} />

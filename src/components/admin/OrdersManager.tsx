@@ -7,10 +7,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
-import { Search, Eye, Package } from 'lucide-react';
+import { Search, Eye, Package, Loader2 } from 'lucide-react';
 import { OrderStatusBadge } from '@/components/customer/OrderStatusBadge';
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
+import { useDebounce } from '@/hooks/useDebounce';
 import {
   Table,
   TableBody,
@@ -43,16 +44,19 @@ export function OrdersManager() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const { data: orders, isLoading } = useQuery({
-    queryKey: ['admin-orders', searchTerm, statusFilter, currentPage],
+  // Debounce search term to avoid too many queries
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
+  const { data: orders, isLoading, isFetching } = useQuery({
+    queryKey: ['admin-orders', debouncedSearchTerm, statusFilter, currentPage],
     queryFn: async () => {
       let query = supabase
         .from('orders')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (searchTerm) {
-        query = query.or(`order_number.ilike.%${searchTerm}%,delivery_name.ilike.%${searchTerm}%,delivery_phone.ilike.%${searchTerm}%`);
+      if (debouncedSearchTerm) {
+        query = query.or(`order_number.ilike.%${debouncedSearchTerm}%,delivery_name.ilike.%${debouncedSearchTerm}%,delivery_phone.ilike.%${debouncedSearchTerm}%`);
       }
 
       if (statusFilter !== 'all') {
@@ -99,8 +103,10 @@ export function OrdersManager() {
   };
 
   const handleViewDetails = (orderId: string) => {
-    navigate(`/order/${orderId}`);
+    navigate(`/admin/orders/${orderId}`);
   };
+
+  const isSearching = searchTerm !== debouncedSearchTerm;
 
   if (isLoading) {
     return (
@@ -133,8 +139,11 @@ export function OrdersManager() {
                 placeholder="Search by order number, customer name, or phone..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9"
+                className="pl-9 pr-9"
               />
+              {isSearching && (
+                <Loader2 className="absolute right-3 top-3 h-4 w-4 text-muted-foreground animate-spin" />
+              )}
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-full md:w-[200px]">
