@@ -15,6 +15,7 @@ import InvoiceHistory from './admin/InvoiceHistory';
 import InvoiceReset from './admin/InvoiceReset';
 import Dashboard from './admin/Dashboard';
 import AdminOrderDetails from './admin/OrderDetails';
+import Production from './admin/Production';
 
 const Admin = () => {
   const { isAdmin, loading } = useAuth();
@@ -50,6 +51,7 @@ const Admin = () => {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/orders" element={<OrdersManager />} />
               <Route path="/orders/:orderId" element={<AdminOrderDetails />} />
+              <Route path="/production" element={<Production />} />
               <Route path="/invoice" element={<InvoiceGenerator />} />
               <Route path="/customers" element={<CustomersManager />} />
               <Route path="/products" element={<ProductsManager />} />
