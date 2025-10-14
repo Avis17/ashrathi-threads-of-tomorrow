@@ -7,15 +7,15 @@ const Services = () => {
   const services = [
     {
       icon: Layers,
-      title: "Custom Garment Manufacturing",
-      description: "End-to-end production from pattern design to final packaging. We handle every detail with precision and care.",
-      features: ["Pattern Development", "Fabric Sourcing", "Production Management", "Quality Packaging"],
+      title: "Sustainable Garment Manufacturing",
+      description: "End-to-end eco-conscious production from pattern design to final packaging using organic and sustainable fabrics.",
+      features: ["Eco-Fabric Sourcing", "Pattern Development", "Ethical Production", "Sustainable Packaging"],
     },
     {
       icon: Tag,
-      title: "Private Labeling",
-      description: "Build your brand with our private labeling services. Custom designs, branding, and labeling tailored to your vision.",
-      features: ["Brand Design Support", "Custom Tags & Labels", "Packaging Solutions", "Market-Ready Products"],
+      title: "Private Labeling & Brand Development",
+      description: "Build your conscious brand with our sustainable private labeling. Custom designs, eco-tags, and branding aligned with your values.",
+      features: ["Sustainable Brand Design", "Eco-Friendly Tags & Labels", "Premium Packaging", "Market-Ready Collections"],
     },
     {
       icon: Users2,
@@ -51,7 +51,7 @@ const Services = () => {
           <div className="divider-accent mb-6" />
           <h1 className="text-5xl md:text-6xl font-bold mb-4">What We Do Best</h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Comprehensive apparel manufacturing solutions tailored to your business needs.
+            Sustainable apparel manufacturing with a conscience — tailored to your vision and values.
           </p>
         </div>
 
@@ -102,10 +102,10 @@ const Services = () => {
         {/* CTA Section */}
         <Card className="bg-gradient-to-r from-secondary via-accent to-primary text-white p-8 md:p-12 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Looking for a Reliable Apparel Partner?
+            Ready to Create Sustainable Fashion Together?
           </h2>
           <p className="text-lg mb-6 text-white/90 max-w-2xl mx-auto">
-            Let's connect and discuss how we can help bring your apparel vision to reality with our expertise and quality manufacturing.
+            Let's collaborate to bring your vision to life with eco-friendly fabrics, ethical manufacturing, and uncompromising quality.
           </p>
           <Button asChild size="lg" className="bg-white text-primary hover:bg-white/90">
             <Link to="/contact">Start Your Project</Link>

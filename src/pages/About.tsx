@@ -5,16 +5,16 @@ import fabricImage from "@/assets/quality-fabric.jpg";
 
 const About = () => {
   const values = [
-    { icon: Heart, title: "Integrity", description: "Honesty and transparency in every interaction" },
-    { icon: Award, title: "Innovation", description: "Embracing new ideas and technologies" },
-    { icon: Target, title: "Sustainability", description: "Responsible manufacturing practices" },
-    { icon: Eye, title: "Customer Satisfaction", description: "Exceeding expectations every time" },
+    { icon: Heart, title: "Sustainability First", description: "Eco-friendly fabrics and ethical production practices" },
+    { icon: Award, title: "Premium Quality", description: "Luxurious comfort in every stitch" },
+    { icon: Target, title: "Mindful Design", description: "Timeless styles that transcend trends" },
+    { icon: Eye, title: "Customer Delight", description: "Creating experiences, not just products" },
   ];
 
   const timeline = [
-    { year: "2023", event: "Founded", description: "Ashrathi Apparels established with a vision" },
-    { year: "2024", event: "Expansion", description: "Expanded product range and production capacity" },
-    { year: "2025", event: "Digital Launch", description: "Launch of online presence and catalog" },
+    { year: "2023", event: "The Beginning", description: "Feather Fashions founded in Tirupur with a sustainable vision" },
+    { year: "2024", event: "Eco-Innovation", description: "Expanded to organic and bamboo-blend collections" },
+    { year: "2025", event: "Global Presence", description: "Digital launch and international outreach" },
   ];
 
   return (
@@ -23,9 +23,9 @@ const About = () => {
         {/* Header */}
         <div className="text-center mb-16">
           <div className="divider-accent mb-6" />
-          <h1 className="text-5xl md:text-6xl font-bold mb-4">About Ashrathi Apparels</h1>
+          <h1 className="text-5xl md:text-6xl font-bold mb-4">About Feather Fashions</h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Where tradition meets innovation in every thread we weave.
+            Where sustainable comfort meets modern elegance in every stitch.
           </p>
         </div>
 
@@ -35,25 +35,23 @@ const About = () => {
             <h2 className="text-4xl font-bold mb-6">Our Story</h2>
             <div className="prose prose-lg text-muted-foreground">
               <p className="mb-4 leading-relaxed">
-                Ashrathi Apparels began as a dream to merge tradition with innovation. Founded by{" "}
+                Feather Fashions was born from a vision to redefine comfort with conscience. Founded by{" "}
                 <span className="text-foreground font-semibold">Siva</span> and{" "}
-                <span className="text-foreground font-semibold">Athilakshmi</span>, inspired by their son{" "}
-                <span className="text-foreground font-semibold">Ashrav</span>, our brand embodies dedication, precision, and creativity.
+                <span className="text-foreground font-semibold">Athilakshmi</span>, and inspired by their son{" "}
+                <span className="text-foreground font-semibold">Ashrav</span>, our brand represents the perfect harmony of sustainable practices, innovative design, and uncompromising quality.
               </p>
               <p className="mb-4 leading-relaxed">
-                From a small idea to a thriving apparel manufacturing unit, we continue to stitch our passion into every garment. 
-                Our journey is defined by a commitment to quality, a love for craftsmanship, and a vision to deliver excellence.
+                From our roots in Tirupur, Tamil Nadu — India's knitwear capital — we've grown into a thoughtful apparel manufacturer dedicated to creating garments that are as gentle on the planet as they are on your skin. Every piece is crafted with eco-friendly fabrics like organic cotton, bamboo, modal, and Tencel, ensuring breathability, softness, and sustainability.
               </p>
               <p className="leading-relaxed">
-                With a legacy of precision, comfort, and quality, every thread we weave reflects our dedication to creating 
-                apparel that doesn't just look good but feels exceptional.
+                At Feather Fashions, we believe fashion should feel effortless. Our collections blend modern aesthetics with timeless comfort, perfect for lounging, sleeping, or everyday wear. We're not just making clothes — we're weaving a legacy of mindful living, one feather-soft garment at a time.
               </p>
             </div>
           </div>
           <div className="relative">
             <img
               src={aboutImage}
-              alt="Ashrathi Team"
+              alt="Feather Fashions Team"
               className="rounded-2xl shadow-2xl w-full object-cover h-96"
             />
             <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-gradient-to-br from-secondary to-accent rounded-2xl -z-10" />
@@ -69,8 +67,7 @@ const About = () => {
                 <h3 className="text-3xl font-bold">Our Mission</h3>
               </div>
               <p className="text-lg text-muted-foreground leading-relaxed">
-                To deliver top-quality apparel with creative craftsmanship and timely service. We aim to be the trusted 
-                manufacturing partner for brands seeking excellence in every stitch.
+                To craft sustainable, premium-quality apparel that prioritizes comfort, style, and environmental responsibility. We aim to be the go-to partner for brands and individuals who value conscious fashion without compromising on elegance or functionality.
               </p>
             </CardContent>
           </Card>
@@ -82,8 +79,7 @@ const About = () => {
                 <h3 className="text-3xl font-bold">Our Vision</h3>
               </div>
               <p className="text-lg text-muted-foreground leading-relaxed">
-                To become a globally trusted apparel manufacturer blending Indian heritage with innovation. We envision 
-                expanding our reach while maintaining our core values of quality and craftsmanship.
+                To become a globally recognized leader in sustainable fashion, blending Indian craftsmanship with eco-innovation. We envision a world where every garment tells a story of quality, care, and commitment to the planet.
               </p>
             </CardContent>
           </Card>
@@ -141,8 +137,7 @@ const About = () => {
                 Our Promise to You
               </h2>
               <p className="text-lg text-center text-white/90 max-w-3xl mx-auto leading-relaxed">
-                Every garment that leaves our facility carries our commitment to excellence. From fabric selection to final 
-                stitching, we ensure the highest standards. Your trust is our greatest asset, and quality is our promise.
+                Every garment we create is a promise — of sustainable sourcing, ethical manufacturing, and unmatched comfort. From selecting the finest eco-friendly fabrics to the final stitch, we uphold the highest standards. Your comfort and our planet's well-being are at the heart of everything we do.
               </p>
             </div>
           </CardContent>

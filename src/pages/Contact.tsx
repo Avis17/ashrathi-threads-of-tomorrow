@@ -30,10 +30,10 @@ const Contact = () => {
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-16">
-          <div className="divider-gold mb-6" />
+          <div className="divider-accent mb-6" />
           <h1 className="text-5xl md:text-6xl font-bold mb-4">Let's Connect</h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Have a question or want to discuss a project? We're here to help bring your apparel vision to life.
+            Let's create sustainable fashion together. Reach out for inquiries, bulk orders, private labeling, or eco-conscious collaborations.
           </p>
         </div>
 
@@ -199,7 +199,7 @@ const Contact = () => {
                 allowFullScreen 
                 loading="lazy" 
                 referrerPolicy="no-referrer-when-downgrade"
-                title="Ashrathi Apparels Location"
+                title="Feather Fashions Location - Tirupur, Tamil Nadu"
               />
             </div>
           </CardContent>

@@ -6,25 +6,45 @@ import { Link } from "react-router-dom";
 import { Maximize } from "lucide-react";
 import ImageZoomDialog from "@/components/ImageZoomDialog";
 import product1 from "@/assets/products/cloud-whisper-lounge-set.jpg";
+import product1b from "@/assets/products/cloud-whisper-lounge-set-2.png";
 import product2 from "@/assets/products/feathersoft-lounge-tee.jpg";
+import product2b from "@/assets/products/feathersoft-lounge-tee-2.png";
+import product2c from "@/assets/products/feathersoft-lounge-tee-3.png";
 import product3 from "@/assets/products/dreamease-night-pants.jpg";
+import product3b from "@/assets/products/dreamease-night-pants-2.png";
 import product4 from "@/assets/products/featherflow-coord-set.jpg";
+import product4b from "@/assets/products/featherflow-coord-set-2.png";
 import product5 from "@/assets/products/free-spirit-tshirt.jpg";
 import product6 from "@/assets/products/serenity-cardigan.jpg";
+import product6b from "@/assets/products/serenity-cardigan-2.png";
 import product7 from "@/assets/products/cloudyday-cotton-set.jpg";
+import product7b from "@/assets/products/cloudyday-cotton-set-2.png";
+import product7c from "@/assets/products/cloudyday-cotton-set-3.png";
+import product7d from "@/assets/products/cloudyday-cotton-set-4.png";
 import product8 from "@/assets/products/dreamnest-pyjama-set.jpg";
+import product9 from "@/assets/products/dream-weaver-kids-set-2.png";
 
 const Collections = () => {
   const [selectedImage, setSelectedImage] = useState<{ src: string; alt: string } | null>(null);
   const newArrivals = [
     { name: "Cloud Whisper Lounge Set", fabric: "Modal Cotton", category: "Women", color: "Cream", image: product1, tag: "Bestseller" },
+    { name: "Cloud Whisper - Grey Feather", fabric: "Modal Cotton", category: "Women", color: "Grey", image: product1b, tag: "New" },
     { name: "FeatherSoft Lounge Tee", fabric: "Bamboo Blend", category: "Unisex", color: "Moss Green", image: product2, tag: "New" },
+    { name: "FeatherSoft - Horse Print", fabric: "Bamboo Blend", category: "Loungewear", color: "Blush Pink", image: product2b, tag: "Trending" },
+    { name: "FeatherSoft - Cat Print", fabric: "Bamboo Blend", category: "Loungewear", color: "Cream", image: product2c, tag: "Premium" },
     { name: "DreamEase Night Pants", fabric: "Modal Cotton", category: "Women", color: "Lavender", image: product3, tag: "New" },
+    { name: "DreamEase - Floral Dots", fabric: "Modal Cotton", category: "Sleepwear", color: "Sage Green", image: product3b, tag: "New" },
     { name: "FeatherFlow Co-ord Set", fabric: "French Terry", category: "Women", color: "Beige", image: product4, tag: "Trending" },
+    { name: "FeatherFlow Kids - Koala", fabric: "Organic Cotton", category: "Kids", color: "Cream & Green", image: product4b, tag: "New" },
     { name: "Free Spirit T-Shirt", fabric: "Slub Cotton", category: "Women", color: "Natural", image: product5, tag: "Premium" },
     { name: "Serenity Cardigan", fabric: "Lightweight Knit", category: "Women", color: "Blush Pink", image: product6, tag: "New" },
+    { name: "Serenity Wrap - Beige", fabric: "Soft Knit", category: "Women", color: "Beige", image: product6b, tag: "Bestseller" },
     { name: "CloudyDay Cotton Set", fabric: "Organic Cotton", category: "Kids", color: "Pastel Multi", image: product7, tag: "New" },
+    { name: "CloudyDay - Sweet Dreams", fabric: "Organic Cotton", category: "Kids", color: "Navy", image: product7b, tag: "New" },
+    { name: "CloudyDay - Bunny Bliss", fabric: "Organic Cotton", category: "Kids", color: "Sky Blue", image: product7c, tag: "New" },
+    { name: "CloudyDay - Moon Rabbit", fabric: "Organic Cotton", category: "Kids", color: "Coral", image: product7d, tag: "Premium" },
     { name: "DreamNest Pyjama Set", fabric: "Muslin Cotton", category: "Kids", color: "Cream & Blue", image: product8, tag: "New" },
+    { name: "Dream Weaver - Red Panda", fabric: "Organic Cotton", category: "Kids", color: "Sky Blue", image: product9, tag: "New" },
   ];
 
   return (
