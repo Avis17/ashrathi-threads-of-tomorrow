@@ -25,12 +25,26 @@ import product9b from "@/assets/products/cloudyday-cotton-set-2.png";
 import product9c from "@/assets/products/cloudyday-cotton-set-3.png";
 import product9d from "@/assets/products/cloudyday-cotton-set-4.png";
 import product10 from "@/assets/products/dreamnest-pyjama-set.jpg";
+import mensTrackPantsTeal from "@/assets/products/mens-track-pants-teal.png";
+import mensShortsTeal from "@/assets/products/mens-shorts-teal.png";
+import mensPoloOrange from "@/assets/products/mens-polo-orange.png";
+import feathersoftSage from "@/assets/products/feathersoft-lounge-tee-sage.png";
+import freeSpiritWhite from "@/assets/products/free-spirit-white-vneck.png";
+import littleExplorerBlue from "@/assets/products/little-explorer-blue-feather.png";
+import dreamnestTeal from "@/assets/products/dreamnest-teal-feather.png";
+import featherflowKidsGreen from "@/assets/products/featherflow-kids-green.png";
+import mensTrackPantsNavy from "@/assets/products/mens-track-pants-navy.jpg";
+import mensTshirtCharcoal from "@/assets/products/mens-tshirt-charcoal.jpg";
+import mensLoungeSetSage from "@/assets/products/mens-lounge-set-sage.jpg";
+import mensTrackPantsBeige from "@/assets/products/mens-track-pants-beige.jpg";
+import mensHenleyMoss from "@/assets/products/mens-henley-moss.jpg";
+import mensCoordSetBW from "@/assets/products/mens-coord-set-bw.jpg";
 
 const Products = () => {
   const [activeCategory, setActiveCategory] = useState("All");
   const [selectedImage, setSelectedImage] = useState<{ src: string; alt: string } | null>(null);
   
-  const categories = ["All", "Women", "Kids", "Loungewear", "Sleepwear"];
+  const categories = ["All", "Women", "Men", "Kids", "Loungewear", "Sleepwear"];
   
   const products = [
     { name: "Cloud Whisper Lounge Set", category: "Loungewear", fabric: "50% Modal, 50% Cotton", description: "Luxurious two-piece with wide-leg pants", image: product1 },
@@ -53,6 +67,20 @@ const Products = () => {
     { name: "CloudyDay Set - Bunny Bliss", category: "Kids", fabric: "100% Organic Cotton", description: "Charming bunny and floral design", image: product9c },
     { name: "CloudyDay Set - Moon Rabbit", category: "Kids", fabric: "100% Organic Cotton", description: "Dreamy moon and star pattern", image: product9d },
     { name: "DreamNest Pyjama Set", category: "Sleepwear", fabric: "Soft Muslin", description: "Feather-patterned nightwear", image: product10 },
+    { name: "Men's Track Pants - Teal", category: "Men", fabric: "Premium Cotton", description: "Comfortable joggers with feather logo", image: mensTrackPantsTeal },
+    { name: "Men's Shorts - Teal", category: "Men", fabric: "Performance Cotton", description: "Athletic shorts with feather detail", image: mensShortsTeal },
+    { name: "Men's Polo - Orange", category: "Men", fabric: "Pique Cotton", description: "Classic polo for casual wear", image: mensPoloOrange },
+    { name: "FeatherSoft Lounge Tee - Sage", category: "Loungewear", fabric: "95% Bamboo, 5% Spandex", description: "Women's relaxed fit with feather logo", image: feathersoftSage },
+    { name: "Free Spirit Tee - White", category: "Women", fabric: "Premium Slub Cotton", description: "V-neck with subtle feather detail", image: freeSpiritWhite },
+    { name: "Little Explorer - Feather Print", category: "Kids", fabric: "100% Organic Cotton", description: "Vibrant blue feather pattern tee", image: littleExplorerBlue },
+    { name: "DreamNest Set - Teal Feather", category: "Sleepwear", fabric: "Soft Cotton Jersey", description: "Bold feather graphic sleepwear", image: dreamnestTeal },
+    { name: "FeatherFlow Kids - Stars", category: "Kids", fabric: "100% Organic Cotton", description: "Sleep Under the Stars set", image: featherflowKidsGreen },
+    { name: "Men's Track Pants - Navy", category: "Men", fabric: "100% Cotton", description: "Classic joggers with feather embroidery", image: mensTrackPantsNavy },
+    { name: "Men's Tee - Charcoal", category: "Men", fabric: "Premium Cotton", description: "Minimal design with chest logo", image: mensTshirtCharcoal },
+    { name: "Men's Lounge Set - Sage", category: "Men", fabric: "Bamboo Cotton Blend", description: "Complete comfort set with feather print", image: mensLoungeSetSage },
+    { name: "Men's Track Pants - Beige", category: "Men", fabric: "Organic Cotton", description: "Tapered fit with ankle detail", image: mensTrackPantsBeige },
+    { name: "Men's Henley - Moss", category: "Men", fabric: "Premium Cotton", description: "Long sleeve with feather embroidery", image: mensHenleyMoss },
+    { name: "Men's Co-ord Set - B&W", category: "Men", fabric: "Cotton Jersey", description: "Modern streetwear with large feather graphic", image: mensCoordSetBW },
   ];
 
   const filteredProducts = activeCategory === "All" ? products : products.filter(p => p.category === activeCategory);

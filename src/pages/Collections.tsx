@@ -23,6 +23,20 @@ import product7c from "@/assets/products/cloudyday-cotton-set-3.png";
 import product7d from "@/assets/products/cloudyday-cotton-set-4.png";
 import product8 from "@/assets/products/dreamnest-pyjama-set.jpg";
 import product9 from "@/assets/products/dream-weaver-kids-set-2.png";
+import mensTrackPantsTeal from "@/assets/products/mens-track-pants-teal.png";
+import mensShortsTeal from "@/assets/products/mens-shorts-teal.png";
+import mensPoloOrange from "@/assets/products/mens-polo-orange.png";
+import feathersoftSage from "@/assets/products/feathersoft-lounge-tee-sage.png";
+import freeSpiritWhite from "@/assets/products/free-spirit-white-vneck.png";
+import littleExplorerBlue from "@/assets/products/little-explorer-blue-feather.png";
+import dreamnestTeal from "@/assets/products/dreamnest-teal-feather.png";
+import featherflowKidsGreen from "@/assets/products/featherflow-kids-green.png";
+import mensTrackPantsNavy from "@/assets/products/mens-track-pants-navy.jpg";
+import mensTshirtCharcoal from "@/assets/products/mens-tshirt-charcoal.jpg";
+import mensLoungeSetSage from "@/assets/products/mens-lounge-set-sage.jpg";
+import mensTrackPantsBeige from "@/assets/products/mens-track-pants-beige.jpg";
+import mensHenleyMoss from "@/assets/products/mens-henley-moss.jpg";
+import mensCoordSetBW from "@/assets/products/mens-coord-set-bw.jpg";
 
 const Collections = () => {
   const [selectedImage, setSelectedImage] = useState<{ src: string; alt: string } | null>(null);
@@ -45,6 +59,20 @@ const Collections = () => {
     { name: "CloudyDay - Moon Rabbit", fabric: "Organic Cotton", category: "Kids", color: "Coral", image: product7d, tag: "Premium" },
     { name: "DreamNest Pyjama Set", fabric: "Muslin Cotton", category: "Kids", color: "Cream & Blue", image: product8, tag: "New" },
     { name: "Dream Weaver - Red Panda", fabric: "Organic Cotton", category: "Kids", color: "Sky Blue", image: product9, tag: "New" },
+    { name: "Men's Track Pants - Teal", fabric: "Premium Cotton", category: "Men", color: "Deep Teal", image: mensTrackPantsTeal, tag: "New" },
+    { name: "Men's Athletic Shorts - Teal", fabric: "Performance Cotton", category: "Men", color: "Deep Teal", image: mensShortsTeal, tag: "Bestseller" },
+    { name: "Men's Polo - Orange", fabric: "Pique Cotton", category: "Men", color: "Bright Orange", image: mensPoloOrange, tag: "Premium" },
+    { name: "FeatherSoft Lounge - Sage", fabric: "Bamboo Blend", category: "Women", color: "Sage Green", image: feathersoftSage, tag: "New" },
+    { name: "Free Spirit - White V-Neck", fabric: "Slub Cotton", category: "Women", color: "Pure White", image: freeSpiritWhite, tag: "Bestseller" },
+    { name: "Little Explorer - Blue Print", fabric: "Organic Cotton", category: "Kids", color: "Azure Blue", image: littleExplorerBlue, tag: "New" },
+    { name: "DreamNest - Teal Bold", fabric: "Cotton Jersey", category: "Sleepwear", color: "Teal & White", image: dreamnestTeal, tag: "Trending" },
+    { name: "FeatherFlow Kids - Stars", fabric: "Organic Cotton", category: "Kids", color: "Sage & Cream", image: featherflowKidsGreen, tag: "New" },
+    { name: "Men's Joggers - Navy", fabric: "100% Cotton", category: "Men", color: "Navy Blue", image: mensTrackPantsNavy, tag: "New" },
+    { name: "Men's Essential Tee - Charcoal", fabric: "Premium Cotton", category: "Men", color: "Charcoal Grey", image: mensTshirtCharcoal, tag: "Premium" },
+    { name: "Men's Lounge Set - Sage", fabric: "Bamboo Cotton", category: "Men", color: "Sage Green", image: mensLoungeSetSage, tag: "Bestseller" },
+    { name: "Men's Track Pants - Beige", fabric: "Organic Cotton", category: "Men", color: "Sand Beige", image: mensTrackPantsBeige, tag: "New" },
+    { name: "Men's Henley - Moss", fabric: "Premium Cotton", category: "Men", color: "Moss Green", image: mensHenleyMoss, tag: "Premium" },
+    { name: "Men's Co-ord - Black/White", fabric: "Cotton Jersey", category: "Men", color: "Monochrome", image: mensCoordSetBW, tag: "Trending" },
   ];
 
   return (
