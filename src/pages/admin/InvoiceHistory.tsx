@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useDebounce } from '@/hooks/useDebounce';
 import { supabase } from '@/integrations/supabase/client';
 import {
   Table,
@@ -42,21 +43,22 @@ const ITEMS_PER_PAGE = 10;
 
 export default function InvoiceHistory() {
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearch = useDebounce(searchTerm, 500);
   const [currentPage, setCurrentPage] = useState(1);
   const [deletingInvoice, setDeletingInvoice] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: invoices, isLoading } = useQuery({
-    queryKey: ['invoices', searchTerm, currentPage],
+    queryKey: ['invoices', debouncedSearch, currentPage],
     queryFn: async () => {
       let query = supabase
         .from('invoices')
         .select('*, customers(company_name), invoice_items(*, products(name))', { count: 'exact' })
         .order('created_at', { ascending: false });
 
-      if (searchTerm) {
-        query = query.or(`invoice_number.eq.${searchTerm},customers.company_name.ilike.%${searchTerm}%`);
+      if (debouncedSearch) {
+        query = query.or(`invoice_number.eq.${debouncedSearch},customers.company_name.ilike.%${debouncedSearch}%`);
       }
 
       const { data, error, count } = await query
@@ -220,8 +222,14 @@ export default function InvoiceHistory() {
           <TableBody>
             {invoices?.data?.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center text-muted-foreground">
-                  No invoices found
+                <TableCell colSpan={8} className="h-64">
+                  <div className="flex flex-col items-center justify-center space-y-4 text-center">
+                    <img src="/src/assets/no-data.png" alt="No data found" className="w-48 h-36 object-contain opacity-50" />
+                    <div>
+                      <p className="text-lg font-semibold text-muted-foreground">No invoices found</p>
+                      <p className="text-sm text-muted-foreground">Try a different search term</p>
+                    </div>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : (

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useDebounce } from '@/hooks/useDebounce';
 import { supabase } from '@/integrations/supabase/client';
 import {
   Table,
@@ -44,6 +45,7 @@ const ITEMS_PER_PAGE = 10;
 
 export function ViewEditCustomers() {
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearch = useDebounce(searchTerm, 500);
   const [currentPage, setCurrentPage] = useState(1);
   const [editingCustomer, setEditingCustomer] = useState<any>(null);
   const [deletingCustomer, setDeletingCustomer] = useState<string | null>(null);
@@ -51,7 +53,7 @@ export function ViewEditCustomers() {
   const queryClient = useQueryClient();
 
   const { data: customers, isLoading } = useQuery({
-    queryKey: ['customers', searchTerm, currentPage],
+    queryKey: ['customers', debouncedSearch, currentPage],
     queryFn: async () => {
       let query = supabase
         .from('customers')
@@ -59,8 +61,8 @@ export function ViewEditCustomers() {
         .eq('is_active', true)
         .order('created_at', { ascending: false });
 
-      if (searchTerm) {
-        query = query.or(`company_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,gst_number.ilike.%${searchTerm}%`);
+      if (debouncedSearch) {
+        query = query.or(`company_name.ilike.%${debouncedSearch}%,email.ilike.%${debouncedSearch}%,gst_number.ilike.%${debouncedSearch}%`);
       }
 
       const { data, error, count } = await query
@@ -151,8 +153,14 @@ export function ViewEditCustomers() {
           <TableBody>
             {customers?.data?.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground">
-                  No customers found
+                <TableCell colSpan={7} className="h-64">
+                  <div className="flex flex-col items-center justify-center space-y-4 text-center">
+                    <img src="/src/assets/no-data.png" alt="No data found" className="w-48 h-36 object-contain opacity-50" />
+                    <div>
+                      <p className="text-lg font-semibold text-muted-foreground">No customers found</p>
+                      <p className="text-sm text-muted-foreground">Try a different search term</p>
+                    </div>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : (
