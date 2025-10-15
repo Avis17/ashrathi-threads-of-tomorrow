@@ -779,6 +779,7 @@ export type Database = {
           name: string
           price: number | null
           product_code: string | null
+          should_remove: boolean | null
         }
         Insert: {
           additional_images?: Json | null
@@ -799,6 +800,7 @@ export type Database = {
           name: string
           price?: number | null
           product_code?: string | null
+          should_remove?: boolean | null
         }
         Update: {
           additional_images?: Json | null
@@ -819,6 +821,7 @@ export type Database = {
           name?: string
           price?: number | null
           product_code?: string | null
+          should_remove?: boolean | null
         }
         Relationships: []
       }

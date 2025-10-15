@@ -24,7 +24,7 @@ export const useProducts = () => {
       const { data, error } = await supabase
         .from('products')
         .select('*')
-        .eq('is_active', true)
+        .eq('should_remove', false)
         .order('display_order', { ascending: true });
 
       if (error) throw error;

@@ -35,12 +35,11 @@ interface Order {
   user_id: string;
 }
 
-const ITEMS_PER_PAGE = 10;
-
 export function OrdersManager() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -63,8 +62,8 @@ export function OrdersManager() {
         query = query.eq('status', statusFilter);
       }
 
-      const from = (currentPage - 1) * ITEMS_PER_PAGE;
-      const to = from + ITEMS_PER_PAGE - 1;
+      const from = (currentPage - 1) * itemsPerPage;
+      const to = from + itemsPerPage - 1;
       query = query.range(from, to);
 
       const { data, error } = await query;
@@ -239,26 +238,6 @@ export function OrdersManager() {
               </TableBody>
             </Table>
           </div>
-
-          {orders && orders.length >= ITEMS_PER_PAGE && (
-            <div className="flex items-center justify-between mt-4">
-              <Button
-                variant="outline"
-                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                disabled={currentPage === 1}
-              >
-                Previous
-              </Button>
-              <span className="text-sm text-muted-foreground">Page {currentPage}</span>
-              <Button
-                variant="outline"
-                onClick={() => setCurrentPage(currentPage + 1)}
-                disabled={orders.length < ITEMS_PER_PAGE}
-              >
-                Next
-              </Button>
-            </div>
-          )}
         </CardContent>
       </Card>
     </div>

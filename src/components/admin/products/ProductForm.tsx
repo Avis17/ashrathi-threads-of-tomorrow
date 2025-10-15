@@ -40,6 +40,7 @@ const productSchema = z.object({
   is_featured: z.boolean().default(false),
   is_new_arrival: z.boolean().default(false),
   is_signature: z.boolean().default(false),
+  should_remove: z.boolean().default(false),
   available_sizes: z.array(z.string()).default([]),
   available_colors: z.array(z.object({
     name: z.string(),
@@ -66,6 +67,7 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
       is_featured: initialData?.is_featured ?? false,
       is_new_arrival: initialData?.is_new_arrival ?? false,
       is_signature: initialData?.is_signature ?? false,
+      should_remove: initialData?.should_remove ?? false,
       display_order: initialData?.display_order?.toString() || '0',
       price: initialData?.price?.toString() || '',
       name: initialData?.name || '',
@@ -85,6 +87,7 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
   const isFeatured = watch('is_featured');
   const isNewArrival = watch('is_new_arrival');
   const isSignature = watch('is_signature');
+  const shouldRemove = watch('should_remove');
 
   const handleFormSubmit = (data: ProductFormData) => {
     onSubmit({ ...data, available_sizes: sizes, available_colors: colors });
@@ -222,6 +225,15 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
             onCheckedChange={(checked) => setValue('is_signature', checked)}
           />
           <Label htmlFor="is_signature">Signature Collection</Label>
+        </div>
+
+        <div className="flex items-center space-x-2 border border-destructive rounded-md p-2">
+          <Switch
+            id="should_remove"
+            checked={shouldRemove}
+            onCheckedChange={(checked) => setValue('should_remove', checked)}
+          />
+          <Label htmlFor="should_remove" className="text-destructive font-semibold">Remove from Website</Label>
         </div>
       </div>
 
