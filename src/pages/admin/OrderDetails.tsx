@@ -10,9 +10,11 @@ import { OrderStatusBadge } from '@/components/customer/OrderStatusBadge';
 import { OrderTimeline } from '@/components/customer/OrderTimeline';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
-import { ArrowLeft, Package, MapPin, Phone, User, Save } from 'lucide-react';
+import { ArrowLeft, Package, MapPin, Phone, User, Save, Printer } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState } from 'react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 export default function AdminOrderDetails() {
   const { orderId } = useParams();
@@ -97,6 +99,116 @@ export default function AdminOrderDetails() {
     },
   });
 
+  const handlePrintInvoice = () => {
+    if (!order) return;
+
+    const doc = new jsPDF();
+    
+    // Company Info
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.text('FEATHER FASHIONS', 105, 20, { align: 'center' });
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text('No.1, Nallappa Gounder Street, Gandhi Nagar,', 105, 28, { align: 'center' });
+    doc.text('Tirupur - 641 601, Tamil Nadu, India', 105, 33, { align: 'center' });
+    doc.text('Phone: +91 99999 99999', 105, 38, { align: 'center' });
+    
+    // Invoice Title
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('INVOICE', 105, 50, { align: 'center' });
+    
+    // Invoice Details
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Invoice No: ${order.order_number}`, 14, 60);
+    doc.text(`Date: ${format(new Date(order.created_at), 'dd/MM/yyyy')}`, 14, 66);
+    
+    // Bill To
+    doc.setFont('helvetica', 'bold');
+    doc.text('Bill To:', 14, 76);
+    doc.setFont('helvetica', 'normal');
+    doc.text(order.delivery_name, 14, 82);
+    doc.text(order.delivery_phone, 14, 88);
+    
+    const addressLines = [
+      order.delivery_address_line_1,
+      order.delivery_address_line_2,
+      `${order.delivery_city}, ${order.delivery_state} - ${order.delivery_pincode}`
+    ].filter(Boolean);
+    
+    let yPos = 94;
+    addressLines.forEach(line => {
+      doc.text(line, 14, yPos);
+      yPos += 6;
+    });
+    
+    // Items Table
+    const tableData = order.order_items?.map((item: any) => {
+      const variants = [
+        item.selected_size ? `Size: ${item.selected_size}` : null,
+        item.selected_color ? item.selected_color : null
+      ].filter(Boolean).join(', ');
+
+      return [
+        item.product_code || '-',
+        `${item.product_name}${variants ? `\n(${variants})` : ''}`,
+        '-', // HSN (not available for orders)
+        item.quantity.toString(),
+        `₹${Number(item.unit_price).toFixed(2)}`,
+        `₹${Number(item.total_price).toFixed(2)}`
+      ];
+    }) || [];
+    
+    autoTable(doc, {
+      startY: yPos + 10,
+      head: [['Code', 'Description', 'HSN', 'Qty', 'Rate', 'Amount']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: { fillColor: [66, 66, 66], textColor: [255, 255, 255], fontStyle: 'bold' },
+      styles: { fontSize: 9 },
+      columnStyles: {
+        0: { cellWidth: 25 },
+        1: { cellWidth: 70 },
+        2: { cellWidth: 20 },
+        3: { cellWidth: 15 },
+        4: { cellWidth: 25 },
+        5: { cellWidth: 30 }
+      }
+    });
+    
+    // Summary
+    const finalY = (doc as any).lastAutoTable.finalY + 10;
+    const rightAlign = 196;
+    
+    doc.text('Subtotal:', rightAlign - 50, finalY, { align: 'right' });
+    doc.text(`₹${Number(order.subtotal).toFixed(2)}`, rightAlign, finalY, { align: 'right' });
+    
+    doc.text('Shipping:', rightAlign - 50, finalY + 6, { align: 'right' });
+    doc.text(`₹${Number(order.shipping_charges || 0).toFixed(2)}`, rightAlign, finalY + 6, { align: 'right' });
+    
+    doc.setFont('helvetica', 'bold');
+    doc.text('Total Amount:', rightAlign - 50, finalY + 14, { align: 'right' });
+    doc.text(`₹${Number(order.total_amount).toFixed(2)}`, rightAlign, finalY + 14, { align: 'right' });
+    
+    // Payment Method
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.text(`Payment Method: ${order.payment_method.toUpperCase().replace('_', ' ')}`, 14, finalY + 20);
+    
+    // Footer
+    doc.setFontSize(8);
+    doc.text('Thank you for your business!', 105, 280, { align: 'center' });
+    
+    // Open print dialog
+    doc.autoPrint();
+    window.open(doc.output('bloburl'), '_blank');
+    
+    toast.success('Invoice generated successfully');
+  };
+
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -121,6 +233,10 @@ export default function AdminOrderDetails() {
           Back to Orders
         </Button>
         <div className="flex items-center gap-4">
+          <Button variant="outline" onClick={handlePrintInvoice}>
+            <Printer className="mr-2 h-4 w-4" />
+            Print Invoice
+          </Button>
           <Select
             value={order.status}
             onValueChange={(value) => updateStatusMutation.mutate(value)}

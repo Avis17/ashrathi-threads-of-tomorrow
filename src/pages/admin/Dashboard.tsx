@@ -10,16 +10,23 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { OrderStatusBadge } from '@/components/customer/OrderStatusBadge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useState } from 'react';
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const [flippedCard, setFlippedCard] = useState<string | null>(null);
+
+  // Date ranges
+  const now = new Date();
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
 
   const { data: stats, isLoading } = useQuery({
     queryKey: ['dashboard-stats'],
     queryFn: async () => {
       const [customersRes, productsRes, invoicesRes, invoicesWithData, recentInvoices, ordersRes, ordersData] = await Promise.all([
         supabase.from('customers').select('*', { count: 'exact', head: true }),
-        supabase.from('products').select('*', { count: 'exact', head: true }),
+        supabase.from('products').select('*', { count: 'exact', head: true }).eq('should_remove', false),
         supabase.from('invoices').select('*', { count: 'exact', head: true }),
         supabase.from('invoices').select('total_amount, created_at, invoice_date'),
         supabase.from('invoices').select('total_amount, invoice_date').order('invoice_date', { ascending: false }).limit(6),
@@ -27,12 +34,115 @@ export default function Dashboard() {
         supabase.from('orders').select('*').order('created_at', { ascending: false }),
       ]);
 
+      // Customers trend
+      const { count: newCustomersLast30 } = await supabase
+        .from('customers')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', thirtyDaysAgo.toISOString());
+      
+      const { count: newCustomersPrev30 } = await supabase
+        .from('customers')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', sixtyDaysAgo.toISOString())
+        .lt('created_at', thirtyDaysAgo.toISOString());
+
+      const customersTrend = newCustomersPrev30 && newCustomersPrev30 > 0 
+        ? (((newCustomersLast30 || 0) - newCustomersPrev30) / newCustomersPrev30) * 100 
+        : (newCustomersLast30 || 0) > 0 ? 100 : 0;
+
+      // Products trend
+      const { data: recentProductChanges } = await supabase
+        .from('products')
+        .select('created_at, should_remove')
+        .gte('created_at', sixtyDaysAgo.toISOString());
+
+      const addedLast30 = recentProductChanges?.filter(p => 
+        new Date(p.created_at) >= thirtyDaysAgo && !p.should_remove
+      ).length || 0;
+
+      const addedPrev30 = recentProductChanges?.filter(p => 
+        new Date(p.created_at) >= sixtyDaysAgo && 
+        new Date(p.created_at) < thirtyDaysAgo && 
+        !p.should_remove
+      ).length || 0;
+
+      const productsTrend = addedPrev30 > 0 
+        ? ((addedLast30 - addedPrev30) / addedPrev30) * 100 
+        : addedLast30 > 0 ? 100 : 0;
+
+      // Orders trend (last 30 days)
+      const ordersLast30 = ordersData.data?.filter(o => 
+        new Date(o.created_at) >= thirtyDaysAgo
+      ) || [];
+
+      const ordersPrev30Count = ordersData.data?.filter(o => 
+        new Date(o.created_at) >= sixtyDaysAgo && 
+        new Date(o.created_at) < thirtyDaysAgo
+      ).length || 0;
+
+      const ordersTrend = ordersPrev30Count > 0
+        ? ((ordersLast30.length - ordersPrev30Count) / ordersPrev30Count) * 100
+        : ordersLast30.length > 0 ? 100 : 0;
+
+      // Revenue trend (invoices + online orders)
+      const ordersRevenueLast30 = ordersLast30.reduce((sum, o) => sum + Number(o.total_amount || 0), 0);
+      const invoicesLast30 = invoicesWithData.data?.filter(i => 
+        new Date(i.created_at) >= thirtyDaysAgo
+      ) || [];
+      const invoicesRevenueLast30 = invoicesLast30.reduce((sum, i) => sum + Number(i.total_amount || 0), 0);
+      const totalRevenueLast30 = ordersRevenueLast30 + invoicesRevenueLast30;
+
+      const ordersPrev30 = ordersData.data?.filter(o => 
+        new Date(o.created_at) >= sixtyDaysAgo && 
+        new Date(o.created_at) < thirtyDaysAgo
+      ) || [];
+      const ordersRevenuePrev30 = ordersPrev30.reduce((sum, o) => sum + Number(o.total_amount || 0), 0);
+      
+      const invoicesPrev30 = invoicesWithData.data?.filter(i => 
+        new Date(i.created_at) >= sixtyDaysAgo && 
+        new Date(i.created_at) < thirtyDaysAgo
+      ) || [];
+      const invoicesRevenuePrev30 = invoicesPrev30.reduce((sum, i) => sum + Number(i.total_amount || 0), 0);
+      const totalRevenuePrev30 = ordersRevenuePrev30 + invoicesRevenuePrev30;
+
+      const revenueTrend = totalRevenuePrev30 > 0
+        ? ((totalRevenueLast30 - totalRevenuePrev30) / totalRevenuePrev30) * 100
+        : totalRevenueLast30 > 0 ? 100 : 0;
+
+      // Pending orders trend
+      const pendingOrdersCurrent = ordersData.data?.filter(o => 
+        ['pending', 'confirmed'].includes(o.status)
+      ).length || 0;
+
+      const pendingOrdersPrev = ordersData.data?.filter(o => 
+        ['pending', 'confirmed'].includes(o.status) &&
+        new Date(o.created_at) >= sixtyDaysAgo && 
+        new Date(o.created_at) < thirtyDaysAgo
+      ).length || 0;
+
+      const pendingTrend = pendingOrdersPrev > 0
+        ? ((pendingOrdersCurrent - pendingOrdersPrev) / pendingOrdersPrev) * 100
+        : pendingOrdersCurrent > 0 ? 100 : 0;
+
+      // AOV trend
+      const aovLast30 = ordersLast30.length > 0
+        ? ordersRevenueLast30 / ordersLast30.length
+        : 0;
+
+      const aovPrev30 = ordersPrev30.length > 0
+        ? ordersRevenuePrev30 / ordersPrev30.length
+        : 0;
+
+      const aovTrend = aovPrev30 > 0
+        ? ((aovLast30 - aovPrev30) / aovPrev30) * 100
+        : aovLast30 > 0 ? 100 : 0;
+
       const totalAmount = invoicesWithData.data?.reduce(
         (sum, invoice) => sum + Number(invoice.total_amount || 0),
         0
       ) || 0;
 
-      // Calculate monthly revenue for last 6 months
+      // Monthly revenue
       const monthlyRevenue = recentInvoices.data?.reduce((acc: any[], invoice) => {
         const month = new Date(invoice.invoice_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
         const existing = acc.find(item => item.month === month);
@@ -45,7 +155,7 @@ export default function Dashboard() {
       }, []).reverse() || [];
 
       // Product category distribution
-      const productsData = await supabase.from('products').select('category');
+      const productsData = await supabase.from('products').select('category').eq('should_remove', false);
       const categoryCount = productsData.data?.reduce((acc: any, product) => {
         acc[product.category] = (acc[product.category] || 0) + 1;
         return acc;
@@ -89,7 +199,6 @@ export default function Dashboard() {
         };
       });
 
-      // Recent orders (last 10)
       const recentOrders = ordersData.data?.slice(0, 10) || [];
 
       return {
@@ -106,6 +215,28 @@ export default function Dashboard() {
         orderStatusDistribution,
         dailyOrders,
         recentOrders,
+        // Trends
+        customersTrend,
+        productsTrend,
+        ordersTrend,
+        revenueTrend,
+        pendingTrend,
+        aovTrend,
+        // Breakdown data
+        newCustomersLast30,
+        newCustomersPrev30,
+        addedLast30,
+        addedPrev30,
+        ordersLast30Count: ordersLast30.length,
+        ordersPrev30Count,
+        totalRevenueLast30,
+        totalRevenuePrev30,
+        ordersRevenueLast30,
+        invoicesRevenueLast30,
+        pendingOrdersCurrent,
+        pendingOrdersPrev,
+        aovLast30,
+        aovPrev30,
       };
     },
   });
@@ -116,48 +247,54 @@ export default function Dashboard() {
       value: stats?.customers || 0,
       icon: Users,
       gradient: 'from-blue-500 to-cyan-500',
-      trend: '+12%',
-      trendUp: true,
+      trend: stats?.customersTrend || 0,
+      trendUp: (stats?.customersTrend || 0) >= 0,
+      breakdown: `New customers (30d): ${stats?.newCustomersLast30 || 0}\nPrevious period: ${stats?.newCustomersPrev30 || 0}\nTotal in database: ${stats?.customers || 0}`,
     },
     {
       title: 'Total Products',
       value: stats?.products || 0,
       icon: Package,
       gradient: 'from-green-500 to-emerald-500',
-      trend: '+8%',
-      trendUp: true,
+      trend: stats?.productsTrend || 0,
+      trendUp: (stats?.productsTrend || 0) >= 0,
+      breakdown: `Active products: ${stats?.products || 0}\nAdded last 30d: ${stats?.addedLast30 || 0}\nPrevious period: ${stats?.addedPrev30 || 0}`,
     },
     {
-      title: 'Total Orders',
-      value: stats?.totalOrders || 0,
+      title: 'Total Orders (30d)',
+      value: stats?.ordersLast30Count || 0,
       icon: ShoppingCart,
       gradient: 'from-purple-500 to-pink-500',
-      trend: `${stats?.ordersToday || 0} today`,
-      trendUp: true,
+      trend: stats?.ordersTrend || 0,
+      trendUp: (stats?.ordersTrend || 0) >= 0,
+      breakdown: `Orders last 30d: ${stats?.ordersLast30Count || 0}\nPrevious 30d: ${stats?.ordersPrev30Count || 0}\nToday: ${stats?.ordersToday || 0}`,
     },
     {
-      title: 'Total Revenue',
-      value: `₹${stats?.totalAmount.toFixed(2) || '0.00'}`,
+      title: 'Total Revenue (30d)',
+      value: `₹${stats?.totalRevenueLast30?.toLocaleString() || '0'}`,
       icon: DollarSign,
       gradient: 'from-orange-500 to-red-500',
-      trend: '+15%',
-      trendUp: true,
+      trend: stats?.revenueTrend || 0,
+      trendUp: (stats?.revenueTrend || 0) >= 0,
+      breakdown: `Online orders: ₹${stats?.ordersRevenueLast30?.toLocaleString() || 0}\nInvoices: ₹${stats?.invoicesRevenueLast30?.toLocaleString() || 0}\nTotal: ₹${stats?.totalRevenueLast30?.toLocaleString() || 0}\nPrevious: ₹${stats?.totalRevenuePrev30?.toLocaleString() || 0}`,
     },
     {
       title: 'Pending Orders',
-      value: stats?.pendingOrders || 0,
+      value: stats?.pendingOrdersCurrent || 0,
       icon: Clock,
       gradient: 'from-yellow-500 to-amber-500',
-      trend: 'Requires action',
-      trendUp: false,
+      trend: stats?.pendingTrend || 0,
+      trendUp: (stats?.pendingTrend || 0) < 0, // Lower is better
+      breakdown: `Current pending: ${stats?.pendingOrdersCurrent || 0}\nPrevious period: ${stats?.pendingOrdersPrev || 0}\nLower is better`,
     },
     {
-      title: 'Avg Order Value',
-      value: `₹${stats?.avgOrderValue.toFixed(2) || '0.00'}`,
+      title: 'Avg Order Value (30d)',
+      value: `₹${stats?.aovLast30?.toFixed(0) || '0'}`,
       icon: CheckCircle,
       gradient: 'from-indigo-500 to-violet-500',
-      trend: '+5%',
-      trendUp: true,
+      trend: stats?.aovTrend || 0,
+      trendUp: (stats?.aovTrend || 0) >= 0,
+      breakdown: `Current AOV: ₹${stats?.aovLast30?.toFixed(2) || 0}\nPrevious AOV: ₹${stats?.aovPrev30?.toFixed(2) || 0}\nFrom online orders only`,
     },
   ];
 
@@ -166,7 +303,7 @@ export default function Dashboard() {
   const chartConfig = {
     revenue: {
       label: 'Revenue',
-      color: 'hsl(var(--chart-1))',
+      color: '#3B82F6',
     },
   };
 
@@ -194,33 +331,76 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {statCards.map((stat, index) => (
-          <Card key={index} className="relative overflow-hidden animate-fade-in border-none shadow-lg">
-            <div className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-10`} />
-            <CardHeader className="flex flex-row items-center justify-between pb-2 relative">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {stat.title}
-              </CardTitle>
-              <div className={`p-3 rounded-xl bg-gradient-to-br ${stat.gradient} shadow-md`}>
-                <stat.icon className="h-5 w-5 text-white" />
+        {statCards.map((stat, index) => {
+          const isFlipped = flippedCard === stat.title;
+          return (
+            <div 
+              key={index} 
+              className="cursor-pointer"
+              onClick={() => setFlippedCard(isFlipped ? null : stat.title)}
+              style={{ perspective: '1000px', height: '180px' }}
+            >
+              <div 
+                className="relative w-full h-full transition-transform duration-600"
+                style={{
+                  transformStyle: 'preserve-3d',
+                  transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+                }}
+              >
+                {/* Front of card */}
+                <Card 
+                  className="absolute w-full h-full overflow-hidden animate-fade-in border-none shadow-lg"
+                  style={{ backfaceVisibility: 'hidden' }}
+                >
+                  <div className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-10`} />
+                  <CardHeader className="flex flex-row items-center justify-between pb-2 relative">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                      {stat.title}
+                    </CardTitle>
+                    <div className={`p-3 rounded-xl bg-gradient-to-br ${stat.gradient} shadow-md`}>
+                      <stat.icon className="h-5 w-5 text-white" />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="relative">
+                    <div className="text-3xl font-bold mb-1">{stat.value}</div>
+                    <div className="flex items-center gap-1 text-sm">
+                      {stat.trendUp ? (
+                        <TrendingUp className="h-4 w-4 text-green-600" />
+                      ) : (
+                        <TrendingDown className="h-4 w-4 text-red-600" />
+                      )}
+                      <span className={stat.trendUp ? 'text-green-600' : 'text-red-600'}>
+                        {stat.trend >= 0 ? '+' : ''}{stat.trend.toFixed(1)}%
+                      </span>
+                      <span className="text-muted-foreground">vs previous</span>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Back of card */}
+                <Card 
+                  className="absolute w-full h-full overflow-hidden border-none shadow-lg"
+                  style={{ 
+                    backfaceVisibility: 'hidden',
+                    transform: 'rotateY(180deg)',
+                  }}
+                >
+                  <div className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-20`} />
+                  <CardHeader className="relative">
+                    <CardTitle className="text-sm font-semibold">
+                      {stat.title} - Details
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-xs space-y-1 relative">
+                    {stat.breakdown.split('\n').map((line, i) => (
+                      <p key={i} className="text-muted-foreground leading-relaxed">{line}</p>
+                    ))}
+                  </CardContent>
+                </Card>
               </div>
-            </CardHeader>
-            <CardContent className="relative">
-              <div className="text-3xl font-bold mb-1">{stat.value}</div>
-              <div className="flex items-center gap-1 text-sm">
-                {stat.trendUp ? (
-                  <TrendingUp className="h-4 w-4 text-green-600" />
-                ) : (
-                  <TrendingDown className="h-4 w-4 text-red-600" />
-                )}
-                <span className={stat.trendUp ? 'text-green-600' : 'text-red-600'}>
-                  {stat.trend}
-                </span>
-                {stat.trend.includes('%') && <span className="text-muted-foreground">vs last month</span>}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+            </div>
+          );
+        })}
       </div>
 
       {/* Charts Section */}
@@ -242,9 +422,9 @@ export default function Dashboard() {
                   <Line 
                     type="monotone" 
                     dataKey="orders" 
-                    stroke="hsl(var(--chart-3))" 
+                    stroke="#3B82F6" 
                     strokeWidth={3}
-                    dot={{ fill: "hsl(var(--chart-3))", r: 4 }}
+                    dot={{ fill: "#3B82F6", r: 4 }}
                     activeDot={{ r: 6 }}
                   />
                 </LineChart>
@@ -300,7 +480,7 @@ export default function Dashboard() {
                   <ChartTooltip content={<ChartTooltipContent />} />
                   <Bar 
                     dataKey="revenue" 
-                    fill="hsl(var(--chart-2))" 
+                    fill="#10B981" 
                     radius={[8, 8, 0, 0]}
                   />
                 </BarChart>
