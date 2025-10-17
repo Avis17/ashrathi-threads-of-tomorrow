@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
-import { Menu, X, User, LogOut, Shield } from "lucide-react";
+import { Menu, X, User, LogOut, Shield, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -10,6 +10,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from "@/components/ui/navigation-menu";
 import { useAuth } from "@/hooks/useAuth";
 import { CartButton } from "@/components/cart/CartButton";
 import logo from "@/assets/logo.png";
@@ -29,6 +37,14 @@ const Navbar = () => {
     { name: "Contact", path: "/contact" },
   ];
 
+  const womenCategories = [
+    { name: "Half Sleeve T-Shirt", path: "/women/half-sleeve-tshirt" },
+    { name: "Long Sleeve T-Shirt", path: "/women/long-sleeve-tshirt" },
+    { name: "V-Neck T-Shirt", path: "/women/vneck-tshirt" },
+    { name: "Polo T-Shirt", path: "/women/polo-tshirt" },
+    { name: "Leggings", path: "/women/leggings" },
+  ];
+
   const isActive = (path: string) => location.pathname === path;
 
   return (
@@ -42,7 +58,42 @@ const Navbar = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center space-x-1">
-            {navLinks.map((link) => (
+            <Link
+              to="/"
+              className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                isActive("/") ? "text-secondary" : "text-foreground hover:text-secondary"
+              }`}
+            >
+              Home
+            </Link>
+            
+            <NavigationMenu>
+              <NavigationMenuList>
+                <NavigationMenuItem>
+                  <NavigationMenuTrigger className="bg-transparent hover:bg-transparent data-[state=open]:bg-transparent">
+                    Women
+                  </NavigationMenuTrigger>
+                  <NavigationMenuContent>
+                    <ul className="grid w-[400px] gap-3 p-4">
+                      {womenCategories.map((category) => (
+                        <li key={category.path}>
+                          <NavigationMenuLink asChild>
+                            <Link
+                              to={category.path}
+                              className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                            >
+                              <div className="text-sm font-medium leading-none">{category.name}</div>
+                            </Link>
+                          </NavigationMenuLink>
+                        </li>
+                      ))}
+                    </ul>
+                  </NavigationMenuContent>
+                </NavigationMenuItem>
+              </NavigationMenuList>
+            </NavigationMenu>
+
+            {navLinks.slice(1).map((link) => (
               <Link
                 key={link.path}
                 to={link.path}
@@ -134,7 +185,38 @@ const Navbar = () => {
                   </Button>
                 </div>
               )}
-              {navLinks.map((link) => (
+              <Link
+                to="/"
+                onClick={() => setIsOpen(false)}
+                className={`px-4 py-3 rounded-md font-medium transition-colors ${
+                  isActive("/")
+                    ? "bg-secondary/10 text-secondary"
+                    : "text-foreground hover:bg-muted"
+                }`}
+              >
+                Home
+              </Link>
+              
+              {/* Women Submenu */}
+              <div className="border-t border-border pt-2 mt-2">
+                <div className="px-4 py-2 text-sm font-semibold text-muted-foreground">Women</div>
+                {womenCategories.map((category) => (
+                  <Link
+                    key={category.path}
+                    to={category.path}
+                    onClick={() => setIsOpen(false)}
+                    className={`px-6 py-2.5 rounded-md text-sm transition-colors block ${
+                      isActive(category.path)
+                        ? "bg-secondary/10 text-secondary"
+                        : "text-foreground hover:bg-muted"
+                    }`}
+                  >
+                    {category.name}
+                  </Link>
+                ))}
+              </div>
+
+              {navLinks.slice(1).map((link) => (
                 <Link
                   key={link.path}
                   to={link.path}

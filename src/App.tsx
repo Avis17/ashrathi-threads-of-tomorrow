@@ -20,6 +20,11 @@ import MyOrders from "./pages/MyOrders";
 import OrderDetails from "./pages/OrderDetails";
 import CustomerProfile from "./pages/CustomerProfile";
 import NotFound from "./pages/NotFound";
+import WomenHalfSleeveTShirt from "./pages/women/WomenHalfSleeveTShirt";
+import WomenLongSleeveTShirt from "./pages/women/WomenLongSleeveTShirt";
+import WomenVNeckTShirt from "./pages/women/WomenVNeckTShirt";
+import WomenPoloTShirt from "./pages/women/WomenPoloTShirt";
+import WomenLeggings from "./pages/women/WomenLeggings";
 
 const queryClient = new QueryClient();
 
@@ -54,6 +59,14 @@ const App = () => (
                       <Route path="/my-orders" element={<MyOrders />} />
                       <Route path="/my-orders/:orderId" element={<OrderDetails />} />
                       <Route path="/profile" element={<CustomerProfile />} />
+                      
+                      {/* Women's Category Pages */}
+                      <Route path="/women/half-sleeve-tshirt" element={<WomenHalfSleeveTShirt />} />
+                      <Route path="/women/long-sleeve-tshirt" element={<WomenLongSleeveTShirt />} />
+                      <Route path="/women/vneck-tshirt" element={<WomenVNeckTShirt />} />
+                      <Route path="/women/polo-tshirt" element={<WomenPoloTShirt />} />
+                      <Route path="/women/leggings" element={<WomenLeggings />} />
+                      
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </main>
