@@ -1,4 +1,3 @@
-import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { VibrantCategoryLayout } from "@/components/category/VibrantCategoryLayout";
 import boxerImage from "@/assets/boxer-collection.jpg";
@@ -22,7 +21,6 @@ const Boxer = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-        <Navbar />
         <VibrantCategoryLayout
           title="Boxer Shorts Collection"
           subtitle="Comfort in Every Move"

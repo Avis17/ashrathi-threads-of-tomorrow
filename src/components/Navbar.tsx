@@ -91,7 +91,7 @@ const Navbar = () => {
             <NavigationMenu>
               <NavigationMenuList className="flex-wrap">
                 <NavigationMenuItem>
-                  <NavigationMenuTrigger className="bg-transparent hover:bg-transparent data-[state=open]:bg-transparent">
+                  <NavigationMenuTrigger className="bg-transparent hover:bg-transparent data-[state=open]:bg-transparent hover:text-secondary data-[state=open]:text-secondary">
                     Women
                   </NavigationMenuTrigger>
                   <NavigationMenuContent>
@@ -112,7 +112,7 @@ const Navbar = () => {
                   </NavigationMenuContent>
                 </NavigationMenuItem>
                 <NavigationMenuItem>
-                  <NavigationMenuTrigger className="bg-transparent hover:bg-transparent data-[state=open]:bg-transparent">
+                  <NavigationMenuTrigger className="bg-transparent hover:bg-transparent data-[state=open]:bg-transparent hover:text-secondary data-[state=open]:text-secondary">
                     Men
                   </NavigationMenuTrigger>
                   <NavigationMenuContent>
@@ -152,7 +152,7 @@ const Navbar = () => {
             <NavigationMenu>
               <NavigationMenuList>
                 <NavigationMenuItem>
-                  <NavigationMenuTrigger className="bg-transparent hover:bg-transparent data-[state=open]:bg-transparent">
+                  <NavigationMenuTrigger className="bg-transparent hover:bg-transparent data-[state=open]:bg-transparent hover:text-secondary data-[state=open]:text-secondary">
                     More
                   </NavigationMenuTrigger>
                   <NavigationMenuContent>

@@ -1,4 +1,3 @@
-import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { VibrantCategoryLayout } from "@/components/category/VibrantCategoryLayout";
 import exportSurplusImage from "@/assets/export-surplus-collection.jpg";
@@ -22,7 +21,6 @@ const ExportSurplus = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-        <Navbar />
         <VibrantCategoryLayout
           title="Export Surplus Collection"
           subtitle="International Quality, Local Prices"

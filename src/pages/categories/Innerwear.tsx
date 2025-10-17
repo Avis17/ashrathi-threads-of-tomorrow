@@ -1,4 +1,3 @@
-import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { VibrantCategoryLayout } from "@/components/category/VibrantCategoryLayout";
 import innerwearImage from "@/assets/innerwear-collection.jpg";
@@ -22,7 +21,6 @@ const Innerwear = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-        <Navbar />
         <VibrantCategoryLayout
           title="Premium Innerwear"
           subtitle="Comfort Meets Style"

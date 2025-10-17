@@ -1,4 +1,3 @@
-import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { VibrantCategoryLayout } from "@/components/category/VibrantCategoryLayout";
 import trackPantsImage from "@/assets/track-pants-collection.jpg";
@@ -22,7 +21,6 @@ const TrackPants = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-        <Navbar />
         <VibrantCategoryLayout
           title="Track Pants Collection"
           subtitle="Performance Meets Style"
