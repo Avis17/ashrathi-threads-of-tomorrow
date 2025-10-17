@@ -1,4 +1,5 @@
 import { MeasurementChart } from "@/components/women/MeasurementChart";
+import productImage from "@/assets/women-polo-collection.jpg";
 
 export default function WomenPoloTShirt() {
   const measurements = [
@@ -43,27 +44,13 @@ export default function WomenPoloTShirt() {
             </p>
           </div>
 
-          {/* Product Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-16 max-w-6xl mx-auto">
-            {[
-              { name: "Hot Pink", color: "bg-pink-500" },
-              { name: "Green", color: "bg-green-500" },
-              { name: "Royal Blue", color: "bg-blue-700" },
-              { name: "Maroon", color: "bg-red-800" },
-              { name: "Cyan", color: "bg-cyan-400" },
-              { name: "Grey", color: "bg-gray-500" },
-              { name: "Black", color: "bg-gray-900" },
-              { name: "Light Pink", color: "bg-pink-200" },
-            ].map((item, idx) => (
-              <div
-                key={idx}
-                className="aspect-square rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all hover:scale-105 cursor-pointer"
-              >
-                <div className={`w-full h-full ${item.color} flex items-center justify-center`}>
-                  <div className="w-3/4 h-3/4 bg-white/10 rounded-lg backdrop-blur-sm"></div>
-                </div>
-              </div>
-            ))}
+          {/* Product Image */}
+          <div className="mt-16 max-w-6xl mx-auto">
+            <img 
+              src={productImage} 
+              alt="Women's Polo T-Shirt Collection" 
+              className="w-full rounded-2xl shadow-2xl"
+            />
           </div>
         </div>
       </section>

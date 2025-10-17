@@ -1,4 +1,5 @@
 import { MeasurementChart } from "@/components/women/MeasurementChart";
+import productImage from "@/assets/women-leggings-featured.jpg";
 
 export default function WomenLeggings() {
   const measurements = [
@@ -46,9 +47,11 @@ export default function WomenLeggings() {
           {/* Feature Section with Image */}
           <div className="grid md:grid-cols-2 gap-12 mt-16 max-w-6xl mx-auto items-center">
             <div className="rounded-2xl overflow-hidden shadow-2xl">
-              <div className="aspect-[3/4] bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
-                <div className="w-3/4 h-5/6 bg-gray-900 rounded-lg"></div>
-              </div>
+              <img 
+                src={productImage} 
+                alt="Women's Leggings with Floral Pattern" 
+                className="w-full h-full object-cover"
+              />
             </div>
             
             <div className="space-y-6">
