@@ -36,6 +36,10 @@ import EventApparel from "./pages/categories/EventApparel";
 import SportsApparel from "./pages/categories/SportsApparel";
 import KidsApparel from "./pages/categories/KidsApparel";
 import CorporateApparel from "./pages/categories/CorporateApparel";
+import Innerwear from "./pages/categories/Innerwear";
+import Boxer from "./pages/categories/Boxer";
+import TrackPants from "./pages/categories/TrackPants";
+import ExportSurplus from "./pages/categories/ExportSurplus";
 
 const queryClient = new QueryClient();
 
@@ -90,8 +94,12 @@ const App = () => (
                       <Route path="/categories/uniform" element={<UniformApparel />} />
                       <Route path="/categories/event" element={<EventApparel />} />
                       <Route path="/categories/sports" element={<SportsApparel />} />
-                      <Route path="/categories/kids" element={<KidsApparel />} />
-                      <Route path="/categories/corporate" element={<CorporateApparel />} />
+          <Route path="/categories/kids" element={<KidsApparel />} />
+          <Route path="/categories/corporate" element={<CorporateApparel />} />
+          <Route path="/categories/innerwear" element={<Innerwear />} />
+          <Route path="/categories/boxer" element={<Boxer />} />
+          <Route path="/categories/track-pants" element={<TrackPants />} />
+          <Route path="/categories/export-surplus" element={<ExportSurplus />} />
                       
                       <Route path="*" element={<NotFound />} />
                     </Routes>

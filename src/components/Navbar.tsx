@@ -37,13 +37,17 @@ const Navbar = () => {
     { name: "Contact", path: "/contact" },
   ];
 
-  const categoryLinks = [
+  const moreMenuLinks = [
     { name: "College", path: "/categories/college" },
     { name: "Uniform", path: "/categories/uniform" },
     { name: "Event", path: "/categories/event" },
     { name: "Sports", path: "/categories/sports" },
     { name: "Kids", path: "/categories/kids" },
     { name: "Corporate", path: "/categories/corporate" },
+    { name: "Innerwear", path: "/categories/innerwear" },
+    { name: "Boxer", path: "/categories/boxer" },
+    { name: "Track Pants", path: "/categories/track-pants" },
+    { name: "Export Surplus", path: "/categories/export-surplus" },
   ];
 
   const womenCategories = [
@@ -131,20 +135,6 @@ const Navbar = () => {
               </NavigationMenuList>
             </NavigationMenu>
 
-            {categoryLinks.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={`px-4 py-2 rounded-md font-medium transition-colors ${
-                  isActive(link.path)
-                    ? "text-secondary"
-                    : "text-foreground hover:text-secondary"
-                }`}
-              >
-                {link.name}
-              </Link>
-            ))}
-
             {navLinks.slice(1).map((link) => (
               <Link
                 key={link.path}
@@ -158,6 +148,32 @@ const Navbar = () => {
                 {link.name}
               </Link>
             ))}
+
+            <NavigationMenu>
+              <NavigationMenuList>
+                <NavigationMenuItem>
+                  <NavigationMenuTrigger className="bg-transparent hover:bg-transparent data-[state=open]:bg-transparent">
+                    More
+                  </NavigationMenuTrigger>
+                  <NavigationMenuContent>
+                    <ul className="grid w-[400px] gap-3 p-4">
+                      {moreMenuLinks.map((link) => (
+                        <li key={link.path}>
+                          <NavigationMenuLink asChild>
+                            <Link
+                              to={link.path}
+                              className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                            >
+                              <div className="text-sm font-medium leading-none">{link.name}</div>
+                            </Link>
+                          </NavigationMenuLink>
+                        </li>
+                      ))}
+                    </ul>
+                  </NavigationMenuContent>
+                </NavigationMenuItem>
+              </NavigationMenuList>
+            </NavigationMenu>
           </div>
 
           {/* Auth & CTA Buttons */}
@@ -287,10 +303,10 @@ const Navbar = () => {
                 ))}
               </div>
 
-              {/* Category Links */}
+              {/* More Menu Links */}
               <div className="border-t border-border pt-2 mt-2">
-                <div className="px-4 py-2 text-sm font-semibold text-muted-foreground">Categories</div>
-                {categoryLinks.map((link) => (
+                <div className="px-4 py-2 text-sm font-semibold text-muted-foreground">More</div>
+                {moreMenuLinks.map((link) => (
                   <Link
                     key={link.path}
                     to={link.path}
