@@ -25,6 +25,11 @@ import WomenLongSleeveTShirt from "./pages/women/WomenLongSleeveTShirt";
 import WomenVNeckTShirt from "./pages/women/WomenVNeckTShirt";
 import WomenPoloTShirt from "./pages/women/WomenPoloTShirt";
 import WomenLeggings from "./pages/women/WomenLeggings";
+import MenFullSleeveTShirt from "./pages/men/MenFullSleeveTShirt";
+import MenPoloTShirt from "./pages/men/MenPoloTShirt";
+import MenPrintedTShirt from "./pages/men/MenPrintedTShirt";
+import MenStripedTShirt from "./pages/men/MenStripedTShirt";
+import MenVNeckTShirt from "./pages/men/MenVNeckTShirt";
 
 const queryClient = new QueryClient();
 
@@ -66,6 +71,13 @@ const App = () => (
                       <Route path="/women/vneck-tshirt" element={<WomenVNeckTShirt />} />
                       <Route path="/women/polo-tshirt" element={<WomenPoloTShirt />} />
                       <Route path="/women/leggings" element={<WomenLeggings />} />
+                      
+                      {/* Men's Category Pages */}
+                      <Route path="/men/full-sleeve-tshirt" element={<MenFullSleeveTShirt />} />
+                      <Route path="/men/polo-tshirt" element={<MenPoloTShirt />} />
+                      <Route path="/men/printed-tshirt" element={<MenPrintedTShirt />} />
+                      <Route path="/men/striped-tshirt" element={<MenStripedTShirt />} />
+                      <Route path="/men/vneck-tshirt" element={<MenVNeckTShirt />} />
                       
                       <Route path="*" element={<NotFound />} />
                     </Routes>
