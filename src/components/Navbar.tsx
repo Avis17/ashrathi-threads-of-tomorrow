@@ -37,6 +37,15 @@ const Navbar = () => {
     { name: "Contact", path: "/contact" },
   ];
 
+  const categoryLinks = [
+    { name: "College", path: "/categories/college" },
+    { name: "Uniform", path: "/categories/uniform" },
+    { name: "Event", path: "/categories/event" },
+    { name: "Sports", path: "/categories/sports" },
+    { name: "Kids", path: "/categories/kids" },
+    { name: "Corporate", path: "/categories/corporate" },
+  ];
+
   const womenCategories = [
     { name: "Half Sleeve T-Shirt", path: "/women/half-sleeve-tshirt" },
     { name: "Long Sleeve T-Shirt", path: "/women/long-sleeve-tshirt" },
@@ -76,7 +85,7 @@ const Navbar = () => {
             </Link>
             
             <NavigationMenu>
-              <NavigationMenuList>
+              <NavigationMenuList className="flex-wrap">
                 <NavigationMenuItem>
                   <NavigationMenuTrigger className="bg-transparent hover:bg-transparent data-[state=open]:bg-transparent">
                     Women
@@ -121,6 +130,20 @@ const Navbar = () => {
                 </NavigationMenuItem>
               </NavigationMenuList>
             </NavigationMenu>
+
+            {categoryLinks.map((link) => (
+              <Link
+                key={link.path}
+                to={link.path}
+                className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                  isActive(link.path)
+                    ? "text-secondary"
+                    : "text-foreground hover:text-secondary"
+                }`}
+              >
+                {link.name}
+              </Link>
+            ))}
 
             {navLinks.slice(1).map((link) => (
               <Link
@@ -260,6 +283,25 @@ const Navbar = () => {
                     }`}
                   >
                     {category.name}
+                  </Link>
+                ))}
+              </div>
+
+              {/* Category Links */}
+              <div className="border-t border-border pt-2 mt-2">
+                <div className="px-4 py-2 text-sm font-semibold text-muted-foreground">Categories</div>
+                {categoryLinks.map((link) => (
+                  <Link
+                    key={link.path}
+                    to={link.path}
+                    onClick={() => setIsOpen(false)}
+                    className={`px-6 py-2.5 rounded-md text-sm transition-colors block ${
+                      isActive(link.path)
+                        ? "bg-secondary/10 text-secondary"
+                        : "text-foreground hover:bg-muted"
+                    }`}
+                  >
+                    {link.name}
                   </Link>
                 ))}
               </div>

@@ -30,6 +30,12 @@ import MenPoloTShirt from "./pages/men/MenPoloTShirt";
 import MenPrintedTShirt from "./pages/men/MenPrintedTShirt";
 import MenStripedTShirt from "./pages/men/MenStripedTShirt";
 import MenVNeckTShirt from "./pages/men/MenVNeckTShirt";
+import CollegeApparel from "./pages/categories/CollegeApparel";
+import UniformApparel from "./pages/categories/UniformApparel";
+import EventApparel from "./pages/categories/EventApparel";
+import SportsApparel from "./pages/categories/SportsApparel";
+import KidsApparel from "./pages/categories/KidsApparel";
+import CorporateApparel from "./pages/categories/CorporateApparel";
 
 const queryClient = new QueryClient();
 
@@ -78,6 +84,14 @@ const App = () => (
                       <Route path="/men/printed-tshirt" element={<MenPrintedTShirt />} />
                       <Route path="/men/striped-tshirt" element={<MenStripedTShirt />} />
                       <Route path="/men/vneck-tshirt" element={<MenVNeckTShirt />} />
+                      
+                      {/* Category Pages */}
+                      <Route path="/categories/college" element={<CollegeApparel />} />
+                      <Route path="/categories/uniform" element={<UniformApparel />} />
+                      <Route path="/categories/event" element={<EventApparel />} />
+                      <Route path="/categories/sports" element={<SportsApparel />} />
+                      <Route path="/categories/kids" element={<KidsApparel />} />
+                      <Route path="/categories/corporate" element={<CorporateApparel />} />
                       
                       <Route path="*" element={<NotFound />} />
                     </Routes>
