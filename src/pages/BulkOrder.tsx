@@ -59,6 +59,26 @@ const BulkOrder = () => {
 
       if (error) throw error;
 
+      // Send email notification
+      const { error: emailError } = await supabase.functions.invoke('send-contact-notification', {
+        body: {
+          type: 'bulk_order',
+          data: {
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            company_name: formData.companyName,
+            product_interest: formData.productInterest,
+            quantity: parseInt(formData.quantity),
+            requirements: formData.requirements,
+          }
+        }
+      });
+
+      if (emailError) {
+        console.error('Email notification error:', emailError);
+      }
+
       toast.success('Bulk order request submitted successfully!');
       setFormData({
         name: '',
