@@ -18,6 +18,12 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { useAuth } from "@/hooks/useAuth";
 import { CartButton } from "@/components/cart/CartButton";
 import logo from "@/assets/logo.png";
@@ -236,8 +242,8 @@ const Navbar = () => {
 
         {/* Mobile Navigation */}
         {isOpen && (
-          <div className="lg:hidden py-4 border-t border-border animate-fade-in">
-            <div className="flex flex-col space-y-2">
+          <div className="lg:hidden border-t border-border animate-fade-in max-h-[calc(100vh-5rem)] overflow-y-auto">
+            <div className="flex flex-col space-y-2 py-4">
               {user && (
                 <div className="mx-4 mb-2 flex items-center gap-2">
                   <CartButton />
@@ -265,62 +271,76 @@ const Navbar = () => {
                 Home
               </Link>
               
-              {/* Women Submenu */}
-              <div className="border-t border-border pt-2 mt-2">
-                <div className="px-4 py-2 text-sm font-semibold text-muted-foreground">Women</div>
-                {womenCategories.map((category) => (
-                  <Link
-                    key={category.path}
-                    to={category.path}
-                    onClick={() => setIsOpen(false)}
-                    className={`px-6 py-2.5 rounded-md text-sm transition-colors block ${
-                      isActive(category.path)
-                        ? "bg-secondary/10 text-secondary"
-                        : "text-foreground hover:bg-muted"
-                    }`}
-                  >
-                    {category.name}
-                  </Link>
-                ))}
-              </div>
+              <Accordion type="single" collapsible className="w-full">
+                {/* Women Submenu */}
+                <AccordionItem value="women" className="border-0">
+                  <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted rounded-md font-medium">
+                    Women
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-2">
+                    {womenCategories.map((category) => (
+                      <Link
+                        key={category.path}
+                        to={category.path}
+                        onClick={() => setIsOpen(false)}
+                        className={`px-6 py-2.5 rounded-md text-sm transition-colors block ${
+                          isActive(category.path)
+                            ? "bg-secondary/10 text-secondary"
+                            : "text-foreground hover:bg-muted"
+                        }`}
+                      >
+                        {category.name}
+                      </Link>
+                    ))}
+                  </AccordionContent>
+                </AccordionItem>
 
-              {/* Men Submenu */}
-              <div className="border-t border-border pt-2 mt-2">
-                <div className="px-4 py-2 text-sm font-semibold text-muted-foreground">Men</div>
-                {menCategories.map((category) => (
-                  <Link
-                    key={category.path}
-                    to={category.path}
-                    onClick={() => setIsOpen(false)}
-                    className={`px-6 py-2.5 rounded-md text-sm transition-colors block ${
-                      isActive(category.path)
-                        ? "bg-secondary/10 text-secondary"
-                        : "text-foreground hover:bg-muted"
-                    }`}
-                  >
-                    {category.name}
-                  </Link>
-                ))}
-              </div>
+                {/* Men Submenu */}
+                <AccordionItem value="men" className="border-0">
+                  <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted rounded-md font-medium">
+                    Men
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-2">
+                    {menCategories.map((category) => (
+                      <Link
+                        key={category.path}
+                        to={category.path}
+                        onClick={() => setIsOpen(false)}
+                        className={`px-6 py-2.5 rounded-md text-sm transition-colors block ${
+                          isActive(category.path)
+                            ? "bg-secondary/10 text-secondary"
+                            : "text-foreground hover:bg-muted"
+                        }`}
+                      >
+                        {category.name}
+                      </Link>
+                    ))}
+                  </AccordionContent>
+                </AccordionItem>
 
-              {/* More Menu Links */}
-              <div className="border-t border-border pt-2 mt-2">
-                <div className="px-4 py-2 text-sm font-semibold text-muted-foreground">More</div>
-                {moreMenuLinks.map((link) => (
-                  <Link
-                    key={link.path}
-                    to={link.path}
-                    onClick={() => setIsOpen(false)}
-                    className={`px-6 py-2.5 rounded-md text-sm transition-colors block ${
-                      isActive(link.path)
-                        ? "bg-secondary/10 text-secondary"
-                        : "text-foreground hover:bg-muted"
-                    }`}
-                  >
-                    {link.name}
-                  </Link>
-                ))}
-              </div>
+                {/* More Menu Links */}
+                <AccordionItem value="more" className="border-0">
+                  <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted rounded-md font-medium">
+                    More
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-2">
+                    {moreMenuLinks.map((link) => (
+                      <Link
+                        key={link.path}
+                        to={link.path}
+                        onClick={() => setIsOpen(false)}
+                        className={`px-6 py-2.5 rounded-md text-sm transition-colors block ${
+                          isActive(link.path)
+                            ? "bg-secondary/10 text-secondary"
+                            : "text-foreground hover:bg-muted"
+                        }`}
+                      >
+                        {link.name}
+                      </Link>
+                    ))}
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
 
               {navLinks.slice(1).map((link) => (
                 <Link
