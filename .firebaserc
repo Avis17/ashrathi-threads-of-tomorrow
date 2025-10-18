@@ -1,0 +1,8 @@
+{
+  "projects": {
+    "default": "featherfashions-cfbc9",
+    "prod": "featherfashions-cfbc9"
+  },
+  "targets": {},
+  "etags": {}
+}
