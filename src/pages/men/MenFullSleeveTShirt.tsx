@@ -24,8 +24,8 @@ export default function MenFullSleeveTShirt() {
   return (
     <MenProductLayout
       title="Men's Full Sleeve T-Shirt"
-      subtitle="Garment Buying Office in Tirupur, India"
-      description="We are experienced men full sleeve t-shirt export company in Tirupur, India. We manufacture and export the finest quality men full sleeve t-shirt all over the world."
+      subtitle="Garment Buying Office in Annur, India"
+      description="We are experienced men full sleeve t-shirt export company in Annur, India. We manufacture and export the finest quality men full sleeve t-shirt all over the world."
       heroImage={heroImage}
       productImage={productImage}
       measurements={measurements}

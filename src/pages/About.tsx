@@ -12,7 +12,7 @@ const About = () => {
   ];
 
   const timeline = [
-    { year: "2023", event: "The Beginning", description: "Feather Fashions founded in Tirupur with a sustainable vision" },
+    { year: "2023", event: "The Beginning", description: "Feather Fashions founded in Annur with a sustainable vision" },
     { year: "2024", event: "Eco-Innovation", description: "Expanded to organic and bamboo-blend collections" },
     { year: "2025", event: "Global Presence", description: "Digital launch and international outreach" },
   ];
@@ -41,7 +41,7 @@ const About = () => {
                 <span className="text-foreground font-semibold">Ashrav</span>, our brand represents the perfect harmony of sustainable practices, innovative design, and uncompromising quality.
               </p>
               <p className="mb-4 leading-relaxed">
-                From our roots in Tirupur, Tamil Nadu — India's knitwear capital — we've grown into a thoughtful apparel manufacturer dedicated to creating garments that are as gentle on the planet as they are on your skin. Every piece is crafted with eco-friendly fabrics like organic cotton, bamboo, modal, and Tencel, ensuring breathability, softness, and sustainability.
+                From our roots in Annur, Tamil Nadu — India's knitwear capital — we've grown into a thoughtful apparel manufacturer dedicated to creating garments that are as gentle on the planet as they are on your skin. Every piece is crafted with eco-friendly fabrics like organic cotton, bamboo, modal, and Tencel, ensuring breathability, softness, and sustainability.
               </p>
               <p className="leading-relaxed">
                 At Feather Fashions, we believe fashion should feel effortless. Our collections blend modern aesthetics with timeless comfort, perfect for lounging, sleeping, or everyday wear. We're not just making clothes — we're weaving a legacy of mindful living, one feather-soft garment at a time.

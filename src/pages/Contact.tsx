@@ -10,9 +10,9 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 const contactSchema = z.object({
-  name: z.string().min(1, 'Name is required').max(100),
-  email: z.string().email('Invalid email address').max(255),
-  message: z.string().min(1, 'Message is required').max(1000),
+  name: z.string().min(1, "Name is required").max(100),
+  email: z.string().email("Invalid email address").max(255),
+  message: z.string().min(1, "Message is required").max(1000),
 });
 
 const Contact = () => {
@@ -33,7 +33,7 @@ const Contact = () => {
         message: formData.message,
       });
 
-      const { error } = await supabase.from('contact_inquiries').insert([
+      const { error } = await supabase.from("contact_inquiries").insert([
         {
           name: formData.name,
           email: formData.email,
@@ -45,30 +45,35 @@ const Contact = () => {
       if (error) throw error;
 
       // Send email notification
-      const { error: emailError } = await supabase.functions.invoke('send-contact-notification', {
-        body: {
-          type: 'contact',
-          data: {
-            name: formData.name,
-            email: formData.email,
-            phone: formData.phone,
-            message: formData.message,
-          }
+      const { error: emailError } = await supabase.functions.invoke(
+        "send-contact-notification",
+        {
+          body: {
+            type: "contact",
+            data: {
+              name: formData.name,
+              email: formData.email,
+              phone: formData.phone,
+              message: formData.message,
+            },
+          },
         }
-      });
+      );
 
       if (emailError) {
-        console.error('Email notification error:', emailError);
+        console.error("Email notification error:", emailError);
       }
 
       toast.success("Thank you for reaching out! We'll get back to you soon.");
       setFormData({ name: "", email: "", phone: "", message: "" });
     } catch (err: any) {
-      toast.error(err.message || 'Failed to send message');
+      toast.error(err.message || "Failed to send message");
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
@@ -80,7 +85,8 @@ const Contact = () => {
           <div className="divider-accent mb-6" />
           <h1 className="text-5xl md:text-6xl font-bold mb-4">Let's Connect</h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Let's create sustainable fashion together. Reach out for inquiries, bulk orders, private labeling, or eco-conscious collaborations.
+            Let's create sustainable fashion together. Reach out for inquiries,
+            bulk orders, private labeling, or eco-conscious collaborations.
           </p>
         </div>
 
@@ -96,7 +102,7 @@ const Contact = () => {
                   <div>
                     <h3 className="font-semibold text-lg mb-1">Our Location</h3>
                     <p className="text-muted-foreground text-sm">
-                      Tirupur, Tamil Nadu, India
+                      Annur, Tamil Nadu, India
                     </p>
                   </div>
                 </div>
@@ -107,7 +113,9 @@ const Contact = () => {
                   </div>
                   <div>
                     <h3 className="font-semibold text-lg mb-1">Phone</h3>
-                    <p className="text-muted-foreground text-sm">+91 9789225510</p>
+                    <p className="text-muted-foreground text-sm">
+                      +91 9789225510
+                    </p>
                   </div>
                 </div>
 
@@ -128,9 +136,12 @@ const Contact = () => {
                     <Clock className="h-6 w-6 text-gold" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-lg mb-1">Working Hours</h3>
+                    <h3 className="font-semibold text-lg mb-1">
+                      Working Hours
+                    </h3>
                     <p className="text-muted-foreground text-sm">
-                      Mon - Sat: 9:00 AM - 6:00 PM<br />
+                      Mon - Sat: 9:00 AM - 6:00 PM
+                      <br />
                       Sunday: Closed
                     </p>
                   </div>
@@ -141,11 +152,17 @@ const Contact = () => {
             <Card className="bg-gradient-to-br from-secondary to-accent text-white border-0">
               <CardContent className="p-6">
                 <MessageCircle className="h-10 w-10 mb-3" />
-                <h3 className="font-accent font-semibold text-xl mb-2">Quick Response</h3>
+                <h3 className="font-accent font-semibold text-xl mb-2">
+                  Quick Response
+                </h3>
                 <p className="text-white/90 text-sm mb-4">
-                  Need immediate assistance? Connect with us on WhatsApp for faster responses.
+                  Need immediate assistance? Connect with us on WhatsApp for
+                  faster responses.
                 </p>
-                <Button variant="outline" className="w-full bg-white/20 border-white text-white hover:bg-white hover:text-primary">
+                <Button
+                  variant="outline"
+                  className="w-full bg-white/20 border-white text-white hover:bg-white hover:text-primary"
+                >
                   Chat on WhatsApp
                 </Button>
               </CardContent>
@@ -160,7 +177,10 @@ const Contact = () => {
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <Label htmlFor="name" className="text-base font-semibold mb-2 block">
+                      <Label
+                        htmlFor="name"
+                        className="text-base font-semibold mb-2 block"
+                      >
                         Your Name *
                       </Label>
                       <Input
@@ -174,7 +194,10 @@ const Contact = () => {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="email" className="text-base font-semibold mb-2 block">
+                      <Label
+                        htmlFor="email"
+                        className="text-base font-semibold mb-2 block"
+                      >
                         Email Address *
                       </Label>
                       <Input
@@ -191,7 +214,10 @@ const Contact = () => {
                   </div>
 
                   <div>
-                    <Label htmlFor="phone" className="text-base font-semibold mb-2 block">
+                    <Label
+                      htmlFor="phone"
+                      className="text-base font-semibold mb-2 block"
+                    >
                       Phone Number
                     </Label>
                     <Input
@@ -206,7 +232,10 @@ const Contact = () => {
                   </div>
 
                   <div>
-                    <Label htmlFor="message" className="text-base font-semibold mb-2 block">
+                    <Label
+                      htmlFor="message"
+                      className="text-base font-semibold mb-2 block"
+                    >
                       Your Message *
                     </Label>
                     <Textarea
@@ -238,15 +267,15 @@ const Contact = () => {
         <Card className="overflow-hidden">
           <CardContent className="p-0">
             <div className="w-full h-96">
-              <iframe 
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d254.16454346298983!2d77.15303385699188!3d11.187924053040138!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ba8fdbe78c36eb5%3A0xf0b370a24b23230e!2sGlobal%20city%20Entrance%2C%20Kaduvettipalayam!5e1!3m2!1sen!2sin!4v1760357543042!5m2!1sen!2sin" 
-                width="100%" 
-                height="100%" 
-                style={{ border: 0 }} 
-                allowFullScreen 
-                loading="lazy" 
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3913.3190061814194!2d77.10418647481198!3d11.237927088940278!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ba8fd56e2714fcb%3A0xa4c27c5e5043ce32!2sSemmaClicks%20Studio!5e0!3m2!1sen!2sin!4v1760847657810!5m2!1sen!2sin"
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
-                title="Feather Fashions Location - Tirupur, Tamil Nadu"
+                title="Feather Fashions Location - Annur, Tamil Nadu"
               />
             </div>
           </CardContent>

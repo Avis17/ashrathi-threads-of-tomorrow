@@ -48,7 +48,7 @@ export default function InvoiceGenerator() {
   const [termsAndConditions, setTermsAndConditions] = useState([
     'Payment is due within 30 days of invoice date.',
     'Goods once sold will not be taken back or exchanged.',
-    'All disputes are subject to Tirupur jurisdiction only.',
+    'All disputes are subject to Annur jurisdiction only.',
   ]);
   const [items, setItems] = useState<InvoiceItem[]>([{
     product_id: '',

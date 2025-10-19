@@ -27,7 +27,7 @@ export default function WomenLongSleeveTShirt() {
       <section className="relative bg-gradient-to-r from-orange-400/30 via-yellow-400/30 to-orange-400/30 py-20">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-6 animate-fade-in">
-            WOMEN'S LONG SLEEVE T-SHIRT MANUFACTURING COMPANY IN TIRUPUR
+            WOMEN'S LONG SLEEVE T-SHIRT MANUFACTURING COMPANY IN Annur
           </h1>
         </div>
       </section>
@@ -37,10 +37,10 @@ export default function WomenLongSleeveTShirt() {
         <div className="container mx-auto px-4">
           <div className="max-w-5xl mx-auto">
             <h2 className="text-3xl font-bold text-center mb-8">
-              WOMEN'S LONG SLEEVE T-SHIRT MANUFACTURER IN TIRUPUR, INDIA
+              WOMEN'S LONG SLEEVE T-SHIRT MANUFACTURER IN Annur, INDIA
             </h2>
             <p className="text-lg text-muted-foreground text-center leading-relaxed">
-              We are women long sleeve t-shirt manufacturers, women long sleeve t-shirt exporter, women long sleeve t-shirt supplier, women long sleeve t-shirt wholesalers in Tirupur, India. We are best women long sleeve t-shirt manufacturer with premium quality fabrics, exotic colors, 100% cotton raw materials in Tirupur. We manufacture women long sleeve t-shirt with different styles like women round neck t-shirt, women v neck t-shirt, women plain t-shirt and export to all over the world. Feather Fashions is the best women long sleeve t-shirt manufacturer, supplier and export company in Tirupur, India.
+              We are women long sleeve t-shirt manufacturers, women long sleeve t-shirt exporter, women long sleeve t-shirt supplier, women long sleeve t-shirt wholesalers in Annur, India. We are best women long sleeve t-shirt manufacturer with premium quality fabrics, exotic colors, 100% cotton raw materials in Annur. We manufacture women long sleeve t-shirt with different styles like women round neck t-shirt, women v neck t-shirt, women plain t-shirt and export to all over the world. Feather Fashions is the best women long sleeve t-shirt manufacturer, supplier and export company in Annur, India.
             </p>
           </div>
 

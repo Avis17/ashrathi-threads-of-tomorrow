@@ -27,7 +27,7 @@ export default function WomenLeggings() {
       <section className="relative bg-gradient-to-r from-slate-400/30 via-gray-400/30 to-slate-400/30 py-20">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-6 animate-fade-in">
-            LEGGINGS MANUFACTURER IN TIRUPUR, INDIA
+            LEGGINGS MANUFACTURER IN Annur, INDIA
           </h1>
         </div>
       </section>
@@ -37,10 +37,10 @@ export default function WomenLeggings() {
         <div className="container mx-auto px-4">
           <div className="max-w-5xl mx-auto">
             <h2 className="text-3xl font-bold text-center mb-8">
-            LEGGINGS MANUFACTURING COMPANY IN TIRUPUR
+            LEGGINGS MANUFACTURING COMPANY IN Annur
             </h2>
             <p className="text-lg text-muted-foreground text-center leading-relaxed mb-6">
-              Our company is known as leading Women's leggings manufacturer, supplier, exporter in Tirupur. We have Women's leggings with various size, fabric, colors, leggings type and pattern.
+              Our company is known as leading Women's leggings manufacturer, supplier, exporter in Annur. We have Women's leggings with various size, fabric, colors, leggings type and pattern.
             </p>
           </div>
 
@@ -55,12 +55,12 @@ export default function WomenLeggings() {
             </div>
             
             <div className="space-y-6">
-              <h3 className="text-3xl font-bold">BULK LEGGINGS IN TIRUPUR</h3>
+              <h3 className="text-3xl font-bold">BULK LEGGINGS IN Annur</h3>
               <p className="text-lg text-muted-foreground leading-relaxed">
-                Feather Fashions is a best Women's leggings manufacture, exporter, supplier and wholesalers in Tirupur, India. We are experienced ladies leggings manufacturer with quality range of cotton lycra leggings. We are Women's leggings manufacturers, Women's leggings exporter, Women's leggings supplier, Women's leggings wholesalers in Tirupur, India. We are Women's leggings manufacturer with premium quality fabrics, exotic colors, 100% cotton lycra raw materials in Tirupur. Feather Fashions is the best Women's leggings manufacturer, supplier and export company in Tirupur, India.
+                Feather Fashions is a best Women's leggings manufacture, exporter, supplier and wholesalers in Annur, India. We are experienced ladies leggings manufacturer with quality range of cotton lycra leggings. We are Women's leggings manufacturers, Women's leggings exporter, Women's leggings supplier, Women's leggings wholesalers in Annur, India. We are Women's leggings manufacturer with premium quality fabrics, exotic colors, 100% cotton lycra raw materials in Annur. Feather Fashions is the best Women's leggings manufacturer, supplier and export company in Annur, India.
               </p>
               <p className="text-lg text-muted-foreground leading-relaxed">
-                Our company is known as leading Women's leggings manufacturer, supplier, exporter in Tirupur. We have Women's leggings with various size, fabric, colors, leggings type and pattern.
+                Our company is known as leading Women's leggings manufacturer, supplier, exporter in Annur. We have Women's leggings with various size, fabric, colors, leggings type and pattern.
               </p>
             </div>
           </div>

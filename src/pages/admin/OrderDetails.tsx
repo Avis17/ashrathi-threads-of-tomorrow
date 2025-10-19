@@ -112,7 +112,7 @@ export default function AdminOrderDetails() {
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.text('No.1, Nallappa Gounder Street, Gandhi Nagar,', 105, 28, { align: 'center' });
-    doc.text('Tirupur - 641 601, Tamil Nadu, India', 105, 33, { align: 'center' });
+    doc.text('Annur - 641 601, Tamil Nadu, India', 105, 33, { align: 'center' });
     doc.text('Phone: +91 99999 99999', 105, 38, { align: 'center' });
     
     // Invoice Title
