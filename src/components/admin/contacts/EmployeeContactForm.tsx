@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { DEPARTMENTS } from "@/lib/departments";
 
+const MAX_FILE_SIZE = 500000; // 500KB
+
 const employeeContactSchema = z.object({
   name: z.string().min(1, "Name is required"),
   phone: z.string().min(10, "Phone number must be at least 10 digits"),
@@ -18,6 +20,7 @@ const employeeContactSchema = z.object({
   date_of_joining: z.string().optional(),
   salary: z.string().optional(),
   notes: z.string().optional(),
+  photo: z.string().optional(),
 });
 
 export type EmployeeContactFormData = z.infer<typeof employeeContactSchema>;
@@ -41,9 +44,30 @@ export const EmployeeContactForm = ({ onSubmit, initialData, isLoading }: Employ
       date_of_joining: "",
       salary: "",
       notes: "",
+      photo: "",
       ...initialData,
     },
   });
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > MAX_FILE_SIZE) {
+      form.setError("photo", {
+        type: "manual",
+        message: "Photo size must be less than 500KB",
+      });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      form.setValue("photo", reader.result as string);
+      form.clearErrors("photo");
+    };
+    reader.readAsDataURL(file);
+  };
 
   return (
     <Form {...form}>
@@ -179,6 +203,47 @@ export const EmployeeContactForm = ({ onSubmit, initialData, isLoading }: Employ
               <FormLabel>Notes</FormLabel>
               <FormControl>
                 <Textarea placeholder="Enter additional notes (optional)" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="photo"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Photo (Optional)</FormLabel>
+              <FormControl>
+                <div className="space-y-2">
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePhotoChange}
+                    disabled={isLoading}
+                  />
+                  {field.value && (
+                    <div className="flex items-center gap-2">
+                      <img
+                        src={field.value}
+                        alt="Preview"
+                        className="h-20 w-20 rounded-full object-cover border-2 border-primary/20"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => form.setValue("photo", "")}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Maximum file size: 500KB
+                  </p>
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>

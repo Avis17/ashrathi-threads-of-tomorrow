@@ -9,8 +9,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Eye } from "lucide-react";
 import { EmployeeContactForm, type EmployeeContactFormData } from "./contacts/EmployeeContactForm";
+import { ContactDetailsDialog } from "./contacts/ContactDetailsDialog";
 import { DynamicPagination } from "./DynamicPagination";
 import { DEPARTMENTS } from "@/lib/departments";
 
@@ -23,6 +24,7 @@ export const EmployeeContactsManager = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingContact, setEditingContact] = useState<any>(null);
   const [deletingContact, setDeletingContact] = useState<any>(null);
+  const [viewingContact, setViewingContact] = useState<any>(null);
 
   const queryClient = useQueryClient();
 
@@ -65,6 +67,7 @@ export const EmployeeContactsManager = () => {
         date_of_joining: data.date_of_joining || null,
         salary: data.salary ? parseFloat(data.salary) : null,
         notes: data.notes || null,
+        photo: data.photo || null,
       };
       const { error } = await supabase.from("employee_contacts").insert([insertData]);
       if (error) throw error;
@@ -92,6 +95,7 @@ export const EmployeeContactsManager = () => {
         date_of_joining: data.date_of_joining || null,
         salary: data.salary ? parseFloat(data.salary) : null,
         notes: data.notes || null,
+        photo: data.photo || null,
       };
       const { error } = await supabase
         .from("employee_contacts")
@@ -222,6 +226,13 @@ export const EmployeeContactsManager = () => {
                         <Button
                           variant="outline"
                           size="sm"
+                          onClick={() => setViewingContact(contact)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={() => setEditingContact(contact)}
                         >
                           <Pencil className="h-4 w-4" />
@@ -285,6 +296,12 @@ export const EmployeeContactsManager = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ContactDetailsDialog
+        contact={viewingContact}
+        open={!!viewingContact}
+        onOpenChange={() => setViewingContact(null)}
+      />
     </div>
   );
 };
