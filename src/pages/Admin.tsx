@@ -10,6 +10,7 @@ import BulkOrdersManager from '@/components/admin/BulkOrdersManager';
 import NewsletterManager from '@/components/admin/NewsletterManager';
 import CustomersManager from '@/components/admin/CustomersManager';
 import { OrdersManager } from '@/components/admin/OrdersManager';
+import { EmployeeContactsManager } from '@/components/admin/EmployeeContactsManager';
 import InvoiceGenerator from './admin/InvoiceGenerator';
 import InvoiceHistory from './admin/InvoiceHistory';
 import InvoiceReset from './admin/InvoiceReset';
@@ -55,6 +56,7 @@ const Admin = () => {
               <Route path="/invoice" element={<InvoiceGenerator />} />
               <Route path="/customers" element={<CustomersManager />} />
               <Route path="/products" element={<ProductsManager />} />
+              <Route path="/contacts" element={<EmployeeContactsManager />} />
               <Route path="/history" element={<InvoiceHistory />} />
               <Route path="/inquiries" element={<ContactInquiries />} />
               <Route path="/bulk-orders" element={<BulkOrdersManager />} />

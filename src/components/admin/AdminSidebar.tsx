@@ -9,7 +9,8 @@ import {
   RotateCcw,
   LayoutDashboard,
   ClipboardList,
-  Factory
+  Factory,
+  Contact
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import {
@@ -30,6 +31,7 @@ const menuItems = [
   { title: 'Generate Invoice', url: '/admin/invoice', icon: FileText },
   { title: 'Customers', url: '/admin/customers', icon: Users },
   { title: 'Products', url: '/admin/products', icon: Package },
+  { title: 'Contacts', url: '/admin/contacts', icon: Contact },
   { title: 'History', url: '/admin/history', icon: History },
   { title: 'Contact Inquiries', url: '/admin/inquiries', icon: Mail },
   { title: 'Bulk Orders', url: '/admin/bulk-orders', icon: ShoppingCart },

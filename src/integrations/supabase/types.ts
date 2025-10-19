@@ -223,6 +223,54 @@ export type Database = {
         }
         Relationships: []
       }
+      employee_contacts: {
+        Row: {
+          address: string
+          alternative_contact: string
+          created_at: string
+          date_of_joining: string | null
+          department: string
+          email: string | null
+          id: string
+          is_active: boolean
+          name: string
+          notes: string | null
+          phone: string
+          salary: number | null
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          alternative_contact: string
+          created_at?: string
+          date_of_joining?: string | null
+          department: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          notes?: string | null
+          phone: string
+          salary?: number | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          alternative_contact?: string
+          created_at?: string
+          date_of_joining?: string | null
+          department?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          notes?: string | null
+          phone?: string
+          salary?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       invoice_items: {
         Row: {
           amount: number
