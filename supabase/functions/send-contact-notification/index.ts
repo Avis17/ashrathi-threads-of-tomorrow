@@ -59,8 +59,8 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const emailResponse = await resend.emails.send({
-      from: "Feather Fashions <info.featherfashions@gmail.com>",
-      to: ["info.featherfashions@gmail.com"],
+      from: "Feather Fashions <info@featherfashions.shop>",
+      to: ["info@featherfashions.shop"],
       subject: subject,
       html: htmlContent,
     });
