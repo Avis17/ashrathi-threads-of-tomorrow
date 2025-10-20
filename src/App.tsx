@@ -13,6 +13,8 @@ import Collections from "./pages/Collections";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Auth from "./pages/Auth";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import Admin from "./pages/Admin";
 import BulkOrder from "./pages/BulkOrder";
 import Checkout from "./pages/Checkout";
@@ -69,6 +71,8 @@ const App = () => (
                       <Route path="/about" element={<About />} />
                       <Route path="/contact" element={<Contact />} />
                       <Route path="/auth" element={<Auth />} />
+                      <Route path="/forgot-password" element={<ForgotPassword />} />
+                      <Route path="/reset-password" element={<ResetPassword />} />
                       <Route path="/bulk-order" element={<BulkOrder />} />
                       <Route path="/checkout" element={<Checkout />} />
                       <Route path="/my-orders" element={<MyOrders />} />
