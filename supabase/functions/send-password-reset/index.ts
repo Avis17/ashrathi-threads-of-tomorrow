@@ -30,10 +30,13 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Generate password reset link
+    // Generate password reset link with redirect to reset password page
     const { data, error } = await supabase.auth.admin.generateLink({
       type: 'recovery',
       email: email,
+      options: {
+        redirectTo: `${Deno.env.get('VITE_SUPABASE_URL')?.replace('/supabase', '')}/reset-password`
+      }
     });
 
     if (error) {
