@@ -51,7 +51,8 @@ const Footer = () => {
             <ul className="space-y-3">
               <li className="flex items-start gap-2 text-sm text-primary-foreground/80">
                 <Mail className="h-4 w-4 mt-0.5 text-secondary" />
-                <span>info.featherfashions@gmail.com</span>
+                <span>                      info@featherfashions.shop
+                </span>
               </li>
               <li className="flex items-start gap-2 text-sm text-primary-foreground/80">
                 <Phone className="h-4 w-4 mt-0.5 text-secondary" />
@@ -62,7 +63,7 @@ const Footer = () => {
                 <span>Annur, Tamil Nadu, India</span>
               </li>
             </ul>
-            
+
             {/* Social Links */}
             <div className="flex gap-3 mt-4">
               <a href="#" className="p-2 rounded-full bg-secondary/20 hover:bg-secondary transition-colors">

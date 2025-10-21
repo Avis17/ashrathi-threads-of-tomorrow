@@ -126,7 +126,7 @@ const Contact = () => {
                   <div>
                     <h3 className="font-semibold text-lg mb-1">Email</h3>
                     <p className="text-muted-foreground text-sm break-all">
-                      info.featherfashions@gmail.com
+                      info@featherfashions.shop
                     </p>
                   </div>
                 </div>
