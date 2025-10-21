@@ -28,16 +28,22 @@ const ForgotPassword = () => {
       return;
     }
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: 'https://featherfashions.shop/reset-password',
-    });
+    try {
+      const { error } = await supabase.functions.invoke('send-password-reset', {
+        body: { email },
+      });
 
-    if (error) {
-      toast.error(error.message);
-    } else {
-      setEmailSent(true);
-      toast.success('Password reset email sent! Please check your inbox.');
+      if (error) {
+        toast.error(error.message || 'Failed to send reset email');
+      } else {
+        setEmailSent(true);
+        toast.success('Password reset email sent! Please check your inbox.');
+      }
+    } catch (err: any) {
+      toast.error('Failed to send reset email. Please try again.');
+      console.error('Password reset error:', err);
     }
+    
     setLoading(false);
   };
 
