@@ -49,10 +49,14 @@ const Footer = () => {
           <div>
             <h3 className="font-accent font-semibold text-lg mb-4">Contact Us</h3>
             <ul className="space-y-3">
-              <li className="flex items-start gap-2 text-sm text-primary-foreground/80">
+              <li className="flex items-start gap-2 text-sm">
                 <Mail className="h-4 w-4 mt-0.5 text-secondary" />
-                <span>                      info@featherfashions.shop
-                </span>
+                <a 
+                  href="mailto:hello@featherfashions.in"
+                  className="font-medium text-secondary hover:text-accent transition-colors duration-200 underline decoration-secondary/30 hover:decoration-accent"
+                >
+                  hello@featherfashions.in
+                </a>
               </li>
               <li className="flex items-start gap-2 text-sm text-primary-foreground/80">
                 <Phone className="h-4 w-4 mt-0.5 text-secondary" />

@@ -125,9 +125,12 @@ const Contact = () => {
                   </div>
                   <div>
                     <h3 className="font-semibold text-lg mb-1">Email</h3>
-                    <p className="text-muted-foreground text-sm break-all">
-                      info@featherfashions.shop
-                    </p>
+                    <a 
+                      href="mailto:hello@featherfashions.in"
+                      className="text-sm font-semibold text-primary hover:text-secondary transition-colors duration-200 underline decoration-primary/30 hover:decoration-secondary break-all"
+                    >
+                      hello@featherfashions.in
+                    </a>
                   </div>
                 </div>
 

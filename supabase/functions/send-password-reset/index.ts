@@ -48,7 +48,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send email with custom domain
     const emailResponse = await resend.emails.send({
-      from: "Feather Fashions <info@featherfashions.shop>",
+      from: "Feather Fashions <hello@featherfashions.in>",
       to: [email],
       subject: "Reset Your Password - Feather Fashions",
       html: `
