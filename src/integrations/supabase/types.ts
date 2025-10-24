@@ -14,6 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
+      branches: {
+        Row: {
+          address: string
+          building_name: string
+          building_size: number
+          building_type: string
+          created_at: string
+          electricity_sanctioned: string | null
+          facilities: string[] | null
+          id: string
+          is_active: boolean
+          is_main_building: boolean
+          is_manufacturing_unit: boolean
+          is_outlet: boolean
+          monthly_rent: number
+          notes: string | null
+          owner_name: string
+          owner_number: string
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          building_name: string
+          building_size: number
+          building_type: string
+          created_at?: string
+          electricity_sanctioned?: string | null
+          facilities?: string[] | null
+          id?: string
+          is_active?: boolean
+          is_main_building?: boolean
+          is_manufacturing_unit?: boolean
+          is_outlet?: boolean
+          monthly_rent: number
+          notes?: string | null
+          owner_name: string
+          owner_number: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          building_name?: string
+          building_size?: number
+          building_type?: string
+          created_at?: string
+          electricity_sanctioned?: string | null
+          facilities?: string[] | null
+          id?: string
+          is_active?: boolean
+          is_main_building?: boolean
+          is_manufacturing_unit?: boolean
+          is_outlet?: boolean
+          monthly_rent?: number
+          notes?: string | null
+          owner_name?: string
+          owner_number?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bulk_order_requests: {
         Row: {
           company_name: string | null
@@ -968,18 +1028,9 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      calculate_batch_costs: {
-        Args: { batch_id: string }
-        Returns: undefined
-      }
-      generate_batch_number: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      generate_order_number: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      calculate_batch_costs: { Args: { batch_id: string }; Returns: undefined }
+      generate_batch_number: { Args: never; Returns: string }
+      generate_order_number: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
