@@ -10,7 +10,8 @@ import {
   LayoutDashboard,
   ClipboardList,
   Factory,
-  Contact
+  Contact,
+  Building2
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import {
@@ -28,6 +29,7 @@ const menuItems = [
   { title: 'Dashboard', url: '/admin/dashboard', icon: LayoutDashboard },
   { title: 'Orders', url: '/admin/orders', icon: ClipboardList },
   { title: 'Production', url: '/admin/production', icon: Factory },
+  { title: 'Branches', url: '/admin/branches', icon: Building2 },
   { title: 'Generate Invoice', url: '/admin/invoice', icon: FileText },
   { title: 'Customers', url: '/admin/customers', icon: Users },
   { title: 'Products', url: '/admin/products', icon: Package },
