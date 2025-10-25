@@ -253,15 +253,14 @@ export function ExpenseForm({ expense, onSubmit, onCancel }: ExpenseFormProps) {
             name="branch_id"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Branch</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormLabel>Branch (Optional)</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select branch (optional)" />
+                      <SelectValue placeholder="Select branch" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="">None</SelectItem>
                     {branches.map((branch) => (
                       <SelectItem key={branch.id} value={branch.id}>
                         {branch.building_name}
