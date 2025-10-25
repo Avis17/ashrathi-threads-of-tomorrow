@@ -19,6 +19,8 @@ import InvoiceReset from './admin/InvoiceReset';
 import Dashboard from './admin/Dashboard';
 import AdminOrderDetails from './admin/OrderDetails';
 import Production from './admin/Production';
+import RBACManagement from './admin/RBACManagement';
+import { PermissionGuard } from '@/components/PermissionGuard';
 
 const Admin = () => {
   const { isAdmin, loading } = useAuth();
@@ -51,21 +53,22 @@ const Admin = () => {
           <main className="flex-1 p-6 overflow-auto">
             <Routes>
               <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/orders" element={<OrdersManager />} />
-              <Route path="/orders/:orderId" element={<AdminOrderDetails />} />
-              <Route path="/production" element={<Production />} />
-              <Route path="/branches" element={<BranchesManager />} />
-              <Route path="/expenses" element={<ExpensesManager />} />
-              <Route path="/invoice" element={<InvoiceGenerator />} />
-              <Route path="/customers" element={<CustomersManager />} />
-              <Route path="/products" element={<ProductsManager />} />
-              <Route path="/contacts" element={<EmployeeContactsManager />} />
-              <Route path="/history" element={<InvoiceHistory />} />
-              <Route path="/inquiries" element={<ContactInquiries />} />
-              <Route path="/bulk-orders" element={<BulkOrdersManager />} />
-              <Route path="/newsletter" element={<NewsletterManager />} />
-              <Route path="/invoice-reset" element={<InvoiceReset />} />
+              <Route path="/dashboard" element={<PermissionGuard permission="view_dashboard"><Dashboard /></PermissionGuard>} />
+              <Route path="/orders" element={<PermissionGuard permission="view_orders"><OrdersManager /></PermissionGuard>} />
+              <Route path="/orders/:orderId" element={<PermissionGuard permission="view_orders"><AdminOrderDetails /></PermissionGuard>} />
+              <Route path="/production" element={<PermissionGuard permission="view_production"><Production /></PermissionGuard>} />
+              <Route path="/branches" element={<PermissionGuard permission="view_branches"><BranchesManager /></PermissionGuard>} />
+              <Route path="/expenses" element={<PermissionGuard permission="view_expenses"><ExpensesManager /></PermissionGuard>} />
+              <Route path="/invoice" element={<PermissionGuard permission="view_invoice"><InvoiceGenerator /></PermissionGuard>} />
+              <Route path="/customers" element={<PermissionGuard permission="view_customers"><CustomersManager /></PermissionGuard>} />
+              <Route path="/products" element={<PermissionGuard permission="view_products"><ProductsManager /></PermissionGuard>} />
+              <Route path="/contacts" element={<PermissionGuard permission="view_contacts"><EmployeeContactsManager /></PermissionGuard>} />
+              <Route path="/history" element={<PermissionGuard permission="view_history"><InvoiceHistory /></PermissionGuard>} />
+              <Route path="/inquiries" element={<PermissionGuard permission="view_inquiries"><ContactInquiries /></PermissionGuard>} />
+              <Route path="/bulk-orders" element={<PermissionGuard permission="view_bulk_orders"><BulkOrdersManager /></PermissionGuard>} />
+              <Route path="/newsletter" element={<PermissionGuard permission="view_newsletter"><NewsletterManager /></PermissionGuard>} />
+              <Route path="/invoice-reset" element={<PermissionGuard permission="manage_invoice_reset"><InvoiceReset /></PermissionGuard>} />
+              <Route path="/rbac" element={<PermissionGuard permission="manage_rbac"><RBACManagement /></PermissionGuard>} />
             </Routes>
           </main>
         </div>

@@ -2,14 +2,26 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
+interface Permission {
+  permission_name: string;
+  description: string;
+  category: string;
+  action: string;
+  resource: string;
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   isAdmin: boolean;
+  isSuperAdmin: boolean;
   loading: boolean;
+  userPermissions: Permission[];
+  hasPermission: (permission: string) => boolean;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
+  refreshPermissions: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -18,6 +30,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [userPermissions, setUserPermissions] = useState<Permission[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -27,13 +41,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Check admin status when session changes
+        // Check admin status and permissions when session changes
         if (session?.user) {
           setTimeout(() => {
             checkAdminStatus(session.user.id);
+            checkSuperAdmin(session.user.id);
+            loadUserPermissions(session.user.id);
           }, 0);
         } else {
           setIsAdmin(false);
+          setIsSuperAdmin(false);
+          setUserPermissions([]);
         }
       }
     );
@@ -44,6 +62,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUser(session?.user ?? null);
       if (session?.user) {
         checkAdminStatus(session.user.id);
+        checkSuperAdmin(session.user.id);
+        loadUserPermissions(session.user.id);
       }
       setLoading(false);
     });
@@ -60,6 +80,34 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       .maybeSingle();
     
     setIsAdmin(!!data);
+  };
+
+  const checkSuperAdmin = async (userId: string) => {
+    const { data, error } = await supabase.rpc('is_super_admin', { _user_id: userId });
+    if (!error && data !== null) {
+      setIsSuperAdmin(data);
+    }
+  };
+
+  const loadUserPermissions = async (userId: string) => {
+    const { data, error } = await supabase.rpc('get_user_permissions', { _user_id: userId });
+    if (!error && data) {
+      setUserPermissions(data);
+    }
+  };
+
+  const refreshPermissions = async () => {
+    if (user?.id) {
+      await loadUserPermissions(user.id);
+      await checkSuperAdmin(user.id);
+    }
+  };
+
+  const hasPermission = (permission: string): boolean => {
+    // Super admin has all permissions
+    if (isSuperAdmin) return true;
+    // Check if user has the specific permission
+    return userPermissions.some(p => p.permission_name === permission);
   };
 
   const signUp = async (email: string, password: string, fullName: string) => {
@@ -91,7 +139,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, isAdmin, loading, signUp, signIn, signOut }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      session, 
+      isAdmin, 
+      isSuperAdmin,
+      loading, 
+      userPermissions,
+      hasPermission,
+      signUp, 
+      signIn, 
+      signOut,
+      refreshPermissions
+    }}>
       {children}
     </AuthContext.Provider>
   );
