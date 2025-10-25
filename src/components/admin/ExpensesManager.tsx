@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -16,12 +16,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Plus, Pencil, Trash2, CheckCircle, Eye } from 'lucide-react';
+import { Plus, Pencil, Trash2, CheckCircle, Eye, TrendingUp, DollarSign, Clock, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ExpenseForm } from './expenses/ExpenseForm';
 import { ExpenseDetailsDialog } from './expenses/ExpenseDetailsDialog';
 import { DynamicPagination } from './DynamicPagination';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { EXPENSE_CATEGORIES } from '@/lib/expenseCategories';
 
 export default function ExpensesManager() {
@@ -31,24 +33,95 @@ export default function ExpensesManager() {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<any>(null);
   const [viewingExpense, setViewingExpense] = useState<any>(null);
+  const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [filterBranch, setFilterBranch] = useState<string>('all');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
   const queryClient = useQueryClient();
 
+  const { data: branches } = useQuery({
+    queryKey: ['branches'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('branches')
+        .select('id, building_name')
+        .eq('is_active', true)
+        .order('building_name');
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
   const { data: expensesData, isLoading } = useQuery({
-    queryKey: ['expenses', currentPage, pageSize],
+    queryKey: ['expenses', currentPage, pageSize, filterCategory, filterBranch, filterStatus],
     queryFn: async () => {
       const from = (currentPage - 1) * pageSize;
       const to = from + pageSize - 1;
 
-      const { data, error, count } = await supabase
+      let query = supabase
         .from('expenses')
-        .select('*, branches(building_name)', { count: 'exact' })
-        .order('expense_date', { ascending: false })
-        .range(from, to);
+        .select('*, branches(building_name)', { count: 'exact' });
+
+      if (filterCategory !== 'all') {
+        query = query.eq('category', filterCategory as any);
+      }
+      
+      if (filterBranch !== 'all') {
+        query = query.eq('branch_id', filterBranch);
+      }
+
+      if (filterStatus !== 'all') {
+        query = query.eq('is_approved', filterStatus === 'approved');
+      }
+
+      query = query.order('expense_date', { ascending: false }).range(from, to);
+
+      const { data, error, count } = await query;
 
       if (error) throw error;
       return { expenses: data || [], count: count || 0 };
     },
   });
+
+  const { data: allExpensesData } = useQuery({
+    queryKey: ['all-expenses'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('expenses')
+        .select('amount, is_approved, expense_date');
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const stats = useMemo(() => {
+    if (!allExpensesData) return null;
+
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    const totalExpenses = allExpensesData.reduce((sum, exp) => sum + Number(exp.amount), 0);
+    const approvedExpenses = allExpensesData.filter(exp => exp.is_approved);
+    const pendingExpenses = allExpensesData.filter(exp => !exp.is_approved);
+    const approvedAmount = approvedExpenses.reduce((sum, exp) => sum + Number(exp.amount), 0);
+    const pendingAmount = pendingExpenses.reduce((sum, exp) => sum + Number(exp.amount), 0);
+
+    const currentMonthExpenses = allExpensesData.filter(exp => {
+      const expDate = new Date(exp.expense_date);
+      return expDate.getMonth() === currentMonth && expDate.getFullYear() === currentYear;
+    });
+    const monthlyTotal = currentMonthExpenses.reduce((sum, exp) => sum + Number(exp.amount), 0);
+
+    return {
+      totalExpenses,
+      totalCount: allExpensesData.length,
+      approvedCount: approvedExpenses.length,
+      approvedAmount,
+      pendingCount: pendingExpenses.length,
+      pendingAmount,
+      monthlyTotal,
+    };
+  }, [allExpensesData]);
 
   const addMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -152,7 +225,8 @@ export default function ExpensesManager() {
   };
 
   const getCategoryLabel = (category: string) => {
-    return EXPENSE_CATEGORIES[category as keyof typeof EXPENSE_CATEGORIES]?.label || category;
+    const categoryKey = category as keyof typeof EXPENSE_CATEGORIES;
+    return EXPENSE_CATEGORIES[categoryKey]?.label || category;
   };
 
   const totalPages = Math.ceil((expensesData?.count || 0) / pageSize);
@@ -163,7 +237,7 @@ export default function ExpensesManager() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Expenses Management</h2>
         <Button
@@ -176,6 +250,113 @@ export default function ExpensesManager() {
           Add Expense
         </Button>
       </div>
+
+      {/* Stats Cards */}
+      {stats && (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card className="bg-gradient-to-br from-primary/10 via-primary/5 to-background border-primary/20">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Expenses</CardTitle>
+              <DollarSign className="h-4 w-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatCurrency(stats.totalExpenses)}</div>
+              <p className="text-xs text-muted-foreground mt-1">{stats.totalCount} total records</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-blue-500/10 via-blue-500/5 to-background border-blue-500/20">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">This Month</CardTitle>
+              <TrendingUp className="h-4 w-4 text-blue-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatCurrency(stats.monthlyTotal)}</div>
+              <p className="text-xs text-muted-foreground mt-1">Current month expenses</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-green-500/10 via-green-500/5 to-background border-green-500/20">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Approved</CardTitle>
+              <CheckCircle2 className="h-4 w-4 text-green-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatCurrency(stats.approvedAmount)}</div>
+              <p className="text-xs text-muted-foreground mt-1">{stats.approvedCount} approved expenses</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-orange-500/10 via-orange-500/5 to-background border-orange-500/20">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Pending Approval</CardTitle>
+              <Clock className="h-4 w-4 text-orange-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatCurrency(stats.pendingAmount)}</div>
+              <p className="text-xs text-muted-foreground mt-1">{stats.pendingCount} pending expenses</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Filters */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Filters</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Category</label>
+              <Select value={filterCategory} onValueChange={setFilterCategory}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All Categories" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {Object.entries(EXPENSE_CATEGORIES).map(([key, value]) => (
+                    <SelectItem key={key} value={key}>
+                      {value.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Branch</label>
+              <Select value={filterBranch} onValueChange={setFilterBranch}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All Branches" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Branches</SelectItem>
+                  {branches?.map((branch) => (
+                    <SelectItem key={branch.id} value={branch.id}>
+                      {branch.building_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Status</label>
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="approved">Approved</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {isLoading ? (
         <p>Loading expenses...</p>
