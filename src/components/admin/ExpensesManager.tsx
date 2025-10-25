@@ -229,6 +229,37 @@ export default function ExpensesManager() {
     return EXPENSE_CATEGORIES[categoryKey]?.label || category;
   };
 
+  const filteredStats = useMemo(() => {
+    if (!expensesData?.expenses) return null;
+    const data = expensesData.expenses;
+
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    const totalExpenses = data.reduce((sum: number, exp: any) => sum + Number(exp.amount), 0);
+    const approvedExpenses = data.filter((exp: any) => exp.is_approved);
+    const pendingExpenses = data.filter((exp: any) => !exp.is_approved);
+    const approvedAmount = approvedExpenses.reduce((sum: number, exp: any) => sum + Number(exp.amount), 0);
+    const pendingAmount = pendingExpenses.reduce((sum: number, exp: any) => sum + Number(exp.amount), 0);
+
+    const currentMonthExpenses = data.filter((exp: any) => {
+      const expDate = new Date(exp.expense_date);
+      return expDate.getMonth() === currentMonth && expDate.getFullYear() === currentYear;
+    });
+    const monthlyTotal = currentMonthExpenses.reduce((sum: number, exp: any) => sum + Number(exp.amount), 0);
+
+    return {
+      totalExpenses,
+      totalCount: data.length,
+      approvedCount: approvedExpenses.length,
+      approvedAmount,
+      pendingCount: pendingExpenses.length,
+      pendingAmount,
+      monthlyTotal,
+    };
+  }, [expensesData]);
+
   const totalPages = Math.ceil((expensesData?.count || 0) / pageSize);
 
   const handlePageSizeChange = (newSize: number) => {
@@ -295,6 +326,55 @@ export default function ExpensesManager() {
             <CardContent>
               <div className="text-2xl font-bold">{formatCurrency(stats.pendingAmount)}</div>
               <p className="text-xs text-muted-foreground mt-1">{stats.pendingCount} pending expenses</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Filtered Stats */}
+      {(filterCategory !== 'all' || filterBranch !== 'all' || filterStatus !== 'all') && filteredStats && (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-4">
+          <Card className="bg-gradient-to-br from-primary/10 via-primary/5 to-background border-primary/20">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Filtered Total</CardTitle>
+              <DollarSign className="h-4 w-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatCurrency(filteredStats.totalExpenses)}</div>
+              <p className="text-xs text-muted-foreground mt-1">{filteredStats.totalCount} records</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-blue-500/10 via-blue-500/5 to-background border-blue-500/20">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Filtered This Month</CardTitle>
+              <TrendingUp className="h-4 w-4 text-blue-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatCurrency(filteredStats.monthlyTotal)}</div>
+              <p className="text-xs text-muted-foreground mt-1">Current month in filter</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-green-500/10 via-green-500/5 to-background border-green-500/20">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Filtered Approved</CardTitle>
+              <CheckCircle2 className="h-4 w-4 text-green-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatCurrency(filteredStats.approvedAmount)}</div>
+              <p className="text-xs text-muted-foreground mt-1">{filteredStats.approvedCount} approved</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-orange-500/10 via-orange-500/5 to-background border-orange-500/20">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Filtered Pending</CardTitle>
+              <Clock className="h-4 w-4 text-orange-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatCurrency(filteredStats.pendingAmount)}</div>
+              <p className="text-xs text-muted-foreground mt-1">{filteredStats.pendingCount} pending</p>
             </CardContent>
           </Card>
         </div>

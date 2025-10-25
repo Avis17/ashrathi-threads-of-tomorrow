@@ -1122,6 +1122,13 @@ export type Database = {
         | "office_supplies"
         | "rent"
         | "other"
+        | "security"
+        | "machinery"
+        | "raw_materials"
+        | "materials_purchase"
+        | "professional_fees"
+        | "marketing"
+        | "insurance"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1266,6 +1273,13 @@ export const Constants = {
         "office_supplies",
         "rent",
         "other",
+        "security",
+        "machinery",
+        "raw_materials",
+        "materials_purchase",
+        "professional_fees",
+        "marketing",
+        "insurance",
       ],
     },
   },
