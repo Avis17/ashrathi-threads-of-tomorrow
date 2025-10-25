@@ -695,6 +695,33 @@ export type Database = {
         }
         Relationships: []
       }
+      pending_user_roles: {
+        Row: {
+          assigned_by: string | null
+          created_at: string | null
+          email: string
+          id: string
+          notes: string | null
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          assigned_by?: string | null
+          created_at?: string | null
+          email: string
+          id?: string
+          notes?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          assigned_by?: string | null
+          created_at?: string | null
+          email?: string
+          id?: string
+          notes?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: []
+      }
       permissions: {
         Row: {
           action: string

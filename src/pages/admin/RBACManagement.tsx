@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { UserManagement } from '@/components/admin/rbac/UserManagement';
 import { RolePermissionsMatrix } from '@/components/admin/rbac/RolePermissionsMatrix';
 import { PermissionDirectory } from '@/components/admin/rbac/PermissionDirectory';
+import { PendingUsersManager } from '@/components/admin/rbac/PendingUsersManager';
 
 const RBACManagement = () => {
   const queryClient = useQueryClient();
@@ -88,12 +89,17 @@ const RBACManagement = () => {
       </div>
 
       {/* Main Content */}
-      <Tabs defaultValue="users" className="space-y-4">
-        <TabsList className="grid w-full max-w-lg grid-cols-3">
+      <Tabs defaultValue="pending" className="space-y-4">
+        <TabsList className="grid w-full max-w-2xl grid-cols-4">
+          <TabsTrigger value="pending">Pre-Configure</TabsTrigger>
           <TabsTrigger value="users">User Management</TabsTrigger>
           <TabsTrigger value="permissions">Role Permissions</TabsTrigger>
           <TabsTrigger value="directory">Permission Directory</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="pending">
+          <PendingUsersManager />
+        </TabsContent>
 
         <TabsContent value="users">
           <UserManagement />
