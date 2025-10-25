@@ -16,9 +16,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Plus, Pencil, Trash2, CheckCircle } from 'lucide-react';
+import { Plus, Pencil, Trash2, CheckCircle, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 import { ExpenseForm } from './expenses/ExpenseForm';
+import { ExpenseDetailsDialog } from './expenses/ExpenseDetailsDialog';
 import { DynamicPagination } from './DynamicPagination';
 import { Badge } from '@/components/ui/badge';
 import { EXPENSE_CATEGORIES } from '@/lib/expenseCategories';
@@ -27,7 +28,9 @@ export default function ExpensesManager() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<any>(null);
+  const [viewingExpense, setViewingExpense] = useState<any>(null);
   const queryClient = useQueryClient();
 
   const { data: expensesData, isLoading } = useQuery({
@@ -136,6 +139,11 @@ export default function ExpensesManager() {
     }
   };
 
+  const handleView = (expense: any) => {
+    setViewingExpense(expense);
+    setIsViewDialogOpen(true);
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
@@ -213,11 +221,20 @@ export default function ExpensesManager() {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleView(expense)}
+                          title="View Details"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
                         {!expense.is_approved && (
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => approveMutation.mutate(expense.id)}
+                            title="Approve"
                           >
                             <CheckCircle className="h-4 w-4" />
                           </Button>
@@ -226,6 +243,7 @@ export default function ExpensesManager() {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleEdit(expense)}
+                          title="Edit"
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
@@ -233,6 +251,7 @@ export default function ExpensesManager() {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleDelete(expense.id)}
+                          title="Delete"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -272,6 +291,12 @@ export default function ExpensesManager() {
           />
         </DialogContent>
       </Dialog>
+
+      <ExpenseDetailsDialog
+        expense={viewingExpense}
+        open={isViewDialogOpen}
+        onOpenChange={setIsViewDialogOpen}
+      />
     </div>
   );
 }
