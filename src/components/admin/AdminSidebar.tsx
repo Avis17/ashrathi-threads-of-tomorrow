@@ -11,7 +11,8 @@ import {
   ClipboardList,
   Factory,
   Contact,
-  Building2
+  Building2,
+  Receipt
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import {
@@ -30,6 +31,7 @@ const menuItems = [
   { title: 'Orders', url: '/admin/orders', icon: ClipboardList },
   { title: 'Production', url: '/admin/production', icon: Factory },
   { title: 'Branches', url: '/admin/branches', icon: Building2 },
+  { title: 'Expenses', url: '/admin/expenses', icon: Receipt },
   { title: 'Generate Invoice', url: '/admin/invoice', icon: FileText },
   { title: 'Customers', url: '/admin/customers', icon: Users },
   { title: 'Products', url: '/admin/products', icon: Package },

@@ -334,6 +334,71 @@ export type Database = {
         }
         Relationships: []
       }
+      expenses: {
+        Row: {
+          amount: number
+          approved_at: string | null
+          approved_by: string | null
+          branch_id: string | null
+          category: Database["public"]["Enums"]["expense_category"]
+          created_at: string
+          description: string
+          expense_date: string
+          id: string
+          is_approved: boolean
+          notes: string | null
+          payment_method: string
+          receipt_number: string | null
+          subcategory: string
+          updated_at: string
+          vendor_name: string | null
+        }
+        Insert: {
+          amount: number
+          approved_at?: string | null
+          approved_by?: string | null
+          branch_id?: string | null
+          category: Database["public"]["Enums"]["expense_category"]
+          created_at?: string
+          description: string
+          expense_date?: string
+          id?: string
+          is_approved?: boolean
+          notes?: string | null
+          payment_method?: string
+          receipt_number?: string | null
+          subcategory: string
+          updated_at?: string
+          vendor_name?: string | null
+        }
+        Update: {
+          amount?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          branch_id?: string | null
+          category?: Database["public"]["Enums"]["expense_category"]
+          created_at?: string
+          description?: string
+          expense_date?: string
+          id?: string
+          is_approved?: boolean
+          notes?: string | null
+          payment_method?: string
+          receipt_number?: string | null
+          subcategory?: string
+          updated_at?: string
+          vendor_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoice_items: {
         Row: {
           amount: number
@@ -1041,6 +1106,22 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      expense_category:
+        | "branch_setup"
+        | "electrical"
+        | "plumbing"
+        | "carpentry"
+        | "painting"
+        | "labour"
+        | "materials"
+        | "equipment"
+        | "maintenance"
+        | "utilities"
+        | "travel"
+        | "food"
+        | "office_supplies"
+        | "rent"
+        | "other"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1169,6 +1250,23 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      expense_category: [
+        "branch_setup",
+        "electrical",
+        "plumbing",
+        "carpentry",
+        "painting",
+        "labour",
+        "materials",
+        "equipment",
+        "maintenance",
+        "utilities",
+        "travel",
+        "food",
+        "office_supplies",
+        "rent",
+        "other",
+      ],
     },
   },
 } as const

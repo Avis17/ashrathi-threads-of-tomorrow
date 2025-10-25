@@ -12,6 +12,7 @@ import CustomersManager from '@/components/admin/CustomersManager';
 import { OrdersManager } from '@/components/admin/OrdersManager';
 import { EmployeeContactsManager } from '@/components/admin/EmployeeContactsManager';
 import BranchesManager from '@/components/admin/BranchesManager';
+import ExpensesManager from '@/components/admin/ExpensesManager';
 import InvoiceGenerator from './admin/InvoiceGenerator';
 import InvoiceHistory from './admin/InvoiceHistory';
 import InvoiceReset from './admin/InvoiceReset';
@@ -55,6 +56,7 @@ const Admin = () => {
               <Route path="/orders/:orderId" element={<AdminOrderDetails />} />
               <Route path="/production" element={<Production />} />
               <Route path="/branches" element={<BranchesManager />} />
+              <Route path="/expenses" element={<ExpensesManager />} />
               <Route path="/invoice" element={<InvoiceGenerator />} />
               <Route path="/customers" element={<CustomersManager />} />
               <Route path="/products" element={<ProductsManager />} />
