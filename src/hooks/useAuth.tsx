@@ -37,17 +37,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         
         // Check admin status and permissions when session changes
         if (session?.user) {
-          setTimeout(() => {
-            checkAdminStatus(session.user.id);
-            checkSuperAdmin(session.user.id);
-            loadUserPermissions(session.user.id);
-          }, 0);
+          await Promise.all([
+            checkAdminStatus(session.user.id),
+            checkSuperAdmin(session.user.id),
+            loadUserPermissions(session.user.id)
+          ]);
         } else {
           setIsAdmin(false);
           setIsSuperAdmin(false);
@@ -57,13 +57,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     );
 
     // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        checkAdminStatus(session.user.id);
-        checkSuperAdmin(session.user.id);
-        loadUserPermissions(session.user.id);
+        await Promise.all([
+          checkAdminStatus(session.user.id),
+          checkSuperAdmin(session.user.id),
+          loadUserPermissions(session.user.id)
+        ]);
       }
       setLoading(false);
     });
