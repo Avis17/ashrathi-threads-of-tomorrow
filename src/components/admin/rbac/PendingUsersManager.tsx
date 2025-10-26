@@ -40,6 +40,7 @@ export const PendingUsersManager = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [notes, setNotes] = useState('');
+  const [selectedRole, setSelectedRole] = useState('admin');
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
@@ -56,13 +57,22 @@ export const PendingUsersManager = () => {
     },
   });
 
+  const { data: roles } = useQuery({
+    queryKey: ['all-roles'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_all_roles');
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const addPendingUserMutation = useMutation({
     mutationFn: async (newUser: { email: string; notes: string }) => {
       const { error } = await supabase
         .from('pending_user_roles')
         .insert({
           email: newUser.email.toLowerCase().trim(),
-          role: 'admin',
+          role: selectedRole,
           notes: newUser.notes || null,
           assigned_by: (await supabase.auth.getUser()).data.user?.id,
         });
@@ -75,6 +85,7 @@ export const PendingUsersManager = () => {
       setIsDialogOpen(false);
       setEmail('');
       setNotes('');
+      setSelectedRole('admin');
     },
     onError: (error: any) => {
       if (error.message?.includes('duplicate')) {
@@ -193,6 +204,21 @@ export const PendingUsersManager = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="role">Role</Label>
+                <select
+                  id="role"
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  value={selectedRole}
+                  onChange={(e) => setSelectedRole(e.target.value)}
+                >
+                  {roles?.map((role: any) => (
+                    <option key={role.name} value={role.name}>
+                      {role.display_name}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="notes">Notes (Optional)</Label>

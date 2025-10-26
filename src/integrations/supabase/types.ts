@@ -702,7 +702,7 @@ export type Database = {
           email: string
           id: string
           notes: string | null
-          role: Database["public"]["Enums"]["app_role"]
+          role: string
         }
         Insert: {
           assigned_by?: string | null
@@ -710,7 +710,7 @@ export type Database = {
           email: string
           id?: string
           notes?: string | null
-          role?: Database["public"]["Enums"]["app_role"]
+          role?: string
         }
         Update: {
           assigned_by?: string | null
@@ -718,9 +718,17 @@ export type Database = {
           email?: string
           id?: string
           notes?: string | null
-          role?: Database["public"]["Enums"]["app_role"]
+          role?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "pending_user_roles_role_fkey"
+            columns: ["role"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["name"]
+          },
+        ]
       }
       permissions: {
         Row: {
@@ -1129,19 +1137,19 @@ export type Database = {
           created_at: string | null
           id: string
           permission_id: string
-          role: Database["public"]["Enums"]["app_role"]
+          role: string
         }
         Insert: {
           created_at?: string | null
           id?: string
           permission_id: string
-          role: Database["public"]["Enums"]["app_role"]
+          role: string
         }
         Update: {
           created_at?: string | null
           id?: string
           permission_id?: string
-          role?: Database["public"]["Enums"]["app_role"]
+          role?: string
         }
         Relationships: [
           {
@@ -1151,28 +1159,73 @@ export type Database = {
             referencedRelation: "permissions"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "role_permissions_role_fkey"
+            columns: ["role"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["name"]
+          },
         ]
+      }
+      roles: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          display_name: string
+          id: string
+          is_system_role: boolean | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          display_name: string
+          id?: string
+          is_system_role?: boolean | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          display_name?: string
+          id?: string
+          is_system_role?: boolean | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
           created_at: string | null
           id: string
-          role: Database["public"]["Enums"]["app_role"]
+          role: string
           user_id: string
         }
         Insert: {
           created_at?: string | null
           id?: string
-          role: Database["public"]["Enums"]["app_role"]
+          role: string
           user_id: string
         }
         Update: {
           created_at?: string | null
           id?: string
-          role?: Database["public"]["Enums"]["app_role"]
+          role?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_role_fkey"
+            columns: ["role"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["name"]
+          },
+        ]
       }
     }
     Views: {
@@ -1180,8 +1233,29 @@ export type Database = {
     }
     Functions: {
       calculate_batch_costs: { Args: { batch_id: string }; Returns: undefined }
+      create_role: {
+        Args: {
+          _description?: string
+          _display_name: string
+          _name: string
+          _permission_ids?: string[]
+        }
+        Returns: string
+      }
+      delete_role: { Args: { _role_name: string }; Returns: boolean }
       generate_batch_number: { Args: never; Returns: string }
       generate_order_number: { Args: never; Returns: string }
+      get_all_roles: {
+        Args: never
+        Returns: {
+          description: string
+          display_name: string
+          is_system_role: boolean
+          name: string
+          permission_count: number
+          user_count: number
+        }[]
+      }
       get_user_permissions: {
         Args: { _user_id: string }
         Returns: {
@@ -1196,13 +1270,15 @@ export type Database = {
         Args: { _permission_name: string; _user_id: string }
         Returns: boolean
       }
-      has_role: {
-        Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: string
-        }
-        Returns: boolean
-      }
+      has_role:
+        | {
+            Args: {
+              _role: Database["public"]["Enums"]["app_role"]
+              _user_id: string
+            }
+            Returns: boolean
+          }
+        | { Args: { _role: string; _user_id: string }; Returns: boolean }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {

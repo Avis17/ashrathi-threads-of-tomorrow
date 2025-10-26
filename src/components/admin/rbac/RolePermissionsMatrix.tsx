@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Save } from 'lucide-react';
 import { useState } from 'react';
@@ -13,6 +14,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import { getRoleColor } from '@/lib/roleUtils';
 
 interface Permission {
   id: string;
@@ -35,7 +37,17 @@ const actionColors: Record<string, string> = {
 
 export const RolePermissionsMatrix = () => {
   const queryClient = useQueryClient();
-  const [changes, setChanges] = useState<Record<string, boolean>>({});
+  const [changes, setChanges] = useState<Record<string, Record<string, boolean>>>({});
+  const [selectedRole, setSelectedRole] = useState<string>('admin');
+
+  const { data: roles } = useQuery({
+    queryKey: ['all-roles'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_all_roles');
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const { data: permissions, isLoading: loadingPermissions } = useQuery({
     queryKey: ['permissions'],
@@ -63,17 +75,18 @@ export const RolePermissionsMatrix = () => {
   });
 
   const updatePermissionsMutation = useMutation({
-    mutationFn: async (updates: { add: string[], remove: string[] }) => {
+    mutationFn: async (updates: { role: string; add: string[]; remove: string[] }) => {
       const addPromises = updates.add.map(permissionId =>
-        supabase.from('role_permissions').insert({ role: 'admin', permission_id: permissionId })
+        supabase.from('role_permissions').insert({ role: updates.role, permission_id: permissionId })
       );
       const removePromises = updates.remove.map(permissionId =>
-        supabase.from('role_permissions').delete().eq('role', 'admin').eq('permission_id', permissionId)
+        supabase.from('role_permissions').delete().eq('role', updates.role).eq('permission_id', permissionId)
       );
       await Promise.all([...addPromises, ...removePromises]);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['role-permissions'] });
+      queryClient.invalidateQueries({ queryKey: ['all-roles'] });
       toast.success('Permissions updated successfully');
       setChanges({});
     },
@@ -82,25 +95,32 @@ export const RolePermissionsMatrix = () => {
     },
   });
 
-  const hasPermission = (permissionId: string): boolean => {
-    if (changes[permissionId] !== undefined) {
-      return changes[permissionId];
+  const hasPermission = (role: string, permissionId: string): boolean => {
+    if (changes[role]?.[permissionId] !== undefined) {
+      return changes[role][permissionId];
     }
-    return rolePermissions?.some(rp => rp.permission_id === permissionId && rp.role === 'admin') || false;
+    return rolePermissions?.some(rp => rp.permission_id === permissionId && rp.role === role) || false;
   };
 
-  const togglePermission = (permissionId: string) => {
-    const currentState = hasPermission(permissionId);
-    setChanges(prev => ({ ...prev, [permissionId]: !currentState }));
+  const togglePermission = (role: string, permissionId: string) => {
+    const currentState = hasPermission(role, permissionId);
+    setChanges(prev => ({
+      ...prev,
+      [role]: {
+        ...prev[role],
+        [permissionId]: !currentState,
+      },
+    }));
   };
 
   const saveChanges = () => {
     const add: string[] = [];
     const remove: string[] = [];
 
-    Object.entries(changes).forEach(([permissionId, shouldHave]) => {
+    const roleChanges = changes[selectedRole] || {};
+    Object.entries(roleChanges).forEach(([permissionId, shouldHave]) => {
       const currentlyHas = rolePermissions?.some(
-        rp => rp.permission_id === permissionId && rp.role === 'admin'
+        rp => rp.permission_id === permissionId && rp.role === selectedRole
       );
       if (shouldHave && !currentlyHas) {
         add.push(permissionId);
@@ -114,7 +134,7 @@ export const RolePermissionsMatrix = () => {
       return;
     }
 
-    updatePermissionsMutation.mutate({ add, remove });
+    updatePermissionsMutation.mutate({ role: selectedRole, add, remove });
   };
 
   // Group permissions by category
@@ -126,6 +146,9 @@ export const RolePermissionsMatrix = () => {
     return acc;
   }, {} as Record<string, Permission[]>);
 
+  // Count pending changes for current role
+  const pendingChangesCount = Object.keys(changes[selectedRole] || {}).length;
+
   if (loadingPermissions || loadingRolePerms) {
     return <div className="text-center py-8">Loading permissions...</div>;
   }
@@ -135,15 +158,30 @@ export const RolePermissionsMatrix = () => {
       <CardHeader>
         <CardTitle>Role Permissions Matrix</CardTitle>
         <CardDescription>
-          Configure which permissions are assigned to the admin role
+          Configure which permissions are assigned to each role
         </CardDescription>
+        <div className="pt-4">
+          <Label htmlFor="roleSelector">Select Role to Manage</Label>
+          <select
+            id="roleSelector"
+            className="w-full md:w-64 mt-2 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            value={selectedRole}
+            onChange={(e) => setSelectedRole(e.target.value)}
+          >
+            {roles?.map((role: any) => (
+              <option key={role.name} value={role.name}>
+                {role.display_name} ({role.permission_count || 0} permissions)
+              </option>
+            ))}
+          </select>
+        </div>
       </CardHeader>
       <CardContent>
         <Accordion type="multiple" className="w-full">
           {Object.entries(groupedPermissions || {}).map(([category, perms]) => (
             <AccordionItem key={category} value={category}>
               <AccordionTrigger className="text-lg font-semibold capitalize">
-                {category.replace(/_/g, ' ')}
+                {category.replace(/_/g, ' ')} ({perms.filter(p => hasPermission(selectedRole, p.id)).length}/{perms.length})
               </AccordionTrigger>
               <AccordionContent>
                 <div className="space-y-3 pt-2">
@@ -154,8 +192,8 @@ export const RolePermissionsMatrix = () => {
                     >
                       <div className="flex items-center gap-3">
                         <Checkbox
-                          checked={hasPermission(permission.id)}
-                          onCheckedChange={() => togglePermission(permission.id)}
+                          checked={hasPermission(selectedRole, permission.id)}
+                          onCheckedChange={() => togglePermission(selectedRole, permission.id)}
                         />
                         <div>
                           <div className="flex items-center gap-2">
@@ -175,7 +213,7 @@ export const RolePermissionsMatrix = () => {
           ))}
         </Accordion>
 
-        {Object.keys(changes).length > 0 && (
+        {pendingChangesCount > 0 && (
           <div className="mt-6 flex justify-end">
             <Button
               onClick={saveChanges}
@@ -183,7 +221,7 @@ export const RolePermissionsMatrix = () => {
               size="lg"
             >
               <Save className="h-4 w-4 mr-2" />
-              Save Changes ({Object.keys(changes).length})
+              Save Changes ({pendingChangesCount})
             </Button>
           </div>
         )}
