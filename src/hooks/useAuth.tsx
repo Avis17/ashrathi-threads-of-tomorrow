@@ -2,26 +2,14 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
-interface Permission {
-  permission_name: string;
-  description: string;
-  category: string;
-  action: string;
-  resource: string;
-}
-
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   isAdmin: boolean;
-  isSuperAdmin: boolean;
   loading: boolean;
-  userPermissions: Permission[];
-  hasPermission: (permission: string) => boolean;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
-  refreshPermissions: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -30,130 +18,48 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
-  const [userPermissions, setUserPermissions] = useState<Permission[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log('[Auth] State change event:', event);
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Check admin status and permissions when session changes
+        // Check admin status when session changes
         if (session?.user) {
-          // Use setTimeout(0) to defer database calls and avoid deadlock
           setTimeout(() => {
             checkAdminStatus(session.user.id);
-            checkSuperAdmin(session.user.id);
-            loadUserPermissions(session.user.id);
           }, 0);
         } else {
           setIsAdmin(false);
-          setIsSuperAdmin(false);
-          setUserPermissions([]);
         }
       }
     );
 
     // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('[Auth] Initial session check:', session ? 'Session found' : 'No session');
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        Promise.all([
-          checkAdminStatus(session.user.id),
-          checkSuperAdmin(session.user.id),
-          loadUserPermissions(session.user.id)
-        ]).finally(() => {
-          setLoading(false);
-        });
-      } else {
-        setLoading(false);
+        checkAdminStatus(session.user.id);
       }
+      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
   const checkAdminStatus = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId);
-      
-      if (error) {
-        console.error('[Auth] Error checking admin status:', error);
-        setIsAdmin(false);
-        return;
-      }
-      
-      // User is admin if they have any role
-      const hasRole = !!data && data.length > 0;
-      console.log('[Auth] Admin status:', hasRole, 'Roles:', data?.length || 0);
-      setIsAdmin(hasRole);
-    } catch (err) {
-      console.error('[Auth] Exception checking admin status:', err);
-      setIsAdmin(false);
-    }
-  };
-
-  const checkSuperAdmin = async (userId: string) => {
-    try {
-      const { data, error } = await supabase.rpc('is_super_admin', { _user_id: userId });
-      if (error) {
-        console.error('[Auth] Error checking super admin status:', error);
-        setIsSuperAdmin(false);
-        return;
-      }
-      
-      const isSuperAdmin = data === true;
-      console.log('[Auth] Super admin status:', isSuperAdmin);
-      setIsSuperAdmin(isSuperAdmin);
-      
-      // Super admins automatically have admin access
-      if (isSuperAdmin) {
-        setIsAdmin(true);
-      }
-    } catch (err) {
-      console.error('[Auth] Exception checking super admin status:', err);
-      setIsSuperAdmin(false);
-    }
-  };
-
-  const loadUserPermissions = async (userId: string) => {
-    try {
-      const { data, error } = await supabase.rpc('get_user_permissions', { _user_id: userId });
-      if (error) {
-        console.error('[Auth] Error loading permissions:', error);
-        setUserPermissions([]);
-        return;
-      }
-      
-      console.log('[Auth] Permissions loaded:', data?.length || 0);
-      setUserPermissions(data || []);
-    } catch (err) {
-      console.error('[Auth] Exception loading permissions:', err);
-      setUserPermissions([]);
-    }
-  };
-
-  const refreshPermissions = async () => {
-    if (user?.id) {
-      await loadUserPermissions(user.id);
-      await checkSuperAdmin(user.id);
-    }
-  };
-
-  const hasPermission = (permission: string): boolean => {
-    // Super admin has all permissions
-    if (isSuperAdmin) return true;
-    // Check if user has the specific permission
-    return userPermissions.some(p => p.permission_name === permission);
+    const { data } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId)
+      .eq('role', 'admin')
+      .maybeSingle();
+    
+    setIsAdmin(!!data);
   };
 
   const signUp = async (email: string, password: string, fullName: string) => {
@@ -181,37 +87,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signOut = async () => {
-    console.log('[Auth] Signing out...');
-    // Immediately clear local state
-    setUser(null);
-    setSession(null);
-    setIsAdmin(false);
-    setIsSuperAdmin(false);
-    setUserPermissions([]);
-    
-    // Then sign out from Supabase
-    try {
-      await supabase.auth.signOut();
-      console.log('[Auth] Sign out successful');
-    } catch (error) {
-      console.error('[Auth] Error signing out:', error);
-    }
+    await supabase.auth.signOut();
   };
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      session, 
-      isAdmin, 
-      isSuperAdmin,
-      loading, 
-      userPermissions,
-      hasPermission,
-      signUp, 
-      signIn, 
-      signOut,
-      refreshPermissions
-    }}>
+    <AuthContext.Provider value={{ user, session, isAdmin, loading, signUp, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   );

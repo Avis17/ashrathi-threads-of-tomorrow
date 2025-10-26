@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,7 +14,7 @@ import noDataImage from '@/assets/no-data.png';
 
 export default function MyOrders() {
   const navigate = useNavigate();
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
@@ -37,29 +37,17 @@ export default function MyOrders() {
     },
     enabled: !!user,
   });
-  useEffect(() => {
-    if (!loading && !user) {
-      navigate('/auth');
-    }
-  }, [loading, user, navigate]);
-
-  if (loading) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center">Loading orders...</div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return null;
-  }
 
   const filteredOrders = orders.filter((order) => {
     const matchesSearch = order.order_number.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
+
+  if (!user) {
+    navigate('/auth');
+    return null;
+  }
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
