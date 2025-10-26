@@ -20,8 +20,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const profileSchema = z.object({
   full_name: z.string().trim().min(1, 'Name is required').max(100, 'Name must be less than 100 characters'),
-  phone: z.string().trim().regex(/^[0-9]{10}$/, 'Phone must be 10 digits').optional().or(z.literal('')),
-  date_of_birth: z.string().optional().or(z.literal('')),
+  phone: z.string().trim().refine(val => val === '' || /^[0-9]{10}$/.test(val), { message: 'Phone must be 10 digits' }),
+  date_of_birth: z.string().refine(val => val === '' || new Date(val) <= new Date(), { message: 'Date cannot be in the future' }).optional().or(z.literal('')),
   gender: z.enum(['male', 'female', 'other']).optional(),
   marital_status: z.enum(['single', 'married', 'divorced', 'widowed']).optional(),
 });
@@ -55,6 +55,7 @@ export const ProfileDetailsForm = () => {
     handleSubmit,
     setValue,
     watch,
+    reset,
     formState: { errors },
   } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -213,7 +214,10 @@ export const ProfileDetailsForm = () => {
             <Button
               type="button"
               variant="outline"
-              onClick={() => setIsEditing(false)}
+              onClick={() => {
+                reset();
+                setIsEditing(false);
+              }}
               disabled={updateMutation.isPending}
             >
               Cancel
