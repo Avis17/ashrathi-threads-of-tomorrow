@@ -37,17 +37,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
+        console.log('[Auth] State change event:', event);
         setSession(session);
         setUser(session?.user ?? null);
         
         // Check admin status and permissions when session changes
         if (session?.user) {
-          await Promise.all([
-            checkAdminStatus(session.user.id),
-            checkSuperAdmin(session.user.id),
-            loadUserPermissions(session.user.id)
-          ]);
+          // Use setTimeout(0) to defer database calls and avoid deadlock
+          setTimeout(() => {
+            checkAdminStatus(session.user.id);
+            checkSuperAdmin(session.user.id);
+            loadUserPermissions(session.user.id);
+          }, 0);
         } else {
           setIsAdmin(false);
           setIsSuperAdmin(false);
@@ -57,44 +59,86 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     );
 
     // Check for existing session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('[Auth] Initial session check:', session ? 'Session found' : 'No session');
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        await Promise.all([
+        Promise.all([
           checkAdminStatus(session.user.id),
           checkSuperAdmin(session.user.id),
           loadUserPermissions(session.user.id)
-        ]);
+        ]).finally(() => {
+          setLoading(false);
+        });
+      } else {
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
   const checkAdminStatus = async (userId: string) => {
-    const { data } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', userId)
-      .eq('role', 'admin')
-      .maybeSingle();
-    
-    setIsAdmin(!!data);
+    try {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId);
+      
+      if (error) {
+        console.error('[Auth] Error checking admin status:', error);
+        setIsAdmin(false);
+        return;
+      }
+      
+      // User is admin if they have any role
+      const hasRole = !!data && data.length > 0;
+      console.log('[Auth] Admin status:', hasRole, 'Roles:', data?.length || 0);
+      setIsAdmin(hasRole);
+    } catch (err) {
+      console.error('[Auth] Exception checking admin status:', err);
+      setIsAdmin(false);
+    }
   };
 
   const checkSuperAdmin = async (userId: string) => {
-    const { data, error } = await supabase.rpc('is_super_admin', { _user_id: userId });
-    if (!error && data !== null) {
-      setIsSuperAdmin(data);
+    try {
+      const { data, error } = await supabase.rpc('is_super_admin', { _user_id: userId });
+      if (error) {
+        console.error('[Auth] Error checking super admin status:', error);
+        setIsSuperAdmin(false);
+        return;
+      }
+      
+      const isSuperAdmin = data === true;
+      console.log('[Auth] Super admin status:', isSuperAdmin);
+      setIsSuperAdmin(isSuperAdmin);
+      
+      // Super admins automatically have admin access
+      if (isSuperAdmin) {
+        setIsAdmin(true);
+      }
+    } catch (err) {
+      console.error('[Auth] Exception checking super admin status:', err);
+      setIsSuperAdmin(false);
     }
   };
 
   const loadUserPermissions = async (userId: string) => {
-    const { data, error } = await supabase.rpc('get_user_permissions', { _user_id: userId });
-    if (!error && data) {
-      setUserPermissions(data);
+    try {
+      const { data, error } = await supabase.rpc('get_user_permissions', { _user_id: userId });
+      if (error) {
+        console.error('[Auth] Error loading permissions:', error);
+        setUserPermissions([]);
+        return;
+      }
+      
+      console.log('[Auth] Permissions loaded:', data?.length || 0);
+      setUserPermissions(data || []);
+    } catch (err) {
+      console.error('[Auth] Exception loading permissions:', err);
+      setUserPermissions([]);
     }
   };
 
@@ -137,7 +181,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    console.log('[Auth] Signing out...');
+    // Immediately clear local state
+    setUser(null);
+    setSession(null);
+    setIsAdmin(false);
+    setIsSuperAdmin(false);
+    setUserPermissions([]);
+    
+    // Then sign out from Supabase
+    try {
+      await supabase.auth.signOut();
+      console.log('[Auth] Sign out successful');
+    } catch (error) {
+      console.error('[Auth] Error signing out:', error);
+    }
   };
 
   return (

@@ -32,7 +32,12 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, isAdmin, signOut } = useAuth();
+  const { user, isAdmin, isSuperAdmin, signOut } = useAuth();
+  
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
+  };
 
   const navLinks = [
     { name: "Home", path: "/" },
@@ -201,7 +206,7 @@ const Navbar = () => {
                     <DropdownMenuItem onClick={() => navigate('/profile')}>
                       My Profile
                     </DropdownMenuItem>
-                    {isAdmin && (
+                    {(isAdmin || isSuperAdmin) && (
                       <>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => navigate('/admin')}>
@@ -211,7 +216,7 @@ const Navbar = () => {
                       </>
                     )}
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={signOut}>
+                    <DropdownMenuItem onClick={handleSignOut}>
                       <LogOut className="h-4 w-4 mr-2" />
                       Sign Out
                     </DropdownMenuItem>
@@ -358,7 +363,7 @@ const Navbar = () => {
               ))}
               {user ? (
                 <>
-                  {isAdmin && (
+                  {(isAdmin || isSuperAdmin) && (
                     <Button asChild variant="outline" className="mx-4">
                       <Link to="/admin" onClick={() => setIsOpen(false)}>
                         <Shield className="h-4 w-4 mr-2" />
@@ -366,7 +371,7 @@ const Navbar = () => {
                       </Link>
                     </Button>
                   )}
-                  <Button onClick={() => { signOut(); setIsOpen(false); }} variant="outline" className="mx-4">
+                  <Button onClick={() => { handleSignOut(); setIsOpen(false); }} variant="outline" className="mx-4">
                     <LogOut className="h-4 w-4 mr-2" />
                     Logout
                   </Button>

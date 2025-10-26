@@ -23,24 +23,29 @@ import RBACManagement from './admin/RBACManagement';
 import { PermissionGuard } from '@/components/PermissionGuard';
 
 const Admin = () => {
-  const { isAdmin, loading } = useAuth();
+  const { isAdmin, isSuperAdmin, loading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && !isAdmin) {
+    if (!loading && !isAdmin && !isSuperAdmin) {
+      console.log('[Admin] Access denied - redirecting to auth');
       navigate('/auth');
     }
-  }, [isAdmin, loading, navigate]);
+  }, [isAdmin, isSuperAdmin, loading, navigate]);
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
+        <div className="text-center">
+          <p className="text-muted-foreground mb-2">Loading admin panel...</p>
+          <div className="text-xs text-muted-foreground">Checking permissions...</div>
+        </div>
       </div>
     );
   }
 
-  if (!isAdmin) {
+  if (!isAdmin && !isSuperAdmin) {
+    console.log('[Admin] Access check failed');
     return null;
   }
 
