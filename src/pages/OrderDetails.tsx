@@ -2,6 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -15,8 +16,14 @@ import { toast } from '@/hooks/use-toast';
 export default function OrderDetails() {
   const { orderId } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate('/auth');
+    }
+  }, [loading, user, navigate]);
 
   const { data: order, isLoading } = useQuery({
     queryKey: ['order', orderId],
@@ -65,17 +72,16 @@ export default function OrderDetails() {
     },
   });
 
-  if (!user) {
-    navigate('/auth');
-    return null;
-  }
-
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">Loading order details...</div>
       </div>
     );
+  }
+
+  if (!user) {
+    return null;
   }
 
   if (!order) {
