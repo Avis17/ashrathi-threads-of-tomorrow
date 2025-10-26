@@ -38,7 +38,7 @@ type Branch = {
   id: string;
   building_name: string;
   owner_name: string;
-  monthly_rent: number;
+  monthly_rent: number | null;
   building_size: number;
   address: string;
   owner_number: string;
@@ -230,7 +230,7 @@ export const BranchesManager = () => {
                         </div>
                       </TableCell>
                       <TableCell>{branch.building_size} sq ft</TableCell>
-                      <TableCell>₹{branch.monthly_rent.toLocaleString()}/mo</TableCell>
+                      <TableCell>₹{(branch.monthly_rent || 0).toLocaleString()}/mo</TableCell>
                       <TableCell>{branch.owner_name}</TableCell>
                       <TableCell>
                         <Badge variant={branch.is_active ? "default" : "secondary"}>
@@ -346,7 +346,7 @@ export const BranchesManager = () => {
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Monthly Rent</Label>
-                  <p className="font-semibold">₹{selectedBranch.monthly_rent.toLocaleString()}</p>
+                  <p className="font-semibold">₹{(selectedBranch.monthly_rent || 0).toLocaleString()}</p>
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Building Size</Label>
