@@ -22,8 +22,8 @@ const profileSchema = z.object({
   full_name: z.string().trim().min(1, 'Name is required').max(100, 'Name must be less than 100 characters'),
   phone: z.string().trim().regex(/^[0-9]{10}$/, 'Phone must be 10 digits').optional().or(z.literal('')),
   date_of_birth: z.string().optional().or(z.literal('')),
-  gender: z.enum(['male', 'female', 'other', '']).optional(),
-  marital_status: z.enum(['single', 'married', 'divorced', 'widowed', '']).optional(),
+  gender: z.enum(['male', 'female', 'other']).optional(),
+  marital_status: z.enum(['single', 'married', 'divorced', 'widowed']).optional(),
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
@@ -63,8 +63,8 @@ export const ProfileDetailsForm = () => {
           full_name: profile.full_name || '',
           phone: profile.phone || '',
           date_of_birth: profile.date_of_birth || '',
-          gender: (profile.gender as ProfileFormData['gender']) || '',
-          marital_status: (profile.marital_status as ProfileFormData['marital_status']) || '',
+          gender: profile.gender && profile.gender !== '' ? (profile.gender as ProfileFormData['gender']) : undefined,
+          marital_status: profile.marital_status && profile.marital_status !== '' ? (profile.marital_status as ProfileFormData['marital_status']) : undefined,
         }
       : undefined,
   });
@@ -164,15 +164,14 @@ export const ProfileDetailsForm = () => {
         <div className="space-y-2">
           <Label htmlFor="gender">Gender</Label>
           <Select
-            value={watch('gender') || ''}
+            value={watch('gender') || undefined}
             onValueChange={(value) => setValue('gender', value as ProfileFormData['gender'])}
             disabled={!isEditing}
           >
             <SelectTrigger className={!isEditing ? 'bg-muted' : ''}>
-              <SelectValue placeholder="Select gender" />
+              <SelectValue placeholder="Prefer not to say" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Prefer not to say</SelectItem>
               <SelectItem value="male">Male</SelectItem>
               <SelectItem value="female">Female</SelectItem>
               <SelectItem value="other">Other</SelectItem>
@@ -183,15 +182,14 @@ export const ProfileDetailsForm = () => {
         <div className="space-y-2">
           <Label htmlFor="marital_status">Marital Status</Label>
           <Select
-            value={watch('marital_status') || ''}
+            value={watch('marital_status') || undefined}
             onValueChange={(value) => setValue('marital_status', value as ProfileFormData['marital_status'])}
             disabled={!isEditing}
           >
             <SelectTrigger className={!isEditing ? 'bg-muted' : ''}>
-              <SelectValue placeholder="Select status" />
+              <SelectValue placeholder="Prefer not to say" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Prefer not to say</SelectItem>
               <SelectItem value="single">Single</SelectItem>
               <SelectItem value="married">Married</SelectItem>
               <SelectItem value="divorced">Divorced</SelectItem>
