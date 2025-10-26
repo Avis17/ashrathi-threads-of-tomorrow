@@ -134,6 +134,7 @@ export default function ExpensesManager() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      queryClient.invalidateQueries({ queryKey: ['all-expenses'] });
       toast.success('Expense added successfully');
       setIsDialogOpen(false);
     },
@@ -154,6 +155,7 @@ export default function ExpensesManager() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      queryClient.invalidateQueries({ queryKey: ['all-expenses'] });
       toast.success('Expense updated successfully');
       setIsDialogOpen(false);
       setEditingExpense(null);
@@ -168,6 +170,7 @@ export default function ExpensesManager() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      queryClient.invalidateQueries({ queryKey: ['all-expenses'] });
       toast.success('Expense deleted successfully');
     },
     onError: () => toast.error('Failed to delete expense'),
@@ -188,6 +191,7 @@ export default function ExpensesManager() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      queryClient.invalidateQueries({ queryKey: ['all-expenses'] });
       toast.success('Expense approved');
     },
     onError: () => toast.error('Failed to approve expense'),
