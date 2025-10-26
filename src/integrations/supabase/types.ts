@@ -695,6 +695,63 @@ export type Database = {
         }
         Relationships: []
       }
+      pending_user_roles: {
+        Row: {
+          assigned_by: string | null
+          created_at: string | null
+          email: string
+          id: string
+          notes: string | null
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          assigned_by?: string | null
+          created_at?: string | null
+          email: string
+          id?: string
+          notes?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          assigned_by?: string | null
+          created_at?: string | null
+          email?: string
+          id?: string
+          notes?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: []
+      }
+      permissions: {
+        Row: {
+          action: string
+          category: string
+          created_at: string | null
+          description: string
+          id: string
+          name: string
+          resource: string
+        }
+        Insert: {
+          action: string
+          category: string
+          created_at?: string | null
+          description: string
+          id?: string
+          name: string
+          resource: string
+        }
+        Update: {
+          action?: string
+          category?: string
+          created_at?: string | null
+          description?: string
+          id?: string
+          name?: string
+          resource?: string
+        }
+        Relationships: []
+      }
       product_materials: {
         Row: {
           created_at: string
@@ -1067,6 +1124,72 @@ export type Database = {
         }
         Relationships: []
       }
+      role_permissions: {
+        Row: {
+          created_at: string | null
+          id: string
+          permission_id: string
+          role: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          permission_id: string
+          role: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          permission_id?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_permissions_permission_id_fkey"
+            columns: ["permission_id"]
+            isOneToOne: false
+            referencedRelation: "permissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "role_permissions_role_fkey"
+            columns: ["role"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["name"]
+          },
+        ]
+      }
+      roles: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          display_name: string
+          id: string
+          is_system_role: boolean | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          display_name: string
+          id?: string
+          is_system_role?: boolean | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          display_name?: string
+          id?: string
+          is_system_role?: boolean | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -1094,8 +1217,43 @@ export type Database = {
     }
     Functions: {
       calculate_batch_costs: { Args: { batch_id: string }; Returns: undefined }
+      create_role: {
+        Args: {
+          _description?: string
+          _display_name: string
+          _name: string
+          _permission_ids?: string[]
+        }
+        Returns: string
+      }
+      delete_role: { Args: { _role_name: string }; Returns: boolean }
       generate_batch_number: { Args: never; Returns: string }
       generate_order_number: { Args: never; Returns: string }
+      get_all_roles: {
+        Args: never
+        Returns: {
+          description: string
+          display_name: string
+          is_system_role: boolean
+          name: string
+          permission_count: number
+          user_count: number
+        }[]
+      }
+      get_user_permissions: {
+        Args: { _user_id: string }
+        Returns: {
+          action: string
+          category: string
+          description: string
+          permission_name: string
+          resource: string
+        }[]
+      }
+      has_permission: {
+        Args: { _permission_name: string; _user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1103,6 +1261,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_super_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "user"
