@@ -14,7 +14,8 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Plus, Trash2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Plus, Trash2, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { TAX_TYPES } from '@/lib/constants';
 import jsPDF from 'jspdf';
@@ -59,6 +60,8 @@ export default function InvoiceGenerator() {
     quantity: 1,
     amount: 0,
   }]);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewPdfUrl, setPreviewPdfUrl] = useState<string | null>(null);
 
   const { data: customers } = useQuery({
     queryKey: ['customers'],
@@ -216,15 +219,15 @@ export default function InvoiceGenerator() {
   });
 
 
-  const generatePDF = () => {
+  const generatePDF = (downloadImmediately: boolean = true) => {
     if (!selectedCustomer) {
       toast({ title: 'Please select a customer', variant: 'destructive' });
-      return;
+      return null;
     }
 
     if (!invoiceSettings) {
       toast({ title: 'Invoice settings not found', variant: 'destructive' });
-      return;
+      return null;
     }
 
     const doc = new jsPDF();
@@ -504,12 +507,50 @@ export default function InvoiceGenerator() {
 
     // Footer drawn per page in didDrawPage
 
-    doc.save(`Invoice_${invoiceNumber}_${selectedCustomer.company_name.replace(/\s+/g, '_')}.pdf`);
+    if (downloadImmediately) {
+      doc.save(`Invoice_${invoiceNumber}_${selectedCustomer.company_name.replace(/\s+/g, '_')}.pdf`);
+      return null;
+    } else {
+      // Return blob URL for preview
+      const pdfBlob = doc.output('blob');
+      const url = URL.createObjectURL(pdfBlob);
+      return { url, filename: `Invoice_${invoiceNumber}_${selectedCustomer.company_name.replace(/\s+/g, '_')}.pdf`, doc };
+    }
   };
 
-  const handleVerifyAndPrint = async () => {
-    await createInvoiceMutation.mutateAsync();
-    generatePDF();
+  const handlePreviewInvoice = () => {
+    if (!customerId || items.some(i => !i.product_id)) {
+      toast({ title: 'Please fill all required fields', variant: 'destructive' });
+      return;
+    }
+
+    const result = generatePDF(false);
+    if (result) {
+      setPreviewPdfUrl(result.url);
+      setPreviewOpen(true);
+    }
+  };
+
+  const handleConfirmAndDownload = async () => {
+    try {
+      await createInvoiceMutation.mutateAsync();
+      generatePDF(true);
+      setPreviewOpen(false);
+      if (previewPdfUrl) {
+        URL.revokeObjectURL(previewPdfUrl);
+        setPreviewPdfUrl(null);
+      }
+    } catch (error) {
+      // Error is already handled by mutation
+    }
+  };
+
+  const handleClosePreview = () => {
+    setPreviewOpen(false);
+    if (previewPdfUrl) {
+      URL.revokeObjectURL(previewPdfUrl);
+      setPreviewPdfUrl(null);
+    }
   };
 
   return (
@@ -760,10 +801,44 @@ export default function InvoiceGenerator() {
       </Card>
 
       <div className="flex gap-4">
-        <Button onClick={handleVerifyAndPrint} disabled={createInvoiceMutation.isPending}>
-          {createInvoiceMutation.isPending ? 'Processing...' : 'Verify & Print Invoice'}
+        <Button onClick={handlePreviewInvoice} variant="outline">
+          <Eye className="h-4 w-4 mr-2" />
+          Preview Invoice
         </Button>
       </div>
+
+      <Dialog open={previewOpen} onOpenChange={handleClosePreview}>
+        <DialogContent className="max-w-[90vw] max-h-[90vh] h-[90vh] p-0">
+          <DialogHeader className="p-6 pb-4">
+            <DialogTitle>Invoice Preview</DialogTitle>
+            <DialogDescription>
+              Review the invoice before confirming generation and download
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex-1 overflow-hidden px-6">
+            {previewPdfUrl && (
+              <iframe
+                src={previewPdfUrl}
+                className="w-full h-[calc(90vh-180px)] border rounded"
+                title="Invoice Preview"
+              />
+            )}
+          </div>
+
+          <DialogFooter className="p-6 pt-4">
+            <Button variant="outline" onClick={handleClosePreview}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleConfirmAndDownload} 
+              disabled={createInvoiceMutation.isPending}
+            >
+              {createInvoiceMutation.isPending ? 'Processing...' : 'Confirm & Download'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
