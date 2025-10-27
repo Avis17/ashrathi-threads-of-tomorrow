@@ -449,18 +449,60 @@ export type Database = {
       }
       invoice_settings: {
         Row: {
+          bank_account_number: string | null
+          bank_branch: string | null
+          bank_ifsc_code: string | null
+          bank_name: string | null
+          company_address: string | null
+          company_email: string | null
+          company_gst_number: string | null
+          company_logo_path: string | null
+          company_name: string | null
+          company_phone: string | null
+          company_tagline: string | null
+          company_website: string | null
           current_invoice_number: number
+          default_terms: Json | null
           id: string
+          payment_modes: string | null
           updated_at: string
         }
         Insert: {
+          bank_account_number?: string | null
+          bank_branch?: string | null
+          bank_ifsc_code?: string | null
+          bank_name?: string | null
+          company_address?: string | null
+          company_email?: string | null
+          company_gst_number?: string | null
+          company_logo_path?: string | null
+          company_name?: string | null
+          company_phone?: string | null
+          company_tagline?: string | null
+          company_website?: string | null
           current_invoice_number?: number
+          default_terms?: Json | null
           id?: string
+          payment_modes?: string | null
           updated_at?: string
         }
         Update: {
+          bank_account_number?: string | null
+          bank_branch?: string | null
+          bank_ifsc_code?: string | null
+          bank_name?: string | null
+          company_address?: string | null
+          company_email?: string | null
+          company_gst_number?: string | null
+          company_logo_path?: string | null
+          company_name?: string | null
+          company_phone?: string | null
+          company_tagline?: string | null
+          company_website?: string | null
           current_invoice_number?: number
+          default_terms?: Json | null
           id?: string
+          payment_modes?: string | null
           updated_at?: string
         }
         Relationships: []

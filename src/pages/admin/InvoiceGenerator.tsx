@@ -22,6 +22,7 @@ import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
 import logo from '@/assets/logo.png';
 import signature from '@/assets/signature.png';
+import { formatCurrency, numberToWords } from '@/lib/invoiceUtils';
 
 interface InvoiceItem {
   product_id: string;
@@ -214,35 +215,6 @@ export default function InvoiceGenerator() {
     },
   });
 
-  // Helper function to convert number to words (Indian currency)
-  const numberToWords = (num: number): string => {
-    const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
-    const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
-    const teens = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
-
-    const convertLessThanThousand = (n: number): string => {
-      if (n === 0) return '';
-      if (n < 10) return ones[n];
-      if (n < 20) return teens[n - 10];
-      if (n < 100) return tens[Math.floor(n / 10)] + (n % 10 !== 0 ? ' ' + ones[n % 10] : '');
-      return ones[Math.floor(n / 100)] + ' Hundred' + (n % 100 !== 0 ? ' ' + convertLessThanThousand(n % 100) : '');
-    };
-
-    if (num === 0) return 'Zero';
-
-    const crore = Math.floor(num / 10000000);
-    const lakh = Math.floor((num % 10000000) / 100000);
-    const thousand = Math.floor((num % 100000) / 1000);
-    const remainder = Math.floor(num % 1000);
-
-    let result = '';
-    if (crore > 0) result += convertLessThanThousand(crore) + ' Crore ';
-    if (lakh > 0) result += convertLessThanThousand(lakh) + ' Lakh ';
-    if (thousand > 0) result += convertLessThanThousand(thousand) + ' Thousand ';
-    if (remainder > 0) result += convertLessThanThousand(remainder);
-
-    return result.trim();
-  };
 
   const generatePDF = () => {
     if (!selectedCustomer) {
@@ -250,8 +222,53 @@ export default function InvoiceGenerator() {
       return;
     }
 
+    if (!invoiceSettings) {
+      toast({ title: 'Invoice settings not found', variant: 'destructive' });
+      return;
+    }
+
     const doc = new jsPDF();
-    const invoiceNumber = invoiceSettings?.current_invoice_number || 1;
+    const invoiceNumber = invoiceSettings.current_invoice_number || 1;
+    const pageHeight = doc.internal.pageSize.height;
+    const pageWidth = doc.internal.pageSize.width;
+    let currentY = 50; // Starting Y position after header
+
+    // Helper function to add header on each page
+    const addHeader = (isFirstPage: boolean = false) => {
+      // Logo and Company Info
+      try {
+        doc.addImage(logo, 'PNG', 15, 12, 25, 25);
+      } catch (error) {
+        console.error('Failed to add logo:', error);
+      }
+      
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(31, 120, 110);
+      doc.text(invoiceSettings.company_name || 'Feather Fashions', 45, 20);
+      
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'italic');
+      doc.setTextColor(100, 100, 100);
+      doc.text(invoiceSettings.company_tagline || 'Feather-Light Comfort. Limitless Style.', 45, 26);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(60, 60, 60);
+      doc.text(invoiceSettings.company_address || '', 15, 34);
+      doc.text(
+        `GSTIN: ${invoiceSettings.company_gst_number || 'N/A'} | Phone: ${invoiceSettings.company_phone || ''} | Email: ${invoiceSettings.company_email || ''}`,
+        15, 39
+      );
+      doc.text(`Website: ${invoiceSettings.company_website || ''}`, 15, 44);
+
+      doc.setDrawColor(200, 200, 200);
+      doc.setLineWidth(0.5);
+      doc.line(15, 48, pageWidth - 15, 48);
+    };
+
+    // Add header for first page
+    addHeader(true);
 
     // ========== HEADER SECTION ==========
     // Logo
@@ -282,63 +299,72 @@ export default function InvoiceGenerator() {
     doc.line(15, 48, 195, 48);
 
     // TAX INVOICE header
+    currentY = 57;
     doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(0, 0, 0);
-    doc.text('TAX INVOICE', 105, 57, { align: 'center' });
+    doc.text('TAX INVOICE', pageWidth / 2, currentY, { align: 'center' });
 
     // Invoice number and date
+    currentY = 65;
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Invoice No: ${invoiceNumber}`, 15, 65);
-    doc.text(`Date: ${format(new Date(invoiceDate), 'dd/MM/yyyy')}`, 140, 65);
+    doc.text(`Invoice No: ${invoiceNumber}`, 15, currentY);
+    doc.text(`Date: ${format(new Date(invoiceDate), 'dd/MM/yyyy')}`, 140, currentY);
+    
+    currentY = 71;
     if (purchaseOrderNo) {
-      doc.text(`PO No: ${purchaseOrderNo}`, 15, 71);
+      doc.text(`PO No: ${purchaseOrderNo}`, 15, currentY);
     }
-    doc.text(`Packages: ${numberOfPackages}`, 140, 71);
+    doc.text(`Packages: ${numberOfPackages}`, 140, currentY);
 
     // ========== BILL TO & DELIVERY ADDRESS SECTION ==========
+    currentY = 76;
     doc.setDrawColor(220, 220, 220);
     doc.setFillColor(250, 250, 250);
-    doc.roundedRect(15, 76, 85, 28, 2, 2, 'FD');
-    doc.roundedRect(110, 76, 85, 28, 2, 2, 'FD');
+    doc.roundedRect(15, currentY, 85, 28, 2, 2, 'FD');
+    doc.roundedRect(110, currentY, 85, 28, 2, 2, 'FD');
 
     // Bill To
     doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(0, 0, 0);
-    doc.text('Bill To:', 18, 82);
+    doc.text('Bill To:', 18, currentY + 6);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
-    doc.text(selectedCustomer.company_name, 18, 88);
-    doc.text(selectedCustomer.email, 18, 93);
-    doc.text(selectedCustomer.phone, 18, 98);
+    doc.text(selectedCustomer.company_name, 18, currentY + 12);
+    doc.text(selectedCustomer.email, 18, currentY + 17);
+    doc.text(selectedCustomer.phone, 18, currentY + 22);
     if (selectedCustomer.gst_number) {
-      doc.text(`GST: ${selectedCustomer.gst_number}`, 18, 103);
+      doc.text(`GST: ${selectedCustomer.gst_number}`, 18, currentY + 27);
     }
 
     // Delivery Address
     doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
-    doc.text('Delivery Address:', 113, 82);
+    doc.text('Delivery Address:', 113, currentY + 6);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
     const addressLines = doc.splitTextToSize(deliveryAddress, 78);
-    doc.text(addressLines, 113, 88);
+    doc.text(addressLines, 113, currentY + 12);
+    
+    currentY += 34;
 
     // ========== PRODUCTS TABLE ==========
     autoTable(doc, {
-      startY: 110,
-      head: [['S.No', 'Product Description', 'HSN Code', 'Qty', 'Unit Price (₹)', 'Amount (₹)']],
+      startY: currentY,
+      head: [['S.No', 'Product Description', 'HSN Code', 'Qty', 'Unit Price', 'Amount']],
       body: items.map((item, index) => {
         const product = products?.find(p => p.id === item.product_id);
+        const productName = product?.name || '';
+        const wrappedName = doc.splitTextToSize(`${productName}\n${item.product_code}`, 58);
         return [
           index + 1,
-          `${product?.name || ''}\n${item.product_code}`,
+          wrappedName.join('\n'),
           item.hsn_code || 'N/A',
           item.quantity,
-          '₹' + item.price.toFixed(2),
-          '₹' + item.amount.toFixed(2),
+          formatCurrency(item.price),
+          formatCurrency(item.amount),
         ];
       }),
       theme: 'grid',
@@ -351,45 +377,57 @@ export default function InvoiceGenerator() {
       },
       columnStyles: {
         0: { halign: 'center', cellWidth: 15 },
-        1: { halign: 'left', cellWidth: 60 },
+        1: { halign: 'left', cellWidth: 'auto', minCellWidth: 50 },
         2: { halign: 'center', cellWidth: 25 },
         3: { halign: 'center', cellWidth: 15 },
-        4: { halign: 'right', cellWidth: 35 },
-        5: { halign: 'right', cellWidth: 35 }
+        4: { halign: 'right', cellWidth: 30 },
+        5: { halign: 'right', cellWidth: 30 }
       },
       styles: {
         fontSize: 9,
         cellPadding: 3,
+        overflow: 'linebreak',
+        cellWidth: 'wrap'
       },
       alternateRowStyles: { fillColor: [248, 248, 248] },
+      margin: { left: 15, right: 15 },
+      didDrawPage: (data) => {
+        // Add page number at bottom
+        const pageCount = (doc as any).internal.getNumberOfPages();
+        const currentPage = (doc as any).internal.getCurrentPageInfo().pageNumber;
+        doc.setFontSize(8);
+        doc.setTextColor(100);
+        doc.text(`Page ${currentPage} of ${pageCount}`, pageWidth / 2, pageHeight - 5, { align: 'center' });
+      }
     });
 
-    const tableEndY = (doc as any).lastAutoTable.finalY || 160;
+    currentY = (doc as any).lastAutoTable.finalY + 10;
 
     // ========== TOTALS SECTION ==========
-    const totalsStartY = tableEndY + 5;
     doc.setDrawColor(220, 220, 220);
     doc.setFillColor(250, 250, 250);
-    doc.roundedRect(130, totalsStartY, 65, taxType === 'intra' ? 30 : 22, 2, 2, 'FD');
+    const totalsHeight = taxType === 'intra' ? 30 : 22;
+    doc.roundedRect(130, currentY, 65, totalsHeight, 2, 2, 'FD');
 
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
-    let yOffset = totalsStartY + 6;
+    doc.setTextColor(0, 0, 0);
+    let yOffset = currentY + 6;
     
     doc.text('Subtotal:', 133, yOffset);
-    doc.text('₹' + subtotal.toFixed(2), 192, yOffset, { align: 'right' });
+    doc.text(formatCurrency(subtotal), 192, yOffset, { align: 'right' });
     yOffset += 5;
 
     if (taxType === 'intra') {
       doc.text(`CGST (${cgstRate}%):`, 133, yOffset);
-      doc.text('₹' + cgstAmount.toFixed(2), 192, yOffset, { align: 'right' });
+      doc.text(formatCurrency(cgstAmount), 192, yOffset, { align: 'right' });
       yOffset += 5;
       doc.text(`SGST (${sgstRate}%):`, 133, yOffset);
-      doc.text('₹' + sgstAmount.toFixed(2), 192, yOffset, { align: 'right' });
+      doc.text(formatCurrency(sgstAmount), 192, yOffset, { align: 'right' });
       yOffset += 5;
     } else {
       doc.text(`IGST (${igstRate}%):`, 133, yOffset);
-      doc.text('₹' + igstAmount.toFixed(2), 192, yOffset, { align: 'right' });
+      doc.text(formatCurrency(igstAmount), 192, yOffset, { align: 'right' });
       yOffset += 5;
     }
 
@@ -400,68 +438,83 @@ export default function InvoiceGenerator() {
     doc.setFontSize(10);
     doc.setTextColor(255, 255, 255);
     doc.text('Grand Total:', 133, yOffset + 2);
-    doc.text('₹' + total.toFixed(2), 192, yOffset + 2, { align: 'right' });
+    doc.text(formatCurrency(total), 192, yOffset + 2, { align: 'right' });
     doc.setTextColor(0, 0, 0);
 
     // Amount in words
     const amountInWords = numberToWords(Math.floor(total));
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9);
-    doc.text('Amount in Words:', 15, totalsStartY + 6);
+    doc.text('Amount in Words:', 15, currentY + 6);
     doc.setFont('helvetica', 'normal');
     const wordsText = `Rupees ${amountInWords} Only`;
     const wrappedWords = doc.splitTextToSize(wordsText, 105);
-    doc.text(wrappedWords, 15, totalsStartY + 12);
+    doc.text(wrappedWords, 15, currentY + 12);
+    
+    currentY += totalsHeight + 10;
 
     // ========== PAYMENT & BANK DETAILS ==========
-    const bankDetailsY = totalsStartY + 35;
     doc.setDrawColor(220, 220, 220);
     doc.setFillColor(250, 250, 250);
-    doc.roundedRect(15, bankDetailsY, 180, 20, 2, 2, 'FD');
+    doc.roundedRect(15, currentY, 180, 20, 2, 2, 'FD');
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9);
-    doc.text('Payment Mode:', 18, bankDetailsY + 6);
+    doc.text('Payment Mode:', 18, currentY + 6);
     doc.setFont('helvetica', 'normal');
-    doc.text('Cash / Bank Transfer / UPI', 50, bankDetailsY + 6);
+    doc.text(invoiceSettings.payment_modes || 'Cash / Bank Transfer / UPI', 50, currentY + 6);
 
     doc.setFont('helvetica', 'bold');
-    doc.text('Bank Details:', 18, bankDetailsY + 11);
+    doc.text('Bank Details:', 18, currentY + 11);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
-    doc.text('Bank: State Bank of India | A/C No: 12345678901 | IFSC: SBIN0001234 | Branch: Annur', 18, bankDetailsY + 15);
+    const bankDetails = `Bank: ${invoiceSettings.bank_name || 'N/A'} | A/C No: ${invoiceSettings.bank_account_number || 'N/A'} | IFSC: ${invoiceSettings.bank_ifsc_code || 'N/A'} | Branch: ${invoiceSettings.bank_branch || 'N/A'}`;
+    doc.text(bankDetails, 18, currentY + 15);
+    
+    currentY += 26;
 
     // ========== TERMS & CONDITIONS ==========
-    const termsY = bankDetailsY + 26;
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9);
-    doc.text('Terms & Conditions:', 15, termsY);
+    doc.text('Terms & Conditions:', 15, currentY);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
-    termsAndConditions.forEach((term, index) => {
-      doc.text(`${index + 1}. ${term}`, 15, termsY + 5 + (index * 4));
+    const terms = Array.isArray(invoiceSettings.default_terms) 
+      ? invoiceSettings.default_terms 
+      : termsAndConditions;
+    terms.forEach((term: string, index: number) => {
+      doc.text(`${index + 1}. ${term}`, 15, currentY + 5 + (index * 4));
     });
+    
+    currentY += 5 + (terms.length * 4) + 5;
 
     // ========== SIGNATURE SECTION ==========
-    const signatureY = termsY + 20;
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9);
-    doc.text('Authorized Signatory', 155, signatureY);
+    doc.text('Authorized Signatory', 155, currentY);
     
-    // Add signature image
-    doc.addImage(signature, 'PNG', 150, signatureY + 3, 40, 15);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7);
-    doc.text('(Company Seal)', 165, signatureY + 20, { align: 'center' });
+    // Add signature image with error handling
+    try {
+      doc.addImage(signature, 'PNG', 150, currentY + 3, 40, 15);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7);
+      doc.text('(Company Seal)', 165, currentY + 20, { align: 'center' });
+    } catch (error) {
+      console.error('Failed to add signature:', error);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7);
+      doc.text('(Signature & Company Seal)', 165, currentY + 10, { align: 'center' });
+    }
 
     // ========== FOOTER BAR ==========
+    const footerY = pageHeight - 12;
     doc.setFillColor(31, 120, 110);
-    doc.rect(0, 285, 210, 12, 'F');
+    doc.rect(0, footerY, pageWidth, 12, 'F');
     
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(8);
     doc.setTextColor(255, 255, 255);
-    doc.text('Thank you for choosing Feather Fashions! 🦚', 105, 291, { align: 'center' });
+    doc.text(`Thank you for choosing ${invoiceSettings.company_name || 'Feather Fashions'}! 🦚`, pageWidth / 2, footerY + 6, { align: 'center' });
 
     doc.save(`Invoice_${invoiceNumber}_${selectedCustomer.company_name.replace(/\s+/g, '_')}.pdf`);
   };
