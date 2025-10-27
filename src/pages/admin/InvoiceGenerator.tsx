@@ -267,36 +267,19 @@ export default function InvoiceGenerator() {
       doc.line(15, 48, pageWidth - 15, 48);
     };
 
+    const ensureSpace = (height: number) => {
+      const bottomMargin = 20;
+      if (currentY + height > pageHeight - bottomMargin) {
+        doc.addPage();
+        addHeader();
+        currentY = 57; // reset below header
+      }
+    };
+
     // Add header for first page
     addHeader(true);
 
-    // ========== HEADER SECTION ==========
-    // Logo
-    doc.addImage(logo, 'PNG', 15, 12, 25, 25);
-    
-    // Company name and tagline
-    doc.setFontSize(18);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(31, 120, 110); // Feather green color
-    doc.text('FEATHER FASHIONS', 45, 20);
-    
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'italic');
-    doc.setTextColor(100, 100, 100);
-    doc.text('Feather-Light Comfort. Limitless Style.', 45, 26);
-
-    // Company details
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    doc.setTextColor(60, 60, 60);
-    doc.text('Sathya Complex, 176/1, Sathy Road, Annur, Tamil Nadu - 641653', 15, 34);
-    doc.text('GSTIN: 33AAGFF1234F1Z5 | Phone: +91 97892 25510 | Email: info@featherfashions.shop', 15, 39);
-    doc.text('Website: featherfashions.shop', 15, 44);
-
-    // Separator line
-    doc.setDrawColor(200, 200, 200);
-    doc.setLineWidth(0.5);
-    doc.line(15, 48, 195, 48);
+    // Header drawn by addHeader(); removing duplicate drawing block
 
     // TAX INVOICE header
     currentY = 57;
@@ -392,12 +375,21 @@ export default function InvoiceGenerator() {
       alternateRowStyles: { fillColor: [248, 248, 248] },
       margin: { left: 15, right: 15 },
       didDrawPage: (data) => {
-        // Add page number at bottom
+        const pageW = (doc as any).internal.pageSize.getWidth();
+        const pageH = (doc as any).internal.pageSize.getHeight();
+        // Header on every page
+        addHeader();
+        // Footer bar
+        doc.setFillColor(31, 120, 110);
+        doc.rect(0, pageH - 12, pageW, 12, 'F');
+        // Page numbers
         const pageCount = (doc as any).internal.getNumberOfPages();
         const currentPage = (doc as any).internal.getCurrentPageInfo().pageNumber;
         doc.setFontSize(8);
-        doc.setTextColor(100);
-        doc.text(`Page ${currentPage} of ${pageCount}`, pageWidth / 2, pageHeight - 5, { align: 'center' });
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(255, 255, 255);
+        doc.text(`Page ${currentPage} of ${pageCount}`, pageW / 2, pageH - 6, { align: 'center' });
+        doc.setTextColor(0, 0, 0);
       }
     });
 
@@ -454,6 +446,7 @@ export default function InvoiceGenerator() {
     currentY += totalsHeight + 10;
 
     // ========== PAYMENT & BANK DETAILS ==========
+    ensureSpace(26);
     doc.setDrawColor(220, 220, 220);
     doc.setFillColor(250, 250, 250);
     doc.roundedRect(15, currentY, 180, 20, 2, 2, 'FD');
@@ -482,13 +475,16 @@ export default function InvoiceGenerator() {
     const terms = Array.isArray(invoiceSettings.default_terms) 
       ? invoiceSettings.default_terms 
       : termsAndConditions;
+    const termsHeight = 5 + (terms.length * 4) + 5;
+    ensureSpace(termsHeight);
     terms.forEach((term: string, index: number) => {
       doc.text(`${index + 1}. ${term}`, 15, currentY + 5 + (index * 4));
     });
     
-    currentY += 5 + (terms.length * 4) + 5;
+    currentY += termsHeight;
 
     // ========== SIGNATURE SECTION ==========
+    ensureSpace(25);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9);
     doc.text('Authorized Signatory', 155, currentY);
@@ -506,15 +502,7 @@ export default function InvoiceGenerator() {
       doc.text('(Signature & Company Seal)', 165, currentY + 10, { align: 'center' });
     }
 
-    // ========== FOOTER BAR ==========
-    const footerY = pageHeight - 12;
-    doc.setFillColor(31, 120, 110);
-    doc.rect(0, footerY, pageWidth, 12, 'F');
-    
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8);
-    doc.setTextColor(255, 255, 255);
-    doc.text(`Thank you for choosing ${invoiceSettings.company_name || 'Feather Fashions'}! 🦚`, pageWidth / 2, footerY + 6, { align: 'center' });
+    // Footer drawn per page in didDrawPage
 
     doc.save(`Invoice_${invoiceNumber}_${selectedCustomer.company_name.replace(/\s+/g, '_')}.pdf`);
   };
