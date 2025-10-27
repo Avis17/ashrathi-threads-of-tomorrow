@@ -253,12 +253,6 @@ export default function InvoiceGenerator() {
     const doc = new jsPDF();
     const invoiceNumber = invoiceSettings?.current_invoice_number || 1;
 
-    // Add watermark (faint logo in background)
-    doc.saveGraphicsState();
-    doc.setGState({ opacity: 0.1 });
-    doc.addImage(logo, 'PNG', 60, 110, 90, 90);
-    doc.restoreGraphicsState();
-
     // ========== HEADER SECTION ==========
     // Logo
     doc.addImage(logo, 'PNG', 15, 12, 25, 25);
