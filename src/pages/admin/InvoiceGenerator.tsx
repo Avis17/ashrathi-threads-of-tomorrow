@@ -22,7 +22,7 @@ import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
 import logo from '@/assets/logo.png';
 import signature from '@/assets/signature.png';
-import { formatCurrency, numberToWords } from '@/lib/invoiceUtils';
+import { formatCurrency, numberToWords, formatCurrencyAscii, sanitizePdfText } from '@/lib/invoiceUtils';
 
 interface InvoiceItem {
   product_id: string;
@@ -346,8 +346,8 @@ export default function InvoiceGenerator() {
           wrappedName.join('\n'),
           item.hsn_code || 'N/A',
           item.quantity,
-          formatCurrency(item.price),
-          formatCurrency(item.amount),
+          formatCurrencyAscii(item.price),
+          formatCurrencyAscii(item.amount),
         ];
       }),
       theme: 'grid',
@@ -363,8 +363,8 @@ export default function InvoiceGenerator() {
         1: { halign: 'left', cellWidth: 'auto', minCellWidth: 50 },
         2: { halign: 'center', cellWidth: 25 },
         3: { halign: 'center', cellWidth: 15 },
-        4: { halign: 'right', cellWidth: 30 },
-        5: { halign: 'right', cellWidth: 30 }
+        4: { halign: 'right', cellWidth: 34, overflow: 'hidden' },
+        5: { halign: 'right', cellWidth: 34, overflow: 'hidden' }
       },
       styles: {
         fontSize: 9,
@@ -407,19 +407,19 @@ export default function InvoiceGenerator() {
     let yOffset = currentY + 6;
     
     doc.text('Subtotal:', 133, yOffset);
-    doc.text(formatCurrency(subtotal), 192, yOffset, { align: 'right' });
+    doc.text(sanitizePdfText(formatCurrencyAscii(subtotal)), 192, yOffset, { align: 'right' });
     yOffset += 5;
 
     if (taxType === 'intra') {
       doc.text(`CGST (${cgstRate}%):`, 133, yOffset);
-      doc.text(formatCurrency(cgstAmount), 192, yOffset, { align: 'right' });
+      doc.text(sanitizePdfText(formatCurrencyAscii(cgstAmount)), 192, yOffset, { align: 'right' });
       yOffset += 5;
       doc.text(`SGST (${sgstRate}%):`, 133, yOffset);
-      doc.text(formatCurrency(sgstAmount), 192, yOffset, { align: 'right' });
+      doc.text(sanitizePdfText(formatCurrencyAscii(sgstAmount)), 192, yOffset, { align: 'right' });
       yOffset += 5;
     } else {
       doc.text(`IGST (${igstRate}%):`, 133, yOffset);
-      doc.text(formatCurrency(igstAmount), 192, yOffset, { align: 'right' });
+      doc.text(sanitizePdfText(formatCurrencyAscii(igstAmount)), 192, yOffset, { align: 'right' });
       yOffset += 5;
     }
 
@@ -430,7 +430,7 @@ export default function InvoiceGenerator() {
     doc.setFontSize(10);
     doc.setTextColor(255, 255, 255);
     doc.text('Grand Total:', 133, yOffset + 2);
-    doc.text(formatCurrency(total), 192, yOffset + 2, { align: 'right' });
+    doc.text(sanitizePdfText(formatCurrencyAscii(total)), 192, yOffset + 2, { align: 'right' });
     doc.setTextColor(0, 0, 0);
 
     // Amount in words

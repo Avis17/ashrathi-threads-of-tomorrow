@@ -41,3 +41,36 @@ export const numberToWords = (num: number): string => {
 
   return result.trim();
 };
+
+/**
+ * Sanitize text for jsPDF: normalize spaces and remove non-ASCII glyphs
+ */
+export const sanitizePdfText = (text: string): string => {
+  if (text == null) return '';
+  const normalized = String(text).replace(/[\u00A0\u202F\u2009\u200A\u200B]/g, ' ');
+  // Keep printable ASCII only (space to ~)
+  return normalized.replace(/[^ -~]/g, '');
+};
+
+// Indian number grouping for integers (e.g., 12,34,567)
+const toIndianGrouping = (intStr: string): string => {
+  if (!intStr) return '0';
+  if (intStr.length <= 3) return intStr;
+  const last3 = intStr.slice(-3);
+  const lead = intStr.slice(0, -3);
+  const leadGrouped = lead.replace(/\B(?=(\d{2})+(?!\d))/g, ',');
+  return `${leadGrouped},${last3}`;
+};
+
+/**
+ * ASCII-only currency formatter for PDFs (avoids ₹ glyph issues)
+ * Example: Rs 1,23,456.78
+ */
+export const formatCurrencyAscii = (amount: number): string => {
+  const n = Number.isFinite(amount) ? amount : 0;
+  const sign = n < 0 ? '-' : '';
+  const s = Math.abs(n).toFixed(2);
+  const [intPart, frac] = s.split('.');
+  const grouped = toIndianGrouping(intPart);
+  return sanitizePdfText(`${sign}Rs ${grouped}.${frac}`);
+};
