@@ -98,6 +98,7 @@ export const ProfileDetailsForm = () => {
   });
 
   const onSubmit = (data: ProfileFormData) => {
+    if (!isEditing) return; // Only submit if in editing mode
     updateMutation.mutate(data);
   };
 
@@ -202,7 +203,14 @@ export const ProfileDetailsForm = () => {
 
       <div className="flex gap-3">
         {!isEditing ? (
-          <Button type="button" onClick={() => setIsEditing(true)}>
+          <Button 
+            type="button" 
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsEditing(true);
+            }}
+          >
             Edit Profile
           </Button>
         ) : (
