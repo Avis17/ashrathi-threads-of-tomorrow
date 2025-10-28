@@ -23,7 +23,7 @@ import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
 import logo from '@/assets/logo.png';
 import signature from '@/assets/signature.png';
-import { formatCurrency, numberToWords, formatCurrencyAscii, sanitizePdfText } from '@/lib/invoiceUtils';
+import { formatCurrency, numberToWords, formatCurrencyAscii, sanitizePdfText, formatInvoiceNumber, groupByHSN, maskBankAccount } from '@/lib/invoiceUtils';
 
 interface InvoiceItem {
   product_id: string;
@@ -232,6 +232,7 @@ export default function InvoiceGenerator() {
 
     const doc = new jsPDF();
     const invoiceNumber = invoiceSettings.current_invoice_number || 1;
+    const formattedInvoiceNumber = formatInvoiceNumber(invoiceNumber, new Date(invoiceDate));
     const pageHeight = doc.internal.pageSize.height;
     const pageWidth = doc.internal.pageSize.width;
     let currentY = 50; // Starting Y position after header
@@ -275,27 +276,50 @@ export default function InvoiceGenerator() {
       if (currentY + height > pageHeight - bottomMargin) {
         doc.addPage();
         addHeader();
+        addWatermark();
         currentY = 57; // reset below header
       }
     };
 
-    // Add header for first page
+    // Function to add watermark on page
+    const addWatermark = () => {
+      doc.saveGraphicsState();
+      doc.setGState({ opacity: 0.1 });
+      doc.setTextColor(224, 224, 224);
+      doc.setFontSize(70);
+      doc.setFont('helvetica', 'bold');
+      
+      const centerX = pageWidth / 2;
+      const centerY = pageHeight / 2;
+      
+      // Rotate and draw watermark text
+      doc.text('FEATHER FASHIONS', centerX, centerY, {
+        align: 'center',
+        angle: -45
+      });
+      
+      doc.restoreGraphicsState();
+      doc.setTextColor(0, 0, 0);
+    };
+
+    // Add header and watermark for first page
     addHeader(true);
+    addWatermark();
 
     // Header drawn by addHeader(); removing duplicate drawing block
 
-    // TAX INVOICE header
+    // TAX INVOICE header - larger and bolder
     currentY = 57;
-    doc.setFontSize(16);
+    doc.setFontSize(20);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(0, 0, 0);
     doc.text('TAX INVOICE', pageWidth / 2, currentY, { align: 'center' });
 
-    // Invoice number and date
+    // Invoice number (FY format) and date
     currentY = 65;
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Invoice No: ${invoiceNumber}`, 15, currentY);
+    doc.text(`Invoice No: ${formattedInvoiceNumber}`, 15, currentY);
     doc.text(`Date: ${format(new Date(invoiceDate), 'dd/MM/yyyy')}`, 140, currentY);
     
     currentY = 71;
@@ -334,7 +358,34 @@ export default function InvoiceGenerator() {
     const addressLines = doc.splitTextToSize(deliveryAddress, 78);
     doc.text(addressLines, 113, currentY + 12);
     
-    currentY += 34;
+    // Check if inter-state supply
+    const customerState = selectedCustomer.state.toLowerCase().trim();
+    const deliveryLower = deliveryAddress.toLowerCase();
+    const isInterState = !deliveryLower.includes(customerState);
+    
+    if (isInterState) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.setTextColor(220, 38, 38);
+      const interStateY = currentY + 12 + (addressLines.length * 4) + 2;
+      doc.text('(Inter-state supply - IGST applicable)', 113, interStateY);
+      doc.setTextColor(0, 0, 0);
+      currentY += 40;
+    } else {
+      currentY += 34;
+    }
+
+    // Place of Supply badge
+    doc.setFillColor(52, 180, 148);
+    doc.setDrawColor(52, 180, 148);
+    const posX = pageWidth - 75;
+    doc.roundedRect(posX, currentY, 70, 8, 2, 2, 'FD');
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(255, 255, 255);
+    doc.text(`Place of Supply: ${invoiceSettings.place_of_supply || 'Tamil Nadu (33)'}`, posX + 35, currentY + 5.5, { align: 'center' });
+    doc.setTextColor(0, 0, 0);
+    currentY += 12;
 
     // ========== PRODUCTS TABLE ==========
     autoTable(doc, {
@@ -382,23 +433,94 @@ export default function InvoiceGenerator() {
         const pageH = (doc as any).internal.pageSize.getHeight();
         // Header on every page
         addHeader();
-        // Footer bar
-        doc.setFillColor(31, 120, 110);
-        doc.rect(0, pageH - 12, pageW, 12, 'F');
-        // Page numbers
-        const pageCount = (doc as any).internal.getNumberOfPages();
-        const currentPage = (doc as any).internal.getCurrentPageInfo().pageNumber;
+        // Enhanced footer bar
+        doc.setFillColor(52, 180, 148);
+        doc.rect(0, pageH - 15, pageW, 15, 'F');
+        doc.setTextColor(255, 255, 255);
         doc.setFontSize(8);
         doc.setFont('helvetica', 'bold');
-        doc.setTextColor(255, 255, 255);
-        doc.text(`Page ${currentPage} of ${pageCount}`, pageW / 2, pageH - 6, { align: 'center' });
+        doc.text('Feather Fashions • Comfort • Style • Sustainability', pageW / 2, pageH - 10, { align: 'center' });
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7);
+        const pageCount = (doc as any).internal.getNumberOfPages();
+        const currentPage = (doc as any).internal.getCurrentPageInfo().pageNumber;
+        doc.text(`featherfashions.shop | Page ${currentPage} of ${pageCount}`, pageW / 2, pageH - 5, { align: 'center' });
         doc.setTextColor(0, 0, 0);
       }
     });
 
     currentY = (doc as any).lastAutoTable.finalY + 10;
+    
+    // HSN Summary Table
+    ensureSpace(40);
+    const hsnGroups = groupByHSN(items.map(item => ({
+      hsn_code: item.hsn_code || 'N/A',
+      quantity: item.quantity,
+      amount: item.amount
+    })));
 
-    // ========== TOTALS SECTION ==========
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text('HSN Summary', 15, currentY);
+    currentY += 5;
+
+    autoTable(doc, {
+      startY: currentY,
+      head: [['HSN Code', 'Total Qty', 'Taxable Amount']],
+      body: Object.entries(hsnGroups).map(([hsn, data]) => [
+        hsn,
+        data.qty.toString(),
+        formatCurrencyAscii(data.amount)
+      ]),
+      theme: 'plain',
+      headStyles: {
+        fillColor: [248, 250, 252],
+        textColor: [0, 0, 0],
+        fontStyle: 'bold',
+        fontSize: 9,
+        halign: 'left'
+      },
+      bodyStyles: {
+        fontSize: 8,
+        textColor: [0, 0, 0]
+      },
+      columnStyles: {
+        0: { cellWidth: 40 },
+        1: { halign: 'right', cellWidth: 30 },
+        2: { halign: 'right', cellWidth: 40 }
+      },
+      margin: { left: 15, right: 15 },
+      tableWidth: 110
+    });
+
+    currentY = (doc as any).lastAutoTable.finalY + 10;
+    ensureSpace(80);
+
+    // Left side: UPI QR Code block
+    const qrX = 15;
+    const qrY = currentY;
+    const qrSize = 35;
+
+    doc.setFillColor(248, 250, 252);
+    doc.rect(qrX, qrY, qrSize + 10, qrSize + 12, 'F');
+    
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Scan to Pay (UPI)', qrX + (qrSize + 10) / 2, qrY + 5, { align: 'center' });
+    
+    // QR code placeholder
+    doc.setDrawColor(200, 200, 200);
+    doc.setLineWidth(0.5);
+    doc.rect(qrX + 5, qrY + 8, qrSize, qrSize);
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    doc.text('QR CODE', qrX + 5 + qrSize / 2, qrY + 8 + qrSize / 2 - 3, { align: 'center' });
+    doc.text('PLACEHOLDER', qrX + 5 + qrSize / 2, qrY + 8 + qrSize / 2 + 2, { align: 'center' });
+    
+    doc.setFontSize(7);
+    doc.text(`UPI: ${invoiceSettings.upi_id || 'featherfashions@upi'}`, qrX + (qrSize + 10) / 2, qrY + qrSize + 12, { align: 'center' });
+
+    // ========== TOTALS SECTION (Right Side) ==========
     doc.setDrawColor(220, 220, 220);
     doc.setFillColor(250, 250, 250);
     const totalsHeight = taxType === 'intra' ? 30 : 22;
@@ -426,8 +548,8 @@ export default function InvoiceGenerator() {
       yOffset += 5;
     }
 
-    // Grand Total with highlight
-    doc.setFillColor(42, 170, 138);
+    // Grand Total with lighter matte green
+    doc.setFillColor(52, 180, 148);
     doc.roundedRect(130, yOffset - 2, 65, 7, 1, 1, 'F');
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10);
@@ -464,7 +586,8 @@ export default function InvoiceGenerator() {
     doc.text('Bank Details:', 18, currentY + 11);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
-    const bankDetails = `Bank: ${invoiceSettings.bank_name || 'N/A'} | A/C No: ${invoiceSettings.bank_account_number || 'N/A'} | IFSC: ${invoiceSettings.bank_ifsc_code || 'N/A'} | Branch: ${invoiceSettings.bank_branch || 'N/A'}`;
+    const maskedAccount = invoiceSettings.bank_account_display || maskBankAccount(invoiceSettings.bank_account_number || 'N/A');
+    const bankDetails = `Bank: ${invoiceSettings.bank_name || 'N/A'} | A/C No: ${maskedAccount} | IFSC: ${invoiceSettings.bank_ifsc_code || 'N/A'} | Branch: ${invoiceSettings.bank_branch || 'N/A'}`;
     doc.text(bankDetails, 18, currentY + 15);
     
     currentY += 26;
@@ -508,13 +631,13 @@ export default function InvoiceGenerator() {
     // Footer drawn per page in didDrawPage
 
     if (downloadImmediately) {
-      doc.save(`Invoice_${invoiceNumber}_${selectedCustomer.company_name.replace(/\s+/g, '_')}.pdf`);
+      doc.save(`Invoice_${formattedInvoiceNumber.replace(/\//g, '_')}_${selectedCustomer.company_name.replace(/\s+/g, '_')}.pdf`);
       return null;
     } else {
       // Return blob URL for preview
       const pdfBlob = doc.output('blob');
       const url = URL.createObjectURL(pdfBlob);
-      return { url, filename: `Invoice_${invoiceNumber}_${selectedCustomer.company_name.replace(/\s+/g, '_')}.pdf`, doc };
+      return { url, filename: `Invoice_${formattedInvoiceNumber.replace(/\//g, '_')}_${selectedCustomer.company_name.replace(/\s+/g, '_')}.pdf`, doc };
     }
   };
 

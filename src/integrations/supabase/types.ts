@@ -449,6 +449,7 @@ export type Database = {
       }
       invoice_settings: {
         Row: {
+          bank_account_display: string | null
           bank_account_number: string | null
           bank_branch: string | null
           bank_ifsc_code: string | null
@@ -465,9 +466,12 @@ export type Database = {
           default_terms: Json | null
           id: string
           payment_modes: string | null
+          place_of_supply: string | null
           updated_at: string
+          upi_id: string | null
         }
         Insert: {
+          bank_account_display?: string | null
           bank_account_number?: string | null
           bank_branch?: string | null
           bank_ifsc_code?: string | null
@@ -484,9 +488,12 @@ export type Database = {
           default_terms?: Json | null
           id?: string
           payment_modes?: string | null
+          place_of_supply?: string | null
           updated_at?: string
+          upi_id?: string | null
         }
         Update: {
+          bank_account_display?: string | null
           bank_account_number?: string | null
           bank_branch?: string | null
           bank_ifsc_code?: string | null
@@ -503,7 +510,9 @@ export type Database = {
           default_terms?: Json | null
           id?: string
           payment_modes?: string | null
+          place_of_supply?: string | null
           updated_at?: string
+          upi_id?: string | null
         }
         Relationships: []
       }
@@ -1285,6 +1294,10 @@ export type Database = {
       }
       delete_role: { Args: { _role_name: string }; Returns: boolean }
       generate_batch_number: { Args: never; Returns: string }
+      generate_fy_invoice_number: {
+        Args: { invoice_date: string; invoice_num: number }
+        Returns: string
+      }
       generate_order_number: { Args: never; Returns: string }
       get_all_roles: {
         Args: never

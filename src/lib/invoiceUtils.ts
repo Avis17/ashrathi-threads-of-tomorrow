@@ -74,3 +74,93 @@ export const formatCurrencyAscii = (amount: number): string => {
   const grouped = toIndianGrouping(intPart);
   return sanitizePdfText(`${sign}Rs ${grouped}.${frac}`);
 };
+
+/**
+ * Format invoice number to FY format: FF/2025-26/0025
+ */
+export const formatInvoiceNumber = (invoiceNum: number, invoiceDate: Date): string => {
+  const year = invoiceDate.getFullYear();
+  const month = invoiceDate.getMonth() + 1; // getMonth() is 0-indexed
+  
+  let fiscalYear: string;
+  if (month >= 4) {
+    // Apr-Dec: Use current year to next year
+    const nextYearShort = (year + 1) % 100;
+    fiscalYear = `${year}-${nextYearShort.toString().padStart(2, '0')}`;
+  } else {
+    // Jan-Mar: Use previous year to current year
+    const currentYearShort = year % 100;
+    fiscalYear = `${year - 1}-${currentYearShort.toString().padStart(2, '0')}`;
+  }
+  
+  return `FF/${fiscalYear}/${invoiceNum.toString().padStart(4, '0')}`;
+};
+
+/**
+ * Mask bank account number (show only last 4 digits)
+ * Example: XXXXXX8901
+ */
+export const maskBankAccount = (accountNumber: string): string => {
+  if (!accountNumber || accountNumber.length < 4) return accountNumber;
+  return 'X'.repeat(Math.max(0, accountNumber.length - 4)) + accountNumber.slice(-4);
+};
+
+/**
+ * Group invoice items by HSN code for GST summary
+ */
+export const groupByHSN = (items: Array<{ hsn_code: string; quantity: number; amount: number }>) => {
+  const grouped: Record<string, { qty: number; amount: number }> = {};
+  
+  items.forEach(item => {
+    if (!grouped[item.hsn_code]) {
+      grouped[item.hsn_code] = { qty: 0, amount: 0 };
+    }
+    grouped[item.hsn_code].qty += item.quantity;
+    grouped[item.hsn_code].amount += item.amount;
+  });
+  
+  return grouped;
+};
+
+/**
+ * State GST codes mapping
+ */
+export const STATE_GST_CODES: Record<string, string> = {
+  'Andaman and Nicobar Islands': '35',
+  'Andhra Pradesh': '37',
+  'Arunachal Pradesh': '12',
+  'Assam': '18',
+  'Bihar': '10',
+  'Chandigarh': '04',
+  'Chhattisgarh': '22',
+  'Dadra and Nagar Haveli': '26',
+  'Daman and Diu': '25',
+  'Delhi': '07',
+  'Goa': '30',
+  'Gujarat': '24',
+  'Haryana': '06',
+  'Himachal Pradesh': '02',
+  'Jammu and Kashmir': '01',
+  'Jharkhand': '20',
+  'Karnataka': '29',
+  'Kerala': '32',
+  'Ladakh': '38',
+  'Lakshadweep': '31',
+  'Madhya Pradesh': '23',
+  'Maharashtra': '27',
+  'Manipur': '14',
+  'Meghalaya': '17',
+  'Mizoram': '15',
+  'Nagaland': '13',
+  'Odisha': '21',
+  'Puducherry': '34',
+  'Punjab': '03',
+  'Rajasthan': '08',
+  'Sikkim': '11',
+  'Tamil Nadu': '33',
+  'Telangana': '36',
+  'Tripura': '16',
+  'Uttar Pradesh': '09',
+  'Uttarakhand': '05',
+  'West Bengal': '19',
+};
