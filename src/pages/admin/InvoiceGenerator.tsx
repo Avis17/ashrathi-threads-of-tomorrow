@@ -283,22 +283,21 @@ export default function InvoiceGenerator() {
 
     // Function to add watermark on page
     const addWatermark = () => {
-      doc.saveGraphicsState();
-      doc.setGState({ opacity: 0.1 });
-      doc.setTextColor(224, 224, 224);
+      // Use very light gray color (simulates 10% opacity)
+      doc.setTextColor(245, 245, 245);
       doc.setFontSize(70);
       doc.setFont('helvetica', 'bold');
       
       const centerX = pageWidth / 2;
       const centerY = pageHeight / 2;
       
-      // Rotate and draw watermark text
+      // Draw watermark text at 45-degree angle
       doc.text('FEATHER FASHIONS', centerX, centerY, {
         align: 'center',
         angle: -45
       });
       
-      doc.restoreGraphicsState();
+      // Reset text color
       doc.setTextColor(0, 0, 0);
     };
 
