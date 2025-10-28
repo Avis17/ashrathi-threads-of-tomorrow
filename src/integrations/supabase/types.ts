@@ -523,6 +523,7 @@ export type Database = {
           created_at: string
           customer_id: string
           delivery_address: string
+          discount: number | null
           id: string
           igst_amount: number
           igst_rate: number
@@ -544,6 +545,7 @@ export type Database = {
           created_at?: string
           customer_id: string
           delivery_address: string
+          discount?: number | null
           id?: string
           igst_amount?: number
           igst_rate?: number
@@ -565,6 +567,7 @@ export type Database = {
           created_at?: string
           customer_id?: string
           delivery_address?: string
+          discount?: number | null
           id?: string
           igst_amount?: number
           igst_rate?: number

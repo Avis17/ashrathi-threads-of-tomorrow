@@ -88,88 +88,227 @@ export default function InvoiceHistory() {
   });
 
   const downloadInvoice = async (invoice: any) => {
+    // Fetch invoice settings for consistent formatting
+    const { data: settings } = await supabase
+      .from('invoice_settings')
+      .select('*')
+      .single();
+
+    if (!settings) {
+      toast({ title: 'Invoice settings not found', variant: 'destructive' });
+      return;
+    }
+
     const doc = new jsPDF();
+    const pageHeight = doc.internal.pageSize.height;
+    const pageWidth = doc.internal.pageSize.width;
 
-    // Add logo
-    doc.addImage(logo, 'PNG', 15, 10, 30, 30);
+    // Helper to add header
+    const addHeader = () => {
+      try {
+        doc.addImage(logo, 'PNG', 15, 12, 25, 25);
+      } catch (error) {
+        console.error('Failed to add logo:', error);
+      }
+      
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(31, 120, 110);
+      doc.text(settings.company_name || 'Feather Fashions', 45, 20);
+      
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'italic');
+      doc.setTextColor(100, 100, 100);
+      doc.text(settings.company_tagline || 'Feather-Light Comfort. Limitless Style.', 45, 26);
 
-    // Header
-    doc.setFontSize(20);
-    doc.setTextColor(41, 128, 185);
-    doc.text('FEATHER FASHIONS', 105, 20, { align: 'center' });
-    doc.setFontSize(12);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(60, 60, 60);
+      doc.text(settings.company_address || '', 15, 34);
+      doc.text(
+        `GSTIN: ${settings.company_gst_number || 'N/A'} | Phone: ${settings.company_phone || ''} | Email: ${settings.company_email || ''}`,
+        15, 39
+      );
+      doc.text(`Website: ${settings.company_website || ''}`, 15, 44);
+
+      doc.setDrawColor(200, 200, 200);
+      doc.setLineWidth(0.5);
+      doc.line(15, 48, pageWidth - 15, 48);
+    };
+
+    addHeader();
+
+    // Watermark
+    doc.setTextColor(245, 245, 245);
+    doc.setFontSize(70);
+    doc.setFont('helvetica', 'bold');
+    doc.text('FEATHER FASHIONS', pageWidth / 2, pageHeight / 2, { align: 'center', angle: -45 });
     doc.setTextColor(0, 0, 0);
-    doc.text('TAX INVOICE', 105, 28, { align: 'center' });
+
+    // TAX INVOICE header
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.text(invoice.invoice_type === 'tax' ? 'TAX INVOICE' : 'INVOICE', pageWidth / 2, 57, { align: 'center' });
 
     // Invoice details
     doc.setFontSize(10);
-    doc.text(`Invoice No: ${invoice.invoice_number}`, 20, 48);
-    doc.text(`Date: ${format(new Date(invoice.invoice_date), 'dd/MM/yyyy')}`, 20, 55);
-
-    // Bill To
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Bill To:', 20, 68);
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
-    doc.text(invoice.customers.company_name, 20, 75);
+    const formattedNum = `FF/${new Date(invoice.invoice_date).getFullYear()}-${(new Date(invoice.invoice_date).getFullYear() + 1) % 100}/${String(invoice.invoice_number).padStart(4, '0')}`;
+    doc.text(`Invoice No: ${formattedNum}`, 15, 65);
+    doc.text(`Date: ${format(new Date(invoice.invoice_date), 'dd/MM/yyyy')}`, 140, 65);
+    if (invoice.purchase_order_no) {
+      doc.text(`PO No: ${invoice.purchase_order_no}`, 15, 71);
+    }
+    doc.text(`Packages: ${invoice.number_of_packages}`, 140, 71);
 
-    // Delivery Address
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Delivery Address:', 120, 68);
-    doc.setFont('helvetica', 'normal');
+    // Bill To & Delivery Address
+    let currentY = 76;
+    doc.setDrawColor(220, 220, 220);
+    doc.setFillColor(250, 250, 250);
+    doc.roundedRect(15, currentY, 85, 28, 2, 2, 'FD');
+    doc.roundedRect(110, currentY, 85, 28, 2, 2, 'FD');
+
     doc.setFontSize(10);
-    const addressLines = doc.splitTextToSize(invoice.delivery_address, 70);
-    doc.text(addressLines, 120, 75);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Bill To:', 18, currentY + 6);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.text(invoice.customers.company_name, 18, currentY + 12);
+    doc.text(invoice.customers.email || '', 18, currentY + 17);
+    doc.text(invoice.customers.phone || '', 18, currentY + 22);
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Delivery Address:', 113, currentY + 6);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    const addressLines = doc.splitTextToSize(invoice.delivery_address, 78);
+    doc.text(addressLines, 113, currentY + 12);
+
+    currentY += 34;
 
     // Products table
     autoTable(doc, {
-      startY: 95,
-      head: [['S.No', 'Product', 'HSN Code', 'Price', 'Qty', 'Amount']],
+      startY: currentY,
+      head: [['S.No', 'Product Description', 'HSN Code', 'Qty', 'Unit Price', 'Amount']],
       body: invoice.invoice_items.map((item: any, index: number) => [
         index + 1,
         item.products.name,
-        item.hsn_code,
-        item.price.toFixed(2),
+        item.hsn_code || 'N/A',
         item.quantity,
-        item.amount.toFixed(2),
+        `Rs ${item.price.toFixed(2)}`,
+        `Rs ${item.amount.toFixed(2)}`,
       ]),
-      foot: [
-        ['', '', '', '', 'Subtotal:', invoice.subtotal.toFixed(2)],
-        ...(invoice.cgst_amount > 0 ? [
-          ['', '', '', '', `CGST (${invoice.cgst_rate}%):`, invoice.cgst_amount.toFixed(2)],
-          ['', '', '', '', `SGST (${invoice.sgst_rate}%):`, invoice.sgst_amount.toFixed(2)],
-        ] : [
-          ['', '', '', '', `IGST (${invoice.igst_rate}%):`, invoice.igst_amount.toFixed(2)],
-        ]),
-        ['', '', '', '', 'Total:', invoice.total_amount.toFixed(2)],
-      ],
-      headStyles: { fillColor: [41, 128, 185], textColor: 255 },
-      footStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
-      alternateRowStyles: { fillColor: [245, 245, 245] },
+      theme: 'grid',
+      headStyles: { 
+        fillColor: [31, 120, 110],
+        textColor: 255,
+        fontStyle: 'bold',
+        fontSize: 9,
+        halign: 'center'
+      },
+      columnStyles: {
+        0: { halign: 'center', cellWidth: 15 },
+        1: { halign: 'left', cellWidth: 'auto' },
+        2: { halign: 'center', cellWidth: 25 },
+        3: { halign: 'center', cellWidth: 15 },
+        4: { halign: 'right', cellWidth: 34 },
+        5: { halign: 'right', cellWidth: 34 }
+      },
+      styles: { fontSize: 9, cellPadding: 3 },
+      alternateRowStyles: { fillColor: [248, 248, 248] },
+      margin: { left: 15, right: 15 },
+      didDrawPage: () => {
+        addHeader();
+        // Footer
+        doc.setFillColor(52, 180, 148);
+        doc.rect(0, pageHeight - 15, pageWidth, 15, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Feather Fashions • Comfort • Style • Sustainability', pageWidth / 2, pageHeight - 10, { align: 'center' });
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7);
+        doc.text(`featherfashions.shop | Page ${(doc as any).internal.getCurrentPageInfo().pageNumber} of ${(doc as any).internal.getNumberOfPages()}`, pageWidth / 2, pageHeight - 5, { align: 'center' });
+        doc.setTextColor(0, 0, 0);
+      }
     });
 
-    const finalY = (doc as any).lastAutoTable.finalY || 160;
+    currentY = (doc as any).lastAutoTable.finalY + 10;
 
-    // Terms and Conditions
+    // Totals
+    doc.setDrawColor(220, 220, 220);
+    doc.setFillColor(250, 250, 250);
+    const discount = invoice.discount || 0;
+    const totalsHeight = invoice.invoice_type === 'tax' ? (discount > 0 ? 35 : 30) : (discount > 0 ? 27 : 22);
+    doc.roundedRect(130, currentY, 65, totalsHeight, 2, 2, 'FD');
+
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    let yOffset = currentY + 6;
+    
+    doc.text('Subtotal:', 133, yOffset);
+    doc.text(`Rs ${invoice.subtotal.toFixed(2)}`, 192, yOffset, { align: 'right' });
+    yOffset += 5;
+
+    if (invoice.invoice_type === 'tax') {
+      if (invoice.igst_amount > 0) {
+        doc.text(`IGST (${invoice.igst_rate}%):`, 133, yOffset);
+        doc.text(`Rs ${invoice.igst_amount.toFixed(2)}`, 192, yOffset, { align: 'right' });
+        yOffset += 5;
+      } else {
+        doc.text(`CGST (${invoice.cgst_rate}%):`, 133, yOffset);
+        doc.text(`Rs ${invoice.cgst_amount.toFixed(2)}`, 192, yOffset, { align: 'right' });
+        yOffset += 5;
+        doc.text(`SGST (${invoice.sgst_rate}%):`, 133, yOffset);
+        doc.text(`Rs ${invoice.sgst_amount.toFixed(2)}`, 192, yOffset, { align: 'right' });
+        yOffset += 5;
+      }
+    }
+
+    if (discount > 0) {
+      doc.text('Discount:', 133, yOffset);
+      doc.text(`- Rs ${discount.toFixed(2)}`, 192, yOffset, { align: 'right' });
+      yOffset += 5;
+    }
+
+    // Grand Total
+    doc.setFillColor(52, 180, 148);
+    doc.roundedRect(130, yOffset - 2, 65, 7, 1, 1, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(255, 255, 255);
+    doc.text('Grand Total:', 133, yOffset + 2);
+    doc.text(`Rs ${invoice.total_amount.toFixed(2)}`, 192, yOffset + 2, { align: 'right' });
+    doc.setTextColor(0, 0, 0);
+
+    currentY += totalsHeight + 10;
+
+    // Terms
     if (invoice.terms_and_conditions && invoice.terms_and_conditions.length > 0) {
-      doc.setFontSize(11);
       doc.setFont('helvetica', 'bold');
-      doc.text('Terms and Conditions:', 20, finalY + 15);
-      doc.setFont('helvetica', 'normal');
       doc.setFontSize(9);
+      doc.text('Terms & Conditions:', 15, currentY);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
       invoice.terms_and_conditions.forEach((term: string, index: number) => {
-        doc.text(`${index + 1}. ${term}`, 20, finalY + 22 + (index * 6));
+        doc.text(`${index + 1}. ${term}`, 15, currentY + 5 + (index * 4));
       });
+      currentY += 5 + (invoice.terms_and_conditions.length * 4);
     }
 
     // Signature
-    doc.addImage(signature, 'PNG', 140, finalY + 25, 50, 20);
+    currentY += 10;
+    doc.setFont('helvetica', 'bold');
     doc.setFontSize(9);
-    doc.text('Authorized Signatory', 150, finalY + 50);
+    doc.text('Authorized Signatory', 155, currentY);
+    try {
+      doc.addImage(signature, 'PNG', 150, currentY + 3, 40, 15);
+    } catch (error) {
+      console.error('Failed to add signature:', error);
+    }
 
-    doc.save(`Invoice_${invoice.invoice_number}.pdf`);
+    doc.save(`Invoice_${formattedNum.replace(/\//g, '_')}_${invoice.customers.company_name.replace(/\s+/g, '_')}.pdf`);
   };
 
   const totalPages = invoices?.count ? Math.ceil(invoices.count / ITEMS_PER_PAGE) : 0;

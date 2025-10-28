@@ -47,6 +47,7 @@ export default function InvoiceGenerator() {
   const [cgstRate, setCgstRate] = useState('9');
   const [sgstRate, setSgstRate] = useState('9');
   const [igstRate, setIgstRate] = useState('18');
+  const [discount, setDiscount] = useState(0);
   const [termsAndConditions, setTermsAndConditions] = useState([
     'Payment is due within 30 days of invoice date.',
     'Goods once sold will not be taken back or exchanged.',
@@ -155,7 +156,8 @@ export default function InvoiceGenerator() {
   const cgstAmount = taxType === 'intra' ? (subtotal * Number(cgstRate)) / 100 : 0;
   const sgstAmount = taxType === 'intra' ? (subtotal * Number(sgstRate)) / 100 : 0;
   const igstAmount = taxType === 'inter' ? (subtotal * Number(igstRate)) / 100 : 0;
-  const total = subtotal + cgstAmount + sgstAmount + igstAmount;
+  const totalBeforeDiscount = subtotal + cgstAmount + sgstAmount + igstAmount;
+  const total = totalBeforeDiscount - discount;
 
   const createInvoiceMutation = useMutation({
     mutationFn: async () => {
@@ -183,6 +185,7 @@ export default function InvoiceGenerator() {
           igst_rate: Number(igstRate),
           igst_amount: igstAmount,
           total_amount: total,
+          discount: discount,
           terms_and_conditions: termsAndConditions,
         }])
         .select()
@@ -374,18 +377,6 @@ export default function InvoiceGenerator() {
       currentY += 34;
     }
 
-    // Place of Supply badge
-    doc.setFillColor(52, 180, 148);
-    doc.setDrawColor(52, 180, 148);
-    const posX = pageWidth - 75;
-    doc.roundedRect(posX, currentY, 70, 8, 2, 2, 'FD');
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(255, 255, 255);
-    doc.text(`Place of Supply: ${invoiceSettings.place_of_supply || 'Tamil Nadu (33)'}`, posX + 35, currentY + 5.5, { align: 'center' });
-    doc.setTextColor(0, 0, 0);
-    currentY += 12;
-
     // ========== PRODUCTS TABLE ==========
     autoTable(doc, {
       startY: currentY,
@@ -495,34 +486,10 @@ export default function InvoiceGenerator() {
     currentY = (doc as any).lastAutoTable.finalY + 10;
     ensureSpace(80);
 
-    // Left side: UPI QR Code block
-    const qrX = 15;
-    const qrY = currentY;
-    const qrSize = 35;
-
-    doc.setFillColor(248, 250, 252);
-    doc.rect(qrX, qrY, qrSize + 10, qrSize + 12, 'F');
-    
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Scan to Pay (UPI)', qrX + (qrSize + 10) / 2, qrY + 5, { align: 'center' });
-    
-    // QR code placeholder
-    doc.setDrawColor(200, 200, 200);
-    doc.setLineWidth(0.5);
-    doc.rect(qrX + 5, qrY + 8, qrSize, qrSize);
-    doc.setFontSize(7);
-    doc.setFont('helvetica', 'normal');
-    doc.text('QR CODE', qrX + 5 + qrSize / 2, qrY + 8 + qrSize / 2 - 3, { align: 'center' });
-    doc.text('PLACEHOLDER', qrX + 5 + qrSize / 2, qrY + 8 + qrSize / 2 + 2, { align: 'center' });
-    
-    doc.setFontSize(7);
-    doc.text(`UPI: ${invoiceSettings.upi_id || 'featherfashions@upi'}`, qrX + (qrSize + 10) / 2, qrY + qrSize + 12, { align: 'center' });
-
-    // ========== TOTALS SECTION (Right Side) ==========
+    // ========== TOTALS SECTION ==========
     doc.setDrawColor(220, 220, 220);
     doc.setFillColor(250, 250, 250);
-    const totalsHeight = taxType === 'intra' ? 30 : 22;
+    const totalsHeight = taxType === 'intra' ? (discount > 0 ? 35 : 30) : (discount > 0 ? 27 : 22);
     doc.roundedRect(130, currentY, 65, totalsHeight, 2, 2, 'FD');
 
     doc.setFontSize(9);
@@ -544,6 +511,14 @@ export default function InvoiceGenerator() {
     } else {
       doc.text(`IGST (${igstRate}%):`, 133, yOffset);
       doc.text(sanitizePdfText(formatCurrencyAscii(igstAmount)), 192, yOffset, { align: 'right' });
+      yOffset += 5;
+    }
+
+    // Discount if applicable
+    if (discount > 0) {
+      doc.setFont('helvetica', 'normal');
+      doc.text('Discount:', 133, yOffset);
+      doc.text(`- ${sanitizePdfText(formatCurrencyAscii(discount))}`, 192, yOffset, { align: 'right' });
       yOffset += 5;
     }
 
@@ -713,23 +688,23 @@ export default function InvoiceGenerator() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Select Customer *</Label>
-              <Select value={customerId} onValueChange={handleCustomerChange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select customer" />
-                </SelectTrigger>
-                <SelectContent>
-                  {customers?.map((customer) => (
-                    <SelectItem key={customer.id} value={customer.id}>
-                      {customer.company_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-2">
+            <Label>Select Customer *</Label>
+            <Select value={customerId} onValueChange={handleCustomerChange}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select customer" />
+              </SelectTrigger>
+              <SelectContent>
+                {customers?.map((customer) => (
+                  <SelectItem key={customer.id} value={customer.id}>
+                    {customer.company_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>Number of Packages</Label>
               <Input
@@ -739,6 +714,26 @@ export default function InvoiceGenerator() {
                 onChange={(e) => setNumberOfPackages(e.target.value)}
               />
             </div>
+
+            <div className="space-y-2">
+              <Label>Purchase Order Number</Label>
+              <Input
+                value={purchaseOrderNo}
+                onChange={(e) => setPurchaseOrderNo(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Discount (Rs)</Label>
+              <Input
+                type="number"
+                min="0"
+                step="0.01"
+                value={discount}
+                onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)}
+                placeholder="0.00"
+              />
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -746,14 +741,6 @@ export default function InvoiceGenerator() {
             <Input
               value={deliveryAddress}
               onChange={(e) => setDeliveryAddress(e.target.value)}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Purchase Order Number</Label>
-            <Input
-              value={purchaseOrderNo}
-              onChange={(e) => setPurchaseOrderNo(e.target.value)}
             />
           </div>
 
@@ -912,6 +899,12 @@ export default function InvoiceGenerator() {
               <div className="flex justify-between">
                 <span>IGST ({igstRate}%):</span>
                 <span>₹{igstAmount.toFixed(2)}</span>
+              </div>
+            )}
+            {discount > 0 && (
+              <div className="flex justify-between">
+                <span>Discount:</span>
+                <span className="text-red-600">- ₹{discount.toFixed(2)}</span>
               </div>
             )}
             <div className="flex justify-between text-lg font-bold border-t pt-2">
