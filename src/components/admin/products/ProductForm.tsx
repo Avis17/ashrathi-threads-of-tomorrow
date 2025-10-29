@@ -33,6 +33,11 @@ const productSchema = z.object({
     .transform((val) => (val === '' ? null : parseFloat(val)))
     .refine((val) => val === null || val > 0, 'Price must be positive')
     .nullable(),
+  discount_percentage: z.string()
+    .transform((val) => (val === '' ? 0 : parseInt(val)))
+    .refine((val) => val >= 0 && val <= 99, 'Discount must be between 0-99%')
+    .default('0'),
+  offer_message: z.string().max(50).optional().or(z.literal('')).nullable(),
   display_order: z.string()
     .transform((val) => (val === '' ? 0 : parseInt(val)))
     .refine((val) => Number.isInteger(val), 'Must be a whole number'),
@@ -70,6 +75,8 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
       should_remove: initialData?.should_remove ?? false,
       display_order: initialData?.display_order?.toString() || '0',
       price: initialData?.price?.toString() || '',
+      discount_percentage: initialData?.discount_percentage?.toString() || '0',
+      offer_message: initialData?.offer_message || '',
       name: initialData?.name || '',
       category: initialData?.category || '',
       fabric: initialData?.fabric || '',
@@ -163,6 +170,22 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
           <Input id="price" type="number" step="0.01" {...register('price')} />
           {errors.price && (
             <p className="text-sm text-destructive">{errors.price.message}</p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="discount_percentage">Discount (%) - 0-99%</Label>
+          <Input id="discount_percentage" type="number" min="0" max="99" {...register('discount_percentage')} />
+          {errors.discount_percentage && (
+            <p className="text-sm text-destructive">{errors.discount_percentage.message}</p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="offer_message">Offer Message (Optional)</Label>
+          <Input id="offer_message" {...register('offer_message')} placeholder="e.g., Buy 2 @598" maxLength={50} />
+          {errors.offer_message && (
+            <p className="text-sm text-destructive">{errors.offer_message.message}</p>
           )}
         </div>
 

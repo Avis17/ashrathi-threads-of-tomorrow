@@ -1054,6 +1054,7 @@ export type Database = {
           category: string
           created_at: string | null
           description: string | null
+          discount_percentage: number | null
           display_order: number | null
           fabric: string
           hsn_code: string | null
@@ -1064,6 +1065,7 @@ export type Database = {
           is_new_arrival: boolean | null
           is_signature: boolean | null
           name: string
+          offer_message: string | null
           price: number | null
           product_code: string | null
           should_remove: boolean | null
@@ -1075,6 +1077,7 @@ export type Database = {
           category: string
           created_at?: string | null
           description?: string | null
+          discount_percentage?: number | null
           display_order?: number | null
           fabric: string
           hsn_code?: string | null
@@ -1085,6 +1088,7 @@ export type Database = {
           is_new_arrival?: boolean | null
           is_signature?: boolean | null
           name: string
+          offer_message?: string | null
           price?: number | null
           product_code?: string | null
           should_remove?: boolean | null
@@ -1096,6 +1100,7 @@ export type Database = {
           category?: string
           created_at?: string | null
           description?: string | null
+          discount_percentage?: number | null
           display_order?: number | null
           fabric?: string
           hsn_code?: string | null
@@ -1106,6 +1111,7 @@ export type Database = {
           is_new_arrival?: boolean | null
           is_signature?: boolean | null
           name?: string
+          offer_message?: string | null
           price?: number | null
           product_code?: string | null
           should_remove?: boolean | null

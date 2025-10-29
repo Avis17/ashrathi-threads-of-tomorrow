@@ -154,14 +154,35 @@ const Products = () => {
                     </Button>
                   </div>
                   <CardContent className="p-5">
+                    {/* Offer Message Badge */}
+                    {product.offer_message && (
+                      <Badge className="mb-2 bg-black text-white font-semibold">{product.offer_message}</Badge>
+                    )}
+                    
                     <h3 className="font-semibold text-lg mb-2">{product.name}</h3>
                     <p className="text-sm text-muted-foreground mb-2">{product.description}</p>
                     <p className="text-sm font-medium text-primary mb-2">Fabric: {product.fabric}</p>
                     
-                    {/* Price */}
+                    {/* Price with Discount */}
                     <div className="mb-4">
                       {product.price ? (
-                        <p className="text-2xl font-bold text-foreground">₹{product.price.toLocaleString()}</p>
+                        <div>
+                          {product.discount_percentage && product.discount_percentage > 0 ? (
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <p className="text-2xl font-bold text-foreground">
+                                  ₹{Math.round(product.price * (1 - product.discount_percentage / 100)).toLocaleString()}
+                                </p>
+                                <p className="text-lg text-muted-foreground line-through">₹{product.price.toLocaleString()}</p>
+                                <Badge variant="destructive" className="text-xs">
+                                  {product.discount_percentage}% off
+                                </Badge>
+                              </div>
+                            </div>
+                          ) : (
+                            <p className="text-2xl font-bold text-foreground">₹{product.price.toLocaleString()}</p>
+                          )}
+                        </div>
                       ) : (
                         <p className="text-sm text-muted-foreground italic">Contact for Price</p>
                       )}

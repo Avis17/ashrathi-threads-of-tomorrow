@@ -15,6 +15,8 @@ export interface Product {
   price: number | null;
   available_sizes: string[];
   available_colors: Array<{ name: string; hex: string }>;
+  discount_percentage: number | null;
+  offer_message: string | null;
 }
 
 export const useProducts = () => {
