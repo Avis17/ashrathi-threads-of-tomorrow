@@ -157,9 +157,20 @@ const Products = () => {
                     </Button>
                   </div>
                   <CardContent className="p-5">
-                    {/* Offer Message Badge */}
-                    {product.offer_message && (
-                      <Badge className="mb-2 bg-black text-white font-semibold">{product.offer_message}</Badge>
+                    {/* Offer Messages Scrolling Animation */}
+                    {product.offer_messages && product.offer_messages.length > 0 && (
+                      <div className="mb-2 h-7 overflow-hidden relative bg-gradient-to-r from-primary/10 via-secondary/10 to-accent/10 rounded-md">
+                        <div className="animate-scroll-vertical space-y-1 py-1">
+                          {[...product.offer_messages, ...product.offer_messages].map((message, index) => (
+                            <Badge 
+                              key={index} 
+                              className="w-full justify-center bg-gradient-to-r from-primary to-secondary text-white font-semibold shadow-sm"
+                            >
+                              {message}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
                     )}
                     
                     <h3 className="font-semibold text-lg mb-2">{product.name}</h3>

@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
+import { Plus, Minus } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -38,7 +40,7 @@ const productSchema = z.object({
     .transform((val) => (val === '' ? 0 : parseInt(val)))
     .refine((val) => val >= 0 && val <= 99, 'Discount must be between 0-99%')
     .default('0'),
-  offer_message: z.string().max(50).optional().or(z.literal('')).nullable(),
+  offer_messages: z.array(z.string()).default([]),
   display_order: z.string()
     .transform((val) => (val === '' ? 0 : parseInt(val)))
     .refine((val) => Number.isInteger(val), 'Must be a whole number'),
@@ -67,6 +69,8 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
   const [colors, setColors] = useState<Array<{ name: string; hex: string }>>(initialData?.available_colors || []);
   const [additionalImages, setAdditionalImages] = useState<string[]>(initialData?.additional_images || []);
   const [newImageUrl, setNewImageUrl] = useState('');
+  const [offerMessages, setOfferMessages] = useState<string[]>(initialData?.offer_messages || []);
+  const [newOfferMessage, setNewOfferMessage] = useState('');
 
   const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
@@ -79,7 +83,7 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
       display_order: initialData?.display_order?.toString() || '0',
       price: initialData?.price?.toString() || '',
       discount_percentage: initialData?.discount_percentage?.toString() || '0',
-      offer_message: initialData?.offer_message || '',
+      offer_messages: initialData?.offer_messages || [],
       name: initialData?.name || '',
       category: initialData?.category || '',
       fabric: initialData?.fabric || '',
@@ -101,7 +105,7 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
   const shouldRemove = watch('should_remove');
 
   const handleFormSubmit = (data: ProductFormData) => {
-    onSubmit({ ...data, available_sizes: sizes, available_colors: colors, additional_images: additionalImages });
+    onSubmit({ ...data, available_sizes: sizes, available_colors: colors, additional_images: additionalImages, offer_messages: offerMessages });
   };
 
   const handleAddImage = () => {
@@ -113,6 +117,17 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
 
   const handleRemoveImage = (index: number) => {
     setAdditionalImages(additionalImages.filter((_, i) => i !== index));
+  };
+
+  const handleAddOfferMessage = () => {
+    if (newOfferMessage.trim()) {
+      setOfferMessages([...offerMessages, newOfferMessage.trim()]);
+      setNewOfferMessage('');
+    }
+  };
+
+  const handleRemoveOfferMessage = (index: number) => {
+    setOfferMessages(offerMessages.filter((_, i) => i !== index));
   };
 
   return (
@@ -232,11 +247,41 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
           )}
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="offer_message">Offer Message (Optional)</Label>
-          <Input id="offer_message" {...register('offer_message')} placeholder="e.g., Buy 2 @598" maxLength={50} />
-          {errors.offer_message && (
-            <p className="text-sm text-destructive">{errors.offer_message.message}</p>
+        <div className="space-y-3 md:col-span-2">
+          <Label>Offer Messages (Optional)</Label>
+          <div className="flex gap-2">
+            <Input
+              value={newOfferMessage}
+              onChange={(e) => setNewOfferMessage(e.target.value)}
+              placeholder="e.g., Limited Time Offer!"
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleAddOfferMessage();
+                }
+              }}
+            />
+            <Button type="button" onClick={handleAddOfferMessage} size="sm">
+              <Plus className="h-4 w-4 mr-1" />
+              Add
+            </Button>
+          </div>
+          {offerMessages.length > 0 && (
+            <div className="space-y-2">
+              {offerMessages.map((message, index) => (
+                <div key={index} className="flex items-center gap-2 p-2 border rounded-md bg-muted/30">
+                  <Badge variant="secondary" className="flex-1">{message}</Badge>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleRemoveOfferMessage(index)}
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
           )}
         </div>
 

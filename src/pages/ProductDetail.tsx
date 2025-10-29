@@ -173,16 +173,20 @@ export default function ProductDetail() {
                   <Heart className={`h-6 w-6 ${isFavorite(product.id) ? 'fill-red-500 text-red-500' : ''}`} />
                 </Button>
               </div>
-              
-              <div className="flex items-center gap-2 mb-4">
-                <Badge variant="secondary">{product.category}</Badge>
-                <Badge variant="outline">{product.fabric}</Badge>
-              </div>
 
-              {product.offer_message && (
-                <Badge className="mb-4 bg-gradient-to-r from-primary to-primary/80">
-                  {product.offer_message}
-                </Badge>
+              {product.offer_messages && product.offer_messages.length > 0 && (
+                <div className="h-8 overflow-hidden relative bg-gradient-to-r from-primary/10 via-secondary/10 to-accent/10 rounded-md px-4 mb-4">
+                  <div className="animate-scroll-vertical space-y-2 py-1">
+                    {[...product.offer_messages, ...product.offer_messages].map((message, index) => (
+                      <Badge 
+                        key={index} 
+                        className="w-full justify-center bg-gradient-to-r from-primary to-secondary text-white font-semibold shadow-sm"
+                      >
+                        {message}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
               )}
             </div>
 
