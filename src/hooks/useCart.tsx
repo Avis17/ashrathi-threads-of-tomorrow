@@ -16,6 +16,7 @@ interface CartItemWithProduct {
     image_url: string;
     price: number | null;
     product_code: string | null;
+    discount_percentage: number | null;
   };
 }
 
@@ -38,7 +39,8 @@ export const useCart = () => {
             name,
             image_url,
             price,
-            product_code
+            product_code,
+            discount_percentage
           )
         `)
         .eq('user_id', user.id);
@@ -168,10 +170,12 @@ export const useCart = () => {
     },
   });
 
-  // Calculate cart total
+  // Calculate cart total with discounts
   const cartTotal = cartItems.reduce((total, item) => {
-    const price = item.products?.price || 0;
-    return total + (price * item.quantity);
+    const basePrice = item.products?.price || 0;
+    const discount = item.products?.discount_percentage || 0;
+    const discountedPrice = discount > 0 ? basePrice * (1 - discount / 100) : basePrice;
+    return total + (discountedPrice * item.quantity);
   }, 0);
 
   const cartCount = cartItems.reduce((count, item) => count + item.quantity, 0);

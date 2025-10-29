@@ -81,19 +81,25 @@ export default function Checkout() {
 
       if (orderError) throw orderError;
 
-      // Create order items
-      const orderItems = cartItems.map((item) => ({
-        order_id: order.id,
-        product_id: item.product_id,
-        product_name: item.products.name,
-        product_code: item.products.product_code,
-        product_image_url: item.products.image_url,
-        quantity: item.quantity,
-        unit_price: item.products.price || 0,
-        total_price: (item.products.price || 0) * item.quantity,
-        selected_size: item.selected_size,
-        selected_color: item.selected_color,
-      }));
+      // Create order items with discounted prices
+      const orderItems = cartItems.map((item) => {
+        const basePrice = item.products.price || 0;
+        const discount = item.products.discount_percentage || 0;
+        const unitPrice = discount > 0 ? basePrice * (1 - discount / 100) : basePrice;
+        
+        return {
+          order_id: order.id,
+          product_id: item.product_id,
+          product_name: item.products.name,
+          product_code: item.products.product_code,
+          product_image_url: item.products.image_url,
+          quantity: item.quantity,
+          unit_price: unitPrice,
+          total_price: unitPrice * item.quantity,
+          selected_size: item.selected_size,
+          selected_color: item.selected_color,
+        };
+      });
 
       const { error: itemsError } = await supabase
         .from('order_items')
@@ -178,16 +184,22 @@ export default function Checkout() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-3">
-                {cartItems.map((item) => (
-                  <div key={item.id} className="flex justify-between text-sm">
-                    <span className="flex-1">
-                      {item.products.name} x {item.quantity}
-                    </span>
-                    <span className="font-medium">
-                      ₹{((item.products.price || 0) * item.quantity).toFixed(2)}
-                    </span>
-                  </div>
-                ))}
+                {cartItems.map((item) => {
+                  const basePrice = item.products.price || 0;
+                  const discount = item.products.discount_percentage || 0;
+                  const price = discount > 0 ? basePrice * (1 - discount / 100) : basePrice;
+                  return (
+                    <div key={item.id} className="flex justify-between text-sm">
+                      <span className="flex-1">
+                        {item.products.name} x {item.quantity}
+                        {discount > 0 && <span className="text-xs text-green-600 ml-1">({discount}% off)</span>}
+                      </span>
+                      <span className="font-medium">
+                        ₹{(price * item.quantity).toFixed(2)}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
 
               <Separator />

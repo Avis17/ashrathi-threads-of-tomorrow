@@ -15,13 +15,16 @@ interface CartItemProps {
       image_url: string;
       price: number | null;
       product_code: string | null;
+      discount_percentage: number | null;
     };
   };
 }
 
 export const CartItem = ({ item }: CartItemProps) => {
   const { updateQuantity, removeFromCart } = useCart();
-  const price = item.products?.price || 0;
+  const basePrice = item.products?.price || 0;
+  const discount = item.products?.discount_percentage || 0;
+  const price = discount > 0 ? basePrice * (1 - discount / 100) : basePrice;
 
   return (
     <div className="flex gap-4 animate-fade-in">
@@ -77,7 +80,16 @@ export const CartItem = ({ item }: CartItemProps) => {
               <Plus className="h-4 w-4" />
             </Button>
           </div>
-          <p className="font-semibold">₹{(price * item.quantity).toFixed(2)}</p>
+          <div className="text-right">
+            {discount > 0 ? (
+              <div className="space-y-0.5">
+                <p className="font-semibold">₹{(price * item.quantity).toFixed(2)}</p>
+                <p className="text-xs text-muted-foreground line-through">₹{(basePrice * item.quantity).toFixed(2)}</p>
+              </div>
+            ) : (
+              <p className="font-semibold">₹{(price * item.quantity).toFixed(2)}</p>
+            )}
+          </div>
         </div>
       </div>
     </div>
