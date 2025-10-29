@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,6 +15,39 @@ import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 
 const PLACEHOLDER_IMAGE = '/placeholder.svg';
+
+const OfferMessageCycle = ({ messages }: { messages: string[] }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    if (messages.length <= 1) return;
+    
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % messages.length);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [messages.length]);
+
+  return (
+    <div className="mb-2 h-8 relative bg-gradient-to-r from-primary/10 via-secondary/10 to-accent/10 rounded-lg overflow-hidden flex items-center justify-center px-2">
+      {messages.map((message, index) => (
+        <Badge
+          key={index}
+          className={`absolute inset-x-2 bg-gradient-to-r from-primary to-secondary text-white font-semibold shadow-sm transition-all duration-500 ${
+            index === currentIndex 
+              ? 'opacity-100 translate-y-0' 
+              : index < currentIndex 
+                ? 'opacity-0 -translate-y-full' 
+                : 'opacity-0 translate-y-full'
+          }`}
+        >
+          {message}
+        </Badge>
+      ))}
+    </div>
+  );
+};
 
 const Products = () => {
   const navigate = useNavigate();
@@ -157,20 +190,9 @@ const Products = () => {
                     </Button>
                   </div>
                   <CardContent className="p-5">
-                    {/* Offer Messages Scrolling Animation */}
+                    {/* Offer Messages with Fade Transition */}
                     {product.offer_messages && product.offer_messages.length > 0 && (
-                      <div className="mb-2 h-7 overflow-hidden relative bg-gradient-to-r from-primary/10 via-secondary/10 to-accent/10 rounded-md">
-                        <div className="animate-scroll-vertical space-y-1 py-1">
-                          {[...product.offer_messages, ...product.offer_messages].map((message, index) => (
-                            <Badge 
-                              key={index} 
-                              className="w-full justify-center bg-gradient-to-r from-primary to-secondary text-white font-semibold shadow-sm"
-                            >
-                              {message}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
+                      <OfferMessageCycle messages={product.offer_messages} />
                     )}
                     
                     <h3 className="font-semibold text-lg mb-2">{product.name}</h3>

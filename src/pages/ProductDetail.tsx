@@ -5,7 +5,7 @@ import { Product } from '@/hooks/useProducts';
 import { useAuth } from '@/hooks/useAuth';
 import { useCart } from '@/hooks/useCart';
 import { useFavorites } from '@/hooks/useFavorites';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
@@ -14,6 +14,39 @@ import { Heart, Minus, Plus, ShoppingCart, ZoomIn, ArrowLeft } from 'lucide-reac
 import { useToast } from '@/hooks/use-toast';
 import ImageZoomDialog from '@/components/ImageZoomDialog';
 import { Skeleton } from '@/components/ui/skeleton';
+
+const OfferMessageCycle = ({ messages }: { messages: string[] }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    if (messages.length <= 1) return;
+    
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % messages.length);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [messages.length]);
+
+  return (
+    <div className="mb-4 h-10 relative bg-gradient-to-r from-primary/10 via-secondary/10 to-accent/10 rounded-lg overflow-hidden flex items-center justify-center px-4">
+      {messages.map((message, index) => (
+        <Badge
+          key={index}
+          className={`absolute inset-x-4 bg-gradient-to-r from-primary to-secondary text-white font-semibold shadow-sm transition-all duration-500 ${
+            index === currentIndex 
+              ? 'opacity-100 translate-y-0' 
+              : index < currentIndex 
+                ? 'opacity-0 -translate-y-full' 
+                : 'opacity-0 translate-y-full'
+          }`}
+        >
+          {message}
+        </Badge>
+      ))}
+    </div>
+  );
+};
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
@@ -175,18 +208,7 @@ export default function ProductDetail() {
               </div>
 
               {product.offer_messages && product.offer_messages.length > 0 && (
-                <div className="h-8 overflow-hidden relative bg-gradient-to-r from-primary/10 via-secondary/10 to-accent/10 rounded-md px-4 mb-4">
-                  <div className="animate-scroll-vertical space-y-2 py-1">
-                    {[...product.offer_messages, ...product.offer_messages].map((message, index) => (
-                      <Badge 
-                        key={index} 
-                        className="w-full justify-center bg-gradient-to-r from-primary to-secondary text-white font-semibold shadow-sm"
-                      >
-                        {message}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
+                <OfferMessageCycle messages={product.offer_messages} />
               )}
             </div>
 
