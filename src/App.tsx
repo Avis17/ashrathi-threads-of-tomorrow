@@ -20,6 +20,7 @@ import BulkOrder from "./pages/BulkOrder";
 import Checkout from "./pages/Checkout";
 import MyOrders from "./pages/MyOrders";
 import OrderDetails from "./pages/OrderDetails";
+import ProductDetail from "./pages/ProductDetail";
 import CustomerProfile from "./pages/CustomerProfile";
 import NotFound from "./pages/NotFound";
 import WomenHalfSleeveTShirt from "./pages/women/WomenHalfSleeveTShirt";
@@ -65,7 +66,8 @@ const App = () => (
                   <main className="flex-1">
                     <Routes>
                       <Route path="/" element={<Home />} />
-                      <Route path="/products" element={<Products />} />
+          <Route path="/products" element={<Products />} />
+          <Route path="/product/:id" element={<ProductDetail />} />
                       <Route path="/services" element={<Services />} />
                       <Route path="/collections" element={<Collections />} />
                       <Route path="/about" element={<About />} />

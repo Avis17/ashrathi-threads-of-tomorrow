@@ -134,7 +134,10 @@ const Products = () => {
               const isUnavailable = !product.is_active;
               return (
                 <Card key={product.id} className={`overflow-hidden card-hover group ${isUnavailable ? 'opacity-60 grayscale' : ''}`}>
-                  <div className="h-96 bg-muted relative cursor-pointer overflow-hidden" onClick={() => setSelectedImage({ src: product.image_url || PLACEHOLDER_IMAGE, alt: product.name })}>
+                  <div 
+                    className="h-96 bg-muted relative cursor-pointer overflow-hidden" 
+                    onClick={() => navigate(`/product/${product.id}`)}
+                  >
                     <img 
                       src={product.image_url || PLACEHOLDER_IMAGE} 
                       alt={product.name} 
