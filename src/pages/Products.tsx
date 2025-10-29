@@ -24,27 +24,32 @@ const OfferMessageCycle = ({ messages }: { messages: string[] }) => {
     
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % messages.length);
-    }, 3000);
+    }, 2500);
 
     return () => clearInterval(interval);
   }, [messages.length]);
 
   return (
-    <div className="mb-2 h-8 relative bg-gradient-to-r from-primary/10 via-secondary/10 to-accent/10 rounded-lg overflow-hidden flex items-center justify-center px-2">
+    <div className="mb-2 inline-flex relative">
       {messages.map((message, index) => (
         <Badge
           key={index}
-          className={`absolute inset-x-2 bg-gradient-to-r from-primary to-secondary text-white font-semibold shadow-sm transition-all duration-500 ${
+          className={`absolute whitespace-nowrap bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-lg transition-all duration-700 ${
             index === currentIndex 
-              ? 'opacity-100 translate-y-0' 
-              : index < currentIndex 
-                ? 'opacity-0 -translate-y-full' 
-                : 'opacity-0 translate-y-full'
+              ? 'opacity-100 scale-100' 
+              : 'opacity-0 scale-75'
           }`}
+          style={{
+            animation: index === currentIndex ? 'pulse 2.5s cubic-bezier(0.4, 0, 0.6, 1)' : 'none'
+          }}
         >
-          {message}
+          🎁 Combo Offer: {message}
         </Badge>
       ))}
+      {/* Invisible spacer to maintain layout */}
+      <span className="invisible text-xs font-semibold px-3 py-1">
+        🎁 Combo Offer: {messages[currentIndex] || messages[0]}
+      </span>
     </div>
   );
 };
