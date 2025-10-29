@@ -1065,7 +1065,7 @@ export type Database = {
           is_new_arrival: boolean | null
           is_signature: boolean | null
           name: string
-          offer_message: Json | null
+          offer_messages: Json | null
           price: number | null
           product_code: string | null
           should_remove: boolean | null
@@ -1088,7 +1088,7 @@ export type Database = {
           is_new_arrival?: boolean | null
           is_signature?: boolean | null
           name: string
-          offer_message?: Json | null
+          offer_messages?: Json | null
           price?: number | null
           product_code?: string | null
           should_remove?: boolean | null
@@ -1111,7 +1111,7 @@ export type Database = {
           is_new_arrival?: boolean | null
           is_signature?: boolean | null
           name?: string
-          offer_message?: Json | null
+          offer_messages?: Json | null
           price?: number | null
           product_code?: string | null
           should_remove?: boolean | null
