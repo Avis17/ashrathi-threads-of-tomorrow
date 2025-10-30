@@ -12,7 +12,8 @@ import {
   Factory,
   Contact,
   Building2,
-  Receipt
+  Receipt,
+  Warehouse
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import {
@@ -30,6 +31,7 @@ const menuItems = [
   { title: 'Dashboard', url: '/admin/dashboard', icon: LayoutDashboard },
   { title: 'Orders', url: '/admin/orders', icon: ClipboardList },
   { title: 'Production', url: '/admin/production', icon: Factory },
+  { title: 'Stock Summary', url: '/admin/stock-summary', icon: Warehouse },
   { title: 'Branches', url: '/admin/branches', icon: Building2 },
   { title: 'Expenses', url: '/admin/expenses', icon: Receipt },
   { title: 'Generate Invoice', url: '/admin/invoice', icon: FileText },

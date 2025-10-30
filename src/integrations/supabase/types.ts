@@ -14,6 +14,78 @@ export type Database = {
   }
   public: {
     Tables: {
+      batch_inventory: {
+        Row: {
+          available_quantity: number | null
+          batch_id: string | null
+          batch_number: string
+          created_at: string
+          dispatched_quantity: number
+          expiry_date: string | null
+          id: string
+          manufacturing_date: string
+          notes: string | null
+          produced_quantity: number
+          product_id: string
+          quality_check_failed: number
+          quality_check_passed: number
+          status: string
+          updated_at: string
+          warehouse_location: string | null
+        }
+        Insert: {
+          available_quantity?: number | null
+          batch_id?: string | null
+          batch_number: string
+          created_at?: string
+          dispatched_quantity?: number
+          expiry_date?: string | null
+          id?: string
+          manufacturing_date?: string
+          notes?: string | null
+          produced_quantity?: number
+          product_id: string
+          quality_check_failed?: number
+          quality_check_passed?: number
+          status?: string
+          updated_at?: string
+          warehouse_location?: string | null
+        }
+        Update: {
+          available_quantity?: number | null
+          batch_id?: string | null
+          batch_number?: string
+          created_at?: string
+          dispatched_quantity?: number
+          expiry_date?: string | null
+          id?: string
+          manufacturing_date?: string
+          notes?: string | null
+          produced_quantity?: number
+          product_id?: string
+          quality_check_failed?: number
+          quality_check_passed?: number
+          status?: string
+          updated_at?: string
+          warehouse_location?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "batch_inventory_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "production_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "batch_inventory_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       branches: {
         Row: {
           address: string
@@ -282,6 +354,73 @@ export type Database = {
           state?: string
         }
         Relationships: []
+      }
+      dispatch_records: {
+        Row: {
+          batch_inventory_id: string
+          courier_name: string | null
+          created_at: string
+          destination: string
+          dispatch_date: string
+          dispatched_by: string
+          id: string
+          invoice_id: string | null
+          notes: string | null
+          order_id: string | null
+          quantity_dispatched: number
+          tracking_number: string | null
+        }
+        Insert: {
+          batch_inventory_id: string
+          courier_name?: string | null
+          created_at?: string
+          destination: string
+          dispatch_date?: string
+          dispatched_by: string
+          id?: string
+          invoice_id?: string | null
+          notes?: string | null
+          order_id?: string | null
+          quantity_dispatched: number
+          tracking_number?: string | null
+        }
+        Update: {
+          batch_inventory_id?: string
+          courier_name?: string | null
+          created_at?: string
+          destination?: string
+          dispatch_date?: string
+          dispatched_by?: string
+          id?: string
+          invoice_id?: string | null
+          notes?: string | null
+          order_id?: string | null
+          quantity_dispatched?: number
+          tracking_number?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dispatch_records_batch_inventory_id_fkey"
+            columns: ["batch_inventory_id"]
+            isOneToOne: false
+            referencedRelation: "batch_inventory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dispatch_records_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dispatch_records_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       employee_contacts: {
         Row: {
@@ -1053,6 +1192,7 @@ export type Database = {
           available_sizes: Json | null
           category: string
           created_at: string | null
+          current_total_stock: number | null
           description: string | null
           discount_percentage: number | null
           display_order: number | null
@@ -1064,10 +1204,12 @@ export type Database = {
           is_featured: boolean | null
           is_new_arrival: boolean | null
           is_signature: boolean | null
+          max_stock_level: number | null
           name: string
           offer_messages: Json | null
           price: number | null
           product_code: string | null
+          reorder_level: number | null
           should_remove: boolean | null
         }
         Insert: {
@@ -1076,6 +1218,7 @@ export type Database = {
           available_sizes?: Json | null
           category: string
           created_at?: string | null
+          current_total_stock?: number | null
           description?: string | null
           discount_percentage?: number | null
           display_order?: number | null
@@ -1087,10 +1230,12 @@ export type Database = {
           is_featured?: boolean | null
           is_new_arrival?: boolean | null
           is_signature?: boolean | null
+          max_stock_level?: number | null
           name: string
           offer_messages?: Json | null
           price?: number | null
           product_code?: string | null
+          reorder_level?: number | null
           should_remove?: boolean | null
         }
         Update: {
@@ -1099,6 +1244,7 @@ export type Database = {
           available_sizes?: Json | null
           category?: string
           created_at?: string | null
+          current_total_stock?: number | null
           description?: string | null
           discount_percentage?: number | null
           display_order?: number | null
@@ -1110,10 +1256,12 @@ export type Database = {
           is_featured?: boolean | null
           is_new_arrival?: boolean | null
           is_signature?: boolean | null
+          max_stock_level?: number | null
           name?: string
           offer_messages?: Json | null
           price?: number | null
           product_code?: string | null
+          reorder_level?: number | null
           should_remove?: boolean | null
         }
         Relationships: []
@@ -1332,6 +1480,10 @@ export type Database = {
       }
       delete_role: { Args: { _role_name: string }; Returns: boolean }
       generate_batch_number: { Args: never; Returns: string }
+      generate_custom_batch_number: {
+        Args: { product_code: string; production_date?: string }
+        Returns: string
+      }
       generate_fy_invoice_number: {
         Args: { invoice_date: string; invoice_num: number }
         Returns: string
