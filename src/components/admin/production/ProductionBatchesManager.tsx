@@ -13,6 +13,7 @@ import { Plus, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
+import { AddToStockInventoryDialog } from "./AddToStockInventoryDialog";
 
 interface Product {
   id: string;
@@ -147,7 +148,9 @@ export function ProductionBatchesManager() {
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>Production Batches</CardTitle>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <div className="flex gap-2">
+            <AddToStockInventoryDialog />
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button>
                 <Plus className="h-4 w-4 mr-2" />
@@ -201,6 +204,7 @@ export function ProductionBatchesManager() {
               </form>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
