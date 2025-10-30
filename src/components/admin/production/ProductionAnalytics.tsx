@@ -13,6 +13,9 @@ interface ProductionBatch {
   actual_quantity: number;
   total_cost: number;
   cost_per_piece: number;
+  total_material_cost: number;
+  total_labor_cost: number;
+  total_overhead_cost: number;
   status: string;
   products: { name: string; product_code: string };
 }
@@ -59,9 +62,10 @@ export function ProductionAnalytics() {
   const productionData = productionByProduct ? Object.values(productionByProduct) : [];
 
   const costBreakdown = batches?.reduce((acc, batch) => {
-    const materialCost = batch.total_cost * 0.6; // Approximation
-    const laborCost = batch.total_cost * 0.3;
-    const overheadCost = batch.total_cost * 0.1;
+    // Use actual recorded costs from the batch
+    const materialCost = batch.total_material_cost || 0;
+    const laborCost = batch.total_labor_cost || 0;
+    const overheadCost = batch.total_overhead_cost || 0;
     
     if (!acc.material) acc.material = 0;
     if (!acc.labor) acc.labor = 0;
