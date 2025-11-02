@@ -9,9 +9,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Pencil, AlertTriangle } from "lucide-react";
+import { Plus, Pencil, AlertTriangle, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface RawMaterial {
   id: string;
@@ -29,6 +30,8 @@ interface RawMaterial {
 export function RawMaterialsManager() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingMaterial, setEditingMaterial] = useState<RawMaterial | null>(null);
+  const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
+  const [materialToDelete, setMaterialToDelete] = useState<{ id: string; name: string } | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     unit: "",
@@ -94,6 +97,24 @@ export function RawMaterialsManager() {
     onError: () => toast.error("Failed to update raw material"),
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("raw_materials")
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["raw-materials"] });
+      queryClient.invalidateQueries({ queryKey: ["product-materials"] });
+      toast.success("Raw material deleted successfully");
+      setDeleteAlertOpen(false);
+      setMaterialToDelete(null);
+    },
+    onError: () => toast.error("Failed to delete raw material"),
+  });
+
   const resetForm = () => {
     setFormData({
       name: "",
@@ -137,6 +158,17 @@ export function RawMaterialsManager() {
 
   const isLowStock = (material: RawMaterial) => {
     return material.current_stock <= material.reorder_level;
+  };
+
+  const handleDeleteRequest = (material: RawMaterial) => {
+    setMaterialToDelete({ id: material.id, name: material.name });
+    setDeleteAlertOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (materialToDelete) {
+      deleteMutation.mutate(materialToDelete.id);
+    }
   };
 
   return (
@@ -299,13 +331,22 @@ export function RawMaterialsManager() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleEdit(material)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleEdit(material)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDeleteRequest(material)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -315,6 +356,23 @@ export function RawMaterialsManager() {
           <p className="text-muted-foreground">No raw materials found. Add your first material to get started.</p>
         )}
       </CardContent>
+
+      <AlertDialog open={deleteAlertOpen} onOpenChange={setDeleteAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Raw Material</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{materialToDelete?.name}"? This will also remove it from any product BOMs that reference it. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

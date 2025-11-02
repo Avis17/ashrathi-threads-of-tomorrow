@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Eye, Package, Users, DollarSign, AlertCircle } from "lucide-react";
+import { Plus, Eye, Package, Users, DollarSign, AlertCircle, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
@@ -66,6 +66,8 @@ export function ProductionBatchesManager() {
   const [selectedBatchProductId, setSelectedBatchProductId] = useState("");
   const [completeAlertOpen, setCompleteAlertOpen] = useState(false);
   const [batchToComplete, setBatchToComplete] = useState<{ id: string; name: string } | null>(null);
+  const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
+  const [batchToDelete, setBatchToDelete] = useState<{ id: string; batchNumber: string } | null>(null);
 
   const queryClient = useQueryClient();
 
@@ -136,6 +138,23 @@ export function ProductionBatchesManager() {
     onError: () => toast.error("Failed to update status"),
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("production_batches")
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["production-batches"] });
+      toast.success("Production batch deleted successfully");
+      setDeleteAlertOpen(false);
+      setBatchToDelete(null);
+    },
+    onError: () => toast.error("Failed to delete batch"),
+  });
+
   const resetForm = () => {
     setSelectedProduct("");
     setTargetQuantity("");
@@ -146,6 +165,17 @@ export function ProductionBatchesManager() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     createMutation.mutate();
+  };
+
+  const handleDeleteRequest = (batch: ProductionBatch) => {
+    setBatchToDelete({ id: batch.id, batchNumber: batch.batch_number });
+    setDeleteAlertOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (batchToDelete) {
+      deleteMutation.mutate(batchToDelete.id);
+    }
   };
 
   const openMaterialDialog = (batchId: string, productId: string) => {
@@ -345,6 +375,13 @@ export function ProductionBatchesManager() {
                       <Button variant="ghost" size="icon">
                         <Eye className="h-4 w-4" />
                       </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={() => handleDeleteRequest(batch)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -390,6 +427,23 @@ export function ProductionBatchesManager() {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={confirmComplete}>
               Complete Batch
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={deleteAlertOpen} onOpenChange={setDeleteAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Production Batch</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete batch "{batchToDelete?.batchNumber}"? This will also delete all associated material usage, labor costs, and overhead records. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
