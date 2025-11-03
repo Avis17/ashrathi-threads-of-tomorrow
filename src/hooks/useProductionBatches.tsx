@@ -23,7 +23,6 @@ export interface ProductionBatch {
   updated_at: string;
   products?: {
     name: string;
-    product_code: string;
   };
 }
 
@@ -80,7 +79,7 @@ export const useProductionBatches = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("production_batches")
-        .select("*, products(name, product_code)")
+        .select("*, products(name)")
         .order("batch_date", { ascending: false });
 
       if (error) throw error;
@@ -98,7 +97,7 @@ export const useBatchDetails = (batchId?: string) => {
       const [batchRes, materialsRes, costsRes, salesRes] = await Promise.all([
         supabase
           .from("production_batches")
-          .select("*, products(name, product_code)")
+          .select("*, products(name)")
           .eq("id", batchId!)
           .single(),
         supabase
@@ -146,9 +145,21 @@ export const useCreateProductionBatch = () => {
       actual_quantity?: number;
       notes?: string;
     }) => {
+      const insertData: any = {
+        batch_date: data.batch_date,
+        product_id: data.product_id,
+        product_name: data.product_name,
+        target_quantity: data.target_quantity,
+        actual_quantity: data.actual_quantity || 0,
+      };
+      
+      if (data.notes) {
+        insertData.notes = data.notes;
+      }
+
       const { data: batch, error } = await supabase
         .from("production_batches")
-        .insert([data])
+        .insert(insertData)
         .select()
         .single();
 

@@ -103,7 +103,7 @@ export const ProductionBatchForm = ({ open, onOpenChange }: ProductionBatchFormP
                 <SelectContent>
                   {products?.map((product) => (
                     <SelectItem key={product.id} value={product.id}>
-                      {product.name} ({product.product_code})
+                      {product.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
