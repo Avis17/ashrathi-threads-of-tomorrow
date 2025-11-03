@@ -22,7 +22,10 @@ export type Database = {
           created_at: string
           description: string
           id: string
+          quantity: number | null
+          rate_per_unit: number | null
           subcategory: string | null
+          unit_type: string | null
         }
         Insert: {
           amount: number
@@ -31,7 +34,10 @@ export type Database = {
           created_at?: string
           description: string
           id?: string
+          quantity?: number | null
+          rate_per_unit?: number | null
           subcategory?: string | null
+          unit_type?: string | null
         }
         Update: {
           amount?: number
@@ -40,7 +46,10 @@ export type Database = {
           created_at?: string
           description?: string
           id?: string
+          quantity?: number | null
+          rate_per_unit?: number | null
           subcategory?: string | null
+          unit_type?: string | null
         }
         Relationships: [
           {
@@ -985,6 +994,7 @@ export type Database = {
           batch_date: string
           cost_per_piece: number
           created_at: string
+          cut_quantity: number | null
           id: string
           notes: string | null
           product_id: string | null
@@ -1005,6 +1015,7 @@ export type Database = {
           batch_date?: string
           cost_per_piece?: number
           created_at?: string
+          cut_quantity?: number | null
           id?: string
           notes?: string | null
           product_id?: string | null
@@ -1025,6 +1036,7 @@ export type Database = {
           batch_date?: string
           cost_per_piece?: number
           created_at?: string
+          cut_quantity?: number | null
           id?: string
           notes?: string | null
           product_id?: string | null

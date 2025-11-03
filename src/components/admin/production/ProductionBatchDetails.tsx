@@ -63,13 +63,18 @@ export const ProductionBatchDetails = ({
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card className="p-4">
           <div className="text-sm text-muted-foreground">Target Quantity</div>
           <div className="text-2xl font-bold">{batch.target_quantity}</div>
         </Card>
         <Card className="p-4">
-          <div className="text-sm text-muted-foreground">Actual Quantity</div>
+          <div className="text-sm text-muted-foreground">Cut Quantity</div>
+          <div className="text-2xl font-bold">{batch.cut_quantity || 0}</div>
+          <div className="text-xs text-muted-foreground mt-1">After cutting</div>
+        </Card>
+        <Card className="p-4">
+          <div className="text-sm text-muted-foreground">Final Produced</div>
           <div className="text-2xl font-bold">{batch.actual_quantity}</div>
           {batch.actual_quantity === 0 && (
             <div className="mt-2 flex gap-2">
@@ -198,7 +203,14 @@ export const ProductionBatchDetails = ({
                   {c.cost_type}
                   {c.subcategory && ` - ${c.subcategory}`}
                 </td>
-                <td className="p-2">{c.description}</td>
+                <td className="p-2">
+                  {c.description}
+                  {c.unit_type && c.quantity && c.rate_per_unit && (
+                    <div className="text-xs text-muted-foreground">
+                      {c.quantity} {c.unit_type}(s) × ₹{c.rate_per_unit}
+                    </div>
+                  )}
+                </td>
                 <td className="p-2 text-right">{formatCurrency(c.amount)}</td>
               </tr>
             ))}

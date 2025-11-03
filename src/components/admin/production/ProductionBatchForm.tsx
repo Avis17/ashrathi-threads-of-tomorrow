@@ -25,6 +25,7 @@ export const ProductionBatchForm = ({ open, onOpenChange }: ProductionBatchFormP
     product_id: "",
     product_name: "",
     target_quantity: 0,
+    cut_quantity: 0,
     actual_quantity: 0,
     notes: "",
   });
@@ -45,6 +46,7 @@ export const ProductionBatchForm = ({ open, onOpenChange }: ProductionBatchFormP
         product_id: formData.product_id || null,
         product_name: formData.product_name,
         target_quantity: formData.target_quantity,
+        cut_quantity: formData.cut_quantity,
         actual_quantity: formData.actual_quantity,
         notes: formData.notes || undefined,
       },
@@ -55,6 +57,7 @@ export const ProductionBatchForm = ({ open, onOpenChange }: ProductionBatchFormP
             product_id: "",
             product_name: "",
             target_quantity: 0,
+            cut_quantity: 0,
             actual_quantity: 0,
             notes: "",
           });
@@ -123,7 +126,7 @@ export const ProductionBatchForm = ({ open, onOpenChange }: ProductionBatchFormP
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div>
               <Label>Target Quantity *</Label>
               <Input
@@ -141,7 +144,23 @@ export const ProductionBatchForm = ({ open, onOpenChange }: ProductionBatchFormP
             </div>
 
             <div>
-              <Label>Actual Quantity (if completed)</Label>
+              <Label>Cut Quantity</Label>
+              <Input
+                type="number"
+                min="0"
+                value={formData.cut_quantity || ""}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    cut_quantity: parseInt(e.target.value) || 0,
+                  })
+                }
+                placeholder="After cutting"
+              />
+            </div>
+
+            <div>
+              <Label>Final Quantity</Label>
               <Input
                 type="number"
                 min="0"
@@ -152,6 +171,7 @@ export const ProductionBatchForm = ({ open, onOpenChange }: ProductionBatchFormP
                     actual_quantity: parseInt(e.target.value) || 0,
                   })
                 }
+                placeholder="Final produced"
               />
             </div>
           </div>

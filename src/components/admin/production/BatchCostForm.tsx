@@ -25,6 +25,9 @@ export const BatchCostForm = ({ batchId, open, onOpenChange }: BatchCostFormProp
     subcategory: "",
     description: "",
     amount: 0,
+    unit_type: "piece" as "piece" | "shift",
+    quantity: 0,
+    rate_per_unit: 0,
   });
 
   const { mutate: addCost, isPending } = useAddBatchCost();
@@ -41,7 +44,12 @@ export const BatchCostForm = ({ batchId, open, onOpenChange }: BatchCostFormProp
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.description || formData.amount <= 0) {
+    const isLabor = formData.cost_type === "labor";
+    const calculatedAmount = isLabor && formData.quantity && formData.rate_per_unit
+      ? formData.quantity * formData.rate_per_unit
+      : formData.amount;
+
+    if (!formData.description || calculatedAmount <= 0) {
       return;
     }
 
@@ -49,9 +57,12 @@ export const BatchCostForm = ({ batchId, open, onOpenChange }: BatchCostFormProp
       {
         batch_id: batchId,
         cost_type: formData.cost_type,
-        subcategory: formData.cost_type === "labor" ? formData.subcategory : undefined,
+        subcategory: isLabor ? formData.subcategory : undefined,
         description: formData.description,
-        amount: formData.amount,
+        amount: calculatedAmount,
+        unit_type: isLabor ? formData.unit_type : undefined,
+        quantity: isLabor ? formData.quantity : undefined,
+        rate_per_unit: isLabor ? formData.rate_per_unit : undefined,
       },
       {
         onSuccess: () => {
@@ -60,6 +71,9 @@ export const BatchCostForm = ({ batchId, open, onOpenChange }: BatchCostFormProp
             subcategory: "",
             description: "",
             amount: 0,
+            unit_type: "piece",
+            quantity: 0,
+            rate_per_unit: 0,
           });
           onOpenChange(false);
         },
@@ -96,40 +110,104 @@ export const BatchCostForm = ({ batchId, open, onOpenChange }: BatchCostFormProp
         </div>
 
         {formData.cost_type === "labor" && (
-          <div>
-            <Label>Labor Category *</Label>
-            <Select
-              value={formData.subcategory}
-              onValueChange={(value) =>
-                setFormData({ ...formData, subcategory: value })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select labor category" />
-              </SelectTrigger>
-              <SelectContent>
-                {laborSubcategories.map((category) => (
-                  <SelectItem key={category} value={category}>
-                    {category}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <>
+            <div>
+              <Label>Labor Category *</Label>
+              <Select
+                value={formData.subcategory}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, subcategory: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select labor category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {laborSubcategories.map((category) => (
+                    <SelectItem key={category} value={category}>
+                      {category}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label>Unit Type *</Label>
+              <Select
+                value={formData.unit_type}
+                onValueChange={(value: "piece" | "shift") =>
+                  setFormData({ ...formData, unit_type: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="piece">Per Piece</SelectItem>
+                  <SelectItem value="shift">Per Shift</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Quantity *</Label>
+                <Input
+                  type="number"
+                  step="1"
+                  min="0"
+                  value={formData.quantity || ""}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      quantity: parseFloat(e.target.value) || 0,
+                    })
+                  }
+                  placeholder={formData.unit_type === "piece" ? "Pieces" : "Shifts"}
+                  required
+                />
+              </div>
+              <div>
+                <Label>Rate *</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formData.rate_per_unit || ""}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      rate_per_unit: parseFloat(e.target.value) || 0,
+                    })
+                  }
+                  placeholder={`Per ${formData.unit_type}`}
+                  required
+                />
+              </div>
+            </div>
+
+            {formData.quantity > 0 && formData.rate_per_unit > 0 && (
+              <div className="text-sm text-muted-foreground">
+                Total: ₹{(formData.quantity * formData.rate_per_unit).toFixed(2)}
+              </div>
+            )}
+          </>
         )}
 
         <div>
           <Label>Description *</Label>
-            <Textarea
-              value={formData.description}
-              onChange={(e) =>
-                setFormData({ ...formData, description: e.target.value })
-              }
-              placeholder="e.g., Worker wages, Electricity bill, etc."
-              required
-            />
-          </div>
+          <Textarea
+            value={formData.description}
+            onChange={(e) =>
+              setFormData({ ...formData, description: e.target.value })
+            }
+            placeholder="e.g., Worker wages, Electricity bill, etc."
+            required
+          />
+        </div>
 
+        {formData.cost_type !== "labor" && (
           <div>
             <Label>Amount *</Label>
             <Input
@@ -146,6 +224,7 @@ export const BatchCostForm = ({ batchId, open, onOpenChange }: BatchCostFormProp
               required
             />
           </div>
+        )}
 
           <div className="flex justify-end gap-2">
             <Button

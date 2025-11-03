@@ -9,6 +9,7 @@ export interface ProductionBatch {
   product_id: string | null;
   product_name: string;
   target_quantity: number;
+  cut_quantity: number;
   actual_quantity: number;
   total_material_cost: number;
   total_labor_cost: number;
@@ -57,6 +58,9 @@ export interface BatchCost {
   description: string;
   amount: number;
   subcategory?: string;
+  unit_type?: "piece" | "shift";
+  quantity?: number;
+  rate_per_unit?: number;
   created_at: string;
 }
 
@@ -143,6 +147,7 @@ export const useCreateProductionBatch = () => {
       product_id: string | null;
       product_name: string;
       target_quantity: number;
+      cut_quantity?: number;
       actual_quantity?: number;
       notes?: string;
     }) => {
@@ -151,6 +156,7 @@ export const useCreateProductionBatch = () => {
         product_id: data.product_id,
         product_name: data.product_name,
         target_quantity: data.target_quantity,
+        cut_quantity: data.cut_quantity || 0,
         actual_quantity: data.actual_quantity || 0,
       };
       
@@ -266,6 +272,9 @@ export const useAddBatchCost = () => {
       description: string;
       amount: number;
       subcategory?: string;
+      unit_type?: "piece" | "shift";
+      quantity?: number;
+      rate_per_unit?: number;
     }) => {
       const { error } = await supabase.from("batch_costs").insert(data);
 
