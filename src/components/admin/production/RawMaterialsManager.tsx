@@ -18,6 +18,9 @@ interface RawMaterial {
   id: string;
   name: string;
   unit: string;
+  color?: string;
+  gsm?: number;
+  wastage_percentage: number;
   cost_per_unit: number;
   current_stock: number;
   reorder_level: number;
@@ -35,6 +38,9 @@ export function RawMaterialsManager() {
   const [formData, setFormData] = useState({
     name: "",
     unit: "",
+    color: "Natural",
+    gsm: "",
+    wastage_percentage: "5",
     cost_per_unit: "",
     current_stock: "",
     reorder_level: "",
@@ -62,6 +68,8 @@ export function RawMaterialsManager() {
     mutationFn: async (data: typeof formData) => {
       const { error } = await supabase.from("raw_materials").insert({
         ...data,
+        gsm: data.gsm ? parseFloat(data.gsm) : 0,
+        wastage_percentage: parseFloat(data.wastage_percentage),
         cost_per_unit: parseFloat(data.cost_per_unit),
         current_stock: parseFloat(data.current_stock),
         reorder_level: parseFloat(data.reorder_level),
@@ -82,6 +90,8 @@ export function RawMaterialsManager() {
         .from("raw_materials")
         .update({
           ...data,
+          gsm: data.gsm ? parseFloat(data.gsm) : 0,
+          wastage_percentage: parseFloat(data.wastage_percentage),
           cost_per_unit: parseFloat(data.cost_per_unit),
           current_stock: parseFloat(data.current_stock),
           reorder_level: parseFloat(data.reorder_level),
@@ -119,6 +129,9 @@ export function RawMaterialsManager() {
     setFormData({
       name: "",
       unit: "",
+      color: "Natural",
+      gsm: "",
+      wastage_percentage: "5",
       cost_per_unit: "",
       current_stock: "",
       reorder_level: "",
@@ -136,6 +149,9 @@ export function RawMaterialsManager() {
     setFormData({
       name: material.name,
       unit: material.unit,
+      color: material.color || "Natural",
+      gsm: material.gsm?.toString() || "",
+      wastage_percentage: material.wastage_percentage.toString(),
       cost_per_unit: material.cost_per_unit.toString(),
       current_stock: material.current_stock.toString(),
       reorder_level: material.reorder_level.toString(),
@@ -207,6 +223,40 @@ export function RawMaterialsManager() {
                       placeholder="e.g., meters, kg, pieces"
                       value={formData.unit}
                       onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="color">Color</Label>
+                    <Input
+                      id="color"
+                      value={formData.color}
+                      onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                      placeholder="Natural, White, Blue..."
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="gsm">GSM</Label>
+                    <Input
+                      id="gsm"
+                      type="number"
+                      step="1"
+                      value={formData.gsm}
+                      onChange={(e) => setFormData({ ...formData, gsm: e.target.value })}
+                      placeholder="150, 180, 200..."
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="wastage_percentage">Wastage % *</Label>
+                    <Input
+                      id="wastage_percentage"
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      max="100"
+                      value={formData.wastage_percentage}
+                      onChange={(e) => setFormData({ ...formData, wastage_percentage: e.target.value })}
+                      placeholder="5.0"
                       required
                     />
                   </div>
@@ -297,6 +347,9 @@ export function RawMaterialsManager() {
             <TableHeader>
               <TableRow>
                 <TableHead>Material</TableHead>
+                <TableHead>Color</TableHead>
+                <TableHead>GSM</TableHead>
+                <TableHead>Wastage %</TableHead>
                 <TableHead>Unit</TableHead>
                 <TableHead>Cost/Unit</TableHead>
                 <TableHead>Stock</TableHead>
@@ -310,6 +363,13 @@ export function RawMaterialsManager() {
               {materials.map((material) => (
                 <TableRow key={material.id}>
                   <TableCell className="font-medium">{material.name}</TableCell>
+                  <TableCell>
+                    <span className="inline-flex items-center px-2 py-1 rounded-md bg-primary/10 text-xs">
+                      {material.color || 'Natural'}
+                    </span>
+                  </TableCell>
+                  <TableCell>{material.gsm || '-'}</TableCell>
+                  <TableCell>{material.wastage_percentage}%</TableCell>
                   <TableCell>{material.unit}</TableCell>
                   <TableCell>₹{material.cost_per_unit.toFixed(2)}</TableCell>
                   <TableCell>

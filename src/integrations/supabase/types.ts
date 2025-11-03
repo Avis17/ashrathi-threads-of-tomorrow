@@ -86,6 +86,47 @@ export type Database = {
           },
         ]
       }
+      batch_predictions: {
+        Row: {
+          batch_id: string | null
+          confidence_score: number | null
+          created_at: string | null
+          id: string
+          model_version: string | null
+          predicted_cost: number
+          predicted_quantity: number
+          prediction_date: string | null
+        }
+        Insert: {
+          batch_id?: string | null
+          confidence_score?: number | null
+          created_at?: string | null
+          id?: string
+          model_version?: string | null
+          predicted_cost: number
+          predicted_quantity: number
+          prediction_date?: string | null
+        }
+        Update: {
+          batch_id?: string | null
+          confidence_score?: number | null
+          created_at?: string | null
+          id?: string
+          model_version?: string | null
+          predicted_cost?: number
+          predicted_quantity?: number
+          prediction_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "batch_predictions_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "production_batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       branches: {
         Row: {
           address: string
@@ -993,15 +1034,56 @@ export type Database = {
           },
         ]
       }
+      production_analytics: {
+        Row: {
+          actual_value: number | null
+          batch_id: string | null
+          deviation_percent: number | null
+          id: string
+          metric_type: string
+          predicted_value: number | null
+          recorded_at: string | null
+        }
+        Insert: {
+          actual_value?: number | null
+          batch_id?: string | null
+          deviation_percent?: number | null
+          id?: string
+          metric_type: string
+          predicted_value?: number | null
+          recorded_at?: string | null
+        }
+        Update: {
+          actual_value?: number | null
+          batch_id?: string | null
+          deviation_percent?: number | null
+          id?: string
+          metric_type?: string
+          predicted_value?: number | null
+          recorded_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_analytics_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "production_batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       production_batches: {
         Row: {
           actual_quantity: number
           batch_number: string
+          color: string | null
           completed_at: string | null
           cost_per_piece: number
           created_at: string
+          fabric_used_kg: number | null
           id: string
           notes: string | null
+          predicted_yield: number | null
           product_id: string
           started_at: string
           status: string
@@ -1011,15 +1093,19 @@ export type Database = {
           total_material_cost: number
           total_overhead_cost: number
           updated_at: string
+          wastage_kg: number | null
         }
         Insert: {
           actual_quantity?: number
           batch_number?: string
+          color?: string | null
           completed_at?: string | null
           cost_per_piece?: number
           created_at?: string
+          fabric_used_kg?: number | null
           id?: string
           notes?: string | null
+          predicted_yield?: number | null
           product_id: string
           started_at?: string
           status?: string
@@ -1029,15 +1115,19 @@ export type Database = {
           total_material_cost?: number
           total_overhead_cost?: number
           updated_at?: string
+          wastage_kg?: number | null
         }
         Update: {
           actual_quantity?: number
           batch_number?: string
+          color?: string | null
           completed_at?: string | null
           cost_per_piece?: number
           created_at?: string
+          fabric_used_kg?: number | null
           id?: string
           notes?: string | null
+          predicted_yield?: number | null
           product_id?: string
           started_at?: string
           status?: string
@@ -1047,6 +1137,7 @@ export type Database = {
           total_material_cost?: number
           total_overhead_cost?: number
           updated_at?: string
+          wastage_kg?: number | null
         }
         Relationships: [
           {
@@ -1302,11 +1393,66 @@ export type Database = {
         }
         Relationships: []
       }
+      purchases: {
+        Row: {
+          color: string
+          created_at: string | null
+          id: string
+          material_id: string | null
+          other_costs: number | null
+          purchase_date: string
+          quantity_kg: number
+          rate_per_kg: number
+          remarks: string | null
+          supplier_name: string | null
+          total_cost: number | null
+          transport_cost: number | null
+        }
+        Insert: {
+          color: string
+          created_at?: string | null
+          id?: string
+          material_id?: string | null
+          other_costs?: number | null
+          purchase_date?: string
+          quantity_kg?: number
+          rate_per_kg?: number
+          remarks?: string | null
+          supplier_name?: string | null
+          total_cost?: number | null
+          transport_cost?: number | null
+        }
+        Update: {
+          color?: string
+          created_at?: string | null
+          id?: string
+          material_id?: string | null
+          other_costs?: number | null
+          purchase_date?: string
+          quantity_kg?: number
+          rate_per_kg?: number
+          remarks?: string | null
+          supplier_name?: string | null
+          total_cost?: number | null
+          transport_cost?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchases_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "raw_materials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       raw_materials: {
         Row: {
+          color: string | null
           cost_per_unit: number
           created_at: string
           current_stock: number
+          gsm: number | null
           id: string
           is_active: boolean
           name: string
@@ -1316,11 +1462,14 @@ export type Database = {
           supplier_name: string | null
           unit: string
           updated_at: string
+          wastage_percentage: number | null
         }
         Insert: {
+          color?: string | null
           cost_per_unit?: number
           created_at?: string
           current_stock?: number
+          gsm?: number | null
           id?: string
           is_active?: boolean
           name: string
@@ -1330,11 +1479,14 @@ export type Database = {
           supplier_name?: string | null
           unit: string
           updated_at?: string
+          wastage_percentage?: number | null
         }
         Update: {
+          color?: string | null
           cost_per_unit?: number
           created_at?: string
           current_stock?: number
+          gsm?: number | null
           id?: string
           is_active?: boolean
           name?: string
@@ -1344,6 +1496,7 @@ export type Database = {
           supplier_name?: string | null
           unit?: string
           updated_at?: string
+          wastage_percentage?: number | null
         }
         Relationships: []
       }
