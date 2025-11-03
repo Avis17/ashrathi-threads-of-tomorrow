@@ -87,7 +87,7 @@ export const useProductionRunDetails = (runId?: string) => {
 
       const [runResult, materialsResult, costsResult] = await Promise.all([
         supabase
-          .from("production_runs")
+          .from("production_runs" as any)
           .select(`
             *,
             products:product_id (
@@ -99,7 +99,7 @@ export const useProductionRunDetails = (runId?: string) => {
           .eq("id", runId)
           .single(),
         supabase
-          .from("production_run_materials")
+          .from("production_run_materials" as any)
           .select(`
             *,
             purchase_batch_items:purchase_batch_item_id (
@@ -115,7 +115,7 @@ export const useProductionRunDetails = (runId?: string) => {
           `)
           .eq("production_run_id", runId),
         supabase
-          .from("production_run_costs")
+          .from("production_run_costs" as any)
           .select("*")
           .eq("production_run_id", runId)
           .order("recorded_at", { ascending: false }),
@@ -126,9 +126,9 @@ export const useProductionRunDetails = (runId?: string) => {
       if (costsResult.error) throw costsResult.error;
 
       return {
-        run: runResult.data as ProductionRun,
-        materials: materialsResult.data as ProductionRunMaterial[],
-        costs: costsResult.data as ProductionRunCost[],
+        run: runResult.data as any as ProductionRun,
+        materials: materialsResult.data as any as ProductionRunMaterial[],
+        costs: costsResult.data as any as ProductionRunCost[],
       };
     },
     enabled: !!runId,
@@ -146,8 +146,8 @@ export const useCreateProductionRun = () => {
       notes?: string;
     }) => {
       const { data: run, error } = await supabase
-        .from("production_runs")
-        .insert(data)
+        .from("production_runs" as any)
+        .insert(data as any)
         .select()
         .single();
 
@@ -178,8 +178,8 @@ export const useUpdateProductionRun = () => {
   return useMutation({
     mutationFn: async (data: { id: string; updates: Partial<ProductionRun> }) => {
       const { data: result, error } = await supabase
-        .from("production_runs")
-        .update(data.updates)
+        .from("production_runs" as any)
+        .update(data.updates as any)
         .eq("id", data.id)
         .select()
         .single();
@@ -218,8 +218,8 @@ export const useAddProductionRunMaterial = () => {
       cost_at_time: number;
     }) => {
       const { data: result, error } = await supabase
-        .from("production_run_materials")
-        .insert(data)
+        .from("production_run_materials" as any)
+        .insert(data as any)
         .select()
         .single();
 
@@ -258,8 +258,8 @@ export const useAddProductionRunCost = () => {
       description?: string;
     }) => {
       const { data: result, error } = await supabase
-        .from("production_run_costs")
-        .insert(data)
+        .from("production_run_costs" as any)
+        .insert(data as any)
         .select()
         .single();
 
@@ -291,7 +291,7 @@ export const useDeleteProductionRun = () => {
   return useMutation({
     mutationFn: async (runId: string) => {
       const { error } = await supabase
-        .from("production_runs")
+        .from("production_runs" as any)
         .delete()
         .eq("id", runId);
 

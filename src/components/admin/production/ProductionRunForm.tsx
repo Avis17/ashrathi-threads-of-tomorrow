@@ -30,7 +30,11 @@ export const ProductionRunForm = ({ open, onOpenChange }: { open: boolean; onOpe
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    await createMutation.mutateAsync(values);
+    await createMutation.mutateAsync({
+      product_id: values.product_id,
+      target_quantity: values.target_quantity,
+      notes: values.notes,
+    });
     form.reset();
     onOpenChange(false);
   };
@@ -62,7 +66,7 @@ export const ProductionRunForm = ({ open, onOpenChange }: { open: boolean; onOpe
                     <SelectContent>
                       {products?.map((product) => (
                         <SelectItem key={product.id} value={product.id}>
-                          {product.name} ({product.product_code})
+                          {product.name}
                         </SelectItem>
                       ))}
                     </SelectContent>

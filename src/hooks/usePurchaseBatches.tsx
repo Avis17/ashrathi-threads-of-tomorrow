@@ -81,8 +81,8 @@ export const usePurchaseBatchDetails = (batchId?: string) => {
       if (itemsResult.error) throw itemsResult.error;
 
       return {
-        batch: batchResult.data as PurchaseBatch,
-        items: itemsResult.data as PurchaseBatchItem[],
+        batch: batchResult.data as any as PurchaseBatch,
+        items: itemsResult.data as any as PurchaseBatchItem[],
       };
     },
     enabled: !!batchId,
@@ -95,7 +95,7 @@ export const useCreatePurchaseBatch = () => {
 
   return useMutation({
     mutationFn: async (data: {
-      batch: Omit<PurchaseBatch, "id" | "batch_code" | "created_at" | "updated_at" | "subtotal" | "total_cost">;
+      batch: any;
       items: Array<{
         raw_material_id: string;
         color: string;
@@ -118,7 +118,7 @@ export const useCreatePurchaseBatch = () => {
 
       // Insert items
       const itemsToInsert = data.items.map(item => ({
-        purchase_batch_id: batch.id,
+        purchase_batch_id: (batch as any).id,
         raw_material_id: item.raw_material_id,
         color: item.color,
         quantity_kg: item.quantity_kg,
@@ -158,10 +158,10 @@ export const useUpdatePurchaseBatch = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { id: string; updates: Partial<PurchaseBatch> }) => {
+    mutationFn: async (data: { id: string; updates: any }) => {
       const { data: result, error } = await supabase
-        .from("purchase_batches")
-        .update(data.updates)
+        .from("purchase_batches" as any)
+        .update(data.updates as any)
         .eq("id", data.id)
         .select()
         .single();
@@ -194,7 +194,7 @@ export const useDeletePurchaseBatch = () => {
   return useMutation({
     mutationFn: async (batchId: string) => {
       const { error } = await supabase
-        .from("purchase_batches")
+        .from("purchase_batches" as any)
         .delete()
         .eq("id", batchId);
 

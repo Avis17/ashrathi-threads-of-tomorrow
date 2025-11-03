@@ -107,7 +107,7 @@ export const PurchaseBatchForm = ({ open, onOpenChange }: { open: boolean; onOpe
     }
 
     await createMutation.mutateAsync({
-      batch: values,
+      batch: values as any,
       items: validItems,
     });
 
