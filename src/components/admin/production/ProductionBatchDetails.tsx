@@ -194,7 +194,10 @@ export const ProductionBatchDetails = ({
           <tbody>
             {costs.map((c) => (
               <tr key={c.id} className="border-b">
-                <td className="p-2 capitalize">{c.cost_type}</td>
+                <td className="p-2 capitalize">
+                  {c.cost_type}
+                  {c.subcategory && ` - ${c.subcategory}`}
+                </td>
                 <td className="p-2">{c.description}</td>
                 <td className="p-2 text-right">{formatCurrency(c.amount)}</td>
               </tr>

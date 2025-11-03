@@ -22,11 +22,21 @@ interface BatchCostFormProps {
 export const BatchCostForm = ({ batchId, open, onOpenChange }: BatchCostFormProps) => {
   const [formData, setFormData] = useState({
     cost_type: "labor" as "labor" | "overhead" | "transport" | "other",
+    subcategory: "",
     description: "",
     amount: 0,
   });
 
   const { mutate: addCost, isPending } = useAddBatchCost();
+
+  const laborSubcategories = [
+    "Cutting",
+    "Stitching",
+    "Checking",
+    "Ironing",
+    "Packing",
+    "Other",
+  ];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,12 +48,16 @@ export const BatchCostForm = ({ batchId, open, onOpenChange }: BatchCostFormProp
     addCost(
       {
         batch_id: batchId,
-        ...formData,
+        cost_type: formData.cost_type,
+        subcategory: formData.cost_type === "labor" ? formData.subcategory : undefined,
+        description: formData.description,
+        amount: formData.amount,
       },
       {
         onSuccess: () => {
           setFormData({
             cost_type: "labor",
+            subcategory: "",
             description: "",
             amount: 0,
           });
@@ -77,12 +91,35 @@ export const BatchCostForm = ({ batchId, open, onOpenChange }: BatchCostFormProp
                 <SelectItem value="overhead">Overhead</SelectItem>
                 <SelectItem value="transport">Transport</SelectItem>
                 <SelectItem value="other">Other</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {formData.cost_type === "labor" && (
+          <div>
+            <Label>Labor Category *</Label>
+            <Select
+              value={formData.subcategory}
+              onValueChange={(value) =>
+                setFormData({ ...formData, subcategory: value })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select labor category" />
+              </SelectTrigger>
+              <SelectContent>
+                {laborSubcategories.map((category) => (
+                  <SelectItem key={category} value={category}>
+                    {category}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
+        )}
 
-          <div>
-            <Label>Description *</Label>
+        <div>
+          <Label>Description *</Label>
             <Textarea
               value={formData.description}
               onChange={(e) =>

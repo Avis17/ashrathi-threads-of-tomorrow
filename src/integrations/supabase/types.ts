@@ -22,6 +22,7 @@ export type Database = {
           created_at: string
           description: string
           id: string
+          subcategory: string | null
         }
         Insert: {
           amount: number
@@ -30,6 +31,7 @@ export type Database = {
           created_at?: string
           description: string
           id?: string
+          subcategory?: string | null
         }
         Update: {
           amount?: number
@@ -38,6 +40,7 @@ export type Database = {
           created_at?: string
           description?: string
           id?: string
+          subcategory?: string | null
         }
         Relationships: [
           {

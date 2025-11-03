@@ -56,6 +56,7 @@ export interface BatchCost {
   cost_type: "labor" | "overhead" | "transport" | "other";
   description: string;
   amount: number;
+  subcategory?: string;
   created_at: string;
 }
 
@@ -264,6 +265,7 @@ export const useAddBatchCost = () => {
       cost_type: "labor" | "overhead" | "transport" | "other";
       description: string;
       amount: number;
+      subcategory?: string;
     }) => {
       const { error } = await supabase.from("batch_costs").insert(data);
 
