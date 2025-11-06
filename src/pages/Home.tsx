@@ -3,13 +3,33 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Leaf, Heart, Sparkles, Shield, ArrowRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 import heroImage from "@/assets/hero-home-fashion.jpg";
+import heroLuxury1 from "@/assets/hero-luxury-1.jpg";
+import heroLuxury2 from "@/assets/hero-luxury-2.jpg";
+import heroLuxury3 from "@/assets/hero-luxury-3.jpg";
+import heroLuxury4 from "@/assets/hero-luxury-4.jpg";
 import qualityImage from "@/assets/feature-quality.jpg";
 import designImage from "@/assets/feature-design.jpg";
 import { useSignatureProducts } from "@/hooks/useCollections";
+import Autoplay from "embla-carousel-autoplay";
 
 const Home = () => {
   const { data: signatureProducts = [], isLoading } = useSignatureProducts();
+  
+  const heroImages = [
+    { src: heroLuxury1, alt: "Luxury silk loungewear collection" },
+    { src: heroLuxury2, alt: "Premium organic cotton menswear" },
+    { src: heroLuxury3, alt: "Sustainable bamboo fabric collection" },
+    { src: heroLuxury4, alt: "Premium modal sleepwear" },
+    { src: heroImage, alt: "Feather Fashions luxury collection" },
+  ];
   
   const features = [
     {
@@ -38,12 +58,33 @@ const Home = () => {
     <div className="min-h-screen">
       {/* Hero Section */}
       <section className="relative h-screen flex items-center overflow-hidden">
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{
-            backgroundImage: `url(${heroImage})`,
+        <Carousel
+          className="absolute inset-0"
+          opts={{
+            align: "start",
+            loop: true,
           }}
-        />
+          plugins={[
+            Autoplay({
+              delay: 5000,
+            }),
+          ]}
+        >
+          <CarouselContent>
+            {heroImages.map((image, index) => (
+              <CarouselItem key={index}>
+                <div
+                  className="absolute inset-0 bg-cover bg-center transition-transform duration-700"
+                  style={{
+                    backgroundImage: `url(${image.src})`,
+                  }}
+                />
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          <CarouselPrevious className="left-4 h-12 w-12 bg-background/20 backdrop-blur-sm border-white/20 text-white hover:bg-background/30" />
+          <CarouselNext className="right-4 h-12 w-12 bg-background/20 backdrop-blur-sm border-white/20 text-white hover:bg-background/30" />
+        </Carousel>
         <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/50 to-transparent" />
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-3xl space-y-8">
