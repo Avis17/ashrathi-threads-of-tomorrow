@@ -57,9 +57,9 @@ const Home = () => {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative h-screen flex items-center overflow-hidden">
+      <section className="relative h-screen overflow-hidden">
         <Carousel
-          className="absolute inset-0"
+          className="w-full h-full"
           opts={{
             align: "start",
             loop: true,
@@ -70,47 +70,51 @@ const Home = () => {
             }),
           ]}
         >
-          <CarouselContent>
+          <CarouselContent className="-ml-0 h-screen">
             {heroImages.map((image, index) => (
-              <CarouselItem key={index}>
-                <div
-                  className="absolute inset-0 bg-cover bg-center transition-transform duration-700"
-                  style={{
-                    backgroundImage: `url(${image.src})`,
-                  }}
-                />
+              <CarouselItem key={index} className="pl-0 basis-full">
+                <div className="relative w-full h-screen">
+                  <div
+                    className="absolute inset-0 bg-cover bg-center"
+                    style={{
+                      backgroundImage: `url(${image.src})`,
+                    }}
+                  />
+                </div>
               </CarouselItem>
             ))}
           </CarouselContent>
-          <CarouselPrevious className="left-4 h-12 w-12 bg-background/20 backdrop-blur-sm border-white/20 text-white hover:bg-background/30" />
-          <CarouselNext className="right-4 h-12 w-12 bg-background/20 backdrop-blur-sm border-white/20 text-white hover:bg-background/30" />
+          <CarouselPrevious className="absolute left-4 z-20 h-12 w-12 bg-background/20 backdrop-blur-sm border-white/20 text-white hover:bg-background/30" />
+          <CarouselNext className="absolute right-4 z-20 h-12 w-12 bg-background/20 backdrop-blur-sm border-white/20 text-white hover:bg-background/30" />
         </Carousel>
-        <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/50 to-transparent" />
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-3xl space-y-8">
-            <div className="inline-block animate-fade-in">
-              <span className="px-4 py-2 rounded-full bg-secondary/10 border border-secondary/20 text-secondary text-sm font-semibold tracking-wider">
-                NEW COLLECTION 2025
-              </span>
-            </div>
-            <h1 className="text-6xl md:text-8xl font-bold leading-tight animate-fade-in">
-              Feather-Light
-              <br />
-              <span className="text-gradient">Luxury</span>
-            </h1>
-            <p className="text-xl md:text-2xl text-muted-foreground leading-relaxed animate-fade-in max-w-2xl">
-              Where sustainable fashion meets unparalleled comfort. Experience premium fabrics that transform everyday moments into pure elegance.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 animate-fade-in">
-              <Button asChild size="lg" className="text-lg group">
-                <Link to="/products">
-                  Explore Collection
-                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                </Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="text-lg border-2">
-                <Link to="/about">Discover Our Story</Link>
-              </Button>
+        <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/50 to-transparent pointer-events-none z-10" />
+        <div className="absolute inset-0 flex items-center z-10">
+          <div className="container mx-auto px-4 relative">
+            <div className="max-w-3xl space-y-8">
+              <div className="inline-block animate-fade-in">
+                <span className="px-4 py-2 rounded-full bg-secondary/10 border border-secondary/20 text-secondary text-sm font-semibold tracking-wider">
+                  NEW COLLECTION 2025
+                </span>
+              </div>
+              <h1 className="text-6xl md:text-8xl font-bold leading-tight animate-fade-in">
+                Feather-Light
+                <br />
+                <span className="text-gradient">Luxury</span>
+              </h1>
+              <p className="text-xl md:text-2xl text-muted-foreground leading-relaxed animate-fade-in max-w-2xl">
+                Where sustainable fashion meets unparalleled comfort. Experience premium fabrics that transform everyday moments into pure elegance.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 animate-fade-in">
+                <Button asChild size="lg" className="text-lg group">
+                  <Link to="/products">
+                    Explore Collection
+                    <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                  </Link>
+                </Button>
+                <Button asChild size="lg" variant="outline" className="text-lg border-2">
+                  <Link to="/about">Discover Our Story</Link>
+                </Button>
+              </div>
             </div>
           </div>
         </div>
