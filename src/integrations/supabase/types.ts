@@ -735,6 +735,207 @@ export type Database = {
           },
         ]
       }
+      job_order_cost_summary: {
+        Row: {
+          created_at: string
+          id: string
+          job_order_id: string
+          labour_cost: number
+          material_cost: number
+          misc_cost: number
+          total_cost: number
+          transport_cost: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          job_order_id: string
+          labour_cost?: number
+          material_cost?: number
+          misc_cost?: number
+          total_cost?: number
+          transport_cost?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          job_order_id?: string
+          labour_cost?: number
+          material_cost?: number
+          misc_cost?: number
+          total_cost?: number
+          transport_cost?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_order_cost_summary_job_order_id_fkey"
+            columns: ["job_order_id"]
+            isOneToOne: true
+            referencedRelation: "job_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      job_order_labours: {
+        Row: {
+          created_at: string
+          id: string
+          job_order_id: string
+          name: string
+          paid_amount: number
+          payment_date: string | null
+          payment_status: string
+          process_assigned: string
+          rate_per_piece: number
+          role: string
+          total_amount: number
+          total_pieces: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          job_order_id: string
+          name: string
+          paid_amount?: number
+          payment_date?: string | null
+          payment_status?: string
+          process_assigned: string
+          rate_per_piece?: number
+          role: string
+          total_amount?: number
+          total_pieces?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          job_order_id?: string
+          name?: string
+          paid_amount?: number
+          payment_date?: string | null
+          payment_status?: string
+          process_assigned?: string
+          rate_per_piece?: number
+          role?: string
+          total_amount?: number
+          total_pieces?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_order_labours_job_order_id_fkey"
+            columns: ["job_order_id"]
+            isOneToOne: false
+            referencedRelation: "job_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      job_order_processes: {
+        Row: {
+          assigned_labour: string[]
+          completion_percent: number
+          created_at: string
+          ended_at: string | null
+          id: string
+          job_order_id: string
+          process_name: string
+          rate_per_piece: number
+          started_at: string | null
+          status: string
+          total_cost: number
+          total_pieces: number
+        }
+        Insert: {
+          assigned_labour?: string[]
+          completion_percent?: number
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          job_order_id: string
+          process_name: string
+          rate_per_piece?: number
+          started_at?: string | null
+          status?: string
+          total_cost?: number
+          total_pieces?: number
+        }
+        Update: {
+          assigned_labour?: string[]
+          completion_percent?: number
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          job_order_id?: string
+          process_name?: string
+          rate_per_piece?: number
+          started_at?: string | null
+          status?: string
+          total_cost?: number
+          total_pieces?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_order_processes_job_order_id_fkey"
+            columns: ["job_order_id"]
+            isOneToOne: false
+            referencedRelation: "job_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      job_orders: {
+        Row: {
+          client_company: string
+          contact_number: string | null
+          contact_person: string
+          created_at: string
+          delivery_date: string
+          id: string
+          job_type: string
+          overall_progress: number
+          product_name: string
+          remarks: string | null
+          start_date: string
+          status: string
+          total_pieces: number
+          updated_at: string
+        }
+        Insert: {
+          client_company: string
+          contact_number?: string | null
+          contact_person: string
+          created_at?: string
+          delivery_date: string
+          id?: string
+          job_type: string
+          overall_progress?: number
+          product_name: string
+          remarks?: string | null
+          start_date: string
+          status?: string
+          total_pieces: number
+          updated_at?: string
+        }
+        Update: {
+          client_company?: string
+          contact_number?: string | null
+          contact_person?: string
+          created_at?: string
+          delivery_date?: string
+          id?: string
+          job_type?: string
+          overall_progress?: number
+          product_name?: string
+          remarks?: string | null
+          start_date?: string
+          status?: string
+          total_pieces?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       materials: {
         Row: {
           available_stock: number
@@ -1401,6 +1602,14 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      recalc_job_order_progress: {
+        Args: { p_job_order_id: string }
+        Returns: undefined
+      }
+      refresh_cost_summary_labour: {
+        Args: { p_job_order_id: string }
+        Returns: undefined
+      }
       validate_batch_costs: {
         Args: { batch_id: string }
         Returns: {
