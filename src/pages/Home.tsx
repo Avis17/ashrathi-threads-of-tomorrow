@@ -9,6 +9,7 @@ import {
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
+  type CarouselApi,
 } from "@/components/ui/carousel";
 import heroImage from "@/assets/hero-home-fashion.jpg";
 import heroLuxury1 from "@/assets/hero-luxury-1.jpg";
@@ -19,9 +20,12 @@ import qualityImage from "@/assets/feature-quality.jpg";
 import designImage from "@/assets/feature-design.jpg";
 import { useSignatureProducts } from "@/hooks/useCollections";
 import Autoplay from "embla-carousel-autoplay";
+import { useEffect, useState } from "react";
 
 const Home = () => {
   const { data: signatureProducts = [], isLoading } = useSignatureProducts();
+  const [api, setApi] = useState<CarouselApi>();
+  const [current, setCurrent] = useState(0);
   
   const heroImages = [
     { src: heroLuxury1, alt: "Luxury silk loungewear collection" },
@@ -31,6 +35,14 @@ const Home = () => {
     { src: heroImage, alt: "Feather Fashions luxury collection" },
   ];
   
+  useEffect(() => {
+    if (!api) return;
+
+    api.on("select", () => {
+      setCurrent(api.selectedScrollSnap());
+    });
+  }, [api]);
+
   const features = [
     {
       icon: Leaf,
@@ -59,6 +71,7 @@ const Home = () => {
       {/* Hero Section */}
       <section className="relative h-screen overflow-hidden">
         <Carousel
+          setApi={setApi}
           className="w-full h-full"
           opts={{
             align: "start",
@@ -117,6 +130,20 @@ const Home = () => {
               </div>
             </div>
           </div>
+        </div>
+        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 flex gap-3 z-20">
+          {heroImages.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => api?.scrollTo(index)}
+              className={`h-2 rounded-full transition-all duration-300 ${
+                current === index 
+                  ? "w-8 bg-white" 
+                  : "w-2 bg-white/40 hover:bg-white/60"
+              }`}
+              aria-label={`Go to slide ${index + 1}`}
+            />
+          ))}
         </div>
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
           <div className="w-6 h-10 border-2 border-foreground/30 rounded-full flex justify-center pt-2">
