@@ -44,7 +44,7 @@ const Home = () => {
             backgroundImage: `url(${heroImage})`,
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/50 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/50 to-transparent" />
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-3xl space-y-8">
             <div className="inline-block animate-fade-in">
@@ -90,7 +90,7 @@ const Home = () => {
                 alt="Premium fabric quality" 
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent" />
             </div>
             <div className="space-y-8">
               <div className="inline-block">
