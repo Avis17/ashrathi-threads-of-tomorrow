@@ -21,6 +21,11 @@ import heroKidsCotton2 from "@/assets/hero-kids-cotton-2.jpg";
 import heroKidsCotton3 from "@/assets/hero-kids-cotton-3.jpg";
 import heroLadiesNightwear1 from "@/assets/hero-ladies-nightwear-1.jpg";
 import heroLadiesNightwear2 from "@/assets/hero-ladies-nightwear-2.jpg";
+import fabricSilk from "@/assets/fabric-silk.jpg";
+import fabricCotton from "@/assets/fabric-cotton.jpg";
+import fabricBamboo from "@/assets/fabric-bamboo.jpg";
+import fabricModal from "@/assets/fabric-modal.jpg";
+import fabricLinen from "@/assets/fabric-linen.jpg";
 import qualityImage from "@/assets/feature-quality.jpg";
 import designImage from "@/assets/feature-design.jpg";
 import { useSignatureProducts } from "@/hooks/useCollections";
@@ -159,6 +164,65 @@ const Home = () => {
           <div className="w-6 h-10 border-2 border-foreground/30 rounded-full flex justify-center pt-2">
             <div className="w-1.5 h-1.5 bg-foreground/30 rounded-full" />
           </div>
+        </div>
+      </section>
+
+      {/* Premium Fabrics Showcase */}
+      <section className="py-20 bg-gradient-to-b from-background via-muted/20 to-background">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <span className="px-4 py-2 rounded-full bg-accent/10 border border-accent/20 text-accent text-sm font-semibold tracking-wider inline-block mb-6">
+              PREMIUM MATERIALS
+            </span>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">
+              Crafted from the Finest <span className="text-gradient">Fabrics</span>
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Experience luxury through our carefully curated collection of sustainable, premium textiles
+            </p>
+          </div>
+          
+          <Carousel
+            className="w-full"
+            opts={{
+              align: "start",
+              loop: true,
+            }}
+            plugins={[
+              Autoplay({
+                delay: 3000,
+              }),
+            ]}
+          >
+            <CarouselContent className="-ml-2 md:-ml-4">
+              {[
+                { src: fabricSilk, name: "Luxury Silk", desc: "Smooth & Lustrous", color: "bg-red-50 dark:bg-red-950/20" },
+                { src: fabricCotton, name: "Organic Cotton", desc: "Soft & Breathable", color: "bg-amber-50 dark:bg-amber-950/20" },
+                { src: fabricBamboo, name: "Bamboo Fiber", desc: "Eco-Friendly & Fresh", color: "bg-emerald-50 dark:bg-emerald-950/20" },
+                { src: fabricModal, name: "Premium Modal", desc: "Silky & Elegant", color: "bg-purple-50 dark:bg-purple-950/20" },
+                { src: fabricLinen, name: "Natural Linen", desc: "Textured & Timeless", color: "bg-orange-50 dark:bg-orange-950/20" },
+              ].map((fabric, index) => (
+                <CarouselItem key={index} className="pl-2 md:pl-4 basis-full md:basis-1/2 lg:basis-1/3">
+                  <Card className="overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-500 group">
+                    <div className="relative h-64 overflow-hidden">
+                      <img 
+                        src={fabric.src} 
+                        alt={fabric.name}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                      />
+                      <div className={`absolute inset-0 ${fabric.color} opacity-0 group-hover:opacity-30 transition-opacity duration-500`} />
+                    </div>
+                    <CardContent className="p-6 text-center">
+                      <h3 className="font-bold text-xl mb-1">{fabric.name}</h3>
+                      <p className="text-muted-foreground">{fabric.desc}</p>
+                    </CardContent>
+                  </Card>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious className="left-2" />
+            <CarouselNext className="right-2" />
+          </Carousel>
         </div>
       </section>
 
