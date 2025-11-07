@@ -16,6 +16,9 @@ import heroLuxury1 from "@/assets/hero-luxury-1.jpg";
 import heroLuxury2 from "@/assets/hero-luxury-2.jpg";
 import heroLuxury3 from "@/assets/hero-luxury-3.jpg";
 import heroLuxury4 from "@/assets/hero-luxury-4.jpg";
+import heroKidsCotton1 from "@/assets/hero-kids-cotton-1.jpg";
+import heroKidsCotton2 from "@/assets/hero-kids-cotton-2.jpg";
+import heroKidsCotton3 from "@/assets/hero-kids-cotton-3.jpg";
 import qualityImage from "@/assets/feature-quality.jpg";
 import designImage from "@/assets/feature-design.jpg";
 import { useSignatureProducts } from "@/hooks/useCollections";
@@ -29,8 +32,11 @@ const Home = () => {
   
   const heroImages = [
     { src: heroLuxury1, alt: "Luxury silk loungewear collection" },
+    { src: heroKidsCotton1, alt: "Kids wearing vibrant colorful cotton clothing sets" },
     { src: heroLuxury2, alt: "Premium organic cotton menswear" },
+    { src: heroKidsCotton2, alt: "Stylish kids in modern cotton loungewear sets" },
     { src: heroLuxury3, alt: "Sustainable bamboo fabric collection" },
+    { src: heroKidsCotton3, alt: "Children in contemporary colorful cotton outfits" },
     { src: heroLuxury4, alt: "Premium modal sleepwear" },
     { src: heroImage, alt: "Feather Fashions luxury collection" },
   ];
