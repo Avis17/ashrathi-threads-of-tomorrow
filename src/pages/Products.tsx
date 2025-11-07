@@ -13,8 +13,35 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import Autoplay from "embla-carousel-autoplay";
+
+// Model showcase images
+import heroModelWoman1 from "@/assets/hero-model-woman-1.jpg";
+import heroModelMan1 from "@/assets/hero-model-man-1.jpg";
+import heroModelKid1 from "@/assets/hero-model-kid-1.jpg";
+import heroModelWoman2 from "@/assets/hero-model-woman-2.jpg";
+import heroModelMan2 from "@/assets/hero-model-man-2.jpg";
+import heroModelKid2 from "@/assets/hero-model-kid-2.jpg";
+import heroModelWoman3 from "@/assets/hero-model-woman-3.jpg";
+import heroModelMan3 from "@/assets/hero-model-man-3.jpg";
+import heroModelKid3 from "@/assets/hero-model-kid-3.jpg";
+import heroModelWoman4 from "@/assets/hero-model-woman-4.jpg";
 
 const PLACEHOLDER_IMAGE = '/placeholder.svg';
+
+const modelShowcaseImages = [
+  { src: heroModelWoman1, alt: "Women's Fashion Collection", category: "Women" },
+  { src: heroModelMan1, alt: "Men's Fashion Collection", category: "Men" },
+  { src: heroModelKid1, alt: "Kids' Fashion Collection", category: "Kids" },
+  { src: heroModelWoman2, alt: "Women's Premium Loungewear", category: "Women" },
+  { src: heroModelMan2, alt: "Men's Active Wear", category: "Men" },
+  { src: heroModelKid2, alt: "Kids' Colorful Outfits", category: "Kids" },
+  { src: heroModelWoman3, alt: "Women's Trendy Styles", category: "Women" },
+  { src: heroModelMan3, alt: "Men's Casual Collection", category: "Men" },
+  { src: heroModelKid3, alt: "Kids' Comfortable Wear", category: "Kids" },
+  { src: heroModelWoman4, alt: "Women's Casual Comfort", category: "Women" },
+];
 
 const OfferMessageCycle = ({ messages }: { messages: string[] }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -134,6 +161,45 @@ const Products = () => {
           <div className="divider-accent mb-6" />
           <h1 className="text-5xl md:text-6xl font-bold mb-4">Our Premium Collection</h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">Sustainable comfort meets modern style</p>
+        </div>
+
+        {/* Model Showcase Carousel */}
+        <div className="mb-16">
+          <Carousel
+            opts={{
+              align: "start",
+              loop: true,
+            }}
+            plugins={[
+              Autoplay({
+                delay: 3000,
+              }),
+            ]}
+            className="w-full"
+          >
+            <CarouselContent className="-ml-4">
+              {modelShowcaseImages.map((image, index) => (
+                <CarouselItem key={index} className="pl-4 md:basis-1/2 lg:basis-1/3">
+                  <div className="group relative overflow-hidden rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-500">
+                    <div className="relative h-[500px] overflow-hidden">
+                      <img
+                        src={image.src}
+                        alt={image.alt}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    </div>
+                    <div className="absolute bottom-0 left-0 right-0 p-6 transform translate-y-full group-hover:translate-y-0 transition-transform duration-500">
+                      <Badge className="mb-2 bg-primary/90 backdrop-blur-sm">{image.category}</Badge>
+                      <p className="text-white font-semibold text-lg drop-shadow-lg">{image.alt}</p>
+                    </div>
+                  </div>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious className="hidden md:flex -left-12" />
+            <CarouselNext className="hidden md:flex -right-12" />
+          </Carousel>
         </div>
 
         <div className="flex flex-wrap justify-center gap-3 mb-12">
