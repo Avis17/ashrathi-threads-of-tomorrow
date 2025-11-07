@@ -26,6 +26,13 @@ import fabricCotton from "@/assets/fabric-cotton.jpg";
 import fabricBamboo from "@/assets/fabric-bamboo.jpg";
 import fabricModal from "@/assets/fabric-modal.jpg";
 import fabricLinen from "@/assets/fabric-linen.jpg";
+import processFabricSourcing from "@/assets/process-fabric-sourcing.jpg";
+import processCadMarking from "@/assets/process-cad-marking.jpg";
+import processCutting from "@/assets/process-cutting.jpg";
+import processStitching from "@/assets/process-stitching.jpg";
+import processIroning from "@/assets/process-ironing.jpg";
+import processInspection from "@/assets/process-inspection.jpg";
+import processPacking from "@/assets/process-packing.jpg";
 import qualityImage from "@/assets/feature-quality.jpg";
 import designImage from "@/assets/feature-design.jpg";
 import { useSignatureProducts } from "@/hooks/useCollections";
@@ -216,6 +223,70 @@ const Home = () => {
                       <h3 className="font-bold text-xl mb-1">{fabric.name}</h3>
                       <p className="text-muted-foreground">{fabric.desc}</p>
                     </CardContent>
+                  </Card>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious className="left-2" />
+            <CarouselNext className="right-2" />
+          </Carousel>
+        </div>
+      </section>
+
+      {/* Manufacturing Process Showcase */}
+      <section className="py-20 bg-gradient-to-b from-background via-accent/5 to-background">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <span className="px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-semibold tracking-wider inline-block mb-6">
+              OUR PROCESS
+            </span>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">
+              From Fabric to <span className="text-gradient">Finished Garment</span>
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Witness our meticulous manufacturing journey - where precision meets perfection at every stage
+            </p>
+          </div>
+          
+          <Carousel
+            className="w-full"
+            opts={{
+              align: "start",
+              loop: true,
+            }}
+            plugins={[
+              Autoplay({
+                delay: 4000,
+              }),
+            ]}
+          >
+            <CarouselContent className="-ml-2 md:-ml-4">
+              {[
+                { src: processFabricSourcing, name: "Fabric Sourcing", desc: "Premium quality fabric selection", step: "01" },
+                { src: processCadMarking, name: "CAD Marking", desc: "Precision pattern programming", step: "02" },
+                { src: processCutting, name: "Cutting", desc: "Automated fabric cutting", step: "03" },
+                { src: processStitching, name: "Stitching", desc: "Skilled craftsmanship", step: "04" },
+                { src: processIroning, name: "Ironing & Pressing", desc: "Perfect finish & crisp look", step: "05" },
+                { src: processInspection, name: "Quality Inspection", desc: "Rigorous quality checks", step: "06" },
+                { src: processPacking, name: "Packing", desc: "Secure packaging & dispatch", step: "07" },
+              ].map((process, index) => (
+                <CarouselItem key={index} className="pl-2 md:pl-4 basis-full md:basis-1/2 lg:basis-1/3">
+                  <Card className="overflow-hidden border-2 shadow-xl hover:shadow-2xl transition-all duration-500 group">
+                    <div className="relative h-72 overflow-hidden">
+                      <img 
+                        src={process.src} 
+                        alt={process.name}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+                      <div className="absolute top-4 left-4">
+                        <span className="text-5xl font-bold text-white/20">{process.step}</span>
+                      </div>
+                      <div className="absolute bottom-0 left-0 right-0 p-6">
+                        <h3 className="font-bold text-2xl mb-1 text-white">{process.name}</h3>
+                        <p className="text-white/90 text-sm">{process.desc}</p>
+                      </div>
+                    </div>
                   </Card>
                 </CarouselItem>
               ))}

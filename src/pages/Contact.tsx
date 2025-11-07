@@ -102,7 +102,7 @@ const Contact = () => {
                   <div>
                     <h3 className="font-semibold text-lg mb-1">Our Location</h3>
                     <p className="text-muted-foreground text-sm">
-                      Annur, Tamil Nadu, India
+                      Tirupur, Tamil Nadu, India
                     </p>
                   </div>
                 </div>
@@ -278,7 +278,7 @@ const Contact = () => {
                 allowFullScreen
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
-                title="Feather Fashions Location - Annur, Tamil Nadu"
+                title="Feather Fashions Location - Tirupur, Tamil Nadu"
               />
             </div>
           </CardContent>
