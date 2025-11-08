@@ -36,6 +36,7 @@ const productSchema = z.object({
     .transform((val) => (val === '' ? null : parseFloat(val)))
     .refine((val) => val === null || val > 0, 'Price must be positive')
     .nullable(),
+  quality_tier: z.enum(['elite', 'smart_basics']).default('smart_basics'),
   discount_percentage: z.string()
     .transform((val) => (val === '' ? 0 : parseInt(val)))
     .refine((val) => val >= 0 && val <= 99, 'Discount must be between 0-99%')
@@ -82,6 +83,7 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
       should_remove: initialData?.should_remove ?? false,
       display_order: initialData?.display_order?.toString() || '0',
       price: initialData?.price?.toString() || '',
+      quality_tier: initialData?.quality_tier || 'smart_basics',
       discount_percentage: initialData?.discount_percentage?.toString() || '0',
       offer_messages: initialData?.offer_messages || [],
       name: initialData?.name || '',
@@ -98,6 +100,7 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
   });
 
   const selectedCategory = watch('category');
+  const qualityTier = watch('quality_tier');
   const isActive = watch('is_active');
   const isFeatured = watch('is_featured');
   const isNewArrival = watch('is_new_arrival');
@@ -237,6 +240,41 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
           {errors.price && (
             <p className="text-sm text-destructive">{errors.price.message}</p>
           )}
+        </div>
+
+        <div className="space-y-2">
+          <Label>Quality Tier *</Label>
+          <Select
+            value={qualityTier}
+            onValueChange={(value) => setValue('quality_tier', value as 'elite' | 'smart_basics')}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select quality tier" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="elite">
+                <div className="flex items-center gap-2">
+                  <span>💎</span>
+                  <div>
+                    <div className="font-semibold">Elite Collection</div>
+                    <div className="text-xs text-muted-foreground">Premium quality, higher GSM, designer finish</div>
+                  </div>
+                </div>
+              </SelectItem>
+              <SelectItem value="smart_basics">
+                <div className="flex items-center gap-2">
+                  <span>🌿</span>
+                  <div>
+                    <div className="font-semibold">Smart Basics</div>
+                    <div className="text-xs text-muted-foreground">Economical everyday wear, surplus fabric</div>
+                  </div>
+                </div>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            Choose the quality tier to help customers make informed decisions
+          </p>
         </div>
 
         <div className="space-y-2">

@@ -145,6 +145,7 @@ export function ViewEditProducts() {
             <TableRow>
               <TableHead>Product Name</TableHead>
               <TableHead>Category</TableHead>
+              <TableHead>Quality Tier</TableHead>
               <TableHead>HSN Code</TableHead>
               <TableHead>Product Code</TableHead>
               <TableHead>Price</TableHead>
@@ -155,7 +156,7 @@ export function ViewEditProducts() {
           <TableBody>
             {products?.data?.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="h-64">
+                <TableCell colSpan={8} className="h-64">
                   <div className="flex flex-col items-center justify-center space-y-4 text-center">
                     <img src="/src/assets/no-data.png" alt="No data found" className="w-48 h-36 object-contain opacity-50" />
                     <div>
@@ -170,6 +171,11 @@ export function ViewEditProducts() {
                 <TableRow key={product.id}>
                   <TableCell className="font-medium">{product.name}</TableCell>
                   <TableCell>{product.category}</TableCell>
+                  <TableCell>
+                    <Badge variant={product.quality_tier === 'elite' ? 'default' : 'secondary'}>
+                      {product.quality_tier === 'elite' ? '💎 Elite' : '🌿 Smart Basics'}
+                    </Badge>
+                  </TableCell>
                   <TableCell>{product.hsn_code || '-'}</TableCell>
                   <TableCell>{product.product_code || '-'}</TableCell>
                   <TableCell>{product.price ? `₹${product.price}` : '-'}</TableCell>

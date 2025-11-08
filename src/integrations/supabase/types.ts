@@ -1286,6 +1286,7 @@ export type Database = {
           offer_messages: Json | null
           price: number | null
           product_code: string | null
+          quality_tier: string
           reorder_level: number | null
           should_remove: boolean | null
         }
@@ -1312,6 +1313,7 @@ export type Database = {
           offer_messages?: Json | null
           price?: number | null
           product_code?: string | null
+          quality_tier?: string
           reorder_level?: number | null
           should_remove?: boolean | null
         }
@@ -1338,6 +1340,7 @@ export type Database = {
           offer_messages?: Json | null
           price?: number | null
           product_code?: string | null
+          quality_tier?: string
           reorder_level?: number | null
           should_remove?: boolean | null
         }

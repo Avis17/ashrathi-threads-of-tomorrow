@@ -13,6 +13,7 @@ export interface Product {
   is_active: boolean;
   display_order: number;
   price: number | null;
+  quality_tier: 'elite' | 'smart_basics';
   available_sizes: string[];
   available_colors: Array<{ name: string; hex: string }>;
   discount_percentage: number | null;
