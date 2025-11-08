@@ -20,6 +20,7 @@ import Dashboard from './admin/Dashboard';
 import AdminOrderDetails from './admin/OrderDetails';
 import Production from './admin/Production';
 import JobOrders from './admin/JobOrders';
+import Settings from './admin/Settings';
 
 const Admin = () => {
   const { isAdmin, loading } = useAuth();
@@ -68,6 +69,7 @@ const Admin = () => {
               <Route path="/bulk-orders" element={<BulkOrdersManager />} />
               <Route path="/newsletter" element={<NewsletterManager />} />
               <Route path="/invoice-reset" element={<InvoiceReset />} />
+              <Route path="/settings" element={<Settings />} />
             </Routes>
           </main>
         </div>

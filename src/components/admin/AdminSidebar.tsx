@@ -14,7 +14,8 @@ import {
   Building2,
   Receipt,
   Warehouse,
-  Briefcase
+  Briefcase,
+  Settings
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import {
@@ -45,6 +46,7 @@ const menuItems = [
   { title: 'Bulk Orders', url: '/admin/bulk-orders', icon: ShoppingCart },
   { title: 'Newsletter', url: '/admin/newsletter', icon: Newspaper },
   { title: 'Invoice Reset', url: '/admin/invoice-reset', icon: RotateCcw },
+  { title: 'Settings', url: '/admin/settings', icon: Settings },
 ];
 
 export function AdminSidebar() {

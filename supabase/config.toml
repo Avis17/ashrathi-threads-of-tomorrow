@@ -5,3 +5,9 @@ verify_jwt = false
 
 [functions.send-password-reset]
 verify_jwt = false
+
+[functions.send-low-stock-alert]
+verify_jwt = false
+
+[functions.send-order-alert]
+verify_jwt = false
