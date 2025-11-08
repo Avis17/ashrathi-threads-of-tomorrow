@@ -176,26 +176,26 @@ const Products = () => {
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
       {/* Trust-Building Hero Banner */}
       <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-background border-b">
-        <div className="container mx-auto px-4 py-12">
-          <div className="text-center max-w-4xl mx-auto space-y-4">
-            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+        <div className="container mx-auto px-4 py-8 md:py-12">
+          <div className="text-center max-w-4xl mx-auto space-y-3 md:space-y-4">
+            <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
               Your Trust, Our Priority
             </h1>
-            <p className="text-lg text-muted-foreground leading-relaxed">
+            <p className="text-sm md:text-base lg:text-lg text-muted-foreground leading-relaxed px-4">
               We believe in radical transparency. Choose the quality that fits your needs—no hidden compromises, just honest value.
             </p>
-            <div className="flex flex-wrap justify-center gap-6 pt-4">
-              <div className="flex items-center gap-2">
-                <Shield className="h-5 w-5 text-primary" />
-                <span className="text-sm font-medium">Quality Assured</span>
+            <div className="flex flex-wrap justify-center gap-3 md:gap-6 pt-2 md:pt-4">
+              <div className="flex items-center gap-1.5 md:gap-2">
+                <Shield className="h-4 w-4 md:h-5 md:w-5 text-primary flex-shrink-0" />
+                <span className="text-xs md:text-sm font-medium">Quality Assured</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Award className="h-5 w-5 text-primary" />
-                <span className="text-sm font-medium">Transparent Pricing</span>
+              <div className="flex items-center gap-1.5 md:gap-2">
+                <Award className="h-4 w-4 md:h-5 md:w-5 text-primary flex-shrink-0" />
+                <span className="text-xs md:text-sm font-medium">Transparent Pricing</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-primary" />
-                <span className="text-sm font-medium">Customer First</span>
+              <div className="flex items-center gap-1.5 md:gap-2">
+                <Sparkles className="h-4 w-4 md:h-5 md:w-5 text-primary flex-shrink-0" />
+                <span className="text-xs md:text-sm font-medium">Customer First</span>
               </div>
             </div>
           </div>
@@ -236,68 +236,69 @@ const Products = () => {
       {/* Two-Tier Tab System */}
       <div className="container mx-auto px-4 py-8">
         <Tabs value={selectedTier} onValueChange={(value) => setSelectedTier(value as 'elite' | 'smart_basics')} className="w-full">
-          <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-2 h-auto p-2 bg-muted/50">
+          <TabsList className="grid w-full grid-cols-2 h-auto p-1 md:p-2 bg-muted/50 gap-1">
             <TabsTrigger 
               value="elite" 
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-500 data-[state=active]:text-white py-4 px-6 text-left"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-500 data-[state=active]:text-white py-2 md:py-4 px-2 md:px-6 text-left"
             >
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-2 font-bold text-lg">
-                  <span>💎</span>
-                  <span>Elite Collection</span>
+              <div className="flex flex-col gap-0.5 md:gap-1">
+                <div className="flex items-center gap-1 md:gap-2 font-bold text-sm md:text-lg">
+                  <span className="text-base md:text-xl">💎</span>
+                  <span className="leading-tight">Elite Collection</span>
                 </div>
-                <p className="text-xs opacity-80 font-normal">Premium quality • Higher GSM • Designer finish</p>
+                <p className="text-[10px] md:text-xs opacity-80 font-normal hidden sm:block">Premium quality • Higher GSM</p>
               </div>
             </TabsTrigger>
             <TabsTrigger 
               value="smart_basics"
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-600 data-[state=active]:to-emerald-600 data-[state=active]:text-white py-4 px-6 text-left"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-600 data-[state=active]:to-emerald-600 data-[state=active]:text-white py-2 md:py-4 px-2 md:px-6 text-left"
             >
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-2 font-bold text-lg">
-                  <span>🌿</span>
-                  <span>Smart Basics</span>
+              <div className="flex flex-col gap-0.5 md:gap-1">
+                <div className="flex items-center gap-1 md:gap-2 font-bold text-sm md:text-lg">
+                  <span className="text-base md:text-xl">🌿</span>
+                  <span className="leading-tight">Smart Basics</span>
                 </div>
-                <p className="text-xs opacity-80 font-normal">Everyday comfort • Smart value • Great quality</p>
+                <p className="text-[10px] md:text-xs opacity-80 font-normal hidden sm:block">Everyday comfort • Smart value</p>
               </div>
             </TabsTrigger>
           </TabsList>
 
           {/* Elite Collection Tab */}
           <TabsContent value="elite" className="mt-8">
-            <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 rounded-lg p-6 mb-8 border border-amber-200 dark:border-amber-900">
-              <h2 className="text-2xl font-bold mb-2 text-amber-900 dark:text-amber-100">Premium Craftsmanship, Lasting Quality</h2>
-              <p className="text-amber-800 dark:text-amber-200 mb-4">
-                Experience the finest fabrics with superior stitching, higher GSM for durability, and designer-level finishing that stands the test of time.
+            <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 rounded-lg p-4 md:p-6 mb-6 md:mb-8 border border-amber-200 dark:border-amber-900">
+              <h2 className="text-lg md:text-2xl font-bold mb-2 text-amber-900 dark:text-amber-100">Premium Craftsmanship, Lasting Quality</h2>
+              <p className="text-sm md:text-base text-amber-800 dark:text-amber-200 mb-3 md:mb-4">
+                Experience the finest fabrics with superior stitching, higher GSM for durability, and designer-level finishing.
               </p>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                <div className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-amber-600" />
-                  <span className="font-medium">Higher GSM Fabrics</span>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 text-xs md:text-sm">
+                <div className="flex items-center gap-1.5 md:gap-2">
+                  <Check className="h-3 w-3 md:h-4 md:w-4 text-amber-600 flex-shrink-0" />
+                  <span className="font-medium">Higher GSM</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-amber-600" />
-                  <span className="font-medium">Designer Finishing</span>
+                <div className="flex items-center gap-1.5 md:gap-2">
+                  <Check className="h-3 w-3 md:h-4 md:w-4 text-amber-600 flex-shrink-0" />
+                  <span className="font-medium">Designer Finish</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-amber-600" />
-                  <span className="font-medium">Superior Stitching</span>
+                <div className="flex items-center gap-1.5 md:gap-2">
+                  <Check className="h-3 w-3 md:h-4 md:w-4 text-amber-600 flex-shrink-0" />
+                  <span className="font-medium">Superior Stitch</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-amber-600" />
-                  <span className="font-medium">Premium Durability</span>
+                <div className="flex items-center gap-1.5 md:gap-2">
+                  <Check className="h-3 w-3 md:h-4 md:w-4 text-amber-600 flex-shrink-0" />
+                  <span className="font-medium">Durability</span>
                 </div>
               </div>
             </div>
 
             {/* Category Filter */}
-            <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+            <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
               {categories.map((category) => (
                 <Button
                   key={category}
                   variant={activeCategory === category ? "default" : "outline"}
                   onClick={() => setActiveCategory(category)}
-                  className="whitespace-nowrap"
+                  className="whitespace-nowrap text-xs md:text-sm px-3 md:px-4 py-1.5 md:py-2 flex-shrink-0"
+                  size="sm"
                 >
                   {category}
                 </Button>
@@ -463,39 +464,40 @@ const Products = () => {
 
           {/* Smart Basics Tab */}
           <TabsContent value="smart_basics" className="mt-8">
-            <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 rounded-lg p-6 mb-8 border border-green-200 dark:border-green-900">
-              <h2 className="text-2xl font-bold mb-2 text-green-900 dark:text-green-100">Everyday Comfort, Smart Value</h2>
-              <p className="text-green-800 dark:text-green-200 mb-4">
-                Quality fabrics at economical prices, perfect for daily wear. Smart choices for budget-conscious shoppers without compromising on comfort.
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 rounded-lg p-4 md:p-6 mb-6 md:mb-8 border border-green-200 dark:border-green-900">
+              <h2 className="text-lg md:text-2xl font-bold mb-2 text-green-900 dark:text-green-100">Everyday Comfort, Smart Value</h2>
+              <p className="text-sm md:text-base text-green-800 dark:text-green-200 mb-3 md:mb-4">
+                Quality fabrics at economical prices, perfect for daily wear. Smart choices without compromising comfort.
               </p>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                <div className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-green-600" />
-                  <span className="font-medium">Economical Pricing</span>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 text-xs md:text-sm">
+                <div className="flex items-center gap-1.5 md:gap-2">
+                  <Check className="h-3 w-3 md:h-4 md:w-4 text-green-600 flex-shrink-0" />
+                  <span className="font-medium">Economical</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-green-600" />
-                  <span className="font-medium">Comfortable Fabrics</span>
+                <div className="flex items-center gap-1.5 md:gap-2">
+                  <Check className="h-3 w-3 md:h-4 md:w-4 text-green-600 flex-shrink-0" />
+                  <span className="font-medium">Comfortable</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-green-600" />
-                  <span className="font-medium">Daily Wear Perfect</span>
+                <div className="flex items-center gap-1.5 md:gap-2">
+                  <Check className="h-3 w-3 md:h-4 md:w-4 text-green-600 flex-shrink-0" />
+                  <span className="font-medium">Daily Wear</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-green-600" />
+                <div className="flex items-center gap-1.5 md:gap-2">
+                  <Check className="h-3 w-3 md:h-4 md:w-4 text-green-600 flex-shrink-0" />
                   <span className="font-medium">Great Value</span>
                 </div>
               </div>
             </div>
 
             {/* Category Filter */}
-            <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+            <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
               {categories.map((category) => (
                 <Button
                   key={category}
                   variant={activeCategory === category ? "default" : "outline"}
                   onClick={() => setActiveCategory(category)}
-                  className="whitespace-nowrap"
+                  className="whitespace-nowrap text-xs md:text-sm px-3 md:px-4 py-1.5 md:py-2 flex-shrink-0"
+                  size="sm"
                 >
                   {category}
                 </Button>
