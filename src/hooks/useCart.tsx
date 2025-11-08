@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from '@/hooks/use-toast';
+import { calculateComboPrice } from '@/lib/calculateComboPrice';
 
 interface CartItemWithProduct {
   id: string;
@@ -178,8 +179,6 @@ export const useCart = () => {
     const discount = item.products?.discount_percentage || 0;
     const comboOffers = item.products?.combo_offers || [];
     
-    // Import dynamically to avoid circular dependencies
-    const { calculateComboPrice } = require('@/lib/calculateComboPrice');
     const calculation = calculateComboPrice(item.quantity, basePrice, comboOffers, discount);
     
     return total + calculation.finalPrice;
