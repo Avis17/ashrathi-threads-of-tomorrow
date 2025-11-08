@@ -81,6 +81,58 @@ export default function ProductDetail() {
     },
   });
 
+  const { data: inventoryData } = useQuery({
+    queryKey: ['product-inventory', id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('product_inventory')
+        .select('*')
+        .eq('product_id', id);
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!id,
+  });
+
+  const [stockStatus, setStockStatus] = useState<{
+    available: boolean;
+    quantity: number;
+    message: string;
+  }>({ available: true, quantity: 0, message: '' });
+
+  // Update stock status when size/color changes
+  useEffect(() => {
+    if (!selectedSize || !selectedColor || !inventoryData) {
+      setStockStatus({ available: true, quantity: 0, message: '' });
+      return;
+    }
+
+    const inventory = inventoryData.find(
+      inv => inv.size === selectedSize && inv.color === selectedColor
+    );
+
+    if (!inventory || inventory.available_quantity === 0) {
+      setStockStatus({
+        available: false,
+        quantity: 0,
+        message: "🔴 Currently out of stock. We'll restock soon!"
+      });
+    } else if (inventory.available_quantity < 10) {
+      setStockStatus({
+        available: true,
+        quantity: inventory.available_quantity,
+        message: `⚠️ Only ${inventory.available_quantity} left in stock!`
+      });
+    } else {
+      setStockStatus({
+        available: true,
+        quantity: inventory.available_quantity,
+        message: `✅ In stock (${inventory.available_quantity} available)`
+      });
+    }
+  }, [selectedSize, selectedColor, inventoryData]);
+
   const { data: similarProducts = [] } = useQuery({
     queryKey: ['similar-products', product?.category],
     queryFn: async () => {
@@ -112,6 +164,24 @@ export default function ProductDetail() {
     }
     if (product.available_colors.length > 0 && !selectedColor) {
       toast({ title: 'Please select a color', variant: 'destructive' });
+      return;
+    }
+
+    if (!stockStatus.available) {
+      toast({ 
+        title: 'Out of Stock', 
+        description: 'This combination is currently unavailable. Please select a different size or color.',
+        variant: 'destructive' 
+      });
+      return;
+    }
+
+    if (quantity > stockStatus.quantity) {
+      toast({ 
+        title: 'Insufficient Stock', 
+        description: `Only ${stockStatus.quantity} pieces available for this combination.`,
+        variant: 'destructive' 
+      });
       return;
     }
 
@@ -298,6 +368,21 @@ export default function ProductDetail() {
               </div>
             )}
 
+            {/* Stock Status */}
+            {selectedSize && selectedColor && (
+              <div className={`p-3 rounded-lg border ${
+                stockStatus.available 
+                  ? 'bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-900'
+                  : 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-900'
+              }`}>
+                <p className={`text-sm font-medium ${
+                  stockStatus.available ? 'text-green-800 dark:text-green-200' : 'text-red-800 dark:text-red-200'
+                }`}>
+                  {stockStatus.message}
+                </p>
+              </div>
+            )}
+
             {/* Quantity */}
             <div>
               <h3 className="text-lg font-semibold mb-3">Quantity</h3>
@@ -314,6 +399,7 @@ export default function ProductDetail() {
                   variant="outline"
                   size="icon"
                   onClick={() => setQuantity(quantity + 1)}
+                  disabled={!stockStatus.available || (stockStatus.quantity > 0 && quantity >= stockStatus.quantity)}
                 >
                   <Plus className="h-4 w-4" />
                 </Button>

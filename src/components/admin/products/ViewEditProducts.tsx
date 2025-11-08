@@ -1,7 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useDebounce } from '@/hooks/useDebounce';
 import { supabase } from '@/integrations/supabase/client';
+import { ProductInventoryView } from './ProductInventoryView';
 import {
   Table,
   TableBody,
@@ -12,7 +13,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Pencil, Trash2, Search } from 'lucide-react';
+import { Pencil, Trash2, Search, Package } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
@@ -50,6 +51,7 @@ export function ViewEditProducts() {
   const [currentPage, setCurrentPage] = useState(1);
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [deletingProduct, setDeletingProduct] = useState<string | null>(null);
+  const [viewingInventory, setViewingInventory] = useState<{ id: string; name: string } | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -74,16 +76,48 @@ export function ViewEditProducts() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: ProductFormData }) => {
-      const { error } = await supabase
+    mutationFn: async ({ id, data }: { id: string; data: ProductFormData & { inventory?: any[] } }) => {
+      const { inventory, ...productData } = data;
+      
+      const { error: productError } = await supabase
         .from('products')
-        .update(data)
+        .update(productData)
         .eq('id', id);
-      if (error) throw error;
+      if (productError) throw productError;
+      
+      // Update inventory if provided
+      if (inventory) {
+        // Delete existing inventory
+        await supabase.from('product_inventory').delete().eq('product_id', id);
+        
+        // Insert new inventory
+        if (inventory.length > 0) {
+          const inventoryEntries = inventory.map(inv => ({
+            product_id: id,
+            size: inv.size,
+            color: inv.color,
+            available_quantity: inv.quantity,
+          }));
+          
+          const { error: invError } = await supabase
+            .from('product_inventory')
+            .insert(inventoryEntries);
+          
+          if (invError) throw invError;
+          
+          // Update product total stock
+          const totalStock = inventory.reduce((sum, inv) => sum + inv.quantity, 0);
+          await supabase
+            .from('products')
+            .update({ current_total_stock: totalStock })
+            .eq('id', id);
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-products'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['product-inventory'] });
       toast({ title: 'Product updated successfully' });
       setEditingProduct(null);
     },
@@ -202,6 +236,14 @@ export function ViewEditProducts() {
                       <Button
                         variant="ghost"
                         size="icon"
+                        onClick={() => setViewingInventory({ id: product.id, name: product.name })}
+                        title="View Inventory"
+                      >
+                        <Package className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         onClick={() => setEditingProduct(product)}
                       >
                         <Pencil className="h-4 w-4" />
@@ -285,6 +327,20 @@ export function ViewEditProducts() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={!!viewingInventory} onOpenChange={() => setViewingInventory(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Product Inventory Details</DialogTitle>
+          </DialogHeader>
+          {viewingInventory && (
+            <ProductInventoryView
+              productId={viewingInventory.id}
+              productName={viewingInventory.name}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

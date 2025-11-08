@@ -59,6 +59,21 @@ export const useCart = () => {
     mutationFn: async ({ productId, quantity, size, color }: { productId: string; quantity: number; size?: string; color?: string }) => {
       if (!user) throw new Error('User not authenticated');
 
+      // Validate stock if size and color are provided
+      if (size && color) {
+        const { data: inventory } = await supabase
+          .from('product_inventory')
+          .select('available_quantity')
+          .eq('product_id', productId)
+          .eq('size', size)
+          .eq('color', color)
+          .single();
+        
+        if (!inventory || inventory.available_quantity < quantity) {
+          throw new Error('INSUFFICIENT_STOCK');
+        }
+      }
+
       // Check if item with same variant already exists
       const { data: existing } = await supabase
         .from('cart_items')
@@ -100,11 +115,19 @@ export const useCart = () => {
       });
     },
     onError: (error: Error) => {
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive',
-      });
+      if (error.message === 'INSUFFICIENT_STOCK') {
+        toast({
+          title: 'Out of Stock',
+          description: 'The selected item is no longer available in the requested quantity.',
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Error',
+          description: error.message,
+          variant: 'destructive',
+        });
+      }
     },
   });
 

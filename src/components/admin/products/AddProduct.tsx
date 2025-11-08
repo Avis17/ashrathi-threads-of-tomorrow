@@ -9,9 +9,40 @@ export function AddProduct() {
   const queryClient = useQueryClient();
 
   const createMutation = useMutation({
-    mutationFn: async (data: ProductFormData) => {
-      const { error } = await supabase.from('products').insert(data as any);
-      if (error) throw error;
+    mutationFn: async (data: ProductFormData & { inventory?: any[] }) => {
+      const { inventory, ...productData } = data;
+      
+      // Insert product
+      const { data: product, error: productError } = await supabase
+        .from('products')
+        .insert(productData as any)
+        .select()
+        .single();
+      
+      if (productError) throw productError;
+      
+      // Insert inventory entries if provided
+      if (inventory && inventory.length > 0) {
+        const inventoryEntries = inventory.map(inv => ({
+          product_id: product.id,
+          size: inv.size,
+          color: inv.color,
+          available_quantity: inv.quantity,
+        }));
+        
+        const { error: invError } = await supabase
+          .from('product_inventory')
+          .insert(inventoryEntries);
+        
+        if (invError) throw invError;
+        
+        // Update product total stock
+        const totalStock = inventory.reduce((sum, inv) => sum + inv.quantity, 0);
+        await supabase
+          .from('products')
+          .update({ current_total_stock: totalStock })
+          .eq('id', product.id);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });

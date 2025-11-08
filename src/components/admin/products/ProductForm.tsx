@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/select';
 import { PRODUCT_CATEGORIES } from '@/lib/constants';
 import { SizeColorManager } from './SizeColorManager';
+import { InventoryManager } from './InventoryManager';
 
 const productSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters').max(200),
@@ -64,7 +65,7 @@ const productSchema = z.object({
 export type ProductFormData = z.infer<typeof productSchema>;
 
 interface ProductFormProps {
-  onSubmit: (data: ProductFormData) => void;
+  onSubmit: (data: ProductFormData & { inventory?: Array<{size: string; color: string; quantity: number}> }) => void;
   initialData?: any;
   isLoading?: boolean;
 }
@@ -81,6 +82,9 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
   );
   const [newComboQuantity, setNewComboQuantity] = useState('');
   const [newComboPrice, setNewComboPrice] = useState('');
+  const [inventory, setInventory] = useState<Array<{size: string; color: string; quantity: number}>>(
+    initialData?.inventory || []
+  );
 
   const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
@@ -125,6 +129,7 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
       additional_images: additionalImages, 
       offer_messages: offerMessages,
       combo_offers: comboOffers,
+      inventory: inventory,
     });
   };
 
@@ -445,6 +450,13 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
         colors={colors}
         onSizesChange={setSizes}
         onColorsChange={setColors}
+      />
+
+      <InventoryManager
+        inventory={inventory}
+        availableSizes={sizes}
+        availableColors={colors}
+        onInventoryChange={setInventory}
       />
 
       <div className="flex flex-wrap gap-6">

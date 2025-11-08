@@ -1188,6 +1188,47 @@ export type Database = {
         }
         Relationships: []
       }
+      product_inventory: {
+        Row: {
+          available_quantity: number
+          color: string
+          created_at: string | null
+          id: string
+          product_id: string
+          reserved_quantity: number
+          size: string
+          updated_at: string | null
+        }
+        Insert: {
+          available_quantity?: number
+          color: string
+          created_at?: string | null
+          id?: string
+          product_id: string
+          reserved_quantity?: number
+          size: string
+          updated_at?: string | null
+        }
+        Update: {
+          available_quantity?: number
+          color?: string
+          created_at?: string | null
+          id?: string
+          product_id?: string
+          reserved_quantity?: number
+          size?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_inventory_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       production_batches: {
         Row: {
           actual_quantity: number
@@ -1552,6 +1593,15 @@ export type Database = {
     }
     Functions: {
       calculate_batch_costs: { Args: { batch_id: string }; Returns: undefined }
+      check_inventory_available: {
+        Args: {
+          p_color: string
+          p_product_id: string
+          p_quantity: number
+          p_size: string
+        }
+        Returns: boolean
+      }
       create_role: {
         Args: {
           _description?: string
@@ -1560,6 +1610,15 @@ export type Database = {
           _permission_ids?: string[]
         }
         Returns: string
+      }
+      deduct_inventory: {
+        Args: {
+          p_color: string
+          p_product_id: string
+          p_quantity: number
+          p_size: string
+        }
+        Returns: boolean
       }
       delete_role: { Args: { _role_name: string }; Returns: boolean }
       generate_batch_code: { Args: never; Returns: string }

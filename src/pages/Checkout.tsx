@@ -61,7 +61,24 @@ export default function Checkout() {
     setIsPlacingOrder(true);
 
     try {
-      // Create order
+      // STEP 1: Validate all items have stock
+      for (const item of cartItems) {
+        if (item.selected_size && item.selected_color) {
+          const { data: inventory } = await supabase
+            .from('product_inventory')
+            .select('available_quantity')
+            .eq('product_id', item.product_id)
+            .eq('size', item.selected_size)
+            .eq('color', item.selected_color)
+            .single();
+          
+          if (!inventory || inventory.available_quantity < item.quantity) {
+            throw new Error(`Insufficient stock for ${item.products.name} (${item.selected_size}/${item.selected_color})`);
+          }
+        }
+      }
+
+      // STEP 2: Create order
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
@@ -135,6 +152,24 @@ export default function Checkout() {
         .insert(orderItems);
 
       if (itemsError) throw itemsError;
+
+      // STEP 3: Deduct inventory for each item
+      for (const item of cartItems) {
+        if (item.selected_size && item.selected_color) {
+          const { error: deductError } = await supabase
+            .rpc('deduct_inventory', {
+              p_product_id: item.product_id,
+              p_size: item.selected_size,
+              p_color: item.selected_color,
+              p_quantity: item.quantity,
+            });
+          
+          if (deductError) {
+            console.error('Inventory deduction failed:', deductError);
+            // Log but don't fail the order - admin can handle manually
+          }
+        }
+      }
 
       // Clear cart
       await clearCart();
