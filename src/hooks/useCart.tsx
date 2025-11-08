@@ -174,15 +174,35 @@ export const useCart = () => {
   });
 
   // Calculate cart total with combo offers and discounts
-  const cartTotal = cartItems.reduce((total, item) => {
-    const basePrice = item.products?.price || 0;
-    const discount = item.products?.discount_percentage || 0;
-    const comboOffers = item.products?.combo_offers || [];
-    
-    const calculation = calculateComboPrice(item.quantity, basePrice, comboOffers, discount);
-    
-    return total + calculation.finalPrice;
-  }, 0);
+  // Group items by product_id to apply combos across all variations
+  const cartTotal = (() => {
+    const groupedByProduct = cartItems.reduce((acc, item) => {
+      const productId = item.product_id;
+      if (!acc[productId]) {
+        acc[productId] = {
+          items: [],
+          totalQuantity: 0,
+          basePrice: item.products?.price || 0,
+          discount: item.products?.discount_percentage || 0,
+          comboOffers: item.products?.combo_offers || [],
+        };
+      }
+      acc[productId].items.push(item);
+      acc[productId].totalQuantity += item.quantity;
+      return acc;
+    }, {} as Record<string, any>);
+
+    // Calculate total for all products
+    return Object.values(groupedByProduct).reduce((total, group: any) => {
+      const calculation = calculateComboPrice(
+        group.totalQuantity,
+        group.basePrice,
+        group.comboOffers,
+        group.discount
+      );
+      return total + calculation.finalPrice;
+    }, 0);
+  })();
 
   const cartCount = cartItems.reduce((count, item) => count + item.quantity, 0);
 

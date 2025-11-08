@@ -83,13 +83,38 @@ export default function Checkout() {
 
       if (orderError) throw orderError;
 
-      // Create order items with combo pricing
+      // Group items by product_id to apply combos across variations
+      const groupedByProduct = cartItems.reduce((acc, item) => {
+        const productId = item.product_id;
+        if (!acc[productId]) {
+          acc[productId] = {
+            items: [],
+            totalQuantity: 0,
+            basePrice: item.products.price || 0,
+            discount: item.products.discount_percentage || 0,
+            comboOffers: item.products.combo_offers || [],
+          };
+        }
+        acc[productId].items.push(item);
+        acc[productId].totalQuantity += item.quantity;
+        return acc;
+      }, {} as Record<string, any>);
+
+      // Calculate combo for each product group
+      const productGroupCalculations = Object.entries(groupedByProduct).reduce((acc, [productId, group]: [string, any]) => {
+        acc[productId] = calculateComboPrice(
+          group.totalQuantity,
+          group.basePrice,
+          group.comboOffers,
+          group.discount
+        );
+        return acc;
+      }, {} as Record<string, any>);
+
+      // Create order items with proportional pricing
       const orderItems = cartItems.map((item) => {
-        const basePrice = item.products.price || 0;
-        const discount = item.products.discount_percentage || 0;
-        const comboOffers = item.products.combo_offers || [];
-        
-        const calculation = calculateComboPrice(item.quantity, basePrice, comboOffers, discount);
+        const groupCalc = productGroupCalculations[item.product_id];
+        const pricePerPiece = groupCalc.finalPrice / groupedByProduct[item.product_id].totalQuantity;
         
         return {
           order_id: order.id,
@@ -98,8 +123,8 @@ export default function Checkout() {
           product_code: item.products.product_code,
           product_image_url: item.products.image_url,
           quantity: item.quantity,
-          unit_price: calculation.finalPrice / item.quantity, // Average price per piece
-          total_price: calculation.finalPrice,
+          unit_price: pricePerPiece,
+          total_price: pricePerPiece * item.quantity,
           selected_size: item.selected_size,
           selected_color: item.selected_color,
         };
@@ -190,23 +215,46 @@ export default function Checkout() {
             <CardContent className="space-y-4 pt-6">
               {/* Items List */}
               <div className="space-y-4">
-              {cartItems.map((item) => {
-                  const basePrice = item.products.price || 0;
-                  const discount = item.products.discount_percentage || 0;
-                  const comboOffers = item.products.combo_offers || [];
-                  
-                  const calculation = calculateComboPrice(item.quantity, basePrice, comboOffers, discount);
-                  const hasCombo = calculation.breakdown.some(b => b.type === 'combo');
-                  
+              {(() => {
+                // Group items by product_id
+                const grouped = cartItems.reduce((acc, item) => {
+                  const productId = item.product_id;
+                  if (!acc[productId]) {
+                    acc[productId] = {
+                      items: [],
+                      totalQuantity: 0,
+                      basePrice: item.products.price || 0,
+                      discount: item.products.discount_percentage || 0,
+                      comboOffers: item.products.combo_offers || [],
+                      productName: item.products.name,
+                    };
+                  }
+                  acc[productId].items.push(item);
+                  acc[productId].totalQuantity += item.quantity;
+                  return acc;
+                }, {} as Record<string, any>);
+
+                return Object.entries(grouped).map(([productId, group]: [string, any]) => {
+                  const calculation = calculateComboPrice(
+                    group.totalQuantity,
+                    group.basePrice,
+                    group.comboOffers,
+                    group.discount
+                  );
+                  const hasCombo = calculation.breakdown.some((b: any) => b.type === 'combo');
+
                   return (
-                    <div key={item.id} className="space-y-2 pb-3 border-b border-border/50 last:border-0 animate-fade-in">
+                    <div key={productId} className="space-y-2 pb-3 border-b border-border/50 last:border-0 animate-fade-in">
                       <div className="flex justify-between items-start">
                         <div className="flex-1 pr-2">
-                          <p className="font-medium text-sm leading-tight">{item.products.name}</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">Qty: {item.quantity}</p>
+                          <p className="font-medium text-sm leading-tight">{group.productName}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">Total: {group.totalQuantity} pcs</p>
+                          {group.items.length > 1 && (
+                            <p className="text-xs text-muted-foreground">({group.items.length} variations)</p>
+                          )}
                           {hasCombo && (
                             <div className="mt-1 space-y-0.5">
-                              {calculation.breakdown.map((b, idx) => (
+                              {calculation.breakdown.map((b: any, idx: number) => (
                                 <p key={idx} className="text-xs text-muted-foreground">
                                   {b.type === 'combo' 
                                     ? `🎁 ${b.quantity} pcs @ ₹${b.price}`
@@ -231,7 +279,8 @@ export default function Checkout() {
                       </div>
                     </div>
                   );
-                })}
+                });
+              })()}
               </div>
 
               <Separator className="my-4" />
@@ -239,11 +288,36 @@ export default function Checkout() {
               {/* Price Breakdown */}
               <div className="space-y-3">
                 {(() => {
-                  const originalTotal = cartItems.reduce((total, item) => {
-                    const basePrice = item.products.price || 0;
-                    return total + (basePrice * item.quantity);
+                  // Group items by product_id for accurate totals
+                  const groupedByProduct = cartItems.reduce((acc, item) => {
+                    const productId = item.product_id;
+                    if (!acc[productId]) {
+                      acc[productId] = {
+                        totalQuantity: 0,
+                        basePrice: item.products.price || 0,
+                        discount: item.products.discount_percentage || 0,
+                        comboOffers: item.products.combo_offers || [],
+                      };
+                    }
+                    acc[productId].totalQuantity += item.quantity;
+                    return acc;
+                  }, {} as Record<string, any>);
+
+                  const originalTotal = Object.values(groupedByProduct).reduce((total, group: any) => {
+                    return total + (group.basePrice * group.totalQuantity);
                   }, 0);
-                  const totalSavings = originalTotal - cartTotal;
+
+                  const finalTotal = Object.values(groupedByProduct).reduce((total, group: any) => {
+                    const calculation = calculateComboPrice(
+                      group.totalQuantity,
+                      group.basePrice,
+                      group.comboOffers,
+                      group.discount
+                    );
+                    return total + calculation.finalPrice;
+                  }, 0);
+
+                  const totalSavings = originalTotal - finalTotal;
                   const hasDiscount = totalSavings > 0;
 
                   return (

@@ -2,7 +2,7 @@ import { Minus, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/hooks/useCart';
-import { calculateComboPrice } from '@/lib/calculateComboPrice';
+import { calculateComboPrice, PriceCalculation } from '@/lib/calculateComboPrice';
 
 interface CartItemProps {
   item: {
@@ -20,16 +20,27 @@ interface CartItemProps {
       combo_offers: Array<{ quantity: number; price: number }> | null;
     };
   };
+  productGroupCalculation?: PriceCalculation & { totalQuantity: number };
 }
 
-export const CartItem = ({ item }: CartItemProps) => {
+export const CartItem = ({ item, productGroupCalculation }: CartItemProps) => {
   const { updateQuantity, removeFromCart } = useCart();
   const basePrice = item.products?.price || 0;
   const discount = item.products?.discount_percentage || 0;
   const comboOffers = item.products?.combo_offers || [];
 
-  const calculation = calculateComboPrice(item.quantity, basePrice, comboOffers, discount);
+  // Use product group calculation if available (combo across variations)
+  const calculation = productGroupCalculation 
+    ? {
+        ...productGroupCalculation,
+        finalPrice: (productGroupCalculation.finalPrice / productGroupCalculation.totalQuantity) * item.quantity,
+        savings: (productGroupCalculation.savings / productGroupCalculation.totalQuantity) * item.quantity,
+        originalPrice: (productGroupCalculation.originalPrice / productGroupCalculation.totalQuantity) * item.quantity,
+      }
+    : calculateComboPrice(item.quantity, basePrice, comboOffers, discount);
+  
   const hasCombo = calculation.breakdown.some(b => b.type === 'combo');
+  const isGroupCombo = !!productGroupCalculation && hasCombo;
 
   return (
     <div className="flex gap-4 animate-fade-in">
@@ -55,7 +66,9 @@ export const CartItem = ({ item }: CartItemProps) => {
                 <Badge variant="secondary" className="text-xs">{item.selected_color}</Badge>
               )}
               {hasCombo && (
-                <Badge className="text-xs bg-green-600">🎁 Combo Deal</Badge>
+                <Badge className="text-xs bg-green-600">
+                  🎁 Combo {isGroupCombo ? 'Across Variations' : 'Deal'}
+                </Badge>
               )}
             </div>
           </div>
@@ -70,7 +83,7 @@ export const CartItem = ({ item }: CartItemProps) => {
         </div>
 
         {/* Combo Breakdown */}
-        {hasCombo && (
+        {hasCombo && !isGroupCombo && (
           <div className="text-xs space-y-1 bg-muted/50 p-2 rounded">
             {calculation.breakdown.map((b, idx) => (
               <div key={idx} className="flex justify-between">
@@ -87,6 +100,13 @@ export const CartItem = ({ item }: CartItemProps) => {
                 )}
               </div>
             ))}
+          </div>
+        )}
+        {isGroupCombo && (
+          <div className="text-xs bg-muted/50 p-2 rounded">
+            <p className="text-muted-foreground">
+              ✨ Combo applied across all sizes/colors of this product
+            </p>
           </div>
         )}
 

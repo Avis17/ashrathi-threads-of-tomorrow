@@ -1,4 +1,4 @@
-interface ComboOffer {
+export interface ComboOffer {
   quantity: number;
   price: number;
 }
