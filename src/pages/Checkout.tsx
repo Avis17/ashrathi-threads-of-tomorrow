@@ -12,6 +12,7 @@ import { toast } from '@/hooks/use-toast';
 import { AddressSelector } from '@/components/checkout/AddressSelector';
 import { Loader2, ArrowLeft } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { calculateComboPrice } from '@/lib/calculateComboPrice';
 
 interface DeliveryAddress {
   id: string;
@@ -88,7 +89,6 @@ export default function Checkout() {
         const discount = item.products.discount_percentage || 0;
         const comboOffers = item.products.combo_offers || [];
         
-        const { calculateComboPrice } = require('@/lib/calculateComboPrice');
         const calculation = calculateComboPrice(item.quantity, basePrice, comboOffers, discount);
         
         return {
@@ -195,7 +195,6 @@ export default function Checkout() {
                   const discount = item.products.discount_percentage || 0;
                   const comboOffers = item.products.combo_offers || [];
                   
-                  const { calculateComboPrice } = require('@/lib/calculateComboPrice');
                   const calculation = calculateComboPrice(item.quantity, basePrice, comboOffers, discount);
                   const hasCombo = calculation.breakdown.some(b => b.type === 'combo');
                   
@@ -240,7 +239,6 @@ export default function Checkout() {
               {/* Price Breakdown */}
               <div className="space-y-3">
                 {(() => {
-                  const { calculateComboPrice } = require('@/lib/calculateComboPrice');
                   const originalTotal = cartItems.reduce((total, item) => {
                     const basePrice = item.products.price || 0;
                     return total + (basePrice * item.quantity);
