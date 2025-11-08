@@ -42,6 +42,10 @@ const productSchema = z.object({
     .refine((val) => val >= 0 && val <= 99, 'Discount must be between 0-99%')
     .default('0'),
   offer_messages: z.array(z.string()).default([]),
+  combo_offers: z.array(z.object({
+    quantity: z.number().int().positive(),
+    price: z.number().positive(),
+  })).default([]),
   display_order: z.string()
     .transform((val) => (val === '' ? 0 : parseInt(val)))
     .refine((val) => Number.isInteger(val), 'Must be a whole number'),
@@ -72,6 +76,11 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
   const [newImageUrl, setNewImageUrl] = useState('');
   const [offerMessages, setOfferMessages] = useState<string[]>(initialData?.offer_messages || []);
   const [newOfferMessage, setNewOfferMessage] = useState('');
+  const [comboOffers, setComboOffers] = useState<Array<{ quantity: number; price: number }>>(
+    initialData?.combo_offers || []
+  );
+  const [newComboQuantity, setNewComboQuantity] = useState('');
+  const [newComboPrice, setNewComboPrice] = useState('');
 
   const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
@@ -86,6 +95,7 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
       quality_tier: initialData?.quality_tier || 'smart_basics',
       discount_percentage: initialData?.discount_percentage?.toString() || '0',
       offer_messages: initialData?.offer_messages || [],
+      combo_offers: initialData?.combo_offers || [],
       name: initialData?.name || '',
       category: initialData?.category || '',
       fabric: initialData?.fabric || '',
@@ -108,7 +118,14 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
   const shouldRemove = watch('should_remove');
 
   const handleFormSubmit = (data: ProductFormData) => {
-    onSubmit({ ...data, available_sizes: sizes, available_colors: colors, additional_images: additionalImages, offer_messages: offerMessages });
+    onSubmit({ 
+      ...data, 
+      available_sizes: sizes, 
+      available_colors: colors, 
+      additional_images: additionalImages, 
+      offer_messages: offerMessages,
+      combo_offers: comboOffers,
+    });
   };
 
   const handleAddImage = () => {
@@ -131,6 +148,34 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
 
   const handleRemoveOfferMessage = (index: number) => {
     setOfferMessages(offerMessages.filter((_, i) => i !== index));
+  };
+
+  const handleAddCombo = () => {
+    const quantity = parseInt(newComboQuantity);
+    const price = parseFloat(newComboPrice);
+    
+    if (isNaN(quantity) || quantity < 2) {
+      alert('Quantity must be at least 2');
+      return;
+    }
+    if (isNaN(price) || price <= 0) {
+      alert('Price must be greater than 0');
+      return;
+    }
+    
+    // Check for duplicate quantity
+    if (comboOffers.some(c => c.quantity === quantity)) {
+      alert('A combo with this quantity already exists');
+      return;
+    }
+    
+    setComboOffers([...comboOffers, { quantity, price }].sort((a, b) => a.quantity - b.quantity));
+    setNewComboQuantity('');
+    setNewComboPrice('');
+  };
+
+  const handleRemoveCombo = (index: number) => {
+    setComboOffers(comboOffers.filter((_, i) => i !== index));
   };
 
   return (
@@ -319,6 +364,61 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
                   </Button>
                 </div>
               ))}
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-3 md:col-span-2">
+          <Label>🎁 Combo Offers (Optional)</Label>
+          <p className="text-xs text-muted-foreground">Set bulk discounts to encourage larger purchases</p>
+          <div className="flex gap-2">
+            <Input
+              type="number"
+              min="2"
+              value={newComboQuantity}
+              onChange={(e) => setNewComboQuantity(e.target.value)}
+              placeholder="Pieces (min 2)"
+              className="w-32"
+            />
+            <Input
+              type="number"
+              step="0.01"
+              min="0"
+              value={newComboPrice}
+              onChange={(e) => setNewComboPrice(e.target.value)}
+              placeholder="Total Price (₹)"
+              className="flex-1"
+            />
+            <Button type="button" onClick={handleAddCombo} size="sm">
+              <Plus className="h-4 w-4 mr-1" />
+              Add Combo
+            </Button>
+          </div>
+          {comboOffers.length > 0 && (
+            <div className="space-y-2">
+              {comboOffers.map((combo, index) => {
+                const pricePerPiece = combo.price / combo.quantity;
+                return (
+                  <div key={index} className="flex items-center gap-2 p-3 border rounded-md bg-muted/30">
+                    <div className="flex-1">
+                      <Badge variant="secondary" className="text-sm">
+                        🎁 {combo.quantity} pieces → ₹{combo.price.toFixed(2)}
+                      </Badge>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        ₹{pricePerPiece.toFixed(2)} per piece
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRemoveCombo(index)}
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

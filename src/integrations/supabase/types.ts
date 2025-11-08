@@ -1268,6 +1268,7 @@ export type Database = {
           available_colors: Json | null
           available_sizes: Json | null
           category: string
+          combo_offers: Json | null
           created_at: string | null
           current_total_stock: number | null
           description: string | null
@@ -1295,6 +1296,7 @@ export type Database = {
           available_colors?: Json | null
           available_sizes?: Json | null
           category: string
+          combo_offers?: Json | null
           created_at?: string | null
           current_total_stock?: number | null
           description?: string | null
@@ -1322,6 +1324,7 @@ export type Database = {
           available_colors?: Json | null
           available_sizes?: Json | null
           category?: string
+          combo_offers?: Json | null
           created_at?: string | null
           current_total_stock?: number | null
           description?: string | null

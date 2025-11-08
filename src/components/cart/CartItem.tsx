@@ -2,6 +2,7 @@ import { Minus, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/hooks/useCart';
+import { calculateComboPrice } from '@/lib/calculateComboPrice';
 
 interface CartItemProps {
   item: {
@@ -16,6 +17,7 @@ interface CartItemProps {
       price: number | null;
       product_code: string | null;
       discount_percentage: number | null;
+      combo_offers: Array<{ quantity: number; price: number }> | null;
     };
   };
 }
@@ -24,7 +26,10 @@ export const CartItem = ({ item }: CartItemProps) => {
   const { updateQuantity, removeFromCart } = useCart();
   const basePrice = item.products?.price || 0;
   const discount = item.products?.discount_percentage || 0;
-  const price = discount > 0 ? basePrice * (1 - discount / 100) : basePrice;
+  const comboOffers = item.products?.combo_offers || [];
+
+  const calculation = calculateComboPrice(item.quantity, basePrice, comboOffers, discount);
+  const hasCombo = calculation.breakdown.some(b => b.type === 'combo');
 
   return (
     <div className="flex gap-4 animate-fade-in">
@@ -42,12 +47,15 @@ export const CartItem = ({ item }: CartItemProps) => {
                 {item.products.product_code}
               </p>
             )}
-            <div className="flex gap-1 mt-1">
+            <div className="flex gap-1 mt-1 flex-wrap">
               {item.selected_size && (
                 <Badge variant="secondary" className="text-xs">Size: {item.selected_size}</Badge>
               )}
               {item.selected_color && (
                 <Badge variant="secondary" className="text-xs">{item.selected_color}</Badge>
+              )}
+              {hasCombo && (
+                <Badge className="text-xs bg-green-600">🎁 Combo Deal</Badge>
               )}
             </div>
           </div>
@@ -60,6 +68,28 @@ export const CartItem = ({ item }: CartItemProps) => {
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>
+
+        {/* Combo Breakdown */}
+        {hasCombo && (
+          <div className="text-xs space-y-1 bg-muted/50 p-2 rounded">
+            {calculation.breakdown.map((b, idx) => (
+              <div key={idx} className="flex justify-between">
+                {b.type === 'combo' ? (
+                  <>
+                    <span>🎁 {b.quantity} pcs @ ₹{b.price}</span>
+                    <span className="font-medium">₹{b.price.toFixed(2)}</span>
+                  </>
+                ) : (
+                  <>
+                    <span>{b.quantity} pcs @ regular</span>
+                    <span>₹{b.price.toFixed(2)}</span>
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Button
@@ -81,13 +111,16 @@ export const CartItem = ({ item }: CartItemProps) => {
             </Button>
           </div>
           <div className="text-right">
-            {discount > 0 ? (
-              <div className="space-y-0.5">
-                <p className="font-semibold">₹{(price * item.quantity).toFixed(2)}</p>
-                <p className="text-xs text-muted-foreground line-through">₹{(basePrice * item.quantity).toFixed(2)}</p>
-              </div>
-            ) : (
-              <p className="font-semibold">₹{(price * item.quantity).toFixed(2)}</p>
+            <p className="font-semibold">₹{calculation.finalPrice.toFixed(2)}</p>
+            {calculation.savings > 0 && (
+              <p className="text-xs text-green-600">
+                Save ₹{calculation.savings.toFixed(2)}
+              </p>
+            )}
+            {calculation.originalPrice !== calculation.finalPrice && !hasCombo && (
+              <p className="text-xs text-muted-foreground line-through">
+                ₹{calculation.originalPrice.toFixed(2)}
+              </p>
             )}
           </div>
         </div>

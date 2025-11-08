@@ -17,6 +17,7 @@ interface CartItemWithProduct {
     price: number | null;
     product_code: string | null;
     discount_percentage: number | null;
+    combo_offers: Array<{ quantity: number; price: number }> | null;
   };
 }
 
@@ -40,13 +41,14 @@ export const useCart = () => {
             image_url,
             price,
             product_code,
-            discount_percentage
+            discount_percentage,
+            combo_offers
           )
         `)
         .eq('user_id', user.id);
 
       if (error) throw error;
-      return data as CartItemWithProduct[];
+      return data as unknown as CartItemWithProduct[];
     },
     enabled: !!user,
   });
@@ -170,12 +172,17 @@ export const useCart = () => {
     },
   });
 
-  // Calculate cart total with discounts
+  // Calculate cart total with combo offers and discounts
   const cartTotal = cartItems.reduce((total, item) => {
     const basePrice = item.products?.price || 0;
     const discount = item.products?.discount_percentage || 0;
-    const discountedPrice = discount > 0 ? basePrice * (1 - discount / 100) : basePrice;
-    return total + (discountedPrice * item.quantity);
+    const comboOffers = item.products?.combo_offers || [];
+    
+    // Import dynamically to avoid circular dependencies
+    const { calculateComboPrice } = require('@/lib/calculateComboPrice');
+    const calculation = calculateComboPrice(item.quantity, basePrice, comboOffers, discount);
+    
+    return total + calculation.finalPrice;
   }, 0);
 
   const cartCount = cartItems.reduce((count, item) => count + item.quantity, 0);

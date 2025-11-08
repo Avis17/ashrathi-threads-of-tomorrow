@@ -82,11 +82,14 @@ export default function Checkout() {
 
       if (orderError) throw orderError;
 
-      // Create order items with discounted prices
+      // Create order items with combo pricing
       const orderItems = cartItems.map((item) => {
         const basePrice = item.products.price || 0;
         const discount = item.products.discount_percentage || 0;
-        const unitPrice = discount > 0 ? basePrice * (1 - discount / 100) : basePrice;
+        const comboOffers = item.products.combo_offers || [];
+        
+        const { calculateComboPrice } = require('@/lib/calculateComboPrice');
+        const calculation = calculateComboPrice(item.quantity, basePrice, comboOffers, discount);
         
         return {
           order_id: order.id,
@@ -95,8 +98,8 @@ export default function Checkout() {
           product_code: item.products.product_code,
           product_image_url: item.products.image_url,
           quantity: item.quantity,
-          unit_price: unitPrice,
-          total_price: unitPrice * item.quantity,
+          unit_price: calculation.finalPrice / item.quantity, // Average price per piece
+          total_price: calculation.finalPrice,
           selected_size: item.selected_size,
           selected_color: item.selected_color,
         };
@@ -187,12 +190,14 @@ export default function Checkout() {
             <CardContent className="space-y-4 pt-6">
               {/* Items List */}
               <div className="space-y-4">
-                {cartItems.map((item) => {
+              {cartItems.map((item) => {
                   const basePrice = item.products.price || 0;
                   const discount = item.products.discount_percentage || 0;
-                  const discountedPrice = discount > 0 ? basePrice * (1 - discount / 100) : basePrice;
-                  const itemTotal = discountedPrice * item.quantity;
-                  const originalTotal = basePrice * item.quantity;
+                  const comboOffers = item.products.combo_offers || [];
+                  
+                  const { calculateComboPrice } = require('@/lib/calculateComboPrice');
+                  const calculation = calculateComboPrice(item.quantity, basePrice, comboOffers, discount);
+                  const hasCombo = calculation.breakdown.some(b => b.type === 'combo');
                   
                   return (
                     <div key={item.id} className="space-y-2 pb-3 border-b border-border/50 last:border-0 animate-fade-in">
@@ -200,28 +205,31 @@ export default function Checkout() {
                         <div className="flex-1 pr-2">
                           <p className="font-medium text-sm leading-tight">{item.products.name}</p>
                           <p className="text-xs text-muted-foreground mt-0.5">Qty: {item.quantity}</p>
+                          {hasCombo && (
+                            <div className="mt-1 space-y-0.5">
+                              {calculation.breakdown.map((b, idx) => (
+                                <p key={idx} className="text-xs text-muted-foreground">
+                                  {b.type === 'combo' 
+                                    ? `🎁 ${b.quantity} pcs @ ₹${b.price}`
+                                    : `${b.quantity} pcs @ regular`
+                                  }
+                                </p>
+                              ))}
+                            </div>
+                          )}
                         </div>
                         <div className="text-right">
-                          {discount > 0 ? (
-                            <div className="space-y-0.5">
-                              <p className="font-bold text-sm">₹{itemTotal.toFixed(2)}</p>
-                              <p className="text-xs text-muted-foreground line-through">₹{originalTotal.toFixed(2)}</p>
-                            </div>
-                          ) : (
-                            <p className="font-bold text-sm">₹{itemTotal.toFixed(2)}</p>
+                          <p className="font-bold text-sm">₹{calculation.finalPrice.toFixed(2)}</p>
+                          {calculation.savings > 0 && (
+                            <p className="text-xs text-green-600 dark:text-green-400">
+                              Save ₹{calculation.savings.toFixed(2)}
+                            </p>
+                          )}
+                          {hasCombo && (
+                            <Badge className="mt-1 text-xs bg-green-600">Combo</Badge>
                           )}
                         </div>
                       </div>
-                      {discount > 0 && (
-                        <div className="flex items-center gap-1.5">
-                          <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300 text-xs">
-                            {discount}% OFF
-                          </Badge>
-                          <span className="text-xs text-green-600 dark:text-green-400 font-medium">
-                            You save ₹{(originalTotal - itemTotal).toFixed(2)}
-                          </span>
-                        </div>
-                      )}
                     </div>
                   );
                 })}
@@ -232,6 +240,7 @@ export default function Checkout() {
               {/* Price Breakdown */}
               <div className="space-y-3">
                 {(() => {
+                  const { calculateComboPrice } = require('@/lib/calculateComboPrice');
                   const originalTotal = cartItems.reduce((total, item) => {
                     const basePrice = item.products.price || 0;
                     return total + (basePrice * item.quantity);

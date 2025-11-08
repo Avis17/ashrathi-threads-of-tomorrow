@@ -18,6 +18,7 @@ export interface Product {
   available_colors: Array<{ name: string; hex: string }>;
   discount_percentage: number | null;
   offer_messages: string[];
+  combo_offers: Array<{ quantity: number; price: number }>;
 }
 
 export const useProducts = () => {

@@ -149,6 +149,7 @@ export function ViewEditProducts() {
               <TableHead>HSN Code</TableHead>
               <TableHead>Product Code</TableHead>
               <TableHead>Price</TableHead>
+              <TableHead>Combos</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -156,7 +157,7 @@ export function ViewEditProducts() {
           <TableBody>
             {products?.data?.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="h-64">
+                <TableCell colSpan={9} className="h-64">
                   <div className="flex flex-col items-center justify-center space-y-4 text-center">
                     <img src="/src/assets/no-data.png" alt="No data found" className="w-48 h-36 object-contain opacity-50" />
                     <div>
@@ -179,6 +180,15 @@ export function ViewEditProducts() {
                   <TableCell>{product.hsn_code || '-'}</TableCell>
                   <TableCell>{product.product_code || '-'}</TableCell>
                   <TableCell>{product.price ? `₹${product.price}` : '-'}</TableCell>
+                  <TableCell>
+                    {product.combo_offers && Array.isArray(product.combo_offers) && product.combo_offers.length > 0 ? (
+                      <Badge variant="outline" className="text-green-600 border-green-600">
+                        🎁 {product.combo_offers.length}
+                      </Badge>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
+                  </TableCell>
                   <TableCell>
                     <div className="flex gap-1">
                       <Badge variant={product.is_active ? 'default' : 'secondary'}>
