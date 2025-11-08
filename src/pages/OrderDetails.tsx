@@ -11,6 +11,7 @@ import { OrderTimeline } from '@/components/customer/OrderTimeline';
 import { format } from 'date-fns';
 import { ArrowLeft, Package, MapPin, Phone, User } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { calculateComboPrice } from '@/lib/calculateComboPrice';
 
 export default function OrderDetails() {
   const { orderId } = useParams();
@@ -29,7 +30,10 @@ export default function OrderDetails() {
             *,
             products (
               name,
-              image_url
+              image_url,
+              price,
+              discount_percentage,
+              combo_offers
             )
           )
         `)
@@ -88,6 +92,35 @@ export default function OrderDetails() {
 
   const canCancel = order.status === 'pending' || order.status === 'confirmed';
 
+  // Group items by product_id and calculate combo pricing
+  const groupedByProduct = order.order_items?.reduce((acc: any, item: any) => {
+    const productId = item.product_id;
+    if (!acc[productId]) {
+      acc[productId] = {
+        items: [],
+        totalQuantity: 0,
+        basePrice: item.products?.price || 0,
+        discount: item.products?.discount_percentage || 0,
+        comboOffers: item.products?.combo_offers || [],
+        productName: item.products?.name || item.product_name,
+      };
+    }
+    acc[productId].items.push(item);
+    acc[productId].totalQuantity += item.quantity;
+    return acc;
+  }, {} as Record<string, any>) || {};
+
+  const productCalculations = Object.entries(groupedByProduct).map(([productId, group]: [string, any]) => ({
+    productId,
+    calculation: calculateComboPrice(
+      group.totalQuantity,
+      group.basePrice,
+      group.comboOffers,
+      group.discount
+    ),
+    ...group,
+  }));
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       <Button variant="ghost" onClick={() => navigate('/my-orders')} className="mb-6">
@@ -117,34 +150,107 @@ export default function OrderDetails() {
                 Order Items
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {order.order_items?.map((item: any) => (
-                <div key={item.id} className="flex gap-4">
-                  <img
-                    src={item.product_image_url}
-                    alt={item.product_name}
-                    className="w-20 h-20 object-cover rounded-md"
-                  />
-                  <div className="flex-1">
-                    <h4 className="font-medium">{item.product_name}</h4>
-                    {item.product_code && (
-                      <p className="text-sm text-muted-foreground">{item.product_code}</p>
-                    )}
-                    <div className="flex gap-1 mt-1">
-                      {item.selected_size && (
-                        <Badge variant="secondary" className="text-xs">Size: {item.selected_size}</Badge>
-                      )}
-                      {item.selected_color && (
-                        <Badge variant="secondary" className="text-xs">{item.selected_color}</Badge>
+            <CardContent className="space-y-6">
+              {productCalculations.map(({ productId, calculation, items, productName, totalQuantity }) => {
+                const hasCombo = calculation.breakdown.some((b: any) => b.type === 'combo');
+                
+                return (
+                  <div key={productId} className="border-b pb-4 last:border-b-0">
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <h4 className="font-semibold text-lg">{productName}</h4>
+                        <p className="text-sm text-muted-foreground">Total: {totalQuantity} pieces</p>
+                      </div>
+                      {hasCombo && (
+                        <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white">
+                          🎁 Combo Applied
+                        </Badge>
                       )}
                     </div>
-                    <div className="flex items-center justify-between mt-2">
-                      <span className="text-sm">Quantity: {item.quantity}</span>
-                      <span className="font-semibold">₹{typeof item.total_price === 'string' ? parseFloat(item.total_price).toFixed(2) : item.total_price.toFixed(2)}</span>
+
+                    {/* Variations */}
+                    <div className="space-y-2 mb-3">
+                      {items.map((item: any) => (
+                        <div key={item.id} className="flex gap-3 text-sm">
+                          <img
+                            src={item.product_image_url}
+                            alt={item.product_name}
+                            className="w-16 h-16 object-cover rounded-md"
+                          />
+                          <div className="flex-1">
+                            {item.product_code && (
+                              <p className="text-xs text-muted-foreground">{item.product_code}</p>
+                            )}
+                            <div className="flex gap-2 mt-1">
+                              {item.selected_size && (
+                                <Badge variant="outline" className="text-xs">
+                                  {item.selected_size}
+                                </Badge>
+                              )}
+                              {item.selected_color && (
+                                <Badge variant="outline" className="text-xs">
+                                  {item.selected_color}
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-xs mt-1">Qty: {item.quantity}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Combo Breakdown */}
+                    {calculation.breakdown.length > 1 && (
+                      <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 rounded-lg p-3 mb-3">
+                        <p className="text-xs font-semibold mb-2 text-green-800 dark:text-green-200">
+                          💰 Price Breakdown:
+                        </p>
+                        <div className="space-y-1">
+                          {calculation.breakdown.map((b: any, idx: number) => (
+                            <div key={idx} className="flex justify-between text-xs">
+                              <span className="text-muted-foreground">
+                                {b.type === 'combo' 
+                                  ? `🎁 ${b.quantity} pieces (combo)`
+                                  : `${b.quantity} pieces (regular)`
+                                }
+                              </span>
+                              <span className="font-medium">₹{b.price.toFixed(2)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Price Summary for this product */}
+                    <div className="flex justify-between items-end">
+                      <div>
+                        {calculation.savings > 0 && (
+                          <div className="space-y-1">
+                            <p className="text-xs text-muted-foreground line-through">
+                              Original: ₹{calculation.originalPrice.toFixed(2)}
+                            </p>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">
+                                🎉 You Saved ₹{calculation.savings.toFixed(2)}!
+                              </Badge>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xl font-bold text-primary">
+                          ₹{calculation.finalPrice.toFixed(2)}
+                        </p>
+                        {calculation.savings > 0 && (
+                          <p className="text-xs text-green-600 dark:text-green-400 font-semibold">
+                            {((calculation.savings / calculation.originalPrice) * 100).toFixed(0)}% OFF
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </CardContent>
           </Card>
 
@@ -190,30 +296,69 @@ export default function OrderDetails() {
 
         {/* Right Side - Summary & Timeline */}
         <div className="space-y-6">
-          <Card>
+          <Card className="border-2 border-primary/20">
             <CardHeader>
               <CardTitle>Order Summary</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span>Subtotal</span>
-                  <span>₹{typeof order.subtotal === 'string' ? parseFloat(order.subtotal).toFixed(2) : order.subtotal.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Shipping</span>
-                  <span>₹{typeof order.shipping_charges === 'string' ? parseFloat(order.shipping_charges).toFixed(2) : order.shipping_charges.toFixed(2)}</span>
-                </div>
-              </div>
-              <Separator />
-              <div className="flex justify-between font-bold">
-                <span>Total</span>
-                <span>₹{typeof order.total_amount === 'string' ? parseFloat(order.total_amount).toFixed(2) : order.total_amount.toFixed(2)}</span>
-              </div>
-              <div className="bg-muted p-3 rounded-md text-sm">
-                <p className="font-medium mb-1">Payment Method</p>
-                <p className="text-muted-foreground">Cash on Delivery</p>
-              </div>
+              {(() => {
+                const totalSavings = productCalculations.reduce(
+                  (sum, p) => sum + p.calculation.savings, 
+                  0
+                );
+                const originalTotal = productCalculations.reduce(
+                  (sum, p) => sum + p.calculation.originalPrice, 
+                  0
+                );
+
+                return (
+                  <>
+                    {totalSavings > 0 && (
+                      <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-white p-4 rounded-lg text-center mb-4">
+                        <p className="text-sm font-medium mb-1">🎊 Congratulations!</p>
+                        <p className="text-2xl font-bold">You Saved ₹{totalSavings.toFixed(2)}</p>
+                        <p className="text-xs mt-1 opacity-90">
+                          {((totalSavings / originalTotal) * 100).toFixed(0)}% off your order
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="space-y-2 text-sm">
+                      {totalSavings > 0 && (
+                        <div className="flex justify-between text-muted-foreground">
+                          <span>Original Total</span>
+                          <span className="line-through">₹{originalTotal.toFixed(2)}</span>
+                        </div>
+                      )}
+                      {totalSavings > 0 && (
+                        <div className="flex justify-between text-green-600 dark:text-green-400 font-semibold">
+                          <span>Combo Savings</span>
+                          <span>-₹{totalSavings.toFixed(2)}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between">
+                        <span>Subtotal</span>
+                        <span>₹{typeof order.subtotal === 'string' ? parseFloat(order.subtotal).toFixed(2) : order.subtotal.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Shipping</span>
+                        <span>₹{typeof order.shipping_charges === 'string' ? parseFloat(order.shipping_charges).toFixed(2) : order.shipping_charges.toFixed(2)}</span>
+                      </div>
+                    </div>
+                    <Separator />
+                    <div className="flex justify-between font-bold text-lg">
+                      <span>Total Paid</span>
+                      <span className="text-primary">₹{typeof order.total_amount === 'string' ? parseFloat(order.total_amount).toFixed(2) : order.total_amount.toFixed(2)}</span>
+                    </div>
+                    <div className="bg-muted p-3 rounded-md text-sm">
+                      <p className="font-medium mb-1">Payment Method</p>
+                      <p className="text-muted-foreground capitalize">
+                        {order.payment_method.replace('_', ' ')}
+                      </p>
+                    </div>
+                  </>
+                );
+              })()}
             </CardContent>
           </Card>
 

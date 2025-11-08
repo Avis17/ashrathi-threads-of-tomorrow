@@ -271,7 +271,7 @@ const Contact = () => {
           <CardContent className="p-0">
             <div className="w-full h-96">
               <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3913.3190061814194!2d77.10418647481198!3d11.237927088940278!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ba8fd56e2714fcb%3A0xa4c27c5e5043ce32!2sSemmaClicks%20Studio!5e0!3m2!1sen!2sin!4v1760847657810!5m2!1sen!2sin"
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d4592.984969361314!2d77.34966020867435!3d11.150001950571243!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ba9075eb1b09dff%3A0xbb8c06a6e1105594!2sFeather%20Fashions!5e1!3m2!1sen!2sin!4v1762583423056!5m2!1sen!2sin"
                 width="100%"
                 height="100%"
                 style={{ border: 0 }}

@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Leaf, Heart, Sparkles, Shield, ArrowRight } from "lucide-react";
@@ -40,6 +40,7 @@ import Autoplay from "embla-carousel-autoplay";
 import { useEffect, useState } from "react";
 
 const Home = () => {
+  const navigate = useNavigate();
   const { data: signatureProducts = [], isLoading } = useSignatureProducts();
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
@@ -387,8 +388,9 @@ const Home = () => {
               {signatureProducts.map((product, idx) => (
                 <Card 
                   key={product.id} 
-                  className="overflow-hidden group border-0 shadow-lg hover:shadow-2xl transition-all duration-500"
+                  className="overflow-hidden group border-0 shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer"
                   style={{ animationDelay: `${idx * 100}ms` }}
+                  onClick={() => navigate(`/products/${product.id}`)}
                 >
                   <div className="relative h-96 bg-muted overflow-hidden">
                     <img 

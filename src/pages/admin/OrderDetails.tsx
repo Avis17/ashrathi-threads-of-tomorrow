@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 import { useState } from 'react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { calculateComboPrice } from '@/lib/calculateComboPrice';
 
 export default function AdminOrderDetails() {
   const { orderId } = useParams();
@@ -33,7 +34,10 @@ export default function AdminOrderDetails() {
             *,
             products (
               name,
-              image_url
+              image_url,
+              price,
+              discount_percentage,
+              combo_offers
             )
           )
         `)
@@ -45,7 +49,7 @@ export default function AdminOrderDetails() {
       // Fetch user profile separately
       const { data: profile } = await supabase
         .from('profiles')
-        .select('email, full_name')
+        .select('email, full_name, phone, date_of_birth, gender, marital_status')
         .eq('id', data.user_id)
         .maybeSingle();
 
@@ -225,6 +229,35 @@ export default function AdminOrderDetails() {
     );
   }
 
+  // Group items by product_id and calculate combo pricing
+  const groupedByProduct = order.order_items?.reduce((acc: any, item: any) => {
+    const productId = item.product_id;
+    if (!acc[productId]) {
+      acc[productId] = {
+        items: [],
+        totalQuantity: 0,
+        basePrice: item.products?.price || 0,
+        discount: item.products?.discount_percentage || 0,
+        comboOffers: item.products?.combo_offers || [],
+        productName: item.products?.name || item.product_name,
+      };
+    }
+    acc[productId].items.push(item);
+    acc[productId].totalQuantity += item.quantity;
+    return acc;
+  }, {} as Record<string, any>) || {};
+
+  const productCalculations = Object.entries(groupedByProduct).map(([productId, group]: [string, any]) => ({
+    productId,
+    calculation: calculateComboPrice(
+      group.totalQuantity,
+      group.basePrice,
+      group.comboOffers,
+      group.discount
+    ),
+    ...group,
+  }));
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -278,14 +311,37 @@ export default function AdminOrderDetails() {
                 Customer Information
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent className="grid md:grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-muted-foreground">Name</p>
+                <p className="text-sm text-muted-foreground">Full Name</p>
                 <p className="font-medium">{order.profile?.full_name || 'N/A'}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Email</p>
-                <p className="font-medium">{order.profile?.email || 'N/A'}</p>
+                <p className="font-medium break-all">{order.profile?.email || 'N/A'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Phone</p>
+                <p className="font-medium">{order.profile?.phone || 'N/A'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Date of Birth</p>
+                <p className="font-medium">
+                  {order.profile?.date_of_birth 
+                    ? format(new Date(order.profile.date_of_birth), 'PPP')
+                    : 'N/A'
+                  }
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Gender</p>
+                <p className="font-medium capitalize">{order.profile?.gender || 'N/A'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Marital Status</p>
+                <p className="font-medium capitalize">
+                  {order.profile?.marital_status?.replace('_', ' ') || 'N/A'}
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -297,34 +353,111 @@ export default function AdminOrderDetails() {
                 Order Items
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {order.order_items?.map((item: any) => (
-                <div key={item.id} className="flex gap-4">
-                  <img
-                    src={item.product_image_url}
-                    alt={item.product_name}
-                    className="w-20 h-20 object-cover rounded-md"
-                  />
-                  <div className="flex-1">
-                    <h4 className="font-medium">{item.product_name}</h4>
-                    {item.product_code && (
-                      <p className="text-sm text-muted-foreground">{item.product_code}</p>
-                    )}
-                    <div className="flex gap-1 mt-1">
-                      {item.selected_size && (
-                        <Badge variant="secondary" className="text-xs">Size: {item.selected_size}</Badge>
-                      )}
-                      {item.selected_color && (
-                        <Badge variant="secondary" className="text-xs">{item.selected_color}</Badge>
+            <CardContent className="space-y-6">
+              {productCalculations.map(({ productId, calculation, items, productName, totalQuantity }) => {
+                const hasCombo = calculation.breakdown.some((b: any) => b.type === 'combo');
+                
+                return (
+                  <div key={productId} className="border-b pb-4 last:border-b-0">
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <h4 className="font-semibold text-lg">{productName}</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Total Quantity: {totalQuantity} pieces
+                        </p>
+                      </div>
+                      {hasCombo && (
+                        <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white">
+                          🎁 Combo Applied
+                        </Badge>
                       )}
                     </div>
-                    <div className="flex items-center justify-between mt-2">
-                      <span className="text-sm">Quantity: {item.quantity}</span>
-                      <span className="font-semibold">₹{typeof item.total_price === 'string' ? parseFloat(item.total_price).toFixed(2) : item.total_price.toFixed(2)}</span>
+
+                    {/* Show all variations */}
+                    <div className="space-y-2 mb-3 bg-muted/30 p-3 rounded-lg">
+                      {items.map((item: any) => (
+                        <div key={item.id} className="flex gap-3 text-sm items-center">
+                          <img
+                            src={item.product_image_url}
+                            alt={item.product_name}
+                            className="w-12 h-12 object-cover rounded"
+                          />
+                          <div className="flex-1 flex items-center justify-between">
+                            <div>
+                              {item.product_code && (
+                                <p className="text-xs text-muted-foreground font-mono">
+                                  {item.product_code}
+                                </p>
+                              )}
+                              <div className="flex gap-2 mt-1">
+                                {item.selected_size && (
+                                  <Badge variant="outline" className="text-xs">
+                                    Size: {item.selected_size}
+                                  </Badge>
+                                )}
+                                {item.selected_color && (
+                                  <Badge variant="outline" className="text-xs">
+                                    {item.selected_color}
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                            <span className="font-medium">Qty: {item.quantity}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Pricing Breakdown */}
+                    {calculation.breakdown.length > 1 && (
+                      <div className="bg-amber-50 dark:bg-amber-950/20 rounded-lg p-3 mb-3 border border-amber-200 dark:border-amber-900">
+                        <p className="text-xs font-semibold mb-2 text-amber-900 dark:text-amber-200">
+                          📊 Pricing Breakdown:
+                        </p>
+                        <div className="space-y-1.5">
+                          {calculation.breakdown.map((b: any, idx: number) => (
+                            <div key={idx} className="flex justify-between text-xs items-center">
+                              <span className="text-muted-foreground">
+                                {b.type === 'combo' 
+                                  ? `🎁 ${b.quantity} pcs @ ₹${(b.price / b.quantity).toFixed(2)}/pc`
+                                  : `${b.quantity} pcs @ ₹${(b.price / b.quantity).toFixed(2)}/pc`
+                                }
+                              </span>
+                              <span className="font-semibold">₹{b.price.toFixed(2)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Summary for this product */}
+                    <div className="flex justify-between items-center pt-2 border-t">
+                      <div>
+                        {calculation.savings > 0 && (
+                          <div className="flex flex-col gap-1">
+                            <p className="text-xs text-muted-foreground">
+                              Original: <span className="line-through">₹{calculation.originalPrice.toFixed(2)}</span>
+                            </p>
+                            <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100 w-fit">
+                              Customer Saved ₹{calculation.savings.toFixed(2)}
+                            </Badge>
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <p className="text-lg font-bold">
+                          ₹{calculation.finalPrice.toFixed(2)}
+                        </p>
+                        {calculation.savings > 0 && (
+                          <p className="text-xs text-green-600 dark:text-green-400">
+                            ({((calculation.savings / calculation.originalPrice) * 100).toFixed(0)}% discount)
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </CardContent>
           </Card>
 
@@ -399,25 +532,71 @@ export default function AdminOrderDetails() {
               <CardTitle>Order Summary</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span>Subtotal</span>
-                  <span>₹{typeof order.subtotal === 'string' ? parseFloat(order.subtotal).toFixed(2) : order.subtotal.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Shipping</span>
-                  <span>₹{typeof order.shipping_charges === 'string' ? parseFloat(order.shipping_charges).toFixed(2) : order.shipping_charges.toFixed(2)}</span>
-                </div>
-              </div>
-              <Separator />
-              <div className="flex justify-between font-bold">
-                <span>Total</span>
-                <span>₹{typeof order.total_amount === 'string' ? parseFloat(order.total_amount).toFixed(2) : order.total_amount.toFixed(2)}</span>
-              </div>
-              <div className="bg-muted p-3 rounded-md text-sm">
-                <p className="font-medium mb-1">Payment Method</p>
-                <p className="text-muted-foreground capitalize">{order.payment_method.replace('_', ' ')}</p>
-              </div>
+              {(() => {
+                const totalSavings = productCalculations.reduce(
+                  (sum, p) => sum + p.calculation.savings, 
+                  0
+                );
+                const originalTotal = productCalculations.reduce(
+                  (sum, p) => sum + p.calculation.originalPrice, 
+                  0
+                );
+
+                return (
+                  <>
+                    {totalSavings > 0 && (
+                      <>
+                        <div className="bg-green-50 dark:bg-green-950/20 p-3 rounded-lg border border-green-200 dark:border-green-900">
+                          <p className="text-xs font-medium text-green-800 dark:text-green-200 mb-1">
+                            💰 Customer Savings
+                          </p>
+                          <p className="text-xl font-bold text-green-600 dark:text-green-400">
+                            ₹{totalSavings.toFixed(2)}
+                          </p>
+                          <p className="text-xs text-green-700 dark:text-green-300 mt-1">
+                            {((totalSavings / originalTotal) * 100).toFixed(1)}% off applied
+                          </p>
+                        </div>
+                        <Separator />
+                      </>
+                    )}
+
+                    <div className="space-y-2 text-sm">
+                      {totalSavings > 0 && (
+                        <div className="flex justify-between text-muted-foreground">
+                          <span>Original Total</span>
+                          <span className="line-through">₹{originalTotal.toFixed(2)}</span>
+                        </div>
+                      )}
+                      {totalSavings > 0 && (
+                        <div className="flex justify-between text-green-600 dark:text-green-400 font-medium">
+                          <span>Combo Discount</span>
+                          <span>-₹{totalSavings.toFixed(2)}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between">
+                        <span>Subtotal</span>
+                        <span>₹{typeof order.subtotal === 'string' ? parseFloat(order.subtotal).toFixed(2) : order.subtotal.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Shipping</span>
+                        <span>₹{typeof order.shipping_charges === 'string' ? parseFloat(order.shipping_charges).toFixed(2) : order.shipping_charges.toFixed(2)}</span>
+                      </div>
+                    </div>
+                    <Separator />
+                    <div className="flex justify-between font-bold text-lg">
+                      <span>Total Amount</span>
+                      <span>₹{typeof order.total_amount === 'string' ? parseFloat(order.total_amount).toFixed(2) : order.total_amount.toFixed(2)}</span>
+                    </div>
+                    <div className="bg-muted p-3 rounded-md text-sm">
+                      <p className="font-medium mb-1">Payment Method</p>
+                      <p className="text-muted-foreground capitalize">
+                        {order.payment_method.replace('_', ' ')}
+                      </p>
+                    </div>
+                  </>
+                );
+              })()}
             </CardContent>
           </Card>
 

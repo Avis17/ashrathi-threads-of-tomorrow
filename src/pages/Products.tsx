@@ -319,22 +319,29 @@ const Products = () => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredProducts.map((product) => (
-                  <Card key={product.id} className="overflow-hidden hover:shadow-xl transition-all duration-300 border-amber-200/50">
-                    <CardContent className="p-0">
-                      <div className="relative aspect-square group">
-                        <img
-                          src={product.image_url || PLACEHOLDER_IMAGE}
-                          alt={product.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-                        <Button
-                          size="icon"
-                          variant="secondary"
-                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={() => setSelectedImage({ src: product.image_url, alt: product.name })}
-                        >
-                          <Maximize className="h-4 w-4" />
-                        </Button>
+                <Card 
+                  key={product.id} 
+                  className="overflow-hidden hover:shadow-xl transition-all duration-300 border-amber-200/50 cursor-pointer"
+                  onClick={() => navigate(`/products/${product.id}`)}
+                >
+                  <CardContent className="p-0">
+                    <div className="relative aspect-square group">
+                      <img
+                        src={product.image_url || PLACEHOLDER_IMAGE}
+                        alt={product.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <Button
+                        size="icon"
+                        variant="secondary"
+                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedImage({ src: product.image_url, alt: product.name });
+                        }}
+                      >
+                        <Maximize className="h-4 w-4" />
+                      </Button>
                         <Badge className="absolute top-2 left-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white">
                           ✨ Premium Quality
                         </Badge>
@@ -518,22 +525,29 @@ const Products = () => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredProducts.map((product) => (
-                  <Card key={product.id} className="overflow-hidden hover:shadow-xl transition-all duration-300 border-green-200/50">
-                    <CardContent className="p-0">
-                      <div className="relative aspect-square group">
-                        <img
-                          src={product.image_url || PLACEHOLDER_IMAGE}
-                          alt={product.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-                        <Button
-                          size="icon"
-                          variant="secondary"
-                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={() => setSelectedImage({ src: product.image_url, alt: product.name })}
-                        >
-                          <Maximize className="h-4 w-4" />
-                        </Button>
+                <Card 
+                  key={product.id} 
+                  className="overflow-hidden hover:shadow-xl transition-all duration-300 border-green-200/50 cursor-pointer"
+                  onClick={() => navigate(`/products/${product.id}`)}
+                >
+                  <CardContent className="p-0">
+                    <div className="relative aspect-square group">
+                      <img
+                        src={product.image_url || PLACEHOLDER_IMAGE}
+                        alt={product.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <Button
+                        size="icon"
+                        variant="secondary"
+                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedImage({ src: product.image_url, alt: product.name });
+                        }}
+                      >
+                        <Maximize className="h-4 w-4" />
+                      </Button>
                         <Badge className="absolute top-2 left-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white">
                           💚 Smart Value
                         </Badge>
