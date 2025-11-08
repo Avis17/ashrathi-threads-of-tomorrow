@@ -375,7 +375,7 @@ const Products = () => {
 
                         {/* Size Selection */}
                         {product.available_sizes && product.available_sizes.length > 0 && (
-                          <div className="space-y-2">
+                          <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
                             <Label className="text-sm font-medium">Size</Label>
                             <RadioGroup
                               value={selectedVariants[product.id]?.size || ""}
@@ -403,7 +403,7 @@ const Products = () => {
 
                         {/* Color Selection */}
                         {product.available_colors && product.available_colors.length > 0 && (
-                          <div className="space-y-2">
+                          <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
                             <Label className="text-sm font-medium">Color</Label>
                             <RadioGroup
                               value={selectedVariants[product.id]?.color || ""}
@@ -581,7 +581,7 @@ const Products = () => {
 
                         {/* Size Selection */}
                         {product.available_sizes && product.available_sizes.length > 0 && (
-                          <div className="space-y-2">
+                          <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
                             <Label className="text-sm font-medium">Size</Label>
                             <RadioGroup
                               value={selectedVariants[product.id]?.size || ""}
@@ -609,7 +609,7 @@ const Products = () => {
 
                         {/* Color Selection */}
                         {product.available_colors && product.available_colors.length > 0 && (
-                          <div className="space-y-2">
+                          <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
                             <Label className="text-sm font-medium">Color</Label>
                             <RadioGroup
                               value={selectedVariants[product.id]?.color || ""}
