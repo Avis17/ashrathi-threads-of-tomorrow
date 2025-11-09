@@ -66,6 +66,7 @@ export default function ProductDetail() {
   const [quantity, setQuantity] = useState(1);
   const [zoomImage, setZoomImage] = useState<string | null>(null);
   const [currentImage, setCurrentImage] = useState<string>('');
+  const [hoveredColor, setHoveredColor] = useState<string | null>(null);
 
   const { data: product, isLoading } = useQuery({
     queryKey: ['product', id],
@@ -375,26 +376,46 @@ export default function ProductDetail() {
             {product.available_colors.length > 0 && (
               <div>
                 <h3 className="text-lg font-semibold mb-3">Select Color</h3>
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-wrap gap-3 relative">
                   {product.available_colors.map((color) => (
-                    <button
-                      key={color.name}
-                      onClick={() => setSelectedColor(color.name)}
-                      className={`relative flex flex-col items-center gap-2 p-2 rounded-lg border-2 transition-all hover:scale-105 ${
-                        selectedColor === color.name ? 'border-primary shadow-lg' : 'border-border'
-                      }`}
-                    >
-                      <div
-                        className="w-10 h-10 rounded-full border-2 border-border"
-                        style={{ backgroundColor: color.hex }}
-                      />
-                      {color.image_url && (
-                        <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full overflow-hidden border-2 border-background shadow-sm">
-                          <img src={color.image_url} alt={color.name} className="w-full h-full object-cover" />
+                    <div key={color.name} className="relative">
+                      <button
+                        onClick={() => setSelectedColor(color.name)}
+                        onMouseEnter={() => color.image_url && setHoveredColor(color.name)}
+                        onMouseLeave={() => setHoveredColor(null)}
+                        className={`relative flex flex-col items-center gap-2 p-2 rounded-lg border-2 transition-all hover:scale-105 ${
+                          selectedColor === color.name ? 'border-primary shadow-lg' : 'border-border'
+                        }`}
+                      >
+                        <div
+                          className="w-10 h-10 rounded-full border-2 border-border"
+                          style={{ backgroundColor: color.hex }}
+                        />
+                        {color.image_url && (
+                          <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full overflow-hidden border-2 border-background shadow-sm">
+                            <img src={color.image_url} alt={color.name} className="w-full h-full object-cover" />
+                          </div>
+                        )}
+                        <span className="text-xs font-medium">{color.name}</span>
+                      </button>
+                      
+                      {/* Hover Preview */}
+                      {color.image_url && hoveredColor === color.name && (
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 animate-scale-in">
+                          <div className="relative bg-background border-2 border-primary rounded-lg shadow-2xl p-2">
+                            <img
+                              src={color.image_url}
+                              alt={`${color.name} preview`}
+                              className="w-48 h-48 object-cover rounded"
+                            />
+                            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-background border-r-2 border-b-2 border-primary rotate-45" />
+                            <div className="mt-2 text-center">
+                              <span className="text-xs font-semibold">{color.name}</span>
+                            </div>
+                          </div>
                         </div>
                       )}
-                      <span className="text-xs font-medium">{color.name}</span>
-                    </button>
+                    </div>
                   ))}
                 </div>
               </div>
