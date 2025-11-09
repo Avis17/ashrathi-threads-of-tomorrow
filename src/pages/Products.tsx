@@ -321,8 +321,7 @@ const Products = () => {
                 {filteredProducts.map((product) => (
                 <Card 
                   key={product.id} 
-                  className="overflow-hidden hover:shadow-xl transition-all duration-300 border-amber-200/50 cursor-pointer"
-                  onClick={() => navigate(`/products/${product.id}`)}
+                  className="overflow-hidden hover:shadow-xl transition-all duration-300 border-amber-200/50"
                 >
                   <CardContent className="p-0">
                     <div className="relative aspect-square group">
@@ -375,7 +374,7 @@ const Products = () => {
 
                         {/* Size Selection */}
                         {product.available_sizes && product.available_sizes.length > 0 && (
-                          <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
+                          <div className="space-y-2">
                             <Label className="text-sm font-medium">Size</Label>
                             <RadioGroup
                               value={selectedVariants[product.id]?.size || ""}
@@ -403,7 +402,7 @@ const Products = () => {
 
                         {/* Color Selection */}
                         {product.available_colors && product.available_colors.length > 0 && (
-                          <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
+                          <div className="space-y-2">
                             <Label className="text-sm font-medium">Color</Label>
                             <RadioGroup
                               value={selectedVariants[product.id]?.color || ""}
@@ -527,8 +526,7 @@ const Products = () => {
                 {filteredProducts.map((product) => (
                 <Card 
                   key={product.id} 
-                  className="overflow-hidden hover:shadow-xl transition-all duration-300 border-green-200/50 cursor-pointer"
-                  onClick={() => navigate(`/products/${product.id}`)}
+                  className="overflow-hidden hover:shadow-xl transition-all duration-300 border-green-200/50"
                 >
                   <CardContent className="p-0">
                     <div className="relative aspect-square group">
@@ -581,7 +579,7 @@ const Products = () => {
 
                         {/* Size Selection */}
                         {product.available_sizes && product.available_sizes.length > 0 && (
-                          <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
+                          <div className="space-y-2">
                             <Label className="text-sm font-medium">Size</Label>
                             <RadioGroup
                               value={selectedVariants[product.id]?.size || ""}
@@ -609,7 +607,7 @@ const Products = () => {
 
                         {/* Color Selection */}
                         {product.available_colors && product.available_colors.length > 0 && (
-                          <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
+                          <div className="space-y-2">
                             <Label className="text-sm font-medium">Color</Label>
                             <RadioGroup
                               value={selectedVariants[product.id]?.color || ""}
