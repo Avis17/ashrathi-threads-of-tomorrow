@@ -25,14 +25,14 @@ export const CartDrawer = ({ onClose }: CartDrawerProps) => {
   const { 
     cartItems, 
     cartCount,
-    selectedItems,
+    selectedCartItems,
     selectedCartTotal,
     toggleItemSelection,
     toggleAllSelection 
   } = useCart();
 
-  const allSelected = selectedItems.size === cartItems.length && cartItems.length > 0;
-  const someSelected = selectedItems.size > 0 && selectedItems.size < cartItems.length;
+  const allSelected = selectedCartItems.length === cartItems.length && cartItems.length > 0;
+  const someSelected = selectedCartItems.length > 0 && selectedCartItems.length < cartItems.length;
 
   // Group items by product_id to apply combos across variations
   const groupedByProduct = cartItems.reduce((acc, item) => {
@@ -99,7 +99,7 @@ export const CartDrawer = ({ onClose }: CartDrawerProps) => {
             className={someSelected ? "data-[state=checked]:bg-primary" : ""}
           />
           <Label className="text-sm font-medium cursor-pointer" onClick={() => toggleAllSelection(!allSelected)}>
-            Select All ({selectedItems.size} of {cartItems.length})
+            Select All ({selectedCartItems.length} of {cartItems.length})
           </Label>
         </div>
       </SheetHeader>
@@ -111,7 +111,7 @@ export const CartDrawer = ({ onClose }: CartDrawerProps) => {
               key={item.id} 
               item={item}
               productGroupCalculation={productGroupCalculations[item.product_id]}
-              isSelected={selectedItems.has(item.id)}
+              isSelected={item.selected_for_checkout}
               onToggleSelect={toggleItemSelection}
             />
           ))}
@@ -122,7 +122,7 @@ export const CartDrawer = ({ onClose }: CartDrawerProps) => {
         <Separator />
         
         {/* Summary Stats */}
-        {selectedItems.size < cartItems.length && (
+        {selectedCartItems.length < cartItems.length && (
           <div className="bg-muted/30 p-3 rounded-lg">
             <div className="text-sm space-y-1">
               <div className="flex justify-between">
@@ -131,11 +131,11 @@ export const CartDrawer = ({ onClose }: CartDrawerProps) => {
               </div>
               <div className="flex justify-between font-medium">
                 <span>Selected for checkout:</span>
-                <span className="text-primary">{selectedItems.size}</span>
+                <span className="text-primary">{selectedCartItems.length}</span>
               </div>
               <div className="flex justify-between text-xs text-muted-foreground">
                 <span>Saved for later:</span>
-                <span>{cartItems.length - selectedItems.size}</span>
+                <span>{cartItems.length - selectedCartItems.length}</span>
               </div>
             </div>
           </div>
@@ -144,16 +144,16 @@ export const CartDrawer = ({ onClose }: CartDrawerProps) => {
         <div className="flex justify-between text-lg font-semibold">
           <span>
             Total
-            {selectedItems.size < cartItems.length && (
+            {selectedCartItems.length < cartItems.length && (
               <span className="text-sm font-normal text-muted-foreground ml-1">
-                ({selectedItems.size} selected)
+                ({selectedCartItems.length} selected)
               </span>
             )}
           </span>
           <span>₹{selectedCartTotal.toFixed(2)}</span>
         </div>
 
-        {selectedItems.size === 0 && (
+        {selectedCartItems.length === 0 && (
           <Alert>
             <AlertDescription>
               Please select at least one item to checkout
@@ -166,9 +166,9 @@ export const CartDrawer = ({ onClose }: CartDrawerProps) => {
             onClick={handleCheckout} 
             className="w-full" 
             size="lg"
-            disabled={selectedItems.size === 0}
+            disabled={selectedCartItems.length === 0}
           >
-            Checkout {selectedItems.size > 0 && `(${selectedItems.size} items)`}
+            Checkout {selectedCartItems.length > 0 && `(${selectedCartItems.length} items)`}
           </Button>
         </SheetFooter>
       </div>

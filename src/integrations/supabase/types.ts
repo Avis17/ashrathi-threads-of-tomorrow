@@ -262,6 +262,7 @@ export type Database = {
           product_id: string
           quantity: number
           selected_color: string | null
+          selected_for_checkout: boolean
           selected_size: string | null
           updated_at: string | null
           user_id: string
@@ -272,6 +273,7 @@ export type Database = {
           product_id: string
           quantity?: number
           selected_color?: string | null
+          selected_for_checkout?: boolean
           selected_size?: string | null
           updated_at?: string | null
           user_id: string
@@ -282,6 +284,7 @@ export type Database = {
           product_id?: string
           quantity?: number
           selected_color?: string | null
+          selected_for_checkout?: boolean
           selected_size?: string | null
           updated_at?: string | null
           user_id?: string

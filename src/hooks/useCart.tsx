@@ -3,7 +3,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from '@/hooks/use-toast';
 import { calculateComboPrice } from '@/lib/calculateComboPrice';
-import { useState, useEffect } from 'react';
 
 interface CartItemWithProduct {
   id: string;
@@ -12,6 +11,7 @@ interface CartItemWithProduct {
   quantity: number;
   selected_size: string | null;
   selected_color: string | null;
+  selected_for_checkout: boolean;
   products: {
     id: string;
     name: string;
@@ -26,7 +26,6 @@ interface CartItemWithProduct {
 export const useCart = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
 
   // Fetch cart items
   const { data: cartItems = [], isLoading } = useQuery({
@@ -48,7 +47,8 @@ export const useCart = () => {
             combo_offers
           )
         `)
-        .eq('user_id', user.id);
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       return data as unknown as CartItemWithProduct[];
@@ -56,36 +56,50 @@ export const useCart = () => {
     enabled: !!user,
   });
 
-  // Initialize all items as selected when cart loads
-  useEffect(() => {
-    if (cartItems && cartItems.length > 0) {
-      setSelectedItems(new Set(cartItems.map(item => item.id)));
-    }
-  }, [cartItems?.length]);
+  // Toggle single item selection
+  const toggleItemSelection = useMutation({
+    mutationFn: async (itemId: string) => {
+      if (!user) throw new Error('User not authenticated');
+      
+      // Get current selection state
+      const { data: item } = await supabase
+        .from('cart_items')
+        .select('selected_for_checkout')
+        .eq('id', itemId)
+        .single();
+      
+      // Toggle it
+      const { error } = await supabase
+        .from('cart_items')
+        .update({ selected_for_checkout: !item?.selected_for_checkout })
+        .eq('id', itemId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cart', user?.id] });
+    },
+  });
 
-  // Selection functions
-  const toggleItemSelection = (itemId: string) => {
-    setSelectedItems(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(itemId)) {
-        newSet.delete(itemId);
-      } else {
-        newSet.add(itemId);
-      }
-      return newSet;
-    });
-  };
-
-  const toggleAllSelection = (selectAll: boolean) => {
-    if (selectAll) {
-      setSelectedItems(new Set(cartItems?.map(item => item.id) || []));
-    } else {
-      setSelectedItems(new Set());
-    }
-  };
+  // Select/deselect all items
+  const toggleAllSelection = useMutation({
+    mutationFn: async (selectAll: boolean) => {
+      if (!user) throw new Error('User not authenticated');
+      
+      const { error } = await supabase
+        .from('cart_items')
+        .update({ selected_for_checkout: selectAll })
+        .eq('user_id', user.id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cart', user?.id] });
+    },
+  });
 
   // Get selected items and their calculations
-  const selectedCartItems = cartItems?.filter(item => selectedItems.has(item.id)) || [];
+  const selectedCartItems = cartItems?.filter(item => item.selected_for_checkout) || [];
   
   const selectedCartTotal = (() => {
     if (!selectedCartItems.length) return 0;
@@ -364,7 +378,6 @@ export const useCart = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cart', user?.id] });
-      setSelectedItems(new Set());
     },
   });
 
@@ -373,26 +386,24 @@ export const useCart = () => {
     mutationFn: async () => {
       if (!user) throw new Error('User not authenticated');
       
-      const itemIds = Array.from(selectedItems);
-      if (itemIds.length === 0) return;
-
-      // Get selected items to release inventory
-      const { data: selectedCartItems } = await supabase
+      // Get selected items from database
+      const { data: itemsToDelete } = await supabase
         .from('cart_items')
         .select('*, product_id, selected_size, selected_color')
-        .in('id', itemIds);
+        .eq('user_id', user.id)
+        .eq('selected_for_checkout', true);
+      
+      if (!itemsToDelete || itemsToDelete.length === 0) return;
 
       // Release inventory for selected items
-      if (selectedCartItems) {
-        for (const item of selectedCartItems) {
-          if (item.selected_size && item.selected_color) {
-            await supabase.rpc('release_inventory', {
-              p_product_id: item.product_id,
-              p_size: item.selected_size,
-              p_color: item.selected_color,
-              p_quantity: item.quantity
-            });
-          }
+      for (const item of itemsToDelete) {
+        if (item.selected_size && item.selected_color) {
+          await supabase.rpc('release_inventory', {
+            p_product_id: item.product_id,
+            p_size: item.selected_size,
+            p_color: item.selected_color,
+            p_quantity: item.quantity
+          });
         }
       }
 
@@ -400,13 +411,13 @@ export const useCart = () => {
       const { error } = await supabase
         .from('cart_items')
         .delete()
-        .in('id', itemIds);
+        .eq('user_id', user.id)
+        .eq('selected_for_checkout', true);
 
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cart', user?.id] });
-      setSelectedItems(new Set());
     },
   });
 
@@ -448,11 +459,10 @@ export const useCart = () => {
     isLoading,
     cartTotal,
     cartCount,
-    selectedItems,
     selectedCartItems,
     selectedCartTotal,
-    toggleItemSelection,
-    toggleAllSelection,
+    toggleItemSelection: toggleItemSelection.mutate,
+    toggleAllSelection: toggleAllSelection.mutate,
     addToCart: addToCart.mutate,
     updateQuantity: updateQuantity.mutate,
     removeFromCart: removeFromCart.mutate,
