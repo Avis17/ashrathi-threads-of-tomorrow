@@ -16,6 +16,8 @@ import { toast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 // Model showcase images
 import heroModelWoman1 from "@/assets/hero-model-woman-1.jpg";
@@ -92,6 +94,55 @@ const Products = () => {
   const [selectedVariants, setSelectedVariants] = useState<Record<string, { size?: string; color?: string }>>({});
   const { data: products = [], isLoading, error } = useProducts();
 
+  // Fetch inventory data for all products
+  const productIds = products.map(p => p.id);
+  const { data: inventoryData = [] } = useQuery({
+    queryKey: ['products-inventory', productIds],
+    queryFn: async () => {
+      if (productIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from('product_inventory')
+        .select('*')
+        .in('product_id', productIds)
+        .gt('available_quantity', 0);
+      
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: productIds.length > 0,
+  });
+
+  // Helper function: Get inventory for a specific product
+  const getInventoryForProduct = (productId: string) => {
+    return inventoryData.filter(inv => inv.product_id === productId);
+  };
+
+  // Helper function: Get available colors based on selected size
+  const getAvailableColors = (productId: string, selectedSize?: string) => {
+    const inventory = getInventoryForProduct(productId);
+    if (!selectedSize) {
+      // Show all colors that have ANY size available
+      return [...new Set(inventory.map(inv => inv.color))];
+    }
+    // Show only colors available for this specific size
+    return inventory
+      .filter(inv => inv.size === selectedSize)
+      .map(inv => inv.color);
+  };
+
+  // Helper function: Get available sizes based on selected color
+  const getAvailableSizes = (productId: string, selectedColor?: string) => {
+    const inventory = getInventoryForProduct(productId);
+    if (!selectedColor) {
+      // Show all sizes that have ANY color available
+      return [...new Set(inventory.map(inv => inv.size))];
+    }
+    // Show only sizes available for this specific color
+    return inventory
+      .filter(inv => inv.color === selectedColor)
+      .map(inv => inv.size);
+  };
+
   const handleQuantityChange = (productId: string, delta: number) => {
     setQuantities((prev) => ({
       ...prev,
@@ -142,7 +193,24 @@ const Products = () => {
       return;
     }
 
+    // Check inventory availability for the selected combination
+    const inventory = inventoryData.find(
+      inv => inv.product_id === product.id 
+          && inv.size === selectedVariant?.size
+          && inv.color === selectedVariant?.color
+    );
+
     const quantity = quantities[product.id] || 1;
+    
+    if (!inventory || inventory.available_quantity < quantity) {
+      toast({
+        title: "Insufficient Stock",
+        description: `Only ${inventory?.available_quantity || 0} pieces available for this combination`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     addToCart({
       productId: product.id,
       quantity,
@@ -381,21 +449,34 @@ const Products = () => {
                               onValueChange={(value) => handleSizeSelect(product.id, value)}
                               className="flex flex-wrap gap-2"
                             >
-                              {product.available_sizes.map((size: string) => (
-                                <div key={size} className="flex items-center">
-                                  <RadioGroupItem value={size} id={`${product.id}-size-${size}`} className="sr-only" />
-                                  <Label
-                                    htmlFor={`${product.id}-size-${size}`}
-                                    className={`cursor-pointer px-3 py-1.5 rounded-md border-2 text-sm font-medium transition-all ${
-                                      selectedVariants[product.id]?.size === size
-                                        ? "border-amber-500 bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300"
-                                        : "border-border hover:border-amber-300"
-                                    }`}
-                                  >
-                                    {size}
-                                  </Label>
-                                </div>
-                              ))}
+                              {product.available_sizes.map((size: string) => {
+                                const availableSizes = getAvailableSizes(product.id, selectedVariants[product.id]?.color);
+                                const isAvailable = availableSizes.includes(size);
+                                
+                                return (
+                                  <div key={size} className="flex items-center">
+                                    <RadioGroupItem 
+                                      value={size} 
+                                      id={`${product.id}-size-${size}`} 
+                                      className="sr-only" 
+                                      disabled={!isAvailable}
+                                    />
+                                    <Label
+                                      htmlFor={`${product.id}-size-${size}`}
+                                      className={`px-3 py-1.5 rounded-md border-2 text-sm font-medium transition-all ${
+                                        !isAvailable 
+                                          ? "opacity-40 cursor-not-allowed line-through border-muted-foreground/30" 
+                                          : selectedVariants[product.id]?.size === size
+                                          ? "border-amber-500 bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 cursor-pointer"
+                                          : "border-border hover:border-amber-300 cursor-pointer"
+                                      }`}
+                                      title={!isAvailable ? "Not available in selected color" : ""}
+                                    >
+                                      {size}
+                                    </Label>
+                                  </div>
+                                );
+                              })}
                             </RadioGroup>
                           </div>
                         )}
@@ -409,25 +490,39 @@ const Products = () => {
                               onValueChange={(value) => handleColorSelect(product.id, value)}
                               className="flex flex-wrap gap-2"
                             >
-                              {product.available_colors.map((color: { name: string; hex: string }) => (
-                                <div key={color.name} className="flex items-center">
-                                  <RadioGroupItem value={color.name} id={`${product.id}-color-${color.name}`} className="sr-only" />
-                                  <Label
-                                    htmlFor={`${product.id}-color-${color.name}`}
-                                    className={`cursor-pointer px-3 py-1.5 rounded-md border-2 text-sm font-medium transition-all flex items-center gap-2 ${
-                                      selectedVariants[product.id]?.color === color.name
-                                        ? "border-amber-500 bg-amber-50 dark:bg-amber-950"
-                                        : "border-border hover:border-amber-300"
-                                    }`}
-                                  >
-                                    <span
-                                      className="w-4 h-4 rounded-full border border-border"
-                                      style={{ backgroundColor: color.hex }}
+                              {product.available_colors.map((color: { name: string; hex: string }) => {
+                                const availableColors = getAvailableColors(product.id, selectedVariants[product.id]?.size);
+                                const isAvailable = availableColors.includes(color.name);
+                                
+                                return (
+                                  <div key={color.name} className="flex items-center">
+                                    <RadioGroupItem 
+                                      value={color.name} 
+                                      id={`${product.id}-color-${color.name}`} 
+                                      className="sr-only"
+                                      disabled={!isAvailable}
                                     />
-                                    {color.name}
-                                  </Label>
-                                </div>
-                              ))}
+                                    <Label
+                                      htmlFor={`${product.id}-color-${color.name}`}
+                                      className={`px-3 py-1.5 rounded-md border-2 text-sm font-medium transition-all flex items-center gap-2 ${
+                                        !isAvailable
+                                          ? "opacity-40 cursor-not-allowed border-muted-foreground/30"
+                                          : selectedVariants[product.id]?.color === color.name
+                                          ? "border-amber-500 bg-amber-50 dark:bg-amber-950 cursor-pointer"
+                                          : "border-border hover:border-amber-300 cursor-pointer"
+                                      }`}
+                                      title={!isAvailable ? "Not available in selected size" : ""}
+                                    >
+                                      <span
+                                        className="w-4 h-4 rounded-full border border-border"
+                                        style={{ backgroundColor: color.hex }}
+                                      />
+                                      {color.name}
+                                      {!isAvailable && <span className="text-xs ml-1">✕</span>}
+                                    </Label>
+                                  </div>
+                                );
+                              })}
                             </RadioGroup>
                           </div>
                         )}
@@ -586,21 +681,34 @@ const Products = () => {
                               onValueChange={(value) => handleSizeSelect(product.id, value)}
                               className="flex flex-wrap gap-2"
                             >
-                              {product.available_sizes.map((size: string) => (
-                                <div key={size} className="flex items-center">
-                                  <RadioGroupItem value={size} id={`${product.id}-size-${size}`} className="sr-only" />
-                                  <Label
-                                    htmlFor={`${product.id}-size-${size}`}
-                                    className={`cursor-pointer px-3 py-1.5 rounded-md border-2 text-sm font-medium transition-all ${
-                                      selectedVariants[product.id]?.size === size
-                                        ? "border-green-500 bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300"
-                                        : "border-border hover:border-green-300"
-                                    }`}
-                                  >
-                                    {size}
-                                  </Label>
-                                </div>
-                              ))}
+                              {product.available_sizes.map((size: string) => {
+                                const availableSizes = getAvailableSizes(product.id, selectedVariants[product.id]?.color);
+                                const isAvailable = availableSizes.includes(size);
+                                
+                                return (
+                                  <div key={size} className="flex items-center">
+                                    <RadioGroupItem 
+                                      value={size} 
+                                      id={`${product.id}-size-${size}`} 
+                                      className="sr-only"
+                                      disabled={!isAvailable}
+                                    />
+                                    <Label
+                                      htmlFor={`${product.id}-size-${size}`}
+                                      className={`px-3 py-1.5 rounded-md border-2 text-sm font-medium transition-all ${
+                                        !isAvailable
+                                          ? "opacity-40 cursor-not-allowed line-through border-muted-foreground/30"
+                                          : selectedVariants[product.id]?.size === size
+                                          ? "border-green-500 bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300 cursor-pointer"
+                                          : "border-border hover:border-green-300 cursor-pointer"
+                                      }`}
+                                      title={!isAvailable ? "Not available in selected color" : ""}
+                                    >
+                                      {size}
+                                    </Label>
+                                  </div>
+                                );
+                              })}
                             </RadioGroup>
                           </div>
                         )}
@@ -614,25 +722,39 @@ const Products = () => {
                               onValueChange={(value) => handleColorSelect(product.id, value)}
                               className="flex flex-wrap gap-2"
                             >
-                              {product.available_colors.map((color: { name: string; hex: string }) => (
-                                <div key={color.name} className="flex items-center">
-                                  <RadioGroupItem value={color.name} id={`${product.id}-color-${color.name}`} className="sr-only" />
-                                  <Label
-                                    htmlFor={`${product.id}-color-${color.name}`}
-                                    className={`cursor-pointer px-3 py-1.5 rounded-md border-2 text-sm font-medium transition-all flex items-center gap-2 ${
-                                      selectedVariants[product.id]?.color === color.name
-                                        ? "border-green-500 bg-green-50 dark:bg-green-950"
-                                        : "border-border hover:border-green-300"
-                                    }`}
-                                  >
-                                    <span
-                                      className="w-4 h-4 rounded-full border border-border"
-                                      style={{ backgroundColor: color.hex }}
+                              {product.available_colors.map((color: { name: string; hex: string }) => {
+                                const availableColors = getAvailableColors(product.id, selectedVariants[product.id]?.size);
+                                const isAvailable = availableColors.includes(color.name);
+                                
+                                return (
+                                  <div key={color.name} className="flex items-center">
+                                    <RadioGroupItem 
+                                      value={color.name} 
+                                      id={`${product.id}-color-${color.name}`} 
+                                      className="sr-only"
+                                      disabled={!isAvailable}
                                     />
-                                    {color.name}
-                                  </Label>
-                                </div>
-                              ))}
+                                    <Label
+                                      htmlFor={`${product.id}-color-${color.name}`}
+                                      className={`px-3 py-1.5 rounded-md border-2 text-sm font-medium transition-all flex items-center gap-2 ${
+                                        !isAvailable
+                                          ? "opacity-40 cursor-not-allowed border-muted-foreground/30"
+                                          : selectedVariants[product.id]?.color === color.name
+                                          ? "border-green-500 bg-green-50 dark:bg-green-950 cursor-pointer"
+                                          : "border-border hover:border-green-300 cursor-pointer"
+                                      }`}
+                                      title={!isAvailable ? "Not available in selected size" : ""}
+                                    >
+                                      <span
+                                        className="w-4 h-4 rounded-full border border-border"
+                                        style={{ backgroundColor: color.hex }}
+                                      />
+                                      {color.name}
+                                      {!isAvailable && <span className="text-xs ml-1">✕</span>}
+                                    </Label>
+                                  </div>
+                                );
+                              })}
                             </RadioGroup>
                           </div>
                         )}
