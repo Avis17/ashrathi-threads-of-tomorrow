@@ -1194,6 +1194,8 @@ export type Database = {
           color: string
           created_at: string | null
           id: string
+          ordered_quantity: number
+          original_quantity: number
           product_id: string
           reserved_quantity: number
           size: string
@@ -1204,6 +1206,8 @@ export type Database = {
           color: string
           created_at?: string | null
           id?: string
+          ordered_quantity?: number
+          original_quantity?: number
           product_id: string
           reserved_quantity?: number
           size: string
@@ -1214,6 +1218,8 @@ export type Database = {
           color?: string
           created_at?: string | null
           id?: string
+          ordered_quantity?: number
+          original_quantity?: number
           product_id?: string
           reserved_quantity?: number
           size?: string

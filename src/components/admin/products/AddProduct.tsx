@@ -28,6 +28,8 @@ export function AddProduct() {
           size: inv.size,
           color: inv.color,
           available_quantity: inv.quantity,
+          original_quantity: inv.quantity,
+          ordered_quantity: 0,
         }));
         
         const { error: invError } = await supabase

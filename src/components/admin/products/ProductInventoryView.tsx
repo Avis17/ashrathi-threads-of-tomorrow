@@ -74,8 +74,10 @@ export function ProductInventoryView({ productId, productName }: ProductInventor
               <TableRow>
                 <TableHead>Size</TableHead>
                 <TableHead>Color</TableHead>
+                <TableHead>Original</TableHead>
                 <TableHead>Available</TableHead>
                 <TableHead>Reserved</TableHead>
+                <TableHead>Ordered</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Last Updated</TableHead>
               </TableRow>
@@ -87,6 +89,9 @@ export function ProductInventoryView({ productId, productName }: ProductInventor
                     <Badge variant="outline">{inv.size}</Badge>
                   </TableCell>
                   <TableCell>{inv.color}</TableCell>
+                  <TableCell className="font-medium text-muted-foreground">
+                    {inv.original_quantity || 0}
+                  </TableCell>
                   <TableCell>
                     <span className={`font-semibold ${
                       inv.available_quantity === 0 ? 'text-red-600' :
@@ -97,6 +102,9 @@ export function ProductInventoryView({ productId, productName }: ProductInventor
                     </span>
                   </TableCell>
                   <TableCell>{inv.reserved_quantity || 0}</TableCell>
+                  <TableCell className="font-medium">
+                    {inv.ordered_quantity || 0}
+                  </TableCell>
                   <TableCell>
                     {inv.available_quantity === 0 ? (
                       <Badge variant="destructive">Out of Stock</Badge>
