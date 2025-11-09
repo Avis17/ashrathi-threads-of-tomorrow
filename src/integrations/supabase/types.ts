@@ -1608,6 +1608,15 @@ export type Database = {
         }
         Returns: boolean
       }
+      convert_reserved_to_ordered: {
+        Args: {
+          p_color: string
+          p_product_id: string
+          p_quantity: number
+          p_size: string
+        }
+        Returns: boolean
+      }
       create_role: {
         Args: {
           _description?: string
@@ -1680,6 +1689,33 @@ export type Database = {
       refresh_cost_summary_labour: {
         Args: { p_job_order_id: string }
         Returns: undefined
+      }
+      release_inventory: {
+        Args: {
+          p_color: string
+          p_product_id: string
+          p_quantity: number
+          p_size: string
+        }
+        Returns: boolean
+      }
+      reserve_inventory: {
+        Args: {
+          p_color: string
+          p_product_id: string
+          p_quantity: number
+          p_size: string
+        }
+        Returns: boolean
+      }
+      restore_inventory_on_cancel: {
+        Args: {
+          p_color: string
+          p_product_id: string
+          p_quantity: number
+          p_size: string
+        }
+        Returns: boolean
       }
       validate_batch_costs: {
         Args: { batch_id: string }

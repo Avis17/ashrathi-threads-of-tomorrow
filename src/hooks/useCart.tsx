@@ -85,13 +85,25 @@ export const useCart = () => {
         .maybeSingle();
 
       if (existing) {
-        // Update quantity
+        // Update quantity in cart
         const { error } = await supabase
           .from('cart_items')
           .update({ quantity: existing.quantity + quantity })
           .eq('id', existing.id);
 
         if (error) throw error;
+
+        // Update reserved quantity in inventory
+        if (size && color) {
+          const { error: invError } = await supabase.rpc('reserve_inventory', {
+            p_product_id: productId,
+            p_size: size,
+            p_color: color,
+            p_quantity: quantity
+          });
+
+          if (invError) throw invError;
+        }
       } else {
         // Insert new item
         const { error } = await supabase
@@ -105,6 +117,18 @@ export const useCart = () => {
           });
 
         if (error) throw error;
+
+        // Reserve inventory
+        if (size && color) {
+          const { error: invError } = await supabase.rpc('reserve_inventory', {
+            p_product_id: productId,
+            p_size: size,
+            p_color: color,
+            p_quantity: quantity
+          });
+
+          if (invError) throw invError;
+        }
       }
     },
     onSuccess: () => {
@@ -134,12 +158,48 @@ export const useCart = () => {
   // Update quantity mutation
   const updateQuantity = useMutation({
     mutationFn: async ({ cartItemId, quantity }: { cartItemId: string; quantity: number }) => {
+      // Get current cart item
+      const { data: cartItem } = await supabase
+        .from('cart_items')
+        .select('*, product_id, selected_size, selected_color')
+        .eq('id', cartItemId)
+        .single();
+
+      if (!cartItem) throw new Error('Cart item not found');
+
+      const oldQuantity = cartItem.quantity;
+      const quantityDiff = quantity - oldQuantity;
+
+      // Update cart quantity
       const { error } = await supabase
         .from('cart_items')
         .update({ quantity })
         .eq('id', cartItemId);
 
       if (error) throw error;
+
+      // Update reserved quantity in inventory
+      if (cartItem.selected_size && cartItem.selected_color) {
+        if (quantityDiff > 0) {
+          // Reserving more
+          const { error: invError } = await supabase.rpc('reserve_inventory', {
+            p_product_id: cartItem.product_id,
+            p_size: cartItem.selected_size,
+            p_color: cartItem.selected_color,
+            p_quantity: quantityDiff
+          });
+          if (invError) throw invError;
+        } else if (quantityDiff < 0) {
+          // Releasing some
+          const { error: invError } = await supabase.rpc('release_inventory', {
+            p_product_id: cartItem.product_id,
+            p_size: cartItem.selected_size,
+            p_color: cartItem.selected_color,
+            p_quantity: Math.abs(quantityDiff)
+          });
+          if (invError) throw invError;
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cart', user?.id] });
@@ -156,12 +216,34 @@ export const useCart = () => {
   // Remove from cart mutation
   const removeFromCart = useMutation({
     mutationFn: async (cartItemId: string) => {
+      // Get cart item details before deleting
+      const { data: cartItem } = await supabase
+        .from('cart_items')
+        .select('*, product_id, selected_size, selected_color')
+        .eq('id', cartItemId)
+        .single();
+
+      if (!cartItem) throw new Error('Cart item not found');
+
+      // Delete cart item
       const { error } = await supabase
         .from('cart_items')
         .delete()
         .eq('id', cartItemId);
 
       if (error) throw error;
+
+      // Release reserved inventory
+      if (cartItem.selected_size && cartItem.selected_color) {
+        const { error: invError } = await supabase.rpc('release_inventory', {
+          p_product_id: cartItem.product_id,
+          p_size: cartItem.selected_size,
+          p_color: cartItem.selected_color,
+          p_quantity: cartItem.quantity
+        });
+
+        if (invError) throw invError;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cart', user?.id] });
@@ -184,6 +266,27 @@ export const useCart = () => {
     mutationFn: async () => {
       if (!user) throw new Error('User not authenticated');
 
+      // Get all cart items to release reserved inventory
+      const { data: cartItems } = await supabase
+        .from('cart_items')
+        .select('*, product_id, selected_size, selected_color')
+        .eq('user_id', user.id);
+
+      // Release all reserved inventory
+      if (cartItems) {
+        for (const item of cartItems) {
+          if (item.selected_size && item.selected_color) {
+            await supabase.rpc('release_inventory', {
+              p_product_id: item.product_id,
+              p_size: item.selected_size,
+              p_color: item.selected_color,
+              p_quantity: item.quantity
+            });
+          }
+        }
+      }
+
+      // Delete cart items
       const { error } = await supabase
         .from('cart_items')
         .delete()

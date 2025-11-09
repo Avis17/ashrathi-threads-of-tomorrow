@@ -49,6 +49,13 @@ export default function OrderDetails() {
 
   const cancelOrder = useMutation({
     mutationFn: async () => {
+      // Get order items to restore inventory
+      const { data: orderItems } = await supabase
+        .from('order_items')
+        .select('product_id, selected_size, selected_color, quantity')
+        .eq('order_id', orderId!);
+
+      // Update order status
       const { error } = await supabase
         .from('orders')
         .update({
@@ -58,6 +65,20 @@ export default function OrderDetails() {
         .eq('id', orderId!);
 
       if (error) throw error;
+
+      // Restore inventory for each item
+      if (orderItems) {
+        for (const item of orderItems) {
+          if (item.selected_size && item.selected_color) {
+            await supabase.rpc('restore_inventory_on_cancel', {
+              p_product_id: item.product_id,
+              p_size: item.selected_size,
+              p_color: item.selected_color,
+              p_quantity: item.quantity,
+            });
+          }
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['order', orderId] });

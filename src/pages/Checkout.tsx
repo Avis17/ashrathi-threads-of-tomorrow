@@ -153,19 +153,18 @@ export default function Checkout() {
 
       if (itemsError) throw itemsError;
 
-      // STEP 3: Deduct inventory for each item
+      // STEP 3: Convert reserved to ordered for each item
       for (const item of cartItems) {
         if (item.selected_size && item.selected_color) {
-          const { error: deductError } = await supabase
-            .rpc('deduct_inventory', {
-              p_product_id: item.product_id,
-              p_size: item.selected_size,
-              p_color: item.selected_color,
-              p_quantity: item.quantity,
-            });
+          const { error: convertError } = await supabase.rpc('convert_reserved_to_ordered', {
+            p_product_id: item.product_id,
+            p_size: item.selected_size,
+            p_color: item.selected_color,
+            p_quantity: item.quantity,
+          });
           
-          if (deductError) {
-            console.error('Inventory deduction failed:', deductError);
+          if (convertError) {
+            console.error('Inventory conversion failed:', convertError);
             // Log but don't fail the order - admin can handle manually
           }
         }
