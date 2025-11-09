@@ -15,7 +15,7 @@ export interface Product {
   price: number | null;
   quality_tier: 'elite' | 'smart_basics';
   available_sizes: string[];
-  available_colors: Array<{ name: string; hex: string }>;
+  available_colors: Array<{ name: string; hex: string; image_url?: string }>;
   discount_percentage: number | null;
   offer_messages: string[];
   combo_offers: Array<{ quantity: number; price: number }>;

@@ -65,6 +65,7 @@ export default function ProductDetail() {
   const [selectedColor, setSelectedColor] = useState<string>('');
   const [quantity, setQuantity] = useState(1);
   const [zoomImage, setZoomImage] = useState<string | null>(null);
+  const [currentImage, setCurrentImage] = useState<string>('');
 
   const { data: product, isLoading } = useQuery({
     queryKey: ['product', id],
@@ -100,6 +101,27 @@ export default function ProductDetail() {
     quantity: number;
     message: string;
   }>({ available: true, quantity: 0, message: '' });
+
+  // Set initial image when product loads
+  useEffect(() => {
+    if (product?.image_url) {
+      setCurrentImage(product.image_url);
+    }
+  }, [product?.image_url]);
+
+  // Update displayed image when color is selected
+  useEffect(() => {
+    if (selectedColor && product?.available_colors) {
+      const colorData = product.available_colors.find(c => c.name === selectedColor);
+      if (colorData?.image_url) {
+        setCurrentImage(colorData.image_url);
+      } else {
+        setCurrentImage(product.image_url);
+      }
+    } else if (product?.image_url) {
+      setCurrentImage(product.image_url);
+    }
+  }, [selectedColor, product]);
 
   // Update stock status when size/color changes
   useEffect(() => {
@@ -203,7 +225,12 @@ export default function ProductDetail() {
     }
   };
 
-  const allImages = product ? [product.image_url, ...product.additional_images].filter(Boolean) : [];
+  // Build display images based on selected color
+  const allImages = product 
+    ? [currentImage, product.image_url, ...product.additional_images]
+        .filter(Boolean)
+        .filter((img, index, self) => self.indexOf(img) === index) // Remove duplicates
+    : [];
   const discountedPrice = product?.price && product?.discount_percentage 
     ? product.price * (1 - product.discount_percentage / 100)
     : product?.price;
@@ -353,7 +380,7 @@ export default function ProductDetail() {
                     <button
                       key={color.name}
                       onClick={() => setSelectedColor(color.name)}
-                      className={`flex flex-col items-center gap-2 p-2 rounded-lg border-2 transition-all hover:scale-105 ${
+                      className={`relative flex flex-col items-center gap-2 p-2 rounded-lg border-2 transition-all hover:scale-105 ${
                         selectedColor === color.name ? 'border-primary shadow-lg' : 'border-border'
                       }`}
                     >
@@ -361,6 +388,11 @@ export default function ProductDetail() {
                         className="w-10 h-10 rounded-full border-2 border-border"
                         style={{ backgroundColor: color.hex }}
                       />
+                      {color.image_url && (
+                        <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full overflow-hidden border-2 border-background shadow-sm">
+                          <img src={color.image_url} alt={color.name} className="w-full h-full object-cover" />
+                        </div>
+                      )}
                       <span className="text-xs font-medium">{color.name}</span>
                     </button>
                   ))}

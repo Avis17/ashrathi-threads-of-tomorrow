@@ -8,16 +8,16 @@ import { Checkbox } from '@/components/ui/checkbox';
 
 interface SizeColorManagerProps {
   sizes: string[];
-  colors: Array<{ name: string; hex: string }>;
+  colors: Array<{ name: string; hex: string; image_url?: string }>;
   onSizesChange: (sizes: string[]) => void;
-  onColorsChange: (colors: Array<{ name: string; hex: string }>) => void;
+  onColorsChange: (colors: Array<{ name: string; hex: string; image_url?: string }>) => void;
 }
 
 const STANDARD_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
 
 export function SizeColorManager({ sizes, colors, onSizesChange, onColorsChange }: SizeColorManagerProps) {
   const [customSize, setCustomSize] = useState('');
-  const [newColor, setNewColor] = useState({ name: '', hex: '#000000' });
+  const [newColor, setNewColor] = useState({ name: '', hex: '#000000', image_url: '' });
 
   const toggleStandardSize = (size: string) => {
     if (sizes.includes(size)) {
@@ -41,7 +41,7 @@ export function SizeColorManager({ sizes, colors, onSizesChange, onColorsChange 
   const addColor = () => {
     if (newColor.name && !colors.find(c => c.name === newColor.name)) {
       onColorsChange([...colors, newColor]);
-      setNewColor({ name: '', hex: '#000000' });
+      setNewColor({ name: '', hex: '#000000', image_url: '' });
     }
   };
 
@@ -113,41 +113,68 @@ export function SizeColorManager({ sizes, colors, onSizesChange, onColorsChange 
       <div className="space-y-3">
         <Label className="text-base font-semibold">Available Colors</Label>
         
-        <div className="flex gap-2">
-          <Input
-            placeholder="Color name"
-            value={newColor.name}
-            onChange={(e) => setNewColor({ ...newColor, name: e.target.value })}
-          />
-          <Input
-            type="color"
-            value={newColor.hex}
-            onChange={(e) => setNewColor({ ...newColor, hex: e.target.value })}
-            className="w-20"
-          />
-          <Button type="button" onClick={addColor} size="sm">
-            <Plus className="h-4 w-4" />
-          </Button>
+        <div className="grid gap-2">
+          <div className="flex gap-2">
+            <Input
+              placeholder="Color name"
+              value={newColor.name}
+              onChange={(e) => setNewColor({ ...newColor, name: e.target.value })}
+            />
+            <Input
+              type="color"
+              value={newColor.hex}
+              onChange={(e) => setNewColor({ ...newColor, hex: e.target.value })}
+              className="w-20"
+            />
+          </div>
+          <div className="flex gap-2">
+            <Input
+              placeholder="Color image URL (e.g., /products/black-shirt.jpg)"
+              value={newColor.image_url}
+              onChange={(e) => setNewColor({ ...newColor, image_url: e.target.value })}
+              onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addColor())}
+            />
+            <Button type="button" onClick={addColor} size="sm">
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Add the product image URL that shows this specific color variant
+          </p>
         </div>
 
         {/* Selected Colors */}
         {colors.length > 0 && (
-          <div className="flex flex-wrap gap-2">
+          <div className="space-y-2">
             {colors.map((color) => (
-              <Badge key={color.name} variant="secondary" className="gap-2">
+              <div key={color.name} className="flex items-center gap-2 p-2 border rounded-md bg-muted/30">
                 <div
-                  className="w-4 h-4 rounded-full border"
+                  className="w-10 h-10 rounded-full border-2"
                   style={{ backgroundColor: color.hex }}
                 />
-                {color.name}
+                <div className="flex-1">
+                  <div className="font-medium">{color.name}</div>
+                  {color.image_url && (
+                    <div className="text-xs text-muted-foreground truncate">
+                      {color.image_url}
+                    </div>
+                  )}
+                </div>
+                {color.image_url && (
+                  <img 
+                    src={color.image_url} 
+                    alt={color.name} 
+                    className="w-12 h-12 object-cover rounded border" 
+                  />
+                )}
                 <button
                   type="button"
                   onClick={() => removeColor(color.name)}
                   className="ml-1 hover:text-destructive"
                 >
-                  <X className="h-3 w-3" />
+                  <X className="h-4 w-4" />
                 </button>
-              </Badge>
+              </div>
             ))}
           </div>
         )}

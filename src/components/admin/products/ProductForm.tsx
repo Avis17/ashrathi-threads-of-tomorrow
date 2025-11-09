@@ -59,6 +59,7 @@ const productSchema = z.object({
   available_colors: z.array(z.object({
     name: z.string(),
     hex: z.string(),
+    image_url: z.string().optional(),
   })).default([]),
 });
 
@@ -72,7 +73,7 @@ interface ProductFormProps {
 
 export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormProps) {
   const [sizes, setSizes] = useState<string[]>(initialData?.available_sizes || []);
-  const [colors, setColors] = useState<Array<{ name: string; hex: string }>>(initialData?.available_colors || []);
+  const [colors, setColors] = useState<Array<{ name: string; hex: string; image_url?: string }>>(initialData?.available_colors || []);
   const [additionalImages, setAdditionalImages] = useState<string[]>(initialData?.additional_images || []);
   const [newImageUrl, setNewImageUrl] = useState('');
   const [offerMessages, setOfferMessages] = useState<string[]>(initialData?.offer_messages || []);
