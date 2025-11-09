@@ -29,7 +29,7 @@ interface DeliveryAddress {
 export default function Checkout() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { cartItems, cartTotal, clearCart } = useCart();
+  const { cartItems, selectedCartItems, selectedCartTotal, clearSelectedItems } = useCart();
   const [selectedAddress, setSelectedAddress] = useState<DeliveryAddress | null>(null);
   const [customerNotes, setCustomerNotes] = useState('');
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
@@ -39,14 +39,14 @@ export default function Checkout() {
       navigate('/auth?redirect=/checkout');
       return;
     }
-    if (cartItems.length === 0) {
+    if (selectedCartItems.length === 0) {
       navigate('/products');
       toast({
-        title: 'Cart is empty',
-        description: 'Please add some products to your cart first',
+        title: 'No items selected',
+        description: 'Please select items from your cart to checkout.',
       });
     }
-  }, [user, cartItems, navigate]);
+  }, [user, selectedCartItems, navigate]);
 
   const handlePlaceOrder = async () => {
     if (!selectedAddress) {
@@ -62,7 +62,7 @@ export default function Checkout() {
 
     try {
       // STEP 1: Validate all items have stock
-      for (const item of cartItems) {
+      for (const item of selectedCartItems) {
         if (item.selected_size && item.selected_color) {
           const { data: inventory } = await supabase
             .from('product_inventory')
@@ -90,9 +90,9 @@ export default function Checkout() {
           delivery_city: selectedAddress.city,
           delivery_state: selectedAddress.state,
           delivery_pincode: selectedAddress.pincode,
-          subtotal: cartTotal,
+          subtotal: selectedCartTotal,
           shipping_charges: 0,
-          total_amount: cartTotal,
+          total_amount: selectedCartTotal,
           customer_notes: customerNotes || null,
         })
         .select()
@@ -101,7 +101,7 @@ export default function Checkout() {
       if (orderError) throw orderError;
 
       // Group items by product_id to apply combos across variations
-      const groupedByProduct = cartItems.reduce((acc, item) => {
+      const groupedByProduct = selectedCartItems.reduce((acc, item) => {
         const productId = item.product_id;
         if (!acc[productId]) {
           acc[productId] = {
@@ -129,7 +129,7 @@ export default function Checkout() {
       }, {} as Record<string, any>);
 
       // Create order items with proportional pricing
-      const orderItems = cartItems.map((item) => {
+      const orderItems = selectedCartItems.map((item) => {
         const groupCalc = productGroupCalculations[item.product_id];
         const pricePerPiece = groupCalc.finalPrice / groupedByProduct[item.product_id].totalQuantity;
         
@@ -154,7 +154,7 @@ export default function Checkout() {
       if (itemsError) throw itemsError;
 
       // STEP 3: Convert reserved to ordered for each item
-      for (const item of cartItems) {
+      for (const item of selectedCartItems) {
         if (item.selected_size && item.selected_color) {
           const { error: convertError } = await supabase.rpc('convert_reserved_to_ordered', {
             p_product_id: item.product_id,
@@ -171,11 +171,14 @@ export default function Checkout() {
       }
 
       // Clear cart
-      await clearCart();
+      await clearSelectedItems();
 
+      const remainingItems = cartItems.length - selectedCartItems.length;
       toast({
         title: 'Order Placed Successfully!',
-        description: `Your order ${order.order_number} has been placed`,
+        description: remainingItems > 0 
+          ? `Your order ${order.order_number} has been placed. ${remainingItems} item${remainingItems > 1 ? 's' : ''} remain in cart.`
+          : `Your order ${order.order_number} has been placed`,
       });
 
       navigate(`/my-orders/${order.id}`);
@@ -190,7 +193,7 @@ export default function Checkout() {
     }
   };
 
-  if (!user || cartItems.length === 0) {
+  if (!user || selectedCartItems.length === 0) {
     return null;
   }
 
@@ -244,14 +247,14 @@ export default function Checkout() {
           <Card className="sticky top-4 border-2">
             <CardHeader className="bg-gradient-to-r from-primary/5 to-secondary/5">
               <CardTitle className="text-xl">Order Summary</CardTitle>
-              <p className="text-sm text-muted-foreground">{cartItems.length} {cartItems.length === 1 ? 'item' : 'items'}</p>
+              <p className="text-sm text-muted-foreground">{selectedCartItems.length} {selectedCartItems.length === 1 ? 'item' : 'items'}</p>
             </CardHeader>
             <CardContent className="space-y-4 pt-6">
               {/* Items List */}
               <div className="space-y-4">
               {(() => {
                 // Group items by product_id
-                const grouped = cartItems.reduce((acc, item) => {
+                const grouped = selectedCartItems.reduce((acc, item) => {
                   const productId = item.product_id;
                   if (!acc[productId]) {
                     acc[productId] = {
@@ -323,7 +326,7 @@ export default function Checkout() {
               <div className="space-y-3">
                 {(() => {
                   // Group items by product_id for accurate totals
-                  const groupedByProduct = cartItems.reduce((acc, item) => {
+                  const groupedByProduct = selectedCartItems.reduce((acc, item) => {
                     const productId = item.product_id;
                     if (!acc[productId]) {
                       acc[productId] = {
@@ -377,6 +380,13 @@ export default function Checkout() {
                         <span className="text-green-600 dark:text-green-400 font-semibold">FREE</span>
                       </div>
 
+                      {selectedCartItems.length < cartItems.length && (
+                        <div className="flex justify-between text-xs text-muted-foreground pt-2 border-t">
+                          <span>Items saved for later</span>
+                          <span>{cartItems.length - selectedCartItems.length}</span>
+                        </div>
+                      )}
+
                       {hasDiscount && (
                         <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 border border-green-200 dark:border-green-800 rounded-lg p-3 animate-fade-in">
                           <div className="flex items-center justify-between">
@@ -409,7 +419,7 @@ export default function Checkout() {
                 <div className="flex justify-between items-center">
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Total Amount</p>
-                    <p className="text-2xl font-bold text-foreground">₹{cartTotal.toFixed(2)}</p>
+                    <p className="text-2xl font-bold text-foreground">₹{selectedCartTotal.toFixed(2)}</p>
                   </div>
                   <div className="text-right">
                     <Badge variant="default" className="bg-primary text-primary-foreground">

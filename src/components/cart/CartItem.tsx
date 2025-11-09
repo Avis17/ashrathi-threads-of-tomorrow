@@ -1,6 +1,7 @@
 import { Minus, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useCart } from '@/hooks/useCart';
 import { calculateComboPrice, PriceCalculation } from '@/lib/calculateComboPrice';
 
@@ -21,9 +22,11 @@ interface CartItemProps {
     };
   };
   productGroupCalculation?: PriceCalculation & { totalQuantity: number };
+  isSelected: boolean;
+  onToggleSelect: (itemId: string) => void;
 }
 
-export const CartItem = ({ item, productGroupCalculation }: CartItemProps) => {
+export const CartItem = ({ item, productGroupCalculation, isSelected, onToggleSelect }: CartItemProps) => {
   const { updateQuantity, removeFromCart } = useCart();
   const basePrice = item.products?.price || 0;
   const discount = item.products?.discount_percentage || 0;
@@ -43,13 +46,19 @@ export const CartItem = ({ item, productGroupCalculation }: CartItemProps) => {
   const isGroupCombo = !!productGroupCalculation && hasCombo;
 
   return (
-    <div className="flex gap-4 animate-fade-in">
+    <div className="flex gap-3 animate-fade-in">
+      <div className="flex items-start pt-1">
+        <Checkbox
+          checked={isSelected}
+          onCheckedChange={() => onToggleSelect(item.id)}
+        />
+      </div>
       <img
         src={item.products.image_url}
         alt={item.products.name}
-        className="w-20 h-20 object-cover rounded-md"
+        className={`w-20 h-20 object-cover rounded-md transition-opacity ${!isSelected ? 'opacity-50' : ''}`}
       />
-      <div className="flex-1 space-y-2">
+      <div className={`flex-1 space-y-2 transition-opacity ${!isSelected ? 'opacity-50' : ''}`}>
         <div className="flex justify-between">
           <div>
             <h4 className="font-medium">{item.products.name}</h4>

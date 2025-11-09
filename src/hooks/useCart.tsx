@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from '@/hooks/use-toast';
 import { calculateComboPrice } from '@/lib/calculateComboPrice';
+import { useState, useEffect } from 'react';
 
 interface CartItemWithProduct {
   id: string;
@@ -25,6 +26,7 @@ interface CartItemWithProduct {
 export const useCart = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
 
   // Fetch cart items
   const { data: cartItems = [], isLoading } = useQuery({
@@ -53,6 +55,72 @@ export const useCart = () => {
     },
     enabled: !!user,
   });
+
+  // Initialize all items as selected when cart loads
+  useEffect(() => {
+    if (cartItems && cartItems.length > 0) {
+      setSelectedItems(new Set(cartItems.map(item => item.id)));
+    }
+  }, [cartItems?.length]);
+
+  // Selection functions
+  const toggleItemSelection = (itemId: string) => {
+    setSelectedItems(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(itemId)) {
+        newSet.delete(itemId);
+      } else {
+        newSet.add(itemId);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleAllSelection = (selectAll: boolean) => {
+    if (selectAll) {
+      setSelectedItems(new Set(cartItems?.map(item => item.id) || []));
+    } else {
+      setSelectedItems(new Set());
+    }
+  };
+
+  // Get selected items and their calculations
+  const selectedCartItems = cartItems?.filter(item => selectedItems.has(item.id)) || [];
+  
+  const selectedCartTotal = (() => {
+    if (!selectedCartItems.length) return 0;
+
+    // Group selected items by product_id to apply combo offers
+    const groupedByProduct = selectedCartItems.reduce((acc, item) => {
+      const productId = item.product_id;
+      if (!acc[productId]) {
+        acc[productId] = {
+          items: [],
+          totalQuantity: 0,
+          basePrice: item.products?.price || 0,
+          discount: item.products?.discount_percentage || 0,
+          comboOffers: item.products?.combo_offers || [],
+        };
+      }
+      acc[productId].items.push(item);
+      acc[productId].totalQuantity += item.quantity;
+      return acc;
+    }, {} as Record<string, any>);
+
+    // Calculate total for each product group
+    let total = 0;
+    Object.values(groupedByProduct).forEach((group: any) => {
+      const calculation = calculateComboPrice(
+        group.totalQuantity,
+        group.basePrice,
+        group.comboOffers,
+        group.discount
+      );
+      total += calculation.finalPrice;
+    });
+
+    return total;
+  })();
 
   // Add to cart mutation
   const addToCart = useMutation({
@@ -296,6 +364,49 @@ export const useCart = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cart', user?.id] });
+      setSelectedItems(new Set());
+    },
+  });
+
+  // Clear only selected items mutation
+  const clearSelectedItems = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error('User not authenticated');
+      
+      const itemIds = Array.from(selectedItems);
+      if (itemIds.length === 0) return;
+
+      // Get selected items to release inventory
+      const { data: selectedCartItems } = await supabase
+        .from('cart_items')
+        .select('*, product_id, selected_size, selected_color')
+        .in('id', itemIds);
+
+      // Release inventory for selected items
+      if (selectedCartItems) {
+        for (const item of selectedCartItems) {
+          if (item.selected_size && item.selected_color) {
+            await supabase.rpc('release_inventory', {
+              p_product_id: item.product_id,
+              p_size: item.selected_size,
+              p_color: item.selected_color,
+              p_quantity: item.quantity
+            });
+          }
+        }
+      }
+
+      // Delete only selected items
+      const { error } = await supabase
+        .from('cart_items')
+        .delete()
+        .in('id', itemIds);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cart', user?.id] });
+      setSelectedItems(new Set());
     },
   });
 
@@ -337,9 +448,15 @@ export const useCart = () => {
     isLoading,
     cartTotal,
     cartCount,
+    selectedItems,
+    selectedCartItems,
+    selectedCartTotal,
+    toggleItemSelection,
+    toggleAllSelection,
     addToCart: addToCart.mutate,
     updateQuantity: updateQuantity.mutate,
     removeFromCart: removeFromCart.mutate,
     clearCart: clearCart.mutate,
+    clearSelectedItems: clearSelectedItems.mutate,
   };
 };
