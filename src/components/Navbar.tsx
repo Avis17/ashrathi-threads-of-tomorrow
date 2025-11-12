@@ -26,7 +26,6 @@ import {
 } from "@/components/ui/accordion";
 import { useAuth } from "@/hooks/useAuth";
 import { CartButton } from "@/components/cart/CartButton";
-import logo from "@/assets/logo.png";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -79,8 +78,13 @@ const Navbar = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-3 transition-transform hover:scale-105">
-            <img src={logo} alt="Feather Fashions Logo" className="h-32 w-auto" />
+          <Link to="/" className="flex flex-col items-start transition-all hover:opacity-80">
+            <span className="text-2xl font-bold tracking-wider text-primary leading-none">
+              FEATHER
+            </span>
+            <span className="text-lg font-light tracking-[0.3em] text-secondary leading-none -mt-1">
+              FASHIONS
+            </span>
           </Link>
 
           {/* Desktop Navigation */}
