@@ -43,7 +43,7 @@ export const useCreateJobProductionEntry = () => {
     mutationFn: async (data: Partial<JobProductionEntry>) => {
       const { data: entry, error } = await supabase
         .from('job_production_entries')
-        .insert([data])
+        .insert(data)
         .select()
         .single();
       if (error) throw error;

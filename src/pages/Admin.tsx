@@ -20,6 +20,7 @@ import Dashboard from './admin/Dashboard';
 import AdminOrderDetails from './admin/OrderDetails';
 import Production from './admin/Production';
 import JobOrders from './admin/JobOrders';
+import JobManagement from './admin/JobManagement';
 import Settings from './admin/Settings';
 
 const Admin = () => {
@@ -58,6 +59,7 @@ const Admin = () => {
               <Route path="/orders/:orderId" element={<AdminOrderDetails />} />
               <Route path="/production" element={<Production />} />
               <Route path="/job-orders" element={<JobOrders />} />
+              <Route path="/job-management" element={<JobManagement />} />
               <Route path="/branches" element={<BranchesManager />} />
               <Route path="/expenses" element={<ExpensesManager />} />
               <Route path="/invoice" element={<InvoiceGenerator />} />

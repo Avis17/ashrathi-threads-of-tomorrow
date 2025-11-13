@@ -44,7 +44,7 @@ export const useCreateJobBatchExpense = () => {
     mutationFn: async (data: Partial<JobBatchExpense>) => {
       const { data: expense, error } = await supabase
         .from('job_batch_expenses')
-        .insert([data])
+        .insert(data)
         .select()
         .single();
       if (error) throw error;

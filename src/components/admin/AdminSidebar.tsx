@@ -15,7 +15,8 @@ import {
   Receipt,
   Warehouse,
   Briefcase,
-  Settings
+  Settings,
+  Shirt
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import {
@@ -34,6 +35,7 @@ const menuItems = [
   { title: 'Orders', url: '/admin/orders', icon: ClipboardList },
   { title: 'Production', url: '/admin/production', icon: Factory },
   { title: 'Job Orders', url: '/admin/job-orders', icon: Briefcase },
+  { title: 'Job Management', url: '/admin/job-management', icon: Shirt },
   { title: 'Stock Summary', url: '/admin/stock-summary', icon: Warehouse },
   { title: 'Branches', url: '/admin/branches', icon: Building2 },
   { title: 'Expenses', url: '/admin/expenses', icon: Receipt },

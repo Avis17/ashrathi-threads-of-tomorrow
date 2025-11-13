@@ -66,7 +66,7 @@ export const useCreateJobBatch = () => {
     mutationFn: async (data: Partial<JobBatch>) => {
       const { data: batch, error } = await supabase
         .from('job_batches')
-        .insert([data])
+        .insert(data)
         .select()
         .single();
       if (error) throw error;

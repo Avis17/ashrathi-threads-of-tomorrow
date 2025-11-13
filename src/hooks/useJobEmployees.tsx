@@ -53,7 +53,7 @@ export const useCreateJobEmployee = () => {
     mutationFn: async (data: Partial<JobEmployee>) => {
       const { data: employee, error } = await supabase
         .from('job_employees')
-        .insert([data])
+        .insert(data)
         .select()
         .single();
       if (error) throw error;

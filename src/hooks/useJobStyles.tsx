@@ -65,7 +65,7 @@ export const useCreateJobStyle = () => {
     mutationFn: async (data: Partial<JobStyle>) => {
       const { data: style, error } = await supabase
         .from('job_styles')
-        .insert([data])
+        .insert(data)
         .select()
         .single();
       if (error) throw error;
