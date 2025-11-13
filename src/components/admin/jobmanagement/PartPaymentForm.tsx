@@ -71,12 +71,12 @@ const PartPaymentForm = ({ employeeId, employeeName, onSuccess, onCancel }: Part
 
       <div className="space-y-2">
         <Label>Batch (Optional)</Label>
-        <Select onValueChange={(value) => setValue('batch_id', value || '')}>
+        <Select onValueChange={(value) => setValue('batch_id', value === 'none' ? '' : value)}>
           <SelectTrigger>
             <SelectValue placeholder="Select batch..." />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">None</SelectItem>
+            <SelectItem value="none">None</SelectItem>
             {batches?.map((batch) => (
               <SelectItem key={batch.id} value={batch.id}>
                 {batch.batch_number} {batch.job_styles?.style_name ? `- ${batch.job_styles.style_name}` : ''}

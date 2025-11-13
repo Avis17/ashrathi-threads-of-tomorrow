@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { ArrowLeft, Edit, DollarSign, Calendar, User, Phone, MapPin, Briefcase, TrendingUp } from 'lucide-react';
 import { format } from 'date-fns';
 import { getCurrentWeek, isSettlementDay, getWeekRange } from '@/lib/weekUtils';
@@ -221,6 +221,9 @@ const EmployeeDetails = ({ employeeId, onClose, onEdit }: EmployeeDetailsProps) 
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Record Part Payment</DialogTitle>
+            <DialogDescription>
+              Record an advance or part payment for {employee.name}
+            </DialogDescription>
           </DialogHeader>
           <PartPaymentForm
             employeeId={employeeId}
@@ -235,6 +238,9 @@ const EmployeeDetails = ({ employeeId, onClose, onEdit }: EmployeeDetailsProps) 
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Weekly Settlement</DialogTitle>
+            <DialogDescription>
+              Complete weekly salary settlement for {employee.name}
+            </DialogDescription>
           </DialogHeader>
           <WeeklySettlementForm
             employeeId={employeeId}
@@ -249,6 +255,9 @@ const EmployeeDetails = ({ employeeId, onClose, onEdit }: EmployeeDetailsProps) 
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Employee</DialogTitle>
+            <DialogDescription>
+              Update employee information and details
+            </DialogDescription>
           </DialogHeader>
           <EmployeeForm
             employee={employee}

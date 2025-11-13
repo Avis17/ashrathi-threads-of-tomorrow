@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import {
   Select,
   SelectContent,
@@ -250,6 +250,12 @@ const EmployeesManager = () => {
       {/* Form Dialog */}
       <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingEmployee ? 'Edit Employee' : 'Add Employee'}</DialogTitle>
+            <DialogDescription>
+              {editingEmployee ? 'Update employee information' : 'Add a new employee to the workforce'}
+            </DialogDescription>
+          </DialogHeader>
           <EmployeeForm employee={editingEmployee} onClose={handleCloseForm} />
         </DialogContent>
       </Dialog>
@@ -257,6 +263,12 @@ const EmployeesManager = () => {
       {/* Payment Records Dialog */}
       <Dialog open={showPaymentRecords} onOpenChange={setShowPaymentRecords}>
         <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Payment Records</DialogTitle>
+            <DialogDescription>
+              View complete payment history and earnings summary
+            </DialogDescription>
+          </DialogHeader>
           {paymentRecordsEmployee && (
             <EmployeePaymentRecords
               employeeId={paymentRecordsEmployee.id}
