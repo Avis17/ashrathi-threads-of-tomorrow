@@ -738,6 +738,199 @@ export type Database = {
           },
         ]
       }
+      job_batch_expenses: {
+        Row: {
+          amount: number
+          batch_id: string | null
+          bill_number: string | null
+          created_at: string | null
+          date: string
+          expense_type: string
+          id: string
+          item_name: string
+          note: string | null
+          quantity: number | null
+          rate_per_unit: number | null
+          supplier_name: string | null
+          unit: string | null
+        }
+        Insert: {
+          amount: number
+          batch_id?: string | null
+          bill_number?: string | null
+          created_at?: string | null
+          date?: string
+          expense_type: string
+          id?: string
+          item_name: string
+          note?: string | null
+          quantity?: number | null
+          rate_per_unit?: number | null
+          supplier_name?: string | null
+          unit?: string | null
+        }
+        Update: {
+          amount?: number
+          batch_id?: string | null
+          bill_number?: string | null
+          created_at?: string | null
+          date?: string
+          expense_type?: string
+          id?: string
+          item_name?: string
+          note?: string | null
+          quantity?: number | null
+          rate_per_unit?: number | null
+          supplier_name?: string | null
+          unit?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_batch_expenses_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "job_batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      job_batches: {
+        Row: {
+          batch_number: string
+          checked_quantity: number | null
+          color: string
+          created_at: string | null
+          cut_quantity: number | null
+          date_created: string
+          dye_test_result: string | null
+          expected_pieces: number
+          fabric_shrinkage_percent: number | null
+          fabric_type: string
+          fabric_width: string | null
+          final_quantity: number | null
+          gsm: string
+          id: string
+          lot_number: string | null
+          marker_efficiency: number | null
+          packed_quantity: number | null
+          remarks: string | null
+          status: string | null
+          stitched_quantity: number | null
+          style_id: string | null
+          supplier_name: string | null
+          total_fabric_received_kg: number
+          updated_at: string | null
+          wastage_percent: number | null
+        }
+        Insert: {
+          batch_number: string
+          checked_quantity?: number | null
+          color: string
+          created_at?: string | null
+          cut_quantity?: number | null
+          date_created?: string
+          dye_test_result?: string | null
+          expected_pieces: number
+          fabric_shrinkage_percent?: number | null
+          fabric_type: string
+          fabric_width?: string | null
+          final_quantity?: number | null
+          gsm: string
+          id?: string
+          lot_number?: string | null
+          marker_efficiency?: number | null
+          packed_quantity?: number | null
+          remarks?: string | null
+          status?: string | null
+          stitched_quantity?: number | null
+          style_id?: string | null
+          supplier_name?: string | null
+          total_fabric_received_kg: number
+          updated_at?: string | null
+          wastage_percent?: number | null
+        }
+        Update: {
+          batch_number?: string
+          checked_quantity?: number | null
+          color?: string
+          created_at?: string | null
+          cut_quantity?: number | null
+          date_created?: string
+          dye_test_result?: string | null
+          expected_pieces?: number
+          fabric_shrinkage_percent?: number | null
+          fabric_type?: string
+          fabric_width?: string | null
+          final_quantity?: number | null
+          gsm?: string
+          id?: string
+          lot_number?: string | null
+          marker_efficiency?: number | null
+          packed_quantity?: number | null
+          remarks?: string | null
+          status?: string | null
+          stitched_quantity?: number | null
+          style_id?: string | null
+          supplier_name?: string | null
+          total_fabric_received_kg?: number
+          updated_at?: string | null
+          wastage_percent?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_batches_style_id_fkey"
+            columns: ["style_id"]
+            isOneToOne: false
+            referencedRelation: "job_styles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      job_employees: {
+        Row: {
+          address: string | null
+          contractor_name: string | null
+          created_at: string | null
+          date_joined: string | null
+          date_left: string | null
+          employee_code: string
+          employee_type: string
+          id: string
+          is_active: boolean | null
+          name: string
+          phone: string | null
+          rate_type: string | null
+        }
+        Insert: {
+          address?: string | null
+          contractor_name?: string | null
+          created_at?: string | null
+          date_joined?: string | null
+          date_left?: string | null
+          employee_code: string
+          employee_type: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          phone?: string | null
+          rate_type?: string | null
+        }
+        Update: {
+          address?: string | null
+          contractor_name?: string | null
+          created_at?: string | null
+          date_joined?: string | null
+          date_left?: string | null
+          employee_code?: string
+          employee_type?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          phone?: string | null
+          rate_type?: string | null
+        }
+        Relationships: []
+      }
       job_order_cost_summary: {
         Row: {
           created_at: string
@@ -938,6 +1131,238 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      job_part_payments: {
+        Row: {
+          amount: number
+          created_at: string | null
+          employee_id: string | null
+          id: string
+          note: string | null
+          payment_date: string
+          payment_mode: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          employee_id?: string | null
+          id?: string
+          note?: string | null
+          payment_date: string
+          payment_mode?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          employee_id?: string | null
+          id?: string
+          note?: string | null
+          payment_date?: string
+          payment_mode?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_part_payments_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "job_employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      job_production_entries: {
+        Row: {
+          batch_id: string | null
+          created_at: string | null
+          date: string
+          employee_id: string | null
+          employee_name: string
+          employee_type: string
+          id: string
+          quantity_completed: number
+          rate_per_piece: number
+          remarks: string | null
+          section: string
+          total_amount: number
+        }
+        Insert: {
+          batch_id?: string | null
+          created_at?: string | null
+          date?: string
+          employee_id?: string | null
+          employee_name: string
+          employee_type: string
+          id?: string
+          quantity_completed: number
+          rate_per_piece: number
+          remarks?: string | null
+          section: string
+          total_amount: number
+        }
+        Update: {
+          batch_id?: string | null
+          created_at?: string | null
+          date?: string
+          employee_id?: string | null
+          employee_name?: string
+          employee_type?: string
+          id?: string
+          quantity_completed?: number
+          rate_per_piece?: number
+          remarks?: string | null
+          section?: string
+          total_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_production_entries_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "job_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_production_entries_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "job_employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      job_styles: {
+        Row: {
+          accessories: Json | null
+          category: string | null
+          created_at: string | null
+          fabric_per_piece: number | null
+          fabric_type: string | null
+          fit: string | null
+          garment_type: string | null
+          gsm_range: string | null
+          id: string
+          is_active: boolean | null
+          min_order_qty: number | null
+          pattern_number: string
+          rate_checking: number | null
+          rate_cutting: number | null
+          rate_ironing: number | null
+          rate_packing: number | null
+          rate_stitching_power_table: number | null
+          rate_stitching_singer: number | null
+          remarks: string | null
+          season: string | null
+          style_code: string
+          style_image_url: string | null
+          style_name: string
+          updated_at: string | null
+        }
+        Insert: {
+          accessories?: Json | null
+          category?: string | null
+          created_at?: string | null
+          fabric_per_piece?: number | null
+          fabric_type?: string | null
+          fit?: string | null
+          garment_type?: string | null
+          gsm_range?: string | null
+          id?: string
+          is_active?: boolean | null
+          min_order_qty?: number | null
+          pattern_number: string
+          rate_checking?: number | null
+          rate_cutting?: number | null
+          rate_ironing?: number | null
+          rate_packing?: number | null
+          rate_stitching_power_table?: number | null
+          rate_stitching_singer?: number | null
+          remarks?: string | null
+          season?: string | null
+          style_code: string
+          style_image_url?: string | null
+          style_name: string
+          updated_at?: string | null
+        }
+        Update: {
+          accessories?: Json | null
+          category?: string | null
+          created_at?: string | null
+          fabric_per_piece?: number | null
+          fabric_type?: string | null
+          fit?: string | null
+          garment_type?: string | null
+          gsm_range?: string | null
+          id?: string
+          is_active?: boolean | null
+          min_order_qty?: number | null
+          pattern_number?: string
+          rate_checking?: number | null
+          rate_cutting?: number | null
+          rate_ironing?: number | null
+          rate_packing?: number | null
+          rate_stitching_power_table?: number | null
+          rate_stitching_singer?: number | null
+          remarks?: string | null
+          season?: string | null
+          style_code?: string
+          style_image_url?: string | null
+          style_name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      job_weekly_settlements: {
+        Row: {
+          created_at: string | null
+          employee_id: string | null
+          id: string
+          net_payable: number | null
+          payment_date: string | null
+          payment_mode: string | null
+          payment_status: string | null
+          remarks: string | null
+          total_part_payments: number | null
+          total_production_amount: number | null
+          week_end_date: string
+          week_start_date: string
+        }
+        Insert: {
+          created_at?: string | null
+          employee_id?: string | null
+          id?: string
+          net_payable?: number | null
+          payment_date?: string | null
+          payment_mode?: string | null
+          payment_status?: string | null
+          remarks?: string | null
+          total_part_payments?: number | null
+          total_production_amount?: number | null
+          week_end_date: string
+          week_start_date: string
+        }
+        Update: {
+          created_at?: string | null
+          employee_id?: string | null
+          id?: string
+          net_payable?: number | null
+          payment_date?: string | null
+          payment_mode?: string | null
+          payment_status?: string | null
+          remarks?: string | null
+          total_part_payments?: number | null
+          total_production_amount?: number | null
+          week_end_date?: string
+          week_start_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_weekly_settlements_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "job_employees"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       materials: {
         Row: {
