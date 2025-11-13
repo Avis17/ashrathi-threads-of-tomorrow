@@ -1,0 +1,107 @@
+import { useForm } from 'react-hook-form';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { useCreatePartPayment } from '@/hooks/usePartPayments';
+
+interface PartPaymentFormProps {
+  employeeId: string;
+  employeeName: string;
+  onSuccess: () => void;
+  onCancel: () => void;
+}
+
+const PartPaymentForm = ({ employeeId, employeeName, onSuccess, onCancel }: PartPaymentFormProps) => {
+  const { register, handleSubmit, formState: { errors }, setValue } = useForm<any>({
+    defaultValues: {
+      payment_date: new Date().toISOString().split('T')[0],
+      payment_mode: 'cash',
+      amount: '',
+      note: '',
+    }
+  });
+  const createPayment = useCreatePartPayment();
+
+  const onSubmit = async (formData: any) => {
+    await createPayment.mutateAsync({
+      employee_id: employeeId,
+      payment_date: formData.payment_date,
+      amount: parseFloat(formData.amount),
+      payment_mode: formData.payment_mode,
+      note: formData.note || null,
+    });
+    onSuccess();
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <div className="bg-muted/50 p-3 rounded-lg">
+        <p className="text-sm font-medium">Employee: {employeeName}</p>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Payment Date *</Label>
+        <Input
+          type="date"
+          {...register('payment_date', { required: 'Required' })}
+        />
+        {errors.payment_date && (
+          <span className="text-sm text-destructive">Required</span>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <Label>Amount (₹) *</Label>
+        <Input
+          type="number"
+          step="0.01"
+          {...register('amount', { required: 'Required', min: 0.01 })}
+          placeholder="Enter amount"
+        />
+        {errors.amount && (
+          <span className="text-sm text-destructive">Required</span>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <Label>Payment Mode *</Label>
+        <Select 
+          defaultValue="cash"
+          onValueChange={(value) => setValue('payment_mode', value)}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="cash">Cash</SelectItem>
+            <SelectItem value="upi">UPI</SelectItem>
+            <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+            <SelectItem value="cheque">Cheque</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Note</Label>
+        <Textarea
+          {...register('note')}
+          placeholder="Optional note..."
+          rows={2}
+        />
+      </div>
+
+      <div className="flex justify-end gap-2 pt-4">
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button type="submit" disabled={createPayment.isPending}>
+          {createPayment.isPending ? 'Recording...' : 'Record Payment'}
+        </Button>
+      </div>
+    </form>
+  );
+};
+
+export default PartPaymentForm;

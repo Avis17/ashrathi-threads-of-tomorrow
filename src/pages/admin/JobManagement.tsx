@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Shirt, Package, Users, DollarSign, Factory } from 'lucide-react';
+import { Shirt, Package, Users, DollarSign, Factory, Building2 } from 'lucide-react';
 import StylesManager from '@/components/admin/jobmanagement/StylesManager';
 import BatchesManager from '@/components/admin/jobmanagement/BatchesManager';
 import ProductionEntry from '@/components/admin/jobmanagement/ProductionEntry';
 import EmployeesManager from '@/components/admin/jobmanagement/EmployeesManager';
 import ExpensesManager from '@/components/admin/jobmanagement/ExpensesManager';
+import ContractorsManager from '@/components/admin/jobmanagement/ContractorsManager';
 
 const JobManagement = () => {
   const [activeTab, setActiveTab] = useState('styles');
@@ -26,7 +27,7 @@ const JobManagement = () => {
 
       {/* Tabs Navigation */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5 h-auto p-1 bg-muted/50">
+        <TabsList className="grid w-full grid-cols-6 h-auto p-1 bg-muted/50">
           <TabsTrigger 
             value="styles" 
             className="flex items-center gap-2 py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-secondary data-[state=active]:text-primary-foreground transition-all"
@@ -62,6 +63,13 @@ const JobManagement = () => {
             <DollarSign className="h-4 w-4" />
             <span className="hidden sm:inline">Expenses</span>
           </TabsTrigger>
+          <TabsTrigger 
+            value="contractors"
+            className="flex items-center gap-2 py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-secondary data-[state=active]:text-primary-foreground transition-all"
+          >
+            <Building2 className="h-4 w-4" />
+            <span className="hidden sm:inline">Contractors</span>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="styles" className="mt-6">
@@ -82,6 +90,10 @@ const JobManagement = () => {
 
         <TabsContent value="expenses" className="mt-6">
           <ExpensesManager />
+        </TabsContent>
+
+        <TabsContent value="contractors" className="mt-6">
+          <ContractorsManager />
         </TabsContent>
       </Tabs>
     </div>

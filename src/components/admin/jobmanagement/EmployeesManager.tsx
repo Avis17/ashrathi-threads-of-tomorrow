@@ -14,7 +14,8 @@ import {
 } from '@/components/ui/select';
 import { useJobEmployees } from '@/hooks/useJobEmployees';
 import EmployeeForm from './EmployeeForm';
-import { UserPlus, Edit, Phone, MapPin, Briefcase, Users } from 'lucide-react';
+import EmployeeDetails from './EmployeeDetails';
+import { UserPlus, Edit, Phone, MapPin, Briefcase, Users, Eye } from 'lucide-react';
 import { JOB_DEPARTMENTS } from '@/lib/jobDepartments';
 
 const EmployeesManager = () => {
@@ -23,6 +24,7 @@ const EmployeesManager = () => {
   const [selectedJobType, setSelectedJobType] = useState<string>('all');
   const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
   const [showForm, setShowForm] = useState(false);
+  const [viewingEmployee, setViewingEmployee] = useState<string | null>(null);
   const [editingEmployee, setEditingEmployee] = useState(null);
 
   const handleEdit = (employee: any) => {
@@ -180,14 +182,22 @@ const EmployeesManager = () => {
                     <Badge variant={employee.is_active ? 'default' : 'secondary'}>
                       {employee.is_active ? 'Active' : 'Inactive'}
                     </Badge>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEdit(employee)}
-                      className="ml-auto"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
+                    <div className="ml-auto flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setViewingEmployee(employee.id)}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEdit(employee)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </Card>
@@ -210,6 +220,18 @@ const EmployeesManager = () => {
             </Button>
           )}
         </Card>
+      )}
+
+      {/* View Dialog */}
+      {viewingEmployee && (
+        <Dialog open={!!viewingEmployee} onOpenChange={() => setViewingEmployee(null)}>
+          <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+            <EmployeeDetails
+              employeeId={viewingEmployee}
+              onClose={() => setViewingEmployee(null)}
+            />
+          </DialogContent>
+        </Dialog>
       )}
 
       {/* Form Dialog */}

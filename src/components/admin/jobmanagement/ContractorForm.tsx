@@ -3,33 +3,52 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { useCreateJobContractor } from '@/hooks/useJobContractors';
+import { useCreateJobContractor, useUpdateJobContractor } from '@/hooks/useJobContractors';
 
 interface ContractorFormProps {
-  onSuccess: (contractorId: string) => void;
+  contractor?: any;
+  onSuccess: (contractorId?: string) => void;
   onCancel: () => void;
 }
 
-const ContractorForm = ({ onSuccess, onCancel }: ContractorFormProps) => {
-  const { register, handleSubmit, formState: { errors } } = useForm();
+const ContractorForm = ({ contractor, onSuccess, onCancel }: ContractorFormProps) => {
+  const { register, handleSubmit, formState: { errors } } = useForm({
+    defaultValues: contractor || {}
+  });
   const createContractor = useCreateJobContractor();
+  const updateContractor = useUpdateJobContractor();
 
   const onSubmit = async (formData: any) => {
-    // Generate contractor code
-    const code = `CONT-${Date.now().toString().slice(-6)}`;
-    
-    const contractor = await createContractor.mutateAsync({
-      contractor_code: code,
-      contractor_name: formData.contractor_name,
-      contact_person: formData.contact_person || null,
-      phone: formData.phone || null,
-      email: formData.email || null,
-      address: formData.address || null,
-      gst_number: formData.gst_number || null,
-      payment_terms: formData.payment_terms || null,
-    });
-
-    onSuccess(contractor.id);
+    if (contractor) {
+      // Update existing
+      await updateContractor.mutateAsync({
+        id: contractor.id,
+        data: {
+          contractor_name: formData.contractor_name,
+          contact_person: formData.contact_person || null,
+          phone: formData.phone || null,
+          email: formData.email || null,
+          address: formData.address || null,
+          gst_number: formData.gst_number || null,
+          payment_terms: formData.payment_terms || null,
+        }
+      });
+      onSuccess();
+    } else {
+      // Create new
+      const code = `CONT-${Date.now().toString().slice(-6)}`;
+      const newContractor = await createContractor.mutateAsync({
+        contractor_code: code,
+        contractor_name: formData.contractor_name,
+        contact_person: formData.contact_person || null,
+        phone: formData.phone || null,
+        email: formData.email || null,
+        address: formData.address || null,
+        gst_number: formData.gst_number || null,
+        payment_terms: formData.payment_terms || null,
+      });
+      onSuccess(newContractor.id);
+    }
   };
 
   return (
@@ -101,8 +120,11 @@ const ContractorForm = ({ onSuccess, onCancel }: ContractorFormProps) => {
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancel
         </Button>
-        <Button type="submit" disabled={createContractor.isPending}>
-          {createContractor.isPending ? 'Creating...' : 'Create Contractor'}
+        <Button type="submit" disabled={createContractor.isPending || updateContractor.isPending}>
+          {createContractor.isPending || updateContractor.isPending 
+            ? 'Saving...' 
+            : contractor ? 'Update Contractor' : 'Create Contractor'
+          }
         </Button>
       </div>
     </form>
