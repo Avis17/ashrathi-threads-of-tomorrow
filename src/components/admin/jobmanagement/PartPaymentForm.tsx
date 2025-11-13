@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useCreatePartPayment } from '@/hooks/usePartPayments';
+import { useJobBatches } from '@/hooks/useJobBatches';
 
 interface PartPaymentFormProps {
   employeeId: string;
@@ -20,9 +21,11 @@ const PartPaymentForm = ({ employeeId, employeeName, onSuccess, onCancel }: Part
       payment_mode: 'cash',
       amount: '',
       note: '',
+      batch_id: '',
     }
   });
   const createPayment = useCreatePartPayment();
+  const { data: batches } = useJobBatches();
 
   const onSubmit = async (formData: any) => {
     await createPayment.mutateAsync({
@@ -31,7 +34,8 @@ const PartPaymentForm = ({ employeeId, employeeName, onSuccess, onCancel }: Part
       amount: parseFloat(formData.amount),
       payment_mode: formData.payment_mode,
       note: formData.note || null,
-    });
+      batch_id: formData.batch_id || undefined,
+    } as any);
     onSuccess();
   };
 
@@ -63,6 +67,23 @@ const PartPaymentForm = ({ employeeId, employeeName, onSuccess, onCancel }: Part
         {errors.amount && (
           <span className="text-sm text-destructive">Required</span>
         )}
+      </div>
+
+      <div className="space-y-2">
+        <Label>Batch (Optional)</Label>
+        <Select onValueChange={(value) => setValue('batch_id', value || '')}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select batch..." />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">None</SelectItem>
+            {batches?.map((batch) => (
+              <SelectItem key={batch.id} value={batch.id}>
+                {batch.batch_number} {batch.job_styles?.style_name ? `- ${batch.job_styles.style_name}` : ''}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="space-y-2">

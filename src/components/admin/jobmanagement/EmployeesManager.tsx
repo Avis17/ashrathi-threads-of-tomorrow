@@ -15,7 +15,8 @@ import {
 import { useJobEmployees } from '@/hooks/useJobEmployees';
 import EmployeeForm from './EmployeeForm';
 import EmployeeDetails from './EmployeeDetails';
-import { UserPlus, Edit, Phone, MapPin, Briefcase, Users, Eye } from 'lucide-react';
+import EmployeePaymentRecords from './EmployeePaymentRecords';
+import { UserPlus, Edit, Phone, MapPin, Briefcase, Users, Eye, Receipt } from 'lucide-react';
 import { JOB_DEPARTMENTS } from '@/lib/jobDepartments';
 
 const EmployeesManager = () => {
@@ -26,6 +27,8 @@ const EmployeesManager = () => {
   const [showForm, setShowForm] = useState(false);
   const [viewingEmployee, setViewingEmployee] = useState<string | null>(null);
   const [editingEmployee, setEditingEmployee] = useState(null);
+  const [showPaymentRecords, setShowPaymentRecords] = useState(false);
+  const [paymentRecordsEmployee, setPaymentRecordsEmployee] = useState<any>(null);
 
   const handleEdit = (employee: any) => {
     setEditingEmployee(employee);
@@ -197,6 +200,16 @@ const EmployeesManager = () => {
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setPaymentRecordsEmployee(employee);
+                          setShowPaymentRecords(true);
+                        }}
+                      >
+                        <Receipt className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -238,6 +251,18 @@ const EmployeesManager = () => {
       <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <EmployeeForm employee={editingEmployee} onClose={handleCloseForm} />
+        </DialogContent>
+      </Dialog>
+
+      {/* Payment Records Dialog */}
+      <Dialog open={showPaymentRecords} onOpenChange={setShowPaymentRecords}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          {paymentRecordsEmployee && (
+            <EmployeePaymentRecords
+              employeeId={paymentRecordsEmployee.id}
+              employeeName={paymentRecordsEmployee.name}
+            />
+          )}
         </DialogContent>
       </Dialog>
     </div>
