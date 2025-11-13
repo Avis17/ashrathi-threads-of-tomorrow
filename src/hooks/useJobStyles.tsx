@@ -1,33 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { Database } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
 
-export type JobStyle = {
-  id: string;
-  style_code: string;
-  pattern_number: string;
-  style_name: string;
-  style_image_url: string | null;
-  fabric_type: string | null;
-  gsm_range: string | null;
-  garment_type: string | null;
-  category: string | null;
-  season: string | null;
-  fit: string | null;
-  fabric_per_piece: number;
-  accessories: any;
-  rate_cutting: number;
-  rate_stitching_singer: number;
-  rate_stitching_power_table: number;
-  rate_ironing: number;
-  rate_checking: number;
-  rate_packing: number;
-  min_order_qty: number | null;
-  remarks: string | null;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-};
+export type JobStyle = Database['public']['Tables']['job_styles']['Row'];
 
 export const useJobStyles = () => {
   return useQuery({
@@ -62,10 +38,10 @@ export const useJobStyle = (id: string) => {
 export const useCreateJobStyle = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: Partial<JobStyle>) => {
+    mutationFn: async (data: Database['public']['Tables']['job_styles']['Insert']) => {
       const { data: style, error } = await supabase
         .from('job_styles')
-        .insert(data)
+        .insert([data])
         .select()
         .single();
       if (error) throw error;
@@ -84,7 +60,7 @@ export const useCreateJobStyle = () => {
 export const useUpdateJobStyle = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Partial<JobStyle> }) => {
+    mutationFn: async ({ id, data }: { id: string; data: Database['public']['Tables']['job_styles']['Update'] }) => {
       const { data: style, error } = await supabase
         .from('job_styles')
         .update(data)

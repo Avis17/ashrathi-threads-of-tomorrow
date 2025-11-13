@@ -12,18 +12,38 @@ import {
 } from '@/components/ui/select';
 import { useCreateJobStyle, useUpdateJobStyle, type JobStyle } from '@/hooks/useJobStyles';
 import { Scissors, Zap, Flame, CheckCircle, Package } from 'lucide-react';
+import { Database } from '@/integrations/supabase/types';
 
 interface StyleFormProps {
   style?: JobStyle | null;
   onClose: () => void;
 }
 
+type StyleFormData = Database['public']['Tables']['job_styles']['Insert'];
+
 const StyleForm = ({ style, onClose }: StyleFormProps) => {
   const createMutation = useCreateJobStyle();
   const updateMutation = useUpdateJobStyle();
   
-  const { register, handleSubmit, setValue, watch } = useForm({
-    defaultValues: style || {
+  const { register, handleSubmit, setValue, watch } = useForm<StyleFormData>({
+    defaultValues: style ? {
+      style_code: style.style_code,
+      pattern_number: style.pattern_number,
+      style_name: style.style_name,
+      garment_type: style.garment_type,
+      category: style.category,
+      fabric_type: style.fabric_type,
+      gsm_range: style.gsm_range,
+      season: style.season,
+      fit: style.fit,
+      fabric_per_piece: style.fabric_per_piece,
+      rate_cutting: style.rate_cutting,
+      rate_stitching_singer: style.rate_stitching_singer,
+      rate_stitching_power_table: style.rate_stitching_power_table,
+      rate_ironing: style.rate_ironing,
+      rate_checking: style.rate_checking,
+      rate_packing: style.rate_packing,
+    } : {
       style_code: '',
       pattern_number: '',
       style_name: '',
@@ -45,7 +65,7 @@ const StyleForm = ({ style, onClose }: StyleFormProps) => {
 
   const garmentType = watch('garment_type');
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: StyleFormData) => {
     if (style) {
       await updateMutation.mutateAsync({ id: style.id, data });
     } else {

@@ -1,22 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { Database } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
 
-export type JobBatchExpense = {
-  id: string;
-  batch_id: string;
-  date: string;
-  expense_type: string;
-  item_name: string;
-  quantity: number | null;
-  unit: string | null;
-  rate_per_unit: number | null;
-  amount: number;
-  supplier_name: string | null;
-  bill_number: string | null;
-  note: string | null;
-  created_at: string;
-};
+export type JobBatchExpense = Database['public']['Tables']['job_batch_expenses']['Row'];
 
 export const useJobBatchExpenses = (batchId?: string) => {
   return useQuery({
@@ -41,10 +28,10 @@ export const useJobBatchExpenses = (batchId?: string) => {
 export const useCreateJobBatchExpense = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: Partial<JobBatchExpense>) => {
+    mutationFn: async (data: Database['public']['Tables']['job_batch_expenses']['Insert']) => {
       const { data: expense, error } = await supabase
         .from('job_batch_expenses')
-        .insert(data)
+        .insert([data])
         .select()
         .single();
       if (error) throw error;
@@ -63,7 +50,7 @@ export const useCreateJobBatchExpense = () => {
 export const useUpdateJobBatchExpense = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Partial<JobBatchExpense> }) => {
+    mutationFn: async ({ id, data }: { id: string; data: Database['public']['Tables']['job_batch_expenses']['Update'] }) => {
       const { data: expense, error } = await supabase
         .from('job_batch_expenses')
         .update(data)

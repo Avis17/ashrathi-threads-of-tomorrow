@@ -1,34 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { Database } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
 
-export type JobBatch = {
-  id: string;
-  batch_number: string;
-  style_id: string;
-  date_created: string;
-  fabric_type: string;
-  gsm: string;
-  color: string;
-  total_fabric_received_kg: number;
-  expected_pieces: number;
-  cut_quantity: number;
-  stitched_quantity: number;
-  checked_quantity: number;
-  packed_quantity: number;
-  final_quantity: number;
-  wastage_percent: number;
-  supplier_name: string | null;
-  lot_number: string | null;
-  fabric_width: string | null;
-  fabric_shrinkage_percent: number | null;
-  dye_test_result: string | null;
-  marker_efficiency: number | null;
-  status: string;
-  remarks: string | null;
-  created_at: string;
-  updated_at: string;
-};
+export type JobBatch = Database['public']['Tables']['job_batches']['Row'];
 
 export const useJobBatches = () => {
   return useQuery({
@@ -63,10 +38,10 @@ export const useJobBatch = (id: string) => {
 export const useCreateJobBatch = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: Partial<JobBatch>) => {
+    mutationFn: async (data: Database['public']['Tables']['job_batches']['Insert']) => {
       const { data: batch, error } = await supabase
         .from('job_batches')
-        .insert(data)
+        .insert([data])
         .select()
         .single();
       if (error) throw error;
@@ -85,7 +60,7 @@ export const useCreateJobBatch = () => {
 export const useUpdateJobBatch = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Partial<JobBatch> }) => {
+    mutationFn: async ({ id, data }: { id: string; data: Database['public']['Tables']['job_batches']['Update'] }) => {
       const { data: batch, error } = await supabase
         .from('job_batches')
         .update(data)
