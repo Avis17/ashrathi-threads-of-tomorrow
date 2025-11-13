@@ -1,130 +1,221 @@
 import { useState } from 'react';
-import { Plus, Search, Users, UserCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useJobEmployees } from '@/hooks/useJobEmployees';
 import EmployeeForm from './EmployeeForm';
+import { UserPlus, Edit, Phone, MapPin, Briefcase, Users } from 'lucide-react';
+import { JOB_DEPARTMENTS } from '@/lib/jobDepartments';
 
 const EmployeesManager = () => {
   const { data: employees, isLoading } = useJobEmployees();
   const [searchTerm, setSearchTerm] = useState('');
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingEmployee, setEditingEmployee] = useState<any>(null);
-
-  const filteredEmployees = employees?.filter((emp) =>
-    emp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    emp.employee_code.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const [selectedJobType, setSelectedJobType] = useState<string>('all');
+  const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
+  const [showForm, setShowForm] = useState(false);
+  const [editingEmployee, setEditingEmployee] = useState(null);
 
   const handleEdit = (employee: any) => {
     setEditingEmployee(employee);
-    setIsFormOpen(true);
+    setShowForm(true);
   };
 
   const handleCloseForm = () => {
-    setIsFormOpen(false);
+    setShowForm(false);
     setEditingEmployee(null);
+  };
+
+  // Filter employees
+  const filteredEmployees = employees?.filter(employee => {
+    const matchesSearch = employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          employee.employee_code.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesJobType = selectedJobType === 'all' || employee.employee_type === selectedJobType;
+    
+    const employeeDepts = (employee.departments as string[]) || [];
+    const matchesDepartment = selectedDepartment === 'all' || employeeDepts.includes(selectedDepartment);
+    
+    return matchesSearch && matchesJobType && matchesDepartment;
+  });
+
+  const getDepartmentColor = (dept: string) => {
+    const colors: Record<string, string> = {
+      'Cutting': 'bg-blue-500/10 text-blue-500 border-blue-500/20',
+      'Stitching(Singer)': 'bg-purple-500/10 text-purple-500 border-purple-500/20',
+      'Stitching(Powertable)': 'bg-violet-500/10 text-violet-500 border-violet-500/20',
+      'Ironing': 'bg-orange-500/10 text-orange-500 border-orange-500/20',
+      'Checking': 'bg-green-500/10 text-green-500 border-green-500/20',
+      'Packing': 'bg-cyan-500/10 text-cyan-500 border-cyan-500/20',
+      'Maintenance': 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
+      'Complete Master': 'bg-pink-500/10 text-pink-500 border-pink-500/20',
+    };
+    return colors[dept] || 'bg-gray-500/10 text-gray-500 border-gray-500/20';
   };
 
   return (
     <div className="space-y-6">
-      {/* Header Actions */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <div className="relative flex-1 max-w-md w-full">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search employees..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
+        <div>
+          <h2 className="text-2xl font-bold">Employees Management</h2>
+          <p className="text-muted-foreground">Manage production workforce</p>
         </div>
-        <Button 
-          onClick={() => setIsFormOpen(true)}
-          className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity"
-        >
-          <Plus className="h-4 w-4 mr-2" />
+        <Button onClick={() => setShowForm(true)} className="gap-2">
+          <UserPlus className="h-4 w-4" />
           Add Employee
         </Button>
       </div>
 
-      {/* Employees Grid */}
-      {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-48 bg-muted/50 animate-pulse rounded-lg" />
-          ))}
+      {/* Filters */}
+      <Card className="p-4">
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex-1">
+            <Input
+              placeholder="Search by name or code..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full"
+            />
+          </div>
+          <Select value={selectedJobType} onValueChange={setSelectedJobType}>
+            <SelectTrigger className="w-full md:w-[200px]">
+              <SelectValue placeholder="Job Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value="direct">Direct Worker</SelectItem>
+              <SelectItem value="contract">Contract Worker</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
+            <SelectTrigger className="w-full md:w-[200px]">
+              <SelectValue placeholder="Department" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Departments</SelectItem>
+              {JOB_DEPARTMENTS.map((dept) => (
+                <SelectItem key={dept} value={dept}>
+                  {dept}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredEmployees?.map((employee) => (
-            <Card 
-              key={employee.id} 
-              className="hover:shadow-xl transition-all duration-300 cursor-pointer border-l-4 border-l-primary"
-              onClick={() => handleEdit(employee)}
-            >
-              <CardContent className="p-6 space-y-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="h-12 w-12 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-                      <Users className="h-6 w-6 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-lg">{employee.name}</h3>
-                      <p className="text-sm text-muted-foreground font-mono">{employee.employee_code}</p>
-                    </div>
-                  </div>
-                  {employee.is_active ? (
-                    <Badge className="bg-green-500">
-                      <UserCheck className="h-3 w-3 mr-1" />
-                      Active
-                    </Badge>
-                  ) : (
-                    <Badge variant="secondary">Inactive</Badge>
-                  )}
-                </div>
-                
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Type:</span>
-                    <Badge variant="outline">{employee.employee_type}</Badge>
-                  </div>
-                  {employee.phone && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Phone:</span>
-                      <span className="font-medium">{employee.phone}</span>
-                    </div>
-                  )}
-                  {employee.contractor_name && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Contractor:</span>
-                      <span className="font-medium">{employee.contractor_name}</span>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
+      </Card>
+
+      {/* Employee Cards */}
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[...Array(6)].map((_, i) => (
+            <Card key={i} className="p-6">
+              <Skeleton className="h-20 w-full" />
             </Card>
           ))}
         </div>
-      )}
+      ) : filteredEmployees && filteredEmployees.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredEmployees.map((employee: any) => {
+            const departments = (employee.departments as string[]) || [];
+            const contractor = employee.contractor;
+            return (
+              <Card key={employee.id} className="p-6 hover:shadow-lg transition-all">
+                <div className="space-y-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-lg">{employee.name}</h3>
+                      <p className="text-sm text-muted-foreground">{employee.employee_code}</p>
+                    </div>
+                    <Badge variant={employee.employee_type === 'direct' ? 'default' : 'secondary'}>
+                      {employee.employee_type === 'direct' ? 'Direct' : 'Contract'}
+                    </Badge>
+                  </div>
 
-      {filteredEmployees?.length === 0 && !isLoading && (
-        <div className="text-center py-12">
-          <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground">No employees found</p>
+                  {/* Departments */}
+                  {departments.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {departments.map((dept) => (
+                        <Badge
+                          key={dept}
+                          variant="outline"
+                          className={`text-xs ${getDepartmentColor(dept)}`}
+                        >
+                          {dept}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="space-y-2 text-sm">
+                    {employee.phone && (
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Phone className="h-4 w-4" />
+                        <span>{employee.phone}</span>
+                      </div>
+                    )}
+                    {contractor?.contractor_name && (
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Briefcase className="h-4 w-4" />
+                        <span>{contractor.contractor_name}</span>
+                      </div>
+                    )}
+                    {employee.address && (
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <MapPin className="h-4 w-4" />
+                        <span className="truncate">{employee.address}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2 pt-2 border-t">
+                    <Badge variant={employee.is_active ? 'default' : 'secondary'}>
+                      {employee.is_active ? 'Active' : 'Inactive'}
+                    </Badge>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEdit(employee)}
+                      className="ml-auto"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
         </div>
+      ) : (
+        <Card className="p-12 text-center">
+          <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+          <h3 className="text-lg font-semibold mb-2">No employees found</h3>
+          <p className="text-muted-foreground mb-4">
+            {searchTerm || selectedJobType !== 'all' || selectedDepartment !== 'all'
+              ? 'Try adjusting your filters'
+              : 'Get started by adding your first employee'}
+          </p>
+          {!searchTerm && selectedJobType === 'all' && selectedDepartment === 'all' && (
+            <Button onClick={() => setShowForm(true)} className="gap-2">
+              <UserPlus className="h-4 w-4" />
+              Add Employee
+            </Button>
+          )}
+        </Card>
       )}
 
-      {/* Employee Form Dialog */}
-      <Dialog open={isFormOpen} onOpenChange={handleCloseForm}>
-        <DialogContent className="max-w-2xl">
-          <EmployeeForm 
-            employee={editingEmployee} 
-            onClose={handleCloseForm}
-          />
+      {/* Form Dialog */}
+      <Dialog open={showForm} onOpenChange={setShowForm}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <EmployeeForm employee={editingEmployee} onClose={handleCloseForm} />
         </DialogContent>
       </Dialog>
     </div>

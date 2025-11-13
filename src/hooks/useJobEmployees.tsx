@@ -11,7 +11,7 @@ export const useJobEmployees = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('job_employees')
-        .select('*')
+        .select('*, contractor:job_contractors(*)')
         .order('name');
       if (error) throw error;
       return data as JobEmployee[];

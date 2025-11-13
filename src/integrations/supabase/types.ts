@@ -886,13 +886,60 @@ export type Database = {
           },
         ]
       }
+      job_contractors: {
+        Row: {
+          address: string | null
+          contact_person: string | null
+          contractor_code: string
+          contractor_name: string
+          created_at: string | null
+          email: string | null
+          gst_number: string | null
+          id: string
+          is_active: boolean | null
+          payment_terms: string | null
+          phone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          contact_person?: string | null
+          contractor_code: string
+          contractor_name: string
+          created_at?: string | null
+          email?: string | null
+          gst_number?: string | null
+          id?: string
+          is_active?: boolean | null
+          payment_terms?: string | null
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          contact_person?: string | null
+          contractor_code?: string
+          contractor_name?: string
+          created_at?: string | null
+          email?: string | null
+          gst_number?: string | null
+          id?: string
+          is_active?: boolean | null
+          payment_terms?: string | null
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       job_employees: {
         Row: {
           address: string | null
+          contractor_id: string | null
           contractor_name: string | null
           created_at: string | null
           date_joined: string | null
           date_left: string | null
+          departments: Json | null
           employee_code: string
           employee_type: string
           id: string
@@ -903,10 +950,12 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          contractor_id?: string | null
           contractor_name?: string | null
           created_at?: string | null
           date_joined?: string | null
           date_left?: string | null
+          departments?: Json | null
           employee_code: string
           employee_type: string
           id?: string
@@ -917,10 +966,12 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          contractor_id?: string | null
           contractor_name?: string | null
           created_at?: string | null
           date_joined?: string | null
           date_left?: string | null
+          departments?: Json | null
           employee_code?: string
           employee_type?: string
           id?: string
@@ -929,7 +980,15 @@ export type Database = {
           phone?: string | null
           rate_type?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "job_employees_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "job_contractors"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       job_order_cost_summary: {
         Row: {

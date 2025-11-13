@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,65 +12,122 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useCreateJobStyle, useUpdateJobStyle, type JobStyle } from '@/hooks/useJobStyles';
-import { Scissors, Zap, Flame, CheckCircle, Package } from 'lucide-react';
-import { Database } from '@/integrations/supabase/types';
+import { supabase } from '@/integrations/supabase/client';
+import { Upload, Link as LinkIcon, X } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface StyleFormProps {
   style?: JobStyle | null;
   onClose: () => void;
 }
 
-type StyleFormData = Database['public']['Tables']['job_styles']['Insert'];
+type FormData = {
+  style_code: string;
+  pattern_number: string;
+  style_name: string;
+  garment_type: string;
+  category: string;
+  season: string;
+  fit: string;
+  rate_cutting: number;
+  rate_stitching_singer: number;
+  rate_stitching_power_table: number;
+  rate_ironing: number;
+  rate_checking: number;
+  rate_packing: number;
+  min_order_qty: number;
+  remarks: string;
+  style_image_url: string;
+};
 
 const StyleForm = ({ style, onClose }: StyleFormProps) => {
   const createMutation = useCreateJobStyle();
   const updateMutation = useUpdateJobStyle();
-  
-  const { register, handleSubmit, setValue, watch } = useForm<StyleFormData>({
-    defaultValues: style ? {
-      style_code: style.style_code,
-      pattern_number: style.pattern_number,
-      style_name: style.style_name,
-      garment_type: style.garment_type,
-      category: style.category,
-      fabric_type: style.fabric_type,
-      gsm_range: style.gsm_range,
-      season: style.season,
-      fit: style.fit,
-      fabric_per_piece: style.fabric_per_piece,
-      rate_cutting: style.rate_cutting,
-      rate_stitching_singer: style.rate_stitching_singer,
-      rate_stitching_power_table: style.rate_stitching_power_table,
-      rate_ironing: style.rate_ironing,
-      rate_checking: style.rate_checking,
-      rate_packing: style.rate_packing,
-    } : {
-      style_code: '',
-      pattern_number: '',
-      style_name: '',
-      garment_type: 'kids',
-      category: '',
-      fabric_type: '',
-      gsm_range: '',
-      season: 'all-season',
-      fit: 'regular',
-      fabric_per_piece: 0,
-      rate_cutting: 0,
-      rate_stitching_singer: 0,
-      rate_stitching_power_table: 0,
-      rate_ironing: 0,
-      rate_checking: 0,
-      rate_packing: 0,
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>(style?.style_image_url || '');
+  const [uploadMode, setUploadMode] = useState<'file' | 'url'>('file');
+
+  const { register, handleSubmit, setValue, watch } = useForm<FormData>({
+    defaultValues: {
+      style_code: style?.style_code || '',
+      pattern_number: style?.pattern_number || '',
+      style_name: style?.style_name || '',
+      garment_type: style?.garment_type || '',
+      category: style?.category || '',
+      season: style?.season || '',
+      fit: style?.fit || '',
+      rate_cutting: style?.rate_cutting || 0,
+      rate_stitching_singer: style?.rate_stitching_singer || 0,
+      rate_stitching_power_table: style?.rate_stitching_power_table || 0,
+      rate_ironing: style?.rate_ironing || 0,
+      rate_checking: style?.rate_checking || 0,
+      rate_packing: style?.rate_packing || 0,
+      min_order_qty: style?.min_order_qty || 0,
+      remarks: style?.remarks || '',
+      style_image_url: style?.style_image_url || '',
     },
   });
 
-  const garmentType = watch('garment_type');
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
-  const onSubmit = async (data: StyleFormData) => {
+  const handleUrlChange = (url: string) => {
+    setImagePreview(url);
+    setValue('style_image_url', url);
+  };
+
+  const uploadImage = async (): Promise<string | null> => {
+    if (!imageFile) return null;
+
+    const fileExt = imageFile.name.split('.').pop();
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+    const filePath = `${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('style-images')
+      .upload(filePath, imageFile);
+
+    if (uploadError) {
+      toast.error('Failed to upload image');
+      return null;
+    }
+
+    const { data } = supabase.storage
+      .from('style-images')
+      .getPublicUrl(filePath);
+
+    return data.publicUrl;
+  };
+
+  const onSubmit = async (data: FormData) => {
+    let imageUrl = data.style_image_url;
+
+    // Upload file if selected
+    if (imageFile) {
+      const uploadedUrl = await uploadImage();
+      if (uploadedUrl) {
+        imageUrl = uploadedUrl;
+      }
+    }
+
+    const submitData = {
+      ...data,
+      style_image_url: imageUrl || null,
+    };
+
     if (style) {
-      await updateMutation.mutateAsync({ id: style.id, data });
+      await updateMutation.mutateAsync({ id: style.id, data: submitData });
     } else {
-      await createMutation.mutateAsync(data);
+      await createMutation.mutateAsync(submitData);
     }
     onClose();
   };
@@ -80,74 +138,37 @@ const StyleForm = ({ style, onClose }: StyleFormProps) => {
         <h2 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
           {style ? 'Edit Style' : 'Create New Style'}
         </h2>
-        <p className="text-sm text-muted-foreground">
-          Enter the style details and process rates
-        </p>
       </div>
 
       {/* Basic Information */}
       <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
-        <h3 className="font-semibold text-foreground">Basic Information</h3>
+        <h3 className="font-semibold">Basic Information</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="style_code">Style Code *</Label>
-            <Input id="style_code" {...register('style_code')} required placeholder="FF-001" />
+            <Label>Style Code *</Label>
+            <Input {...register('style_code')} required placeholder="FF-001" />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="pattern_number">Pattern Number *</Label>
-            <Input id="pattern_number" {...register('pattern_number')} required placeholder="001" />
+            <Label>Pattern Number *</Label>
+            <Input {...register('pattern_number')} required placeholder="P001" />
           </div>
           <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="style_name">Style Name *</Label>
-            <Input id="style_name" {...register('style_name')} required placeholder="Girls Cotton Leggings" />
+            <Label>Style Name *</Label>
+            <Input {...register('style_name')} required placeholder="Girls Leggings" />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="garment_type">Garment Type *</Label>
-            <Select value={garmentType} onValueChange={(value) => setValue('garment_type', value)}>
+            <Label>Garment Type</Label>
+            <Input {...register('garment_type')} placeholder="Leggings" />
+          </div>
+          <div className="space-y-2">
+            <Label>Category</Label>
+            <Input {...register('category')} placeholder="Kids > Leggings" />
+          </div>
+          <div className="space-y-2">
+            <Label>Season</Label>
+            <Select value={watch('season')} onValueChange={(value) => setValue('season', value)}>
               <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="kids">Kids</SelectItem>
-                <SelectItem value="women">Women</SelectItem>
-                <SelectItem value="men">Men</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="category">Category</Label>
-            <Input id="category" {...register('category')} placeholder="Leggings, T-shirt, etc." />
-          </div>
-        </div>
-      </div>
-
-      {/* Fabric Details */}
-      <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
-        <h3 className="font-semibold text-foreground">Fabric Details</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="fabric_type">Fabric Type</Label>
-            <Input id="fabric_type" {...register('fabric_type')} placeholder="Polyester Lycra" />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="gsm_range">GSM Range</Label>
-            <Input id="gsm_range" {...register('gsm_range')} placeholder="180-220 GSM" />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="fabric_per_piece">Fabric Per Piece (meters)</Label>
-            <Input 
-              id="fabric_per_piece" 
-              type="number" 
-              step="0.01"
-              {...register('fabric_per_piece', { valueAsNumber: true })} 
-              placeholder="0.25" 
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="season">Season</Label>
-            <Select defaultValue={watch('season')} onValueChange={(value) => setValue('season', value)}>
-              <SelectTrigger>
-                <SelectValue />
+                <SelectValue placeholder="Select season" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all-season">All Season</SelectItem>
@@ -156,115 +177,133 @@ const StyleForm = ({ style, onClose }: StyleFormProps) => {
               </SelectContent>
             </Select>
           </div>
+          <div className="space-y-2">
+            <Label>Fit</Label>
+            <Input {...register('fit')} placeholder="Regular" />
+          </div>
+        </div>
+      </div>
+
+      {/* Style Image */}
+      <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
+        <h3 className="font-semibold">Style Image</h3>
+        <div className="space-y-4">
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant={uploadMode === 'file' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setUploadMode('file')}
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              Upload File
+            </Button>
+            <Button
+              type="button"
+              variant={uploadMode === 'url' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setUploadMode('url')}
+            >
+              <LinkIcon className="h-4 w-4 mr-2" />
+              Enter URL
+            </Button>
+          </div>
+
+          {uploadMode === 'file' ? (
+            <div>
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+              />
+            </div>
+          ) : (
+            <div>
+              <Input
+                placeholder="Enter image URL"
+                value={watch('style_image_url')}
+                onChange={(e) => handleUrlChange(e.target.value)}
+              />
+            </div>
+          )}
+
+          {imagePreview && (
+            <div className="relative w-full aspect-video bg-muted rounded-lg overflow-hidden">
+              <img
+                src={imagePreview}
+                alt="Preview"
+                className="w-full h-full object-cover"
+              />
+              <Button
+                type="button"
+                variant="destructive"
+                size="icon"
+                className="absolute top-2 right-2"
+                onClick={() => {
+                  setImagePreview('');
+                  setImageFile(null);
+                  setValue('style_image_url', '');
+                }}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Process Rates */}
-      <div className="space-y-4 p-4 bg-gradient-to-br from-primary/5 to-secondary/5 rounded-lg border-2 border-primary/20">
-        <h3 className="font-semibold text-foreground flex items-center gap-2">
-          💰 Process Rates (₹ per piece)
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
+        <h3 className="font-semibold">Process Rates (₹ per piece)</h3>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="rate_cutting" className="flex items-center gap-2">
-              <Scissors className="h-4 w-4 text-primary" />
-              Cutting
-            </Label>
-            <Input 
-              id="rate_cutting" 
-              type="number" 
-              step="0.01"
-              {...register('rate_cutting', { valueAsNumber: true })} 
-              placeholder="2.00"
-              className="font-mono"
-            />
+            <Label>Cutting</Label>
+            <Input type="number" step="0.01" {...register('rate_cutting', { valueAsNumber: true })} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="rate_stitching_singer" className="flex items-center gap-2">
-              <Zap className="h-4 w-4 text-primary" />
-              Stitching (Singer)
-            </Label>
-            <Input 
-              id="rate_stitching_singer" 
-              type="number" 
-              step="0.01"
-              {...register('rate_stitching_singer', { valueAsNumber: true })} 
-              placeholder="8.00"
-              className="font-mono"
-            />
+            <Label>Stitching (Singer)</Label>
+            <Input type="number" step="0.01" {...register('rate_stitching_singer', { valueAsNumber: true })} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="rate_stitching_power_table" className="flex items-center gap-2">
-              <Zap className="h-4 w-4 text-secondary" />
-              Stitching (Power)
-            </Label>
-            <Input 
-              id="rate_stitching_power_table" 
-              type="number" 
-              step="0.01"
-              {...register('rate_stitching_power_table', { valueAsNumber: true })} 
-              placeholder="10.00"
-              className="font-mono"
-            />
+            <Label>Stitching (Power Table)</Label>
+            <Input type="number" step="0.01" {...register('rate_stitching_power_table', { valueAsNumber: true })} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="rate_ironing" className="flex items-center gap-2">
-              <Flame className="h-4 w-4 text-orange-500" />
-              Ironing
-            </Label>
-            <Input 
-              id="rate_ironing" 
-              type="number" 
-              step="0.01"
-              {...register('rate_ironing', { valueAsNumber: true })} 
-              placeholder="3.00"
-              className="font-mono"
-            />
+            <Label>Ironing</Label>
+            <Input type="number" step="0.01" {...register('rate_ironing', { valueAsNumber: true })} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="rate_checking" className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-green-500" />
-              Checking
-            </Label>
-            <Input 
-              id="rate_checking" 
-              type="number" 
-              step="0.01"
-              {...register('rate_checking', { valueAsNumber: true })} 
-              placeholder="2.00"
-              className="font-mono"
-            />
+            <Label>Checking</Label>
+            <Input type="number" step="0.01" {...register('rate_checking', { valueAsNumber: true })} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="rate_packing" className="flex items-center gap-2">
-              <Package className="h-4 w-4 text-blue-500" />
-              Packing
-            </Label>
-            <Input 
-              id="rate_packing" 
-              type="number" 
-              step="0.01"
-              {...register('rate_packing', { valueAsNumber: true })} 
-              placeholder="1.50"
-              className="font-mono"
-            />
+            <Label>Packing</Label>
+            <Input type="number" step="0.01" {...register('rate_packing', { valueAsNumber: true })} />
           </div>
         </div>
       </div>
 
-      {/* Remarks */}
-      <div className="space-y-2">
-        <Label htmlFor="remarks">Remarks</Label>
-        <Textarea id="remarks" {...register('remarks')} rows={3} placeholder="Additional notes..." />
+      {/* Additional Details */}
+      <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
+        <h3 className="font-semibold">Additional Details</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label>Min Order Quantity</Label>
+            <Input type="number" {...register('min_order_qty', { valueAsNumber: true })} />
+          </div>
+          <div className="space-y-2 md:col-span-2">
+            <Label>Remarks</Label>
+            <Textarea {...register('remarks')} rows={2} />
+          </div>
+        </div>
       </div>
 
-      {/* Actions */}
       <div className="flex gap-3 justify-end pt-4 border-t">
         <Button type="button" variant="outline" onClick={onClose}>
           Cancel
         </Button>
-        <Button 
-          type="submit" 
+        <Button
+          type="submit"
           className="bg-gradient-to-r from-primary to-secondary"
           disabled={createMutation.isPending || updateMutation.isPending}
         >

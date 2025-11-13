@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { useJobStyles } from '@/hooks/useJobStyles';
 import StyleCard from './StyleCard';
 import StyleForm from './StyleForm';
+import StyleDetails from './StyleDetails';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import {
   Select,
@@ -19,7 +20,9 @@ const StylesManager = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [editingStyle, setEditingStyle] = useState<any>(null);
+  const [viewingStyle, setViewingStyle] = useState<any>(null);
 
   const filteredStyles = styles?.filter((style) => {
     const matchesSearch = 
@@ -34,6 +37,11 @@ const StylesManager = () => {
     return matchesSearch && matchesFilter && style.is_active;
   });
 
+  const handleView = (style: any) => {
+    setViewingStyle(style);
+    setIsDetailsOpen(true);
+  };
+
   const handleEdit = (style: any) => {
     setEditingStyle(style);
     setIsFormOpen(true);
@@ -42,6 +50,17 @@ const StylesManager = () => {
   const handleCloseForm = () => {
     setIsFormOpen(false);
     setEditingStyle(null);
+  };
+
+  const handleCloseDetails = () => {
+    setIsDetailsOpen(false);
+    setViewingStyle(null);
+  };
+
+  const handleEditFromDetails = () => {
+    setEditingStyle(viewingStyle);
+    setIsDetailsOpen(false);
+    setIsFormOpen(true);
   };
 
   return (
@@ -90,7 +109,9 @@ const StylesManager = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredStyles?.map((style) => (
-            <StyleCard key={style.id} style={style} onEdit={handleEdit} />
+            <div key={style.id} onClick={() => handleView(style)} className="cursor-pointer">
+              <StyleCard style={style} onEdit={handleEdit} />
+            </div>
           ))}
         </div>
       )}
@@ -100,6 +121,14 @@ const StylesManager = () => {
           <p className="text-muted-foreground">No styles found</p>
         </div>
       )}
+
+      {/* Style Details Dialog */}
+      <StyleDetails
+        style={viewingStyle}
+        open={isDetailsOpen}
+        onClose={handleCloseDetails}
+        onEdit={handleEditFromDetails}
+      />
 
       {/* Style Form Dialog */}
       <Dialog open={isFormOpen} onOpenChange={handleCloseForm}>

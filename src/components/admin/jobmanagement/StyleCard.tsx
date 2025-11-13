@@ -62,9 +62,9 @@ const StyleCard = ({ style, onEdit }: StyleCardProps) => {
             <Badge variant="outline" className="text-xs">
               {style.category}
             </Badge>
-            {style.fabric_type && (
+            {style.season && (
               <Badge variant="outline" className="text-xs">
-                {style.fabric_type}
+                {style.season}
               </Badge>
             )}
           </div>
@@ -84,7 +84,10 @@ const StyleCard = ({ style, onEdit }: StyleCardProps) => {
             variant="outline" 
             size="sm" 
             className="flex-1"
-            onClick={() => onEdit(style)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit(style);
+            }}
           >
             <Eye className="h-4 w-4 mr-1" />
             View
@@ -92,7 +95,10 @@ const StyleCard = ({ style, onEdit }: StyleCardProps) => {
           <Button 
             size="sm" 
             className="flex-1 bg-gradient-to-r from-primary to-secondary"
-            onClick={() => onEdit(style)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit(style);
+            }}
           >
             <Edit className="h-4 w-4 mr-1" />
             Edit
