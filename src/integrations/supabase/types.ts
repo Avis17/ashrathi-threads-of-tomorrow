@@ -1194,6 +1194,7 @@ export type Database = {
       job_part_payments: {
         Row: {
           amount: number
+          batch_id: string | null
           created_at: string | null
           employee_id: string | null
           id: string
@@ -1203,6 +1204,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          batch_id?: string | null
           created_at?: string | null
           employee_id?: string | null
           id?: string
@@ -1212,6 +1214,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          batch_id?: string | null
           created_at?: string | null
           employee_id?: string | null
           id?: string
@@ -1220,6 +1223,13 @@ export type Database = {
           payment_mode?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "job_part_payments_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "job_batches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "job_part_payments_employee_id_fkey"
             columns: ["employee_id"]
@@ -1372,6 +1382,7 @@ export type Database = {
       }
       job_weekly_settlements: {
         Row: {
+          batch_id: string | null
           created_at: string | null
           employee_id: string | null
           id: string
@@ -1386,6 +1397,7 @@ export type Database = {
           week_start_date: string
         }
         Insert: {
+          batch_id?: string | null
           created_at?: string | null
           employee_id?: string | null
           id?: string
@@ -1400,6 +1412,7 @@ export type Database = {
           week_start_date: string
         }
         Update: {
+          batch_id?: string | null
           created_at?: string | null
           employee_id?: string | null
           id?: string
@@ -1414,6 +1427,13 @@ export type Database = {
           week_start_date?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "job_weekly_settlements_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "job_batches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "job_weekly_settlements_employee_id_fkey"
             columns: ["employee_id"]

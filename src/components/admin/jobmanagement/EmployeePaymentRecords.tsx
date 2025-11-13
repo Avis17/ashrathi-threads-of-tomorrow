@@ -1,12 +1,17 @@
 import { useMemo, useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { usePartPayments } from '@/hooks/usePartPayments';
-import { useWeeklySettlements } from '@/hooks/useWeeklySettlements';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { usePartPayments, useDeletePartPayment, type PartPayment } from '@/hooks/usePartPayments';
+import { useWeeklySettlements, useDeleteWeeklySettlement, type WeeklySettlement } from '@/hooks/useWeeklySettlements';
 import { useJobProductionEntries } from '@/hooks/useJobProduction';
-import { Banknote, Calendar, TrendingUp } from 'lucide-react';
+import { Banknote, Calendar, TrendingUp, Edit, Trash2 } from 'lucide-react';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, isWithinInterval, parseISO } from 'date-fns';
+import EditPartPaymentForm from './EditPartPaymentForm';
+import EditWeeklySettlementForm from './EditWeeklySettlementForm';
 
 interface EmployeePaymentRecordsProps {
   employeeId: string;
@@ -14,208 +19,88 @@ interface EmployeePaymentRecordsProps {
 }
 
 const EmployeePaymentRecords = ({ employeeId, employeeName }: EmployeePaymentRecordsProps) => {
-  const { data: partPayments, isLoading: loadingPayments } = usePartPayments(employeeId);
-  const { data: settlements, isLoading: loadingSettlements } = useWeeklySettlements(employeeId);
-  const { data: productionEntries, isLoading: loadingProduction } = useJobProductionEntries();
+  const { data: partPayments } = usePartPayments(employeeId);
+  const { data: settlements } = useWeeklySettlements(employeeId);
+  const { data: productionEntries } = useJobProductionEntries();
+  const deletePartPayment = useDeletePartPayment();
+  const deleteSettlement = useDeleteWeeklySettlement();
+
+  const [editingRecord, setEditingRecord] = useState<any>(null);
+  const [deletingRecord, setDeletingRecord] = useState<any>(null);
 
   const now = new Date();
-  const weekStart = startOfWeek(now, { weekStartsOn: 1 });
-  const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
-  const monthStart = startOfMonth(now);
-  const monthEnd = endOfMonth(now);
-  const yearStart = startOfYear(now);
-  const yearEnd = endOfYear(now);
-
-  // Calculate earnings
   const earnings = useMemo(() => {
     const employeeProduction = productionEntries?.filter(entry => entry.employee_id === employeeId) || [];
-    
-    const weekProduction = employeeProduction
-      .filter(entry => isWithinInterval(parseISO(entry.date), { start: weekStart, end: weekEnd }))
-      .reduce((sum, entry) => sum + (entry.total_amount || 0), 0);
-    
-    const monthProduction = employeeProduction
-      .filter(entry => isWithinInterval(parseISO(entry.date), { start: monthStart, end: monthEnd }))
-      .reduce((sum, entry) => sum + (entry.total_amount || 0), 0);
-    
-    const yearProduction = employeeProduction
-      .filter(entry => isWithinInterval(parseISO(entry.date), { start: yearStart, end: yearEnd }))
-      .reduce((sum, entry) => sum + (entry.total_amount || 0), 0);
-
     return {
-      week: weekProduction,
-      month: monthProduction,
-      year: yearProduction,
+      week: employeeProduction.filter(e => isWithinInterval(parseISO(e.date), { start: startOfWeek(now, { weekStartsOn: 1 }), end: endOfWeek(now, { weekStartsOn: 1 }) })).reduce((s, e) => s + (e.total_amount || 0), 0),
+      month: employeeProduction.filter(e => isWithinInterval(parseISO(e.date), { start: startOfMonth(now), end: endOfMonth(now) })).reduce((s, e) => s + (e.total_amount || 0), 0),
+      year: employeeProduction.filter(e => isWithinInterval(parseISO(e.date), { start: startOfYear(now), end: endOfYear(now) })).reduce((s, e) => s + (e.total_amount || 0), 0),
     };
-  }, [productionEntries, employeeId, weekStart, weekEnd, monthStart, monthEnd, yearStart, yearEnd]);
+  }, [productionEntries, employeeId]);
 
-  // Combine and sort all payment records
   const allRecords = useMemo(() => {
-    const payments = (partPayments || []).map(payment => ({
-      date: payment.payment_date,
-      type: 'Part Payment' as const,
-      amount: payment.amount,
-      mode: payment.payment_mode,
-      status: 'paid' as const,
-      note: payment.note,
-    }));
-
-    const settlementRecords = (settlements || []).map(settlement => ({
-      date: settlement.payment_date || settlement.week_end_date,
-      type: 'Weekly Settlement' as const,
-      amount: settlement.net_payable,
-      mode: settlement.payment_mode,
-      status: settlement.payment_status,
-      note: settlement.remarks,
-      weekRange: `${format(parseISO(settlement.week_start_date), 'MMM dd')} - ${format(parseISO(settlement.week_end_date), 'MMM dd, yyyy')}`,
-    }));
-
-    return [...payments, ...settlementRecords].sort((a, b) => 
-      new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
+    const payments = (partPayments || []).map(p => ({ id: p.id, date: p.payment_date, type: 'Part Payment', amount: p.amount, mode: p.payment_mode, status: 'paid', note: p.note, originalData: p }));
+    const sRecords = (settlements || []).map(s => ({ id: s.id, date: s.payment_date || s.week_end_date, type: 'Weekly Settlement', amount: s.net_payable || 0, mode: s.payment_mode, status: s.payment_status || 'pending', note: s.remarks, originalData: s }));
+    return [...payments, ...sRecords].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [partPayments, settlements]);
-
-  const isLoading = loadingPayments || loadingSettlements || loadingProduction;
-
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold">Payment Records</h2>
-            <p className="text-muted-foreground">{employeeName}</p>
-          </div>
-        </div>
-        <div className="text-center py-8 text-muted-foreground">Loading payment records...</div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">Payment Records</h2>
-          <p className="text-muted-foreground">{employeeName}</p>
-        </div>
+      <div className="grid grid-cols-3 gap-4">
+        <Card><CardHeader><CardTitle className="text-2xl text-green-600">₹{earnings.week.toFixed(2)}</CardTitle><p className="text-sm text-muted-foreground">This Week</p></CardHeader></Card>
+        <Card><CardHeader><CardTitle className="text-2xl text-blue-600">₹{earnings.month.toFixed(2)}</CardTitle><p className="text-sm text-muted-foreground">This Month</p></CardHeader></Card>
+        <Card><CardHeader><CardTitle className="text-2xl text-purple-600">₹{earnings.year.toFixed(2)}</CardTitle><p className="text-sm text-muted-foreground">This Year</p></CardHeader></Card>
       </div>
-
-      {/* Earnings Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-primary" />
-              This Week
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">₹{earnings.week.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {format(weekStart, 'MMM dd')} - {format(weekEnd, 'MMM dd, yyyy')}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-primary" />
-              This Month
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">₹{earnings.month.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {format(monthStart, 'MMMM yyyy')}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Banknote className="h-4 w-4 text-primary" />
-              This Year
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">₹{earnings.year.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {format(yearStart, 'yyyy')}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Payment Records Table */}
       <Card>
-        <CardHeader>
-          <CardTitle>All Payment Transactions</CardTitle>
-          <CardDescription>
-            Complete history of part payments and weekly settlements
-          </CardDescription>
-        </CardHeader>
+        <CardHeader><CardTitle>Payment History</CardTitle></CardHeader>
         <CardContent>
-          {allRecords.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No payment records found
-            </div>
-          ) : (
-            <div className="border rounded-lg">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Week/Period</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
-                    <TableHead>Payment Mode</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Notes</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {allRecords.map((record, index) => (
-                    <TableRow 
-                      key={index}
-                      className={record.type === 'Part Payment' ? 'bg-blue-50/50 dark:bg-blue-950/20' : 'bg-green-50/50 dark:bg-green-950/20'}
-                    >
-                      <TableCell className="font-medium">
-                        {format(parseISO(record.date), 'MMM dd, yyyy')}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={record.type === 'Part Payment' ? 'default' : 'secondary'}>
-                          {record.type}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {'weekRange' in record ? record.weekRange : '-'}
-                      </TableCell>
-                      <TableCell className="text-right font-semibold">
-                        ₹{record.amount?.toLocaleString() || '0'}
-                      </TableCell>
-                      <TableCell className="capitalize">
-                        {record.mode?.replace('_', ' ') || '-'}
-                      </TableCell>
-                      <TableCell>
-                        <Badge 
-                          variant={record.status === 'paid' ? 'default' : record.status === 'pending' ? 'secondary' : 'outline'}
-                        >
-                          {record.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground max-w-xs truncate">
-                        {record.note || '-'}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Date</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Amount</TableHead>
+                <TableHead>Mode</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Note</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {allRecords.map((r) => (
+                <TableRow key={r.id}>
+                  <TableCell>{format(parseISO(r.date), 'MMM dd, yyyy')}</TableCell>
+                  <TableCell><Badge>{r.type}</Badge></TableCell>
+                  <TableCell>₹{r.amount.toFixed(2)}</TableCell>
+                  <TableCell>{r.mode || '-'}</TableCell>
+                  <TableCell><Badge variant={r.status === 'paid' ? 'default' : 'outline'}>{r.status}</Badge></TableCell>
+                  <TableCell>{r.note || '-'}</TableCell>
+                  <TableCell>
+                    <Button variant="ghost" size="sm" onClick={() => setEditingRecord(r)}><Edit className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="sm" onClick={() => setDeletingRecord(r)}><Trash2 className="h-4 w-4" /></Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
+      {editingRecord && (
+        <Dialog open={!!editingRecord} onOpenChange={() => setEditingRecord(null)}>
+          <DialogContent>
+            {editingRecord.type === 'Part Payment' ? <EditPartPaymentForm partPayment={editingRecord.originalData} onClose={() => setEditingRecord(null)} /> : <EditWeeklySettlementForm settlement={editingRecord.originalData} onClose={() => setEditingRecord(null)} />}
+          </DialogContent>
+        </Dialog>
+      )}
+      <AlertDialog open={!!deletingRecord} onOpenChange={() => setDeletingRecord(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader><AlertDialogTitle>Delete?</AlertDialogTitle><AlertDialogDescription>Cannot be undone</AlertDialogDescription></AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={async () => { deletingRecord.type === 'Part Payment' ? await deletePartPayment.mutateAsync(deletingRecord.id) : await deleteSettlement.mutateAsync(deletingRecord.id); setDeletingRecord(null); }}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

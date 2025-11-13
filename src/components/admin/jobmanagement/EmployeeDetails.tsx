@@ -8,16 +8,18 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { ArrowLeft, Edit, DollarSign, Calendar, User, Phone, MapPin, Briefcase, TrendingUp } from 'lucide-react';
+import { ArrowLeft, Edit, DollarSign, Calendar, User, Phone, MapPin, Briefcase, TrendingUp, ClipboardList, Package } from 'lucide-react';
 import { format } from 'date-fns';
 import { getCurrentWeek, isSettlementDay, getWeekRange } from '@/lib/weekUtils';
 import PartPaymentForm from './PartPaymentForm';
 import WeeklySettlementForm from './WeeklySettlementForm';
+import ProductionEntryForm from './ProductionEntryForm';
+import BatchSettlementForm from './BatchSettlementForm';
 import EmployeeForm from './EmployeeForm';
 
 interface EmployeeDetailsProps {
   employeeId: string;
-  onClose: () => void;
+  onClose?: () => void;
   onEdit?: () => void;
 }
 
@@ -29,6 +31,8 @@ const EmployeeDetails = ({ employeeId, onClose, onEdit }: EmployeeDetailsProps) 
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [showSettlementForm, setShowSettlementForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
+  const [showProductionForm, setShowProductionForm] = useState(false);
+  const [showBatchSettlement, setShowBatchSettlement] = useState(false);
 
   const currentWeek = getCurrentWeek();
   const weekProduction = production?.filter(p => 
@@ -262,6 +266,34 @@ const EmployeeDetails = ({ employeeId, onClose, onEdit }: EmployeeDetailsProps) 
           <EmployeeForm
             employee={employee}
             onClose={() => setShowEditForm(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showProductionForm} onOpenChange={setShowProductionForm}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Record Production</DialogTitle>
+            <DialogDescription>
+              Record daily production work for {employee.name}
+            </DialogDescription>
+          </DialogHeader>
+          <ProductionEntryForm onClose={() => setShowProductionForm(false)} />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showBatchSettlement} onOpenChange={setShowBatchSettlement}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Batch Settlement</DialogTitle>
+            <DialogDescription>
+              Settle production work for a specific batch
+            </DialogDescription>
+          </DialogHeader>
+          <BatchSettlementForm
+            employeeId={employeeId}
+            employeeName={employee.name}
+            onClose={() => setShowBatchSettlement(false)}
           />
         </DialogContent>
       </Dialog>

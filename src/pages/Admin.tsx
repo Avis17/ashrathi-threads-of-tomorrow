@@ -21,6 +21,7 @@ import AdminOrderDetails from './admin/OrderDetails';
 import Production from './admin/Production';
 import JobOrders from './admin/JobOrders';
 import JobManagement from './admin/JobManagement';
+import EmployeeDetailsPage from './admin/EmployeeDetailsPage';
 import Settings from './admin/Settings';
 
 const Admin = () => {
@@ -60,6 +61,7 @@ const Admin = () => {
               <Route path="/production" element={<Production />} />
               <Route path="/job-orders" element={<JobOrders />} />
               <Route path="/job-management" element={<JobManagement />} />
+              <Route path="/job-management/employee/:id" element={<EmployeeDetailsPage />} />
               <Route path="/branches" element={<BranchesManager />} />
               <Route path="/expenses" element={<ExpensesManager />} />
               <Route path="/invoice" element={<InvoiceGenerator />} />

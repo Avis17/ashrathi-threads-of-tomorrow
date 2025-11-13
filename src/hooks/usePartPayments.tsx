@@ -48,6 +48,30 @@ export const useCreatePartPayment = () => {
   });
 };
 
+export const useUpdatePartPayment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Database['public']['Tables']['job_part_payments']['Update'] }) => {
+      const { data: payment, error } = await supabase
+        .from('job_part_payments')
+        .update(data)
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return payment;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['job-part-payments'] });
+      queryClient.invalidateQueries({ queryKey: ['job-employees'] });
+      toast.success('Payment updated successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to update payment');
+    },
+  });
+};
+
 export const useDeletePartPayment = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -60,6 +84,7 @@ export const useDeletePartPayment = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['job-part-payments'] });
+      queryClient.invalidateQueries({ queryKey: ['job-employees'] });
       toast.success('Payment deleted successfully');
     },
     onError: (error: any) => {

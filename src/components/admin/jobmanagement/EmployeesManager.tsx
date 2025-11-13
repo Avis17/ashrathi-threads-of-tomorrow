@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
@@ -20,12 +21,12 @@ import { UserPlus, Edit, Phone, MapPin, Briefcase, Users, Eye, Receipt } from 'l
 import { JOB_DEPARTMENTS } from '@/lib/jobDepartments';
 
 const EmployeesManager = () => {
+  const navigate = useNavigate();
   const { data: employees, isLoading } = useJobEmployees();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedJobType, setSelectedJobType] = useState<string>('all');
   const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
   const [showForm, setShowForm] = useState(false);
-  const [viewingEmployee, setViewingEmployee] = useState<string | null>(null);
   const [editingEmployee, setEditingEmployee] = useState(null);
   const [showPaymentRecords, setShowPaymentRecords] = useState(false);
   const [paymentRecordsEmployee, setPaymentRecordsEmployee] = useState<any>(null);
@@ -38,6 +39,10 @@ const EmployeesManager = () => {
   const handleCloseForm = () => {
     setShowForm(false);
     setEditingEmployee(null);
+  };
+
+  const handleViewDetails = (employee: any) => {
+    navigate(`/admin/job-management/employee/${employee.id}`);
   };
 
   // Filter employees
@@ -189,7 +194,7 @@ const EmployeesManager = () => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => setViewingEmployee(employee.id)}
+                        onClick={() => handleViewDetails(employee)}
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
@@ -233,18 +238,6 @@ const EmployeesManager = () => {
             </Button>
           )}
         </Card>
-      )}
-
-      {/* View Dialog */}
-      {viewingEmployee && (
-        <Dialog open={!!viewingEmployee} onOpenChange={() => setViewingEmployee(null)}>
-          <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-            <EmployeeDetails
-              employeeId={viewingEmployee}
-              onClose={() => setViewingEmployee(null)}
-            />
-          </DialogContent>
-        </Dialog>
       )}
 
       {/* Form Dialog */}

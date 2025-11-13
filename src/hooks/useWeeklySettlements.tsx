@@ -63,10 +63,32 @@ export const useUpdateWeeklySettlement = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['job-weekly-settlements'] });
+      queryClient.invalidateQueries({ queryKey: ['job-employees'] });
       toast.success('Settlement updated successfully');
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to update settlement');
+    },
+  });
+};
+
+export const useDeleteWeeklySettlement = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('job_weekly_settlements')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['job-weekly-settlements'] });
+      queryClient.invalidateQueries({ queryKey: ['job-employees'] });
+      toast.success('Settlement deleted successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to delete settlement');
     },
   });
 };
