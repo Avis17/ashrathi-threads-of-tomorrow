@@ -109,9 +109,12 @@ const StylesManager = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredStyles?.map((style) => (
-            <div key={style.id} onClick={() => handleView(style)} className="cursor-pointer">
-              <StyleCard style={style} onEdit={handleEdit} />
-            </div>
+            <StyleCard 
+              key={style.id} 
+              style={style}
+              onView={handleView}
+              onEdit={handleEdit} 
+            />
           ))}
         </div>
       )}

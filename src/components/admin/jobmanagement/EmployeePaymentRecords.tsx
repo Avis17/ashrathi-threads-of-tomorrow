@@ -94,10 +94,34 @@ const EmployeePaymentRecords = ({ employeeId, employeeName }: EmployeePaymentRec
       )}
       <AlertDialog open={!!deletingRecord} onOpenChange={() => setDeletingRecord(null)}>
         <AlertDialogContent>
-          <AlertDialogHeader><AlertDialogTitle>Delete?</AlertDialogTitle><AlertDialogDescription>Cannot be undone</AlertDialogDescription></AlertDialogHeader>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {deletingRecord?.type}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deletingRecord?.type === 'Weekly Settlement' ? (
+                <div className="space-y-2">
+                  <p>This will permanently delete this settlement record and all associated data:</p>
+                  <ul className="list-disc pl-6 space-y-1 text-sm">
+                    <li>Production entries created during settlement</li>
+                    <li>Part payments will be marked as un-settled</li>
+                    <li>Batch cost summary will be recalculated</li>
+                  </ul>
+                  <p className="font-semibold mt-2">This action cannot be undone.</p>
+                </div>
+              ) : (
+                "This will permanently delete this part payment record. This action cannot be undone."
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={async () => { deletingRecord.type === 'Part Payment' ? await deletePartPayment.mutateAsync(deletingRecord.id) : await deleteSettlement.mutateAsync(deletingRecord.id); setDeletingRecord(null); }}>Delete</AlertDialogAction>
+            <AlertDialogAction onClick={async () => { 
+              if (deletingRecord.type === 'Part Payment') {
+                await deletePartPayment.mutateAsync(deletingRecord.id);
+              } else {
+                await deleteSettlement.mutateAsync(deletingRecord.originalData);
+              }
+              setDeletingRecord(null);
+            }}>Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
