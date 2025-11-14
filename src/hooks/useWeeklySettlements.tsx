@@ -75,17 +75,48 @@ export const useUpdateWeeklySettlement = () => {
 export const useDeleteWeeklySettlement = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase
+    mutationFn: async (settlement: WeeklySettlement) => {
+      const { employee_id, batch_id, week_start_date, week_end_date } = settlement;
+      
+      // Step 1: Delete associated production entries
+      const { error: prodError } = await supabase
+        .from('job_production_entries')
+        .delete()
+        .eq('employee_id', employee_id)
+        .gte('date', week_start_date)
+        .lte('date', week_end_date)
+        .match(batch_id ? { batch_id } : {});
+      
+      if (prodError) throw prodError;
+      
+      // Step 2: Mark part payments as un-settled for this week
+      const { error: paymentError } = await supabase
+        .from('job_part_payments')
+        .update({ is_settled: false })
+        .eq('employee_id', employee_id)
+        .eq('is_settled', true)
+        .gte('payment_date', week_start_date)
+        .lte('payment_date', week_end_date);
+      
+      if (paymentError) throw paymentError;
+      
+      // Step 3: Delete the settlement record
+      const { error: settlementError } = await supabase
         .from('job_weekly_settlements')
         .delete()
-        .eq('id', id);
-      if (error) throw error;
+        .eq('id', settlement.id);
+      
+      if (settlementError) throw settlementError;
+      
+      return { success: true };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['job-weekly-settlements'] });
       queryClient.invalidateQueries({ queryKey: ['job-employees'] });
-      toast.success('Settlement deleted successfully');
+      queryClient.invalidateQueries({ queryKey: ['job-production-entries'] });
+      queryClient.invalidateQueries({ queryKey: ['job-part-payments'] });
+      queryClient.invalidateQueries({ queryKey: ['job-batches'] });
+      toast.success('Settlement and related records deleted successfully');
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to delete settlement');

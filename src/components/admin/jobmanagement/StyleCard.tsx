@@ -6,10 +6,11 @@ import type { JobStyle } from '@/hooks/useJobStyles';
 
 interface StyleCardProps {
   style: JobStyle;
+  onView: (style: JobStyle) => void;
   onEdit: (style: JobStyle) => void;
 }
 
-const StyleCard = ({ style, onEdit }: StyleCardProps) => {
+const StyleCard = ({ style, onView, onEdit }: StyleCardProps) => {
   const totalRate = 
     style.rate_cutting +
     style.rate_stitching_singer +
@@ -86,7 +87,7 @@ const StyleCard = ({ style, onEdit }: StyleCardProps) => {
             className="flex-1"
             onClick={(e) => {
               e.stopPropagation();
-              onEdit(style);
+              onView(style);
             }}
           >
             <Eye className="h-4 w-4 mr-1" />
