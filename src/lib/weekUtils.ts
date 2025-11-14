@@ -21,3 +21,8 @@ export const isSettlementDay = (date: Date = new Date()) => {
 export const getWeekRange = (weekStart: string, weekEnd: string) => {
   return `${format(new Date(weekStart), 'MMM dd')} - ${format(new Date(weekEnd), 'MMM dd, yyyy')}`;
 };
+
+export const getWeekSaturday = (date: Date = new Date()) => {
+  const weekEnd = endOfWeek(date, { weekStartsOn: 0 });
+  return format(weekEnd, 'yyyy-MM-dd');
+};

@@ -947,6 +947,8 @@ export type Database = {
           name: string
           phone: string | null
           rate_type: string | null
+          salary_amount: number | null
+          salary_type: string | null
         }
         Insert: {
           address?: string | null
@@ -963,6 +965,8 @@ export type Database = {
           name: string
           phone?: string | null
           rate_type?: string | null
+          salary_amount?: number | null
+          salary_type?: string | null
         }
         Update: {
           address?: string | null
@@ -979,6 +983,8 @@ export type Database = {
           name?: string
           phone?: string | null
           rate_type?: string | null
+          salary_amount?: number | null
+          salary_type?: string | null
         }
         Relationships: [
           {
@@ -1198,6 +1204,7 @@ export type Database = {
           created_at: string | null
           employee_id: string | null
           id: string
+          is_settled: boolean | null
           note: string | null
           payment_date: string
           payment_mode: string | null
@@ -1208,6 +1215,7 @@ export type Database = {
           created_at?: string | null
           employee_id?: string | null
           id?: string
+          is_settled?: boolean | null
           note?: string | null
           payment_date: string
           payment_mode?: string | null
@@ -1218,6 +1226,7 @@ export type Database = {
           created_at?: string | null
           employee_id?: string | null
           id?: string
+          is_settled?: boolean | null
           note?: string | null
           payment_date?: string
           payment_mode?: string | null

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useJobEmployee, useDeleteJobEmployee } from '@/hooks/useJobEmployees';
 import { usePartPayments } from '@/hooks/usePartPayments';
@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Edit, DollarSign, Calendar, User, Phone, MapPin, Briefcase, Package, Trash2 } from 'lucide-react';
+import { Edit, DollarSign, Calendar, User, Phone, MapPin, Briefcase, Package, Trash2, CheckCircle2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { getCurrentWeek, isSettlementDay, getWeekRange } from '@/lib/weekUtils';
 import PartPaymentForm from './PartPaymentForm';
@@ -38,13 +38,24 @@ const EmployeeDetails = ({ employeeId, onClose, onEdit }: EmployeeDetailsProps) 
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const currentWeek = getCurrentWeek();
+  
+  // Check if current week is already settled
+  const weekAlreadySettled = useMemo(() => {
+    return settlements?.some(s => 
+      s.week_start_date === currentWeek.start && 
+      s.week_end_date === currentWeek.end
+    );
+  }, [settlements, currentWeek]);
+
   const weekProduction = production?.filter(p => 
     p.employee_id === employeeId &&
     p.date >= currentWeek.start &&
     p.date <= currentWeek.end
   );
 
+  // Only show UNSETTLED part payments for current week
   const weekPartPayments = partPayments?.filter(p => 
+    !p.is_settled &&
     p.payment_date >= currentWeek.start &&
     p.payment_date <= currentWeek.end
   );
@@ -79,10 +90,20 @@ const EmployeeDetails = ({ employeeId, onClose, onEdit }: EmployeeDetailsProps) 
             <DollarSign className="h-4 w-4" />
             Record Payment
           </Button>
-          <Button onClick={() => setShowBatchSettlement(true)} className="gap-2">
+          <Button 
+            onClick={() => setShowBatchSettlement(true)} 
+            className="gap-2"
+            disabled={weekAlreadySettled}
+          >
             <Package className="h-4 w-4" />
-            Record & Settle Work
+            {weekAlreadySettled ? 'Week Settled' : 'Record & Settle Work'}
           </Button>
+          {weekAlreadySettled && (
+            <Badge variant="secondary" className="gap-1">
+              <CheckCircle2 className="h-3 w-3" />
+              Week Settled
+            </Badge>
+          )}
           {isSettlementDay() && (
             <Button variant="secondary" onClick={() => setShowSettlementForm(true)} className="gap-2">
               <Calendar className="h-4 w-4" />
