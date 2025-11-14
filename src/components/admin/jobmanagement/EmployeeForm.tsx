@@ -33,6 +33,8 @@ type FormData = {
   contractor_id: string;
   rate_type: string;
   date_joined: string;
+  salary_type?: string;
+  salary_amount?: string;
 };
 
 const EmployeeForm = ({ employee, onClose }: EmployeeFormProps) => {
@@ -55,6 +57,8 @@ const EmployeeForm = ({ employee, onClose }: EmployeeFormProps) => {
       contractor_id: employee?.contractor_id || '',
       rate_type: employee?.rate_type || 'per_piece',
       date_joined: employee?.date_joined || new Date().toISOString().split('T')[0],
+      salary_type: (employee as any)?.salary_type || '',
+      salary_amount: (employee as any)?.salary_amount?.toString() || '',
     },
   });
 
@@ -72,6 +76,8 @@ const EmployeeForm = ({ employee, onClose }: EmployeeFormProps) => {
       ...data,
       departments: selectedDepartments,
       contractor_id: employeeType === 'contract' ? data.contractor_id : null,
+      salary_type: data.salary_type || null,
+      salary_amount: data.salary_amount ? parseFloat(data.salary_amount) : null,
     };
 
     if (employee) {
@@ -109,33 +115,134 @@ const EmployeeForm = ({ employee, onClose }: EmployeeFormProps) => {
               <Input id="name" {...register('name')} required placeholder="Ravi Kumar" />
             </div>
             <div className="space-y-2">
-              <Label>Employee Type *</Label>
+              <Label htmlFor="phone">Phone</Label>
+              <Input id="phone" {...register('phone')} placeholder="+91 98765 43210" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="date_joined">Date Joined</Label>
+              <Input id="date_joined" type="date" {...register('date_joined')} />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="address">Address</Label>
+              <Textarea id="address" {...register('address')} rows={2} placeholder="Full address..." />
+            </div>
+          </div>
+        </div>
+
+        {/* Employment Type */}
+        <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
+          <h3 className="font-semibold text-foreground">Employment Details</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="employee_type">Employee Type *</Label>
               <Select value={employeeType} onValueChange={(value) => setValue('employee_type', value)}>
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="Select type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="direct">Direct Worker</SelectItem>
-                  <SelectItem value="contract">Contract Worker</SelectItem>
+                  <SelectItem value="direct">Direct</SelectItem>
+                  <SelectItem value="contract">Contract</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="rate_type">Rate Type</Label>
+              <Select value={watch('rate_type')} onValueChange={(value) => setValue('rate_type', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select rate type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="per_piece">Per Piece</SelectItem>
+                  <SelectItem value="daily">Daily</SelectItem>
+                  <SelectItem value="weekly">Weekly</SelectItem>
+                  <SelectItem value="monthly">Monthly</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+
+        {/* Fixed Salary Details (Optional) */}
+        <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
+          <h3 className="font-semibold text-foreground">Fixed Salary (Optional)</h3>
+          <p className="text-sm text-muted-foreground">
+            Configure fixed salary for employees with regular weekly/monthly payments
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="salary_type">Salary Type</Label>
+              <Select value={watch('salary_type') || ''} onValueChange={(value) => setValue('salary_type', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">None</SelectItem>
+                  <SelectItem value="weekly">Weekly</SelectItem>
+                  <SelectItem value="monthly">Monthly</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone</Label>
-              <Input id="phone" {...register('phone')} placeholder="9876543210" />
-            </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="address">Address</Label>
-              <Textarea id="address" {...register('address')} rows={2} placeholder="Enter address" />
+              <Label htmlFor="salary_amount">Salary Amount (₹)</Label>
+              <Input
+                id="salary_amount"
+                type="number"
+                step="0.01"
+                placeholder="Enter amount"
+                {...register('salary_amount')}
+              />
             </div>
           </div>
         </div>
+
+        {/* Contract Worker Details */}
+        {employeeType === 'contract' && (
+          <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-foreground">Contractor Details</h3>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setShowContractorForm(true)}
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Add New Contractor
+              </Button>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="contractor_id">Select Contractor *</Label>
+              <Select value={contractorId} onValueChange={(value) => setValue('contractor_id', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select contractor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {contractors?.map((contractor) => (
+                    <SelectItem key={contractor.id} value={contractor.id}>
+                      {contractor.contractor_name} ({contractor.contractor_code})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {selectedContractor && (
+              <div className="text-sm text-muted-foreground p-3 bg-background rounded border">
+                <p><strong>Contact:</strong> {selectedContractor.contact_person}</p>
+                <p><strong>Phone:</strong> {selectedContractor.phone}</p>
+                <p><strong>Address:</strong> {selectedContractor.address}</p>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Departments/Skills */}
         <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
           <h3 className="font-semibold text-foreground">Departments / Skills</h3>
           <p className="text-sm text-muted-foreground">Select all departments this employee can work in</p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {JOB_DEPARTMENTS.map((dept) => (
               <div key={dept} className="flex items-center space-x-2">
                 <Checkbox
@@ -143,104 +250,39 @@ const EmployeeForm = ({ employee, onClose }: EmployeeFormProps) => {
                   checked={selectedDepartments.includes(dept)}
                   onCheckedChange={() => toggleDepartment(dept)}
                 />
-                <Label
-                  htmlFor={dept}
-                  className="text-sm font-normal cursor-pointer"
-                >
+                <Label htmlFor={dept} className="cursor-pointer text-sm font-normal">
                   {dept}
                 </Label>
               </div>
             ))}
           </div>
+          {selectedDepartments.length === 0 && (
+            <p className="text-sm text-destructive">⚠️ Please select at least one department</p>
+          )}
         </div>
 
-        {/* Contract Details */}
-        {employeeType === 'contract' && (
-          <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
-            <h3 className="font-semibold text-foreground">Contract Details</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2 md:col-span-2">
-                <Label>Contractor *</Label>
-                <div className="flex gap-2">
-                  <Select value={contractorId} onValueChange={(value) => setValue('contractor_id', value)}>
-                    <SelectTrigger className="flex-1">
-                      <SelectValue placeholder="Select contractor" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {contractors?.map((contractor) => (
-                        <SelectItem key={contractor.id} value={contractor.id}>
-                          {contractor.contractor_name} ({contractor.contractor_code})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setShowContractorForm(true)}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-                
-                {selectedContractor && (
-                  <div className="p-3 bg-background rounded-md border text-sm space-y-1">
-                    <div><strong>Contact:</strong> {selectedContractor.contact_person || 'N/A'}</div>
-                    <div><strong>Phone:</strong> {selectedContractor.phone || 'N/A'}</div>
-                    <div><strong>Payment:</strong> {selectedContractor.payment_terms || 'N/A'}</div>
-                  </div>
-                )}
-              </div>
-              
-              <div className="space-y-2">
-                <Label>Rate Type</Label>
-                <Select value={watch('rate_type')} onValueChange={(value) => setValue('rate_type', value)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="per_piece">Per Piece</SelectItem>
-                    <SelectItem value="daily">Daily</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div className="space-y-2">
-          <Label htmlFor="date_joined">Date Joined</Label>
-          <Input id="date_joined" type="date" {...register('date_joined')} />
-        </div>
-
-        <div className="flex gap-3 justify-end pt-4 border-t">
-          <Button type="button" variant="outline" onClick={onClose}>
+        {/* Actions */}
+        <div className="flex gap-3 pt-4 border-t">
+          <Button type="button" variant="outline" onClick={onClose} className="flex-1">
             Cancel
           </Button>
-          <Button 
-            type="submit" 
-            className="bg-gradient-to-r from-primary to-secondary"
-            disabled={createMutation.isPending || updateMutation.isPending}
+          <Button
+            type="submit"
+            disabled={createMutation.isPending || updateMutation.isPending || selectedDepartments.length === 0}
+            className="flex-1"
           >
-            {createMutation.isPending || updateMutation.isPending ? 'Saving...' : 'Save Employee'}
+            {(createMutation.isPending || updateMutation.isPending) ? 'Saving...' : (employee ? 'Update Employee' : 'Save Employee')}
           </Button>
         </div>
       </form>
 
-      {/* Contractor Creation Dialog */}
+      {/* Contractor Form Dialog */}
       <Dialog open={showContractorForm} onOpenChange={setShowContractorForm}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Create New Contractor</DialogTitle>
+            <DialogTitle>Add New Contractor</DialogTitle>
           </DialogHeader>
-          <ContractorForm
-            onSuccess={(contractorId) => {
-              setValue('contractor_id', contractorId);
-              setShowContractorForm(false);
-            }}
-            onCancel={() => setShowContractorForm(false)}
-          />
+          <ContractorForm />
         </DialogContent>
       </Dialog>
     </>
