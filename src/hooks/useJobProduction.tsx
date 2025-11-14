@@ -40,6 +40,8 @@ export const useCreateJobProductionEntry = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['job-production-entries'] });
       queryClient.invalidateQueries({ queryKey: ['job-batches'] });
+      queryClient.invalidateQueries({ queryKey: ['job-employees'] });
+      queryClient.invalidateQueries({ queryKey: ['weekly-settlements'] });
       toast.success('Production entry added successfully');
     },
     onError: (error: any) => {
