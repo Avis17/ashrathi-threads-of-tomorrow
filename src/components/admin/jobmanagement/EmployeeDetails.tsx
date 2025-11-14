@@ -58,16 +58,11 @@ const EmployeeDetails = ({ employeeId, onClose, onEdit }: EmployeeDetailsProps) 
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <h2 className="text-2xl font-bold">{employee.name}</h2>
-            <p className="text-muted-foreground">{employee.employee_code}</p>
-          </div>
+        <div>
+          <h2 className="text-2xl font-bold">{employee.name}</h2>
+          <p className="text-muted-foreground">{employee.employee_code}</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Button variant="outline" onClick={() => setShowEditForm(true)} className="gap-2">
             <Edit className="h-4 w-4" />
             Edit
@@ -76,8 +71,16 @@ const EmployeeDetails = ({ employeeId, onClose, onEdit }: EmployeeDetailsProps) 
             <DollarSign className="h-4 w-4" />
             Record Payment
           </Button>
+          <Button variant="outline" onClick={() => setShowProductionForm(true)} className="gap-2">
+            <ClipboardList className="h-4 w-4" />
+            Record Production
+          </Button>
+          <Button onClick={() => setShowBatchSettlement(true)} className="gap-2">
+            <Package className="h-4 w-4" />
+            Record & Settle Work
+          </Button>
           {isSettlementDay() && (
-            <Button onClick={() => setShowSettlementForm(true)} className="gap-2">
+            <Button variant="secondary" onClick={() => setShowSettlementForm(true)} className="gap-2">
               <Calendar className="h-4 w-4" />
               Settle Week
             </Button>
