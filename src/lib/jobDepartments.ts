@@ -5,8 +5,7 @@ export const JOB_DEPARTMENTS = [
   "Ironing",
   "Checking",
   "Packing",
-  "Maintenance",
-  "Complete Master"
+  "Maintenance"
 ] as const;
 
 export type JobDepartment = typeof JOB_DEPARTMENTS[number];

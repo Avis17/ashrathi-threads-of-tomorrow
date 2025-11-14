@@ -17,7 +17,7 @@ const EmployeeDetailsPage = () => {
         <Button 
           variant="ghost" 
           size="sm"
-          onClick={() => navigate('/admin/job-management')}
+          onClick={() => navigate('/admin/job-management?tab=employees')}
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Employees

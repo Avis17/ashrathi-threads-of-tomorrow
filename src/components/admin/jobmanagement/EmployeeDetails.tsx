@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useJobEmployee } from '@/hooks/useJobEmployees';
+import { useNavigate } from 'react-router-dom';
+import { useJobEmployee, useDeleteJobEmployee } from '@/hooks/useJobEmployees';
 import { usePartPayments } from '@/hooks/usePartPayments';
 import { useWeeklySettlements } from '@/hooks/useWeeklySettlements';
 import { useJobProductionEntries } from '@/hooks/useJobProduction';
@@ -8,12 +9,12 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { ArrowLeft, Edit, DollarSign, Calendar, User, Phone, MapPin, Briefcase, TrendingUp, ClipboardList, Package } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Edit, DollarSign, Calendar, User, Phone, MapPin, Briefcase, Package, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { getCurrentWeek, isSettlementDay, getWeekRange } from '@/lib/weekUtils';
 import PartPaymentForm from './PartPaymentForm';
 import WeeklySettlementForm from './WeeklySettlementForm';
-import ProductionEntryForm from './ProductionEntryForm';
 import BatchSettlementForm from './BatchSettlementForm';
 import EmployeeForm from './EmployeeForm';
 
@@ -24,15 +25,17 @@ interface EmployeeDetailsProps {
 }
 
 const EmployeeDetails = ({ employeeId, onClose, onEdit }: EmployeeDetailsProps) => {
+  const navigate = useNavigate();
   const { data: employee } = useJobEmployee(employeeId);
   const { data: partPayments } = usePartPayments(employeeId);
   const { data: settlements } = useWeeklySettlements(employeeId);
   const { data: production } = useJobProductionEntries();
+  const deleteMutation = useDeleteJobEmployee();
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [showSettlementForm, setShowSettlementForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
-  const [showProductionForm, setShowProductionForm] = useState(false);
   const [showBatchSettlement, setShowBatchSettlement] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const currentWeek = getCurrentWeek();
   const weekProduction = production?.filter(p => 
@@ -51,6 +54,11 @@ const EmployeeDetails = ({ employeeId, onClose, onEdit }: EmployeeDetailsProps) 
   const netPayable = totalWeekProduction - totalWeekPartPayments;
 
   const departments = employee?.departments as string[] || [];
+
+  const handleDelete = async () => {
+    await deleteMutation.mutateAsync(employeeId);
+    navigate('/admin/job-management?tab=employees');
+  };
 
   if (!employee) return null;
 
@@ -71,10 +79,6 @@ const EmployeeDetails = ({ employeeId, onClose, onEdit }: EmployeeDetailsProps) 
             <DollarSign className="h-4 w-4" />
             Record Payment
           </Button>
-          <Button variant="outline" onClick={() => setShowProductionForm(true)} className="gap-2">
-            <ClipboardList className="h-4 w-4" />
-            Record Production
-          </Button>
           <Button onClick={() => setShowBatchSettlement(true)} className="gap-2">
             <Package className="h-4 w-4" />
             Record & Settle Work
@@ -85,6 +89,10 @@ const EmployeeDetails = ({ employeeId, onClose, onEdit }: EmployeeDetailsProps) 
               Settle Week
             </Button>
           )}
+          <Button variant="destructive" onClick={() => setShowDeleteDialog(true)} className="gap-2">
+            <Trash2 className="h-4 w-4" />
+            Delete
+          </Button>
         </div>
       </div>
 
@@ -273,18 +281,6 @@ const EmployeeDetails = ({ employeeId, onClose, onEdit }: EmployeeDetailsProps) 
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showProductionForm} onOpenChange={setShowProductionForm}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Record Production</DialogTitle>
-            <DialogDescription>
-              Record daily production work for {employee.name}
-            </DialogDescription>
-          </DialogHeader>
-          <ProductionEntryForm onClose={() => setShowProductionForm(false)} />
-        </DialogContent>
-      </Dialog>
-
       <Dialog open={showBatchSettlement} onOpenChange={setShowBatchSettlement}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -300,6 +296,24 @@ const EmployeeDetails = ({ employeeId, onClose, onEdit }: EmployeeDetailsProps) 
           />
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Employee</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete {employee.name}? This action cannot be undone.
+              All associated production records, payments, and settlements will remain in the system.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
