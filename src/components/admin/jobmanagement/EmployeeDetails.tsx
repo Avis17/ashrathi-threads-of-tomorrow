@@ -5,12 +5,12 @@ import { usePartPayments } from '@/hooks/usePartPayments';
 import { useWeeklySettlements } from '@/hooks/useWeeklySettlements';
 import { useJobProductionEntries } from '@/hooks/useJobProduction';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Edit, DollarSign, Calendar, User, Phone, MapPin, Briefcase, Package, Trash2, CheckCircle2 } from 'lucide-react';
+import { Edit, DollarSign, Calendar, User, Phone, MapPin, Briefcase, Package, Trash2, CheckCircle2, TrendingUp } from 'lucide-react';
 import { format } from 'date-fns';
 import { getCurrentWeek, isSettlementDay, getWeekRange } from '@/lib/weekUtils';
 import PartPaymentForm from './PartPaymentForm';
@@ -60,9 +60,32 @@ const EmployeeDetails = ({ employeeId, onClose, onEdit }: EmployeeDetailsProps) 
     p.payment_date <= currentWeek.end
   );
 
-  const totalWeekProduction = weekProduction?.reduce((sum, p) => sum + (p.total_amount || 0), 0) || 0;
-  const totalWeekPartPayments = weekPartPayments?.reduce((sum, p) => sum + (p.amount || 0), 0) || 0;
+  const totalWeekProduction = useMemo(() => 
+    weekProduction?.reduce((sum, p) => sum + (p.total_amount || 0), 0) || 0,
+    [weekProduction]
+  );
+  
+  const totalWeekPartPayments = useMemo(() => 
+    weekPartPayments?.reduce((sum, p) => sum + (p.amount || 0), 0) || 0,
+    [weekPartPayments]
+  );
+  
   const netPayable = totalWeekProduction - totalWeekPartPayments;
+
+  // Calculate overall earnings
+  const overallStats = useMemo(() => {
+    const employeeProduction = production?.filter(p => p.employee_id === employeeId) || [];
+    const totalProduction = employeeProduction.reduce((sum, p) => sum + (p.total_amount || 0), 0);
+    const totalPartPayments = partPayments?.reduce((sum, p) => sum + (p.amount || 0), 0) || 0;
+    const totalSettlements = settlements?.reduce((sum, s) => sum + (s.net_payable || 0), 0) || 0;
+    
+    return {
+      totalProduction,
+      totalPartPayments,
+      totalSettlements,
+      netBalance: totalProduction - totalPartPayments - totalSettlements,
+    };
+  }, [production, partPayments, settlements, employeeId]);
 
   const departments = employee?.departments as string[] || [];
 
@@ -116,6 +139,38 @@ const EmployeeDetails = ({ employeeId, onClose, onEdit }: EmployeeDetailsProps) 
           </Button>
         </div>
       </div>
+
+      {/* Overall Earnings Card */}
+      <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 via-secondary/5 to-background">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-primary" />
+            Overall Earnings Summary
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground">Total Production</p>
+              <p className="text-xl font-bold text-green-600">₹{overallStats.totalProduction.toFixed(2)}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground">Part Payments</p>
+              <p className="text-xl font-bold text-orange-600">₹{overallStats.totalPartPayments.toFixed(2)}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground">Settlements Paid</p>
+              <p className="text-xl font-bold text-blue-600">₹{overallStats.totalSettlements.toFixed(2)}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground">Net Balance</p>
+              <p className={`text-xl font-bold ${overallStats.netBalance >= 0 ? 'text-primary' : 'text-destructive'}`}>
+                ₹{overallStats.netBalance.toFixed(2)}
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column - Basic Info */}
