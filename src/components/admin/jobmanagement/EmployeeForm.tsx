@@ -172,12 +172,12 @@ const EmployeeForm = ({ employee, onClose }: EmployeeFormProps) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="salary_type">Salary Type</Label>
-              <Select value={watch('salary_type') || ''} onValueChange={(value) => setValue('salary_type', value)}>
+              <Select value={watch('salary_type') || 'none'} onValueChange={(value) => setValue('salary_type', value === 'none' ? '' : value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">None</SelectItem>
+                  <SelectItem value="none">None</SelectItem>
                   <SelectItem value="weekly">Weekly</SelectItem>
                   <SelectItem value="monthly">Monthly</SelectItem>
                 </SelectContent>
