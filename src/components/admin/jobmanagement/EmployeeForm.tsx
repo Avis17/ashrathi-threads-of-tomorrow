@@ -282,7 +282,10 @@ const EmployeeForm = ({ employee, onClose }: EmployeeFormProps) => {
           <DialogHeader>
             <DialogTitle>Add New Contractor</DialogTitle>
           </DialogHeader>
-          <ContractorForm />
+          <ContractorForm 
+            onSuccess={() => setShowContractorForm(false)}
+            onCancel={() => setShowContractorForm(false)}
+          />
         </DialogContent>
       </Dialog>
     </>
