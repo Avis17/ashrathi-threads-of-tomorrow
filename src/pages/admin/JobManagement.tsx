@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Shirt, Package, Users, DollarSign, Factory, Building2 } from 'lucide-react';
 import StylesManager from '@/components/admin/jobmanagement/StylesManager';
@@ -9,7 +10,15 @@ import ExpensesManager from '@/components/admin/jobmanagement/ExpensesManager';
 import ContractorsManager from '@/components/admin/jobmanagement/ContractorsManager';
 
 const JobManagement = () => {
-  const [activeTab, setActiveTab] = useState('styles');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabFromUrl = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState(tabFromUrl || 'styles');
+
+  useEffect(() => {
+    if (tabFromUrl) {
+      setActiveTab(tabFromUrl);
+    }
+  }, [tabFromUrl]);
 
   return (
     <div className="container mx-auto p-6 space-y-6">
