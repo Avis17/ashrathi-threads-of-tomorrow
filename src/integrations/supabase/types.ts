@@ -812,8 +812,10 @@ export type Database = {
           id: string
           lot_number: string | null
           marker_efficiency: number | null
+          number_of_rolls: number | null
           packed_quantity: number | null
           remarks: string | null
+          rolls_data: Json | null
           status: string | null
           stitched_quantity: number | null
           style_id: string | null
@@ -839,8 +841,10 @@ export type Database = {
           id?: string
           lot_number?: string | null
           marker_efficiency?: number | null
+          number_of_rolls?: number | null
           packed_quantity?: number | null
           remarks?: string | null
+          rolls_data?: Json | null
           status?: string | null
           stitched_quantity?: number | null
           style_id?: string | null
@@ -866,8 +870,10 @@ export type Database = {
           id?: string
           lot_number?: string | null
           marker_efficiency?: number | null
+          number_of_rolls?: number | null
           packed_quantity?: number | null
           remarks?: string | null
+          rolls_data?: Json | null
           status?: string | null
           stitched_quantity?: number | null
           style_id?: string | null
