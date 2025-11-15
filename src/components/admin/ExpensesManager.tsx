@@ -16,7 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Plus, Pencil, Trash2, CheckCircle, Eye, TrendingUp, DollarSign, Clock, CheckCircle2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, CheckCircle, Eye, TrendingUp, DollarSign, Clock, CheckCircle2, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { ExpenseForm } from './expenses/ExpenseForm';
 import { ExpenseDetailsDialog } from './expenses/ExpenseDetailsDialog';
@@ -24,7 +24,9 @@ import { DynamicPagination } from './DynamicPagination';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 import { EXPENSE_CATEGORIES } from '@/lib/expenseCategories';
+import { useDebounce } from '@/hooks/useDebounce';
 
 export default function ExpensesManager() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -36,6 +38,8 @@ export default function ExpensesManager() {
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterBranch, setFilterBranch] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
   const queryClient = useQueryClient();
 
   const { data: branches } = useQuery({
@@ -52,7 +56,7 @@ export default function ExpensesManager() {
   });
 
   const { data: expensesData, isLoading } = useQuery({
-    queryKey: ['expenses', currentPage, pageSize, filterCategory, filterBranch, filterStatus],
+    queryKey: ['expenses', currentPage, pageSize, filterCategory, filterBranch, filterStatus, debouncedSearchTerm],
     queryFn: async () => {
       const from = (currentPage - 1) * pageSize;
       const to = from + pageSize - 1;
@@ -71,6 +75,11 @@ export default function ExpensesManager() {
 
       if (filterStatus !== 'all') {
         query = query.eq('is_approved', filterStatus === 'approved');
+      }
+
+      // Apply search filter
+      if (debouncedSearchTerm) {
+        query = query.or(`description.ilike.%${debouncedSearchTerm}%,subcategory.ilike.%${debouncedSearchTerm}%,vendor_name.ilike.%${debouncedSearchTerm}%,receipt_number.ilike.%${debouncedSearchTerm}%,notes.ilike.%${debouncedSearchTerm}%,payment_method.ilike.%${debouncedSearchTerm}%`);
       }
 
       query = query.order('expense_date', { ascending: false }).range(from, to);
@@ -387,9 +396,22 @@ export default function ExpensesManager() {
       {/* Filters */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Filters</CardTitle>
+          <CardTitle className="text-lg">Search & Filters</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Search</label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search description, subcategory, vendor, receipt, notes..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </div>
+
           <div className="grid gap-4 md:grid-cols-3">
             <div className="space-y-2">
               <label className="text-sm font-medium">Category</label>
