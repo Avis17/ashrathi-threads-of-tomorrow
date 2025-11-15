@@ -44,7 +44,7 @@ export const ContactDetailsDialog = ({ contact, open, onOpenChange }: ContactDet
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Employee Contact Details</DialogTitle>
+          <DialogTitle>General Contact Details</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">

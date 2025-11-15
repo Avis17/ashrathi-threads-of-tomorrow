@@ -13,6 +13,14 @@ export const DEPARTMENTS = [
   "Sales",
   "Design",
   "Production Planning",
+  "Electrician",
+  "Plumber",
+  "CCTV",
+  "Machine Maintenance",
+  "Carpenter",
+  "Internet",
+  "Buyer Office",
+  "Vendors",
   "Other"
 ] as const;
 

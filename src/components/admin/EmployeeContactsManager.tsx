@@ -138,7 +138,7 @@ export const EmployeeContactsManager = () => {
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <h2 className="text-2xl font-bold">Employee Contacts</h2>
+        <h2 className="text-2xl font-bold">General Contacts</h2>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button>
@@ -148,7 +148,7 @@ export const EmployeeContactsManager = () => {
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Add Employee Contact</DialogTitle>
+              <DialogTitle>Add Contact</DialogTitle>
             </DialogHeader>
             <EmployeeContactForm
               onSubmit={(data) => createMutation.mutate(data)}
@@ -212,7 +212,7 @@ export const EmployeeContactsManager = () => {
                 {contacts?.data.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                      No employee contacts found
+                      No contacts found
                     </TableCell>
                   </TableRow>
                 ) : (
