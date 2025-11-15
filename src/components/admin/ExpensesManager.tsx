@@ -464,6 +464,26 @@ export default function ExpensesManager() {
         </CardContent>
       </Card>
 
+      {/* Current Results Summary */}
+      {!isLoading && expensesData && (
+        <Card className="bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground border-0 shadow-lg">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium opacity-90">Current Results Total</p>
+                <h3 className="text-4xl font-bold mt-2">
+                  {formatCurrency(expensesData.expenses.reduce((sum, exp) => sum + Number(exp.amount), 0))}
+                </h3>
+                <p className="text-sm opacity-75 mt-2">
+                  Showing {expensesData.expenses.length} of {expensesData.count} total records
+                </p>
+              </div>
+              <DollarSign className="h-16 w-16 opacity-20" />
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {isLoading ? (
         <p>Loading expenses...</p>
       ) : (
