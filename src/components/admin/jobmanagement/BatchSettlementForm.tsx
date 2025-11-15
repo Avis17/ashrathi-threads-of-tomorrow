@@ -178,6 +178,12 @@ const BatchSettlementForm = ({ employeeId, employeeName, onClose }: BatchSettlem
         toast.error('Please fill in all required fields for piece rate payment');
         return;
       }
+      
+      // Validate batch quantity limit
+      if (!batchValidation.isValid) {
+        toast.error(batchValidation.message || 'Cannot exceed batch production limit');
+        return;
+      }
     } else {
       if (!salaryConfigured) {
         toast.error('Employee salary is not configured');
@@ -210,6 +216,33 @@ const BatchSettlementForm = ({ employeeId, employeeName, onClose }: BatchSettlem
           remarks: `Fixed ${(employee as any)?.salary_type} salary payment. ${formData.remarks || ''}`,
         });
       } else {
+        // Server-side validation - Re-validate against cutting completion
+        if (!selectedBatch?.cutting_completed) {
+          toast.error('Cutting completion must be recorded first');
+          setShowConfirmation(false);
+          return;
+        }
+        
+        if (!selectedBatch?.cut_quantity || selectedBatch.cut_quantity <= 0) {
+          toast.error('Invalid cutting quantity for this batch');
+          setShowConfirmation(false);
+          return;
+        }
+        
+        // Calculate current usage across ALL employees and ALL skills
+        const batchProduction = allProductionEntries?.filter(p => p.batch_id === formData.batch_id) || [];
+        const totalUsed = batchProduction.reduce((sum, p) => sum + p.quantity_completed, 0);
+        const newTotal = totalUsed + (formData.quantity || 0);
+        
+        if (newTotal > selectedBatch.cut_quantity) {
+          const remaining = selectedBatch.cut_quantity - totalUsed;
+          toast.error(
+            `Cannot exceed cutting total! Only ${remaining} pieces remaining out of ${selectedBatch.cut_quantity} cut pieces.`
+          );
+          setShowConfirmation(false);
+          return;
+        }
+        
         await createProduction.mutateAsync({
           employee_id: employeeId,
           batch_id: formData.batch_id!,
@@ -369,9 +402,31 @@ const BatchSettlementForm = ({ employeeId, employeeName, onClose }: BatchSettlem
               {...register('quantity', { valueAsNumber: true })}
             />
             {selectedBatch?.cutting_completed && (
-              <p className="text-xs text-muted-foreground">
-                Maximum allowed: {batchValidation.remaining} pieces
-              </p>
+              <Alert variant={!batchValidation.isValid ? "destructive" : "default"} className="mt-2">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  <div className="space-y-2">
+                    <div className="font-semibold text-base">
+                      📊 Batch Production Limit
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div>Total Cut: <strong>{batchValidation.total}</strong> pieces</div>
+                      <div>Already Used: <strong>{batchValidation.used}</strong> pieces</div>
+                      <div className="col-span-2 text-lg font-bold text-green-600">
+                        Remaining: <strong>{batchValidation.remaining}</strong> pieces
+                      </div>
+                    </div>
+                    {!batchValidation.isValid && (
+                      <div className="mt-2 p-2 bg-destructive/10 rounded text-destructive font-semibold">
+                        ⚠️ {batchValidation.message}
+                      </div>
+                    )}
+                    <div className="text-xs text-muted-foreground mt-2">
+                      * This limit applies across all employees and all skills for this batch
+                    </div>
+                  </div>
+                </AlertDescription>
+              </Alert>
             )}
             </div>
           </div>
@@ -472,7 +527,12 @@ const BatchSettlementForm = ({ employeeId, employeeName, onClose }: BatchSettlem
           </Button>
           <Button 
             type="submit" 
-            disabled={createSettlement.isPending || createProduction.isPending || weekAlreadySettled}
+            disabled={
+              createSettlement.isPending || 
+              createProduction.isPending || 
+              weekAlreadySettled ||
+              (paymentType === 'piece_rate' && !batchValidation.isValid)
+            }
           >
             {weekAlreadySettled ? 'Week Already Settled' : 'Record & Settle'}
           </Button>
@@ -497,6 +557,16 @@ const BatchSettlementForm = ({ employeeId, employeeName, onClose }: BatchSettlem
                     <div><strong>Batch:</strong> {selectedBatch?.batch_number}</div>
                     <div><strong>Skill:</strong> {formData.department}</div>
                     <div><strong>Quantity:</strong> {formData.quantity} pieces</div>
+                    
+                    <div className="p-2 bg-muted rounded mt-2">
+                      <div className="text-xs font-semibold mb-1">Batch Production Status:</div>
+                      <div className="text-xs">
+                        Before: {batchValidation.used} / {batchValidation.total} pieces used
+                        <br />
+                        After: {batchValidation.used + (formData.quantity || 0)} / {batchValidation.total} pieces
+                      </div>
+                    </div>
+                    
                     <div><strong>Production Amount:</strong> ₹{productionAmount.toFixed(2)}</div>
                   </>
                 ) : (
