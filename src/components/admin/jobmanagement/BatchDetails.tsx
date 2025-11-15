@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useJobProductionEntries } from '@/hooks/useJobProduction';
 import { useJobBatchExpenses } from '@/hooks/useJobExpenses';
 import { format } from 'date-fns';
+import { CuttingCompletion } from './CuttingCompletion';
 
 interface BatchDetailsProps {
   batch: any;
@@ -25,7 +26,15 @@ const BatchDetails = ({ batch }: BatchDetailsProps) => {
   ];
 
   const calculateProgress = (qty: number) => {
-    return batch.expected_pieces > 0 ? (qty / batch.expected_pieces) * 100 : 0;
+    // If cutting not completed, no progress
+    if (!batch.cutting_completed || !batch.cut_quantity) return 0;
+    
+    // After cutting: 35% base + 65% based on production progress
+    const baseProgress = 35;
+    const remainingProgress = 65;
+    const productionProgress = (qty / batch.cut_quantity) * remainingProgress;
+    
+    return baseProgress + productionProgress;
   };
 
   const totalLabourCost = productionEntries?.reduce((sum, entry) => sum + entry.total_amount, 0) || 0;
@@ -52,39 +61,47 @@ const BatchDetails = ({ batch }: BatchDetailsProps) => {
         </div>
       </div>
 
+      {/* Cutting Completion */}
+      <CuttingCompletion batch={batch} />
+
       {/* Production Progress */}
-      <Card className="border-l-4 border-l-primary">
-        <CardContent className="p-6">
-          <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
-            <Package className="h-5 w-5 text-primary" />
-            Production Progress
-          </h3>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between text-sm mb-2">
-              <span className="text-muted-foreground">Expected Pieces:</span>
-              <span className="font-bold text-lg">{batch.expected_pieces}</span>
-            </div>
-            {sections.map((section) => {
-              const Icon = section.icon;
-              const progress = calculateProgress(section.qty);
-              return (
-                <div key={section.name} className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2">
-                      <Icon className={`h-4 w-4 ${section.color}`} />
-                      <span className="font-medium">{section.name}</span>
+      {batch.cutting_completed && (
+        <Card className="border-l-4 border-l-primary">
+          <CardContent className="p-6">
+            <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+              <Package className="h-5 w-5 text-primary" />
+              Production Progress
+            </h3>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between text-sm mb-2">
+                <span className="text-muted-foreground">Total Cut Pieces:</span>
+                <span className="font-bold text-lg">{batch.cut_quantity}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm mb-2">
+                <span className="text-muted-foreground">Overall Progress:</span>
+                <span className="font-bold text-lg text-primary">{batch.overall_progress || 0}%</span>
+              </div>
+              {sections.map((section) => {
+                const Icon = section.icon;
+                const progress = calculateProgress(section.qty);
+                return (
+                  <div key={section.name} className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2">
+                        <Icon className={`h-4 w-4 ${section.color}`} />
+                        <span className="font-medium">{section.name}</span>
+                      </div>
+                      <span className="font-semibold">
+                        {section.qty}/{batch.cut_quantity} ({((section.qty / batch.cut_quantity) * 100).toFixed(0)}%)
+                      </span>
                     </div>
-                    <span className="font-semibold">
-                      {section.qty}/{batch.expected_pieces} ({progress.toFixed(0)}%)
-                    </span>
+                    <Progress value={(section.qty / batch.cut_quantity) * 100} className="h-2" />
                   </div>
-                  <Progress value={progress} className="h-2" />
-                </div>
-              );
-            })}
-            <div className="pt-4 border-t">
-              <div className="flex items-center justify-between">
-                <span className="font-semibold">Final Quantity:</span>
+                );
+              })}
+              <div className="pt-4 border-t">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold">Final Quantity:</span>
                 <Badge className="text-lg px-4 py-1 bg-gradient-to-r from-primary to-secondary">
                   {batch.final_quantity} pieces
                 </Badge>
@@ -94,10 +111,11 @@ const BatchDetails = ({ batch }: BatchDetailsProps) => {
                   Wastage: {batch.expected_pieces - batch.final_quantity} pieces ({batch.wastage_percent}%)
                 </div>
               )}
+              </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Cost Summary */}
       <Card className="border-l-4 border-l-green-500">
