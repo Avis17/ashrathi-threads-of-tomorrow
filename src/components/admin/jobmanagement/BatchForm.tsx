@@ -1,8 +1,9 @@
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Plus, Trash2 } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -10,45 +11,94 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Card, CardContent } from '@/components/ui/card';
 import { useJobStyles } from '@/hooks/useJobStyles';
 import { useCreateJobBatch } from '@/hooks/useJobBatches';
+import { useEffect } from 'react';
 
 interface BatchFormProps {
   onClose: () => void;
+}
+
+interface RollData {
+  gsm: string;
+  color: string;
+  weight: number;
+  fabric_width: string;
 }
 
 const BatchForm = ({ onClose }: BatchFormProps) => {
   const { data: styles } = useJobStyles();
   const createMutation = useCreateJobBatch();
   
-  const { register, handleSubmit, setValue, watch } = useForm({
+  const { register, handleSubmit, setValue, watch, control } = useForm({
     defaultValues: {
       style_id: '',
       date_created: new Date().toISOString().split('T')[0],
       fabric_type: '',
-      gsm: '',
-      color: '',
-      total_fabric_received_kg: 0,
-      expected_pieces: 0,
-      wastage_percent: 5,
+      number_of_rolls: 1,
+      rolls: [{ gsm: '', color: '', weight: 0, fabric_width: '' }] as RollData[],
       supplier_name: '',
       lot_number: '',
-      fabric_width: '',
       remarks: '',
     },
   });
 
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: 'rolls',
+  });
+
   const selectedStyleId = watch('style_id');
+  const numberOfRolls = watch('number_of_rolls');
+  const rolls = watch('rolls');
   const selectedStyle = styles?.find(s => s.id === selectedStyleId);
 
+  // Calculate total weight
+  const totalWeight = rolls?.reduce((sum, roll) => sum + (Number(roll.weight) || 0), 0) || 0;
+
+  // Update rolls array when number_of_rolls changes
+  useEffect(() => {
+    const currentRolls = fields.length;
+    const targetRolls = Number(numberOfRolls) || 1;
+
+    if (targetRolls > currentRolls) {
+      for (let i = currentRolls; i < targetRolls; i++) {
+        append({ gsm: '', color: '', weight: 0, fabric_width: '' });
+      }
+    } else if (targetRolls < currentRolls) {
+      for (let i = currentRolls - 1; i >= targetRolls; i--) {
+        remove(i);
+      }
+    }
+  }, [numberOfRolls, fields.length, append, remove]);
+
   const onSubmit = async (data: any) => {
-    await createMutation.mutateAsync(data);
+    const batchData = {
+      style_id: data.style_id,
+      date_created: data.date_created,
+      fabric_type: data.fabric_type,
+      number_of_rolls: Number(data.number_of_rolls),
+      rolls_data: data.rolls,
+      total_fabric_received_kg: totalWeight,
+      supplier_name: data.supplier_name || null,
+      lot_number: data.lot_number || null,
+      remarks: data.remarks || null,
+      // Set first roll's data as default values for backward compatibility
+      gsm: data.rolls[0]?.gsm || '',
+      color: data.rolls[0]?.color || '',
+      fabric_width: data.rolls[0]?.fabric_width || '',
+      expected_pieces: 0, // Default value since we're not using it now
+      batch_number: `B-${Date.now()}`, // Auto-generate batch number
+    };
+
+    await createMutation.mutateAsync(batchData);
     onClose();
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <div className="space-y-2">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-h-[80vh] overflow-y-auto pr-2">
+      <div className="space-y-2 sticky top-0 bg-background pb-4 z-10">
         <h2 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
           Create New Production Batch
         </h2>
@@ -61,10 +111,10 @@ const BatchForm = ({ onClose }: BatchFormProps) => {
       <div className="space-y-2 p-4 bg-muted/30 rounded-lg">
         <Label>Select Style *</Label>
         <Select value={selectedStyleId} onValueChange={(value) => setValue('style_id', value)}>
-          <SelectTrigger>
+          <SelectTrigger className="bg-background">
             <SelectValue placeholder="Choose a style..." />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-popover z-50">
             {styles?.filter(s => s.is_active).map((style) => (
               <SelectItem key={style.id} value={style.id}>
                 {style.style_code} - {style.style_name}
@@ -86,7 +136,7 @@ const BatchForm = ({ onClose }: BatchFormProps) => {
       {/* Fabric Details */}
       <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
         <h3 className="font-semibold text-foreground">Fabric Details</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label htmlFor="date_created">Production Date *</Label>
             <Input id="date_created" type="date" {...register('date_created')} required />
@@ -96,74 +146,136 @@ const BatchForm = ({ onClose }: BatchFormProps) => {
             <Input id="fabric_type" {...register('fabric_type')} required placeholder="Polyester Lycra" />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="gsm">GSM *</Label>
-            <Input id="gsm" {...register('gsm')} required placeholder="200" />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="color">Color *</Label>
-            <Input id="color" {...register('color')} required placeholder="Navy Blue" />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="total_fabric_received_kg">Total Fabric (kg) *</Label>
+            <Label htmlFor="number_of_rolls">Number of Rolls *</Label>
             <Input 
-              id="total_fabric_received_kg" 
+              id="number_of_rolls" 
               type="number" 
-              step="0.01"
-              {...register('total_fabric_received_kg', { valueAsNumber: true })} 
+              min="1"
+              max="50"
+              {...register('number_of_rolls', { valueAsNumber: true })} 
               required 
-              placeholder="180"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="expected_pieces">Expected Pieces *</Label>
-            <Input 
-              id="expected_pieces" 
-              type="number"
-              {...register('expected_pieces', { valueAsNumber: true })} 
-              required 
-              placeholder="720"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="wastage_percent">Wastage %</Label>
-            <Input 
-              id="wastage_percent" 
-              type="number"
-              step="0.1"
-              {...register('wastage_percent', { valueAsNumber: true })} 
-              placeholder="5"
             />
           </div>
         </div>
       </div>
 
-      {/* Supplier Information */}
+      {/* Roll Details */}
       <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
-        <h3 className="font-semibold text-foreground">Supplier Information (Optional)</h3>
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold text-foreground">Roll Details</h3>
+          <div className="text-sm text-muted-foreground">
+            Total Weight: <span className="font-bold text-primary">{totalWeight.toFixed(2)} kg</span>
+          </div>
+        </div>
+        
+        <div className="space-y-4">
+          {fields.map((field, index) => (
+            <Card key={field.id} className="border-primary/20">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-medium text-sm">Roll {index + 1}</h4>
+                  {fields.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        remove(index);
+                        setValue('number_of_rolls', fields.length - 1);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  )}
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                  <div className="space-y-2">
+                    <Label htmlFor={`rolls.${index}.gsm`}>GSM *</Label>
+                    <Input
+                      id={`rolls.${index}.gsm`}
+                      {...register(`rolls.${index}.gsm`)}
+                      required
+                      placeholder="200"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor={`rolls.${index}.color`}>Color *</Label>
+                    <Input
+                      id={`rolls.${index}.color`}
+                      {...register(`rolls.${index}.color`)}
+                      required
+                      placeholder="Navy Blue"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor={`rolls.${index}.weight`}>Weight (kg) *</Label>
+                    <Input
+                      id={`rolls.${index}.weight`}
+                      type="number"
+                      step="0.01"
+                      {...register(`rolls.${index}.weight`, { valueAsNumber: true })}
+                      required
+                      placeholder="25.5"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor={`rolls.${index}.fabric_width`}>Fabric Width *</Label>
+                    <Input
+                      id={`rolls.${index}.fabric_width`}
+                      {...register(`rolls.${index}.fabric_width`)}
+                      required
+                      placeholder='60"'
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {fields.length < 50 && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              append({ gsm: '', color: '', weight: 0, fabric_width: '' });
+              setValue('number_of_rolls', fields.length + 1);
+            }}
+            className="w-full"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Roll
+          </Button>
+        )}
+      </div>
+
+      {/* Supplier & Additional Info */}
+      <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
+        <h3 className="font-semibold text-foreground">Additional Information</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="supplier_name">Supplier Name</Label>
-            <Input id="supplier_name" {...register('supplier_name')} placeholder="ABC Fabrics" />
+            <Input id="supplier_name" {...register('supplier_name')} placeholder="ABC Textiles" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="lot_number">Lot Number</Label>
-            <Input id="lot_number" {...register('lot_number')} placeholder="LOT-2025-001" />
+            <Input id="lot_number" {...register('lot_number')} placeholder="LOT-2024-001" />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="fabric_width">Fabric Width</Label>
-            <Input id="fabric_width" {...register('fabric_width')} placeholder="60 inches" />
-          </div>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="remarks">Remarks</Label>
+          <Textarea 
+            id="remarks" 
+            {...register('remarks')} 
+            placeholder="Any additional notes..."
+            className="min-h-[80px]"
+          />
         </div>
       </div>
 
-      {/* Remarks */}
-      <div className="space-y-2">
-        <Label htmlFor="remarks">Remarks</Label>
-        <Textarea id="remarks" {...register('remarks')} rows={3} placeholder="Additional notes..." />
-      </div>
-
-      {/* Actions */}
-      <div className="flex gap-3 justify-end pt-4 border-t">
+      {/* Action Buttons */}
+      <div className="flex gap-3 justify-end pt-4 border-t sticky bottom-0 bg-background">
         <Button type="button" variant="outline" onClick={onClose}>
           Cancel
         </Button>
