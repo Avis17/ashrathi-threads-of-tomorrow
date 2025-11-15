@@ -1,20 +1,33 @@
 import { useState } from 'react';
-import { Plus, Search, Package, Eye } from 'lucide-react';
+import { Plus, Search, Package, Eye, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { useJobBatches } from '@/hooks/useJobBatches';
+import { useJobBatches, useDeleteJobBatch } from '@/hooks/useJobBatches';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import BatchForm from './BatchForm';
 import BatchDetails from './BatchDetails';
 import { format } from 'date-fns';
 
 const BatchesManager = () => {
   const { data: batches, isLoading } = useJobBatches();
+  const deleteBatchMutation = useDeleteJobBatch();
   const [searchTerm, setSearchTerm] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedBatch, setSelectedBatch] = useState<any>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [deleteBatchId, setDeleteBatchId] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const filteredBatches = batches?.filter((batch: any) => 
     batch.batch_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -36,6 +49,19 @@ const BatchesManager = () => {
   const handleViewDetails = (batch: any) => {
     setSelectedBatch(batch);
     setIsDetailsOpen(true);
+  };
+
+  const handleDeleteClick = (batchId: string) => {
+    setDeleteBatchId(batchId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (deleteBatchId) {
+      await deleteBatchMutation.mutateAsync(deleteBatchId);
+      setDeleteDialogOpen(false);
+      setDeleteBatchId(null);
+    }
   };
 
   return (
@@ -111,14 +137,23 @@ const BatchesManager = () => {
                       </Badge>
                     </td>
                     <td className="px-4 py-3">
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => handleViewDetails(batch)}
-                      >
-                        <Eye className="h-4 w-4 mr-1" />
-                        View
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => handleViewDetails(batch)}
+                        >
+                          <Eye className="h-4 w-4 mr-1" />
+                          View
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="destructive"
+                          onClick={() => handleDeleteClick(batch.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -148,6 +183,34 @@ const BatchesManager = () => {
           {selectedBatch && <BatchDetails batch={selectedBatch} onClose={() => setIsDetailsOpen(false)} />}
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Batch?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete batch <span className="font-semibold">{batches?.find(b => b.id === deleteBatchId)?.batch_number}</span> and all associated records including:
+              <ul className="list-disc list-inside mt-2 space-y-1">
+                <li>Production entries</li>
+                <li>Batch expenses</li>
+                <li>Weekly settlements</li>
+                <li>Part payments</li>
+              </ul>
+              <p className="mt-2 font-semibold text-destructive">This action cannot be undone.</p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

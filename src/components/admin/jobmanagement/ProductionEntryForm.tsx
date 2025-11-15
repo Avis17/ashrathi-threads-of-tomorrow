@@ -9,9 +9,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 import { useJobBatches } from '@/hooks/useJobBatches';
 import { useJobEmployees } from '@/hooks/useJobEmployees';
-import { useCreateJobProductionEntry } from '@/hooks/useJobProduction';
+import { useCreateJobProductionEntry, useJobProductionEntries } from '@/hooks/useJobProduction';
+import { toast } from 'sonner';
 
 interface ProductionEntryFormProps {
   onClose: () => void;
@@ -43,6 +46,14 @@ const ProductionEntryForm = ({ onClose }: ProductionEntryFormProps) => {
 
   const selectedBatch = batches?.find(b => b.id === batchId);
   const selectedEmployee = employees?.find(e => e.id === employeeId);
+  
+  // Fetch production entries for the selected batch
+  const { data: productionEntries } = useJobProductionEntries(batchId || undefined);
+  
+  // Calculate total quantity already used in production entries
+  const totalUsedQuantity = productionEntries?.reduce((sum, entry) => sum + entry.quantity_completed, 0) || 0;
+  const remainingQuantity = selectedBatch?.cut_quantity ? selectedBatch.cut_quantity - totalUsedQuantity : 0;
+  const exceedsLimit = selectedBatch?.cutting_completed && (totalUsedQuantity + quantityCompleted) > (selectedBatch?.cut_quantity || 0);
 
   // Auto-fill employee details
   const handleEmployeeChange = (empId: string) => {
@@ -74,6 +85,15 @@ const ProductionEntryForm = ({ onClose }: ProductionEntryFormProps) => {
   const totalAmount = quantityCompleted * ratePerPiece;
 
   const onSubmit = async (data: any) => {
+    // Validate against cutting completion
+    if (selectedBatch?.cutting_completed) {
+      const newTotal = totalUsedQuantity + data.quantity_completed;
+      if (newTotal > (selectedBatch.cut_quantity || 0)) {
+        toast.error(`Cannot exceed cutting total. You can only add up to ${remainingQuantity} more pieces.`);
+        return;
+      }
+    }
+    
     await createMutation.mutateAsync(data);
     onClose();
   };
@@ -134,6 +154,39 @@ const ProductionEntryForm = ({ onClose }: ProductionEntryFormProps) => {
           )}
         </div>
 
+        {/* Validation Alert */}
+        {selectedBatch?.cutting_completed && (
+          <Alert variant={exceedsLimit ? "destructive" : "default"}>
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              <div className="space-y-1">
+                <div className="font-semibold">
+                  Production Limit: {selectedBatch.cut_quantity} pieces (Cutting Completed)
+                </div>
+                <div className="text-sm">
+                  Used: {totalUsedQuantity} / {selectedBatch.cut_quantity} • Remaining: {remainingQuantity}
+                </div>
+                {exceedsLimit && (
+                  <div className="text-sm font-semibold mt-2">
+                    ⚠️ Cannot exceed cutting total! Maximum allowed: {remainingQuantity} pieces
+                  </div>
+                )}
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {!selectedBatch?.cutting_completed && selectedBatch && (
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              <div className="text-sm">
+                ℹ️ Cutting not yet completed for this batch. No quantity validation applied.
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
+
         <div className="space-y-2">
           <Label>Worker *</Label>
           <Select value={employeeId} onValueChange={handleEmployeeChange}>
@@ -159,7 +212,13 @@ const ProductionEntryForm = ({ onClose }: ProductionEntryFormProps) => {
               {...register('quantity_completed', { valueAsNumber: true })} 
               required 
               placeholder="100"
+              className={exceedsLimit ? "border-destructive" : ""}
             />
+            {selectedBatch?.cutting_completed && (
+              <p className="text-xs text-muted-foreground">
+                Maximum allowed: {remainingQuantity} pieces
+              </p>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="rate_per_piece">Rate Per Piece (₹) *</Label>
@@ -195,7 +254,7 @@ const ProductionEntryForm = ({ onClose }: ProductionEntryFormProps) => {
         <Button 
           type="submit" 
           className="bg-gradient-to-r from-primary to-secondary"
-          disabled={createMutation.isPending}
+          disabled={createMutation.isPending || exceedsLimit}
         >
           {createMutation.isPending ? 'Saving...' : 'Save Entry'}
         </Button>
