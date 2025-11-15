@@ -801,6 +801,8 @@ export type Database = {
           color: string
           created_at: string | null
           cut_quantity: number | null
+          cutting_completed: boolean | null
+          cutting_data: Json | null
           date_created: string
           dye_test_result: string | null
           expected_pieces: number
@@ -813,6 +815,7 @@ export type Database = {
           lot_number: string | null
           marker_efficiency: number | null
           number_of_rolls: number | null
+          overall_progress: number | null
           packed_quantity: number | null
           remarks: string | null
           rolls_data: Json | null
@@ -830,6 +833,8 @@ export type Database = {
           color: string
           created_at?: string | null
           cut_quantity?: number | null
+          cutting_completed?: boolean | null
+          cutting_data?: Json | null
           date_created?: string
           dye_test_result?: string | null
           expected_pieces: number
@@ -842,6 +847,7 @@ export type Database = {
           lot_number?: string | null
           marker_efficiency?: number | null
           number_of_rolls?: number | null
+          overall_progress?: number | null
           packed_quantity?: number | null
           remarks?: string | null
           rolls_data?: Json | null
@@ -859,6 +865,8 @@ export type Database = {
           color?: string
           created_at?: string | null
           cut_quantity?: number | null
+          cutting_completed?: boolean | null
+          cutting_data?: Json | null
           date_created?: string
           dye_test_result?: string | null
           expected_pieces?: number
@@ -871,6 +879,7 @@ export type Database = {
           lot_number?: string | null
           marker_efficiency?: number | null
           number_of_rolls?: number | null
+          overall_progress?: number | null
           packed_quantity?: number | null
           remarks?: string | null
           rolls_data?: Json | null
