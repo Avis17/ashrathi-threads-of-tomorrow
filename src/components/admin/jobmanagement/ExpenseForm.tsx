@@ -11,29 +11,31 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useJobBatches } from '@/hooks/useJobBatches';
-import { useCreateJobBatchExpense } from '@/hooks/useJobExpenses';
+import { useCreateJobBatchExpense, useUpdateJobBatchExpense } from '@/hooks/useJobExpenses';
 
 interface ExpenseFormProps {
+  expense?: any;
   onClose: () => void;
 }
 
-const ExpenseForm = ({ onClose }: ExpenseFormProps) => {
+const ExpenseForm = ({ expense, onClose }: ExpenseFormProps) => {
   const { data: batches } = useJobBatches();
   const createMutation = useCreateJobBatchExpense();
+  const updateMutation = useUpdateJobBatchExpense();
   
   const { register, handleSubmit, setValue, watch } = useForm({
     defaultValues: {
-      batch_id: '',
-      date: new Date().toISOString().split('T')[0],
-      expense_type: 'fabric',
-      item_name: '',
-      quantity: 0,
-      unit: 'kg',
-      rate_per_unit: 0,
-      amount: 0,
-      supplier_name: '',
-      bill_number: '',
-      note: '',
+      batch_id: expense?.batch_id || '',
+      date: expense?.date || new Date().toISOString().split('T')[0],
+      expense_type: expense?.expense_type || 'fabric',
+      item_name: expense?.item_name || '',
+      quantity: expense?.quantity || 0,
+      unit: expense?.unit || 'kg',
+      rate_per_unit: expense?.rate_per_unit || 0,
+      amount: expense?.amount || 0,
+      supplier_name: expense?.supplier_name || '',
+      bill_number: expense?.bill_number || '',
+      note: expense?.note || '',
     },
   });
 
@@ -47,7 +49,11 @@ const ExpenseForm = ({ onClose }: ExpenseFormProps) => {
   };
 
   const onSubmit = async (data: any) => {
-    await createMutation.mutateAsync(data);
+    if (expense) {
+      await updateMutation.mutateAsync({ id: expense.id, data });
+    } else {
+      await createMutation.mutateAsync(data);
+    }
     onClose();
   };
 
@@ -55,17 +61,20 @@ const ExpenseForm = ({ onClose }: ExpenseFormProps) => {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div className="space-y-2">
         <h2 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-          Add Batch Expense
+          {expense ? 'Edit' : 'Add'} Batch Expense
         </h2>
         <p className="text-sm text-muted-foreground">
-          Record an expense for a production batch
+          {expense ? 'Update' : 'Record'} an expense for a production batch
         </p>
       </div>
 
       <div className="space-y-4">
         <div className="space-y-2">
           <Label>Select Batch *</Label>
-          <Select onValueChange={(value) => setValue('batch_id', value)}>
+          <Select 
+            defaultValue={expense?.batch_id || ''}
+            onValueChange={(value) => setValue('batch_id', value)}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Choose a batch..." />
             </SelectTrigger>
@@ -86,7 +95,10 @@ const ExpenseForm = ({ onClose }: ExpenseFormProps) => {
           </div>
           <div className="space-y-2">
             <Label>Expense Type *</Label>
-            <Select defaultValue="fabric" onValueChange={(value) => setValue('expense_type', value)}>
+            <Select 
+              defaultValue={expense?.expense_type || 'fabric'}
+              onValueChange={(value) => setValue('expense_type', value)}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -173,9 +185,9 @@ const ExpenseForm = ({ onClose }: ExpenseFormProps) => {
         <Button 
           type="submit" 
           className="bg-gradient-to-r from-primary to-secondary"
-          disabled={createMutation.isPending}
+          disabled={createMutation.isPending || updateMutation.isPending}
         >
-          {createMutation.isPending ? 'Saving...' : 'Save Expense'}
+          {(createMutation.isPending || updateMutation.isPending) ? 'Saving...' : (expense ? 'Update' : 'Save') + ' Expense'}
         </Button>
       </div>
     </form>
