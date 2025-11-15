@@ -1415,6 +1415,7 @@ export type Database = {
           payment_mode: string | null
           payment_status: string | null
           remarks: string | null
+          section: string | null
           total_part_payments: number | null
           total_production_amount: number | null
           week_end_date: string
@@ -1430,6 +1431,7 @@ export type Database = {
           payment_mode?: string | null
           payment_status?: string | null
           remarks?: string | null
+          section?: string | null
           total_part_payments?: number | null
           total_production_amount?: number | null
           week_end_date: string
@@ -1445,6 +1447,7 @@ export type Database = {
           payment_mode?: string | null
           payment_status?: string | null
           remarks?: string | null
+          section?: string | null
           total_part_payments?: number | null
           total_production_amount?: number | null
           week_end_date?: string
