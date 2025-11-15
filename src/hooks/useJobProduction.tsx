@@ -11,7 +11,10 @@ export const useJobProductionEntries = (batchId?: string) => {
     queryFn: async () => {
       let query = supabase
         .from('job_production_entries')
-        .select('*')
+        // join with employees to exclude deleted/disabled employees
+        .select('*, job_employees!inner(id, is_active)')
+        .not('employee_id', 'is', null)
+        .eq('job_employees.is_active', true)
         .order('date', { ascending: false });
       
       if (batchId) {
