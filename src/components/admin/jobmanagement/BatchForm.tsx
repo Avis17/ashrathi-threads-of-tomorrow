@@ -21,9 +21,11 @@ interface BatchFormProps {
 }
 
 interface RollData {
+  fabric_type: string;
   gsm: string;
   color: string;
   weight: number;
+  number_of_rolls: number;
   fabric_width: string;
 }
 
@@ -35,9 +37,8 @@ const BatchForm = ({ onClose }: BatchFormProps) => {
     defaultValues: {
       style_id: '',
       date_created: new Date().toISOString().split('T')[0],
-      fabric_type: '',
-      number_of_rolls: 1,
-      rolls: [{ gsm: '', color: '', weight: 0, fabric_width: '' }] as RollData[],
+      number_of_types: 1,
+      rolls: [{ fabric_type: '', gsm: '', color: '', weight: 0, number_of_rolls: 1, fabric_width: '' }] as RollData[],
       supplier_name: '',
       lot_number: '',
       remarks: '',
@@ -50,35 +51,35 @@ const BatchForm = ({ onClose }: BatchFormProps) => {
   });
 
   const selectedStyleId = watch('style_id');
-  const numberOfRolls = watch('number_of_rolls');
+  const numberOfTypes = watch('number_of_types');
   const rolls = watch('rolls');
   const selectedStyle = styles?.find(s => s.id === selectedStyleId);
 
-  // Calculate total weight
-  const totalWeight = rolls?.reduce((sum, roll) => sum + (Number(roll.weight) || 0), 0) || 0;
+  // Calculate total weight (weight * number_of_rolls for each type)
+  const totalWeight = rolls?.reduce((sum, roll) => sum + ((Number(roll.weight) || 0) * (Number(roll.number_of_rolls) || 0)), 0) || 0;
 
-  // Update rolls array when number_of_rolls changes
+  // Update rolls array when number_of_types changes
   useEffect(() => {
-    const currentRolls = fields.length;
-    const targetRolls = Number(numberOfRolls) || 1;
+    const currentTypes = fields.length;
+    const targetTypes = Number(numberOfTypes) || 1;
 
-    if (targetRolls > currentRolls) {
-      for (let i = currentRolls; i < targetRolls; i++) {
-        append({ gsm: '', color: '', weight: 0, fabric_width: '' });
+    if (targetTypes > currentTypes) {
+      for (let i = currentTypes; i < targetTypes; i++) {
+        append({ fabric_type: '', gsm: '', color: '', weight: 0, number_of_rolls: 1, fabric_width: '' });
       }
-    } else if (targetRolls < currentRolls) {
-      for (let i = currentRolls - 1; i >= targetRolls; i--) {
+    } else if (targetTypes < currentTypes) {
+      for (let i = currentTypes - 1; i >= targetTypes; i--) {
         remove(i);
       }
     }
-  }, [numberOfRolls, fields.length, append, remove]);
+  }, [numberOfTypes, fields.length, append, remove]);
 
   const onSubmit = async (data: any) => {
     const batchData = {
       style_id: data.style_id,
       date_created: data.date_created,
-      fabric_type: data.fabric_type,
-      number_of_rolls: Number(data.number_of_rolls),
+      fabric_type: data.rolls[0]?.fabric_type || '', // Take first type's fabric for backward compatibility
+      number_of_rolls: data.rolls.reduce((sum: number, roll: any) => sum + (Number(roll.number_of_rolls) || 0), 0), // Total rolls across all types
       rolls_data: data.rolls,
       total_fabric_received_kg: totalWeight,
       supplier_name: data.supplier_name || null,
@@ -133,36 +134,32 @@ const BatchForm = ({ onClose }: BatchFormProps) => {
         )}
       </div>
 
-      {/* Fabric Details */}
+      {/* Basic Details */}
       <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
-        <h3 className="font-semibold text-foreground">Fabric Details</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <h3 className="font-semibold text-foreground">Basic Details</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="date_created">Production Date *</Label>
             <Input id="date_created" type="date" {...register('date_created')} required />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="fabric_type">Fabric Type *</Label>
-            <Input id="fabric_type" {...register('fabric_type')} required placeholder="Polyester Lycra" />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="number_of_rolls">Number of Rolls *</Label>
+            <Label htmlFor="number_of_types">Number of Types *</Label>
             <Input 
-              id="number_of_rolls" 
+              id="number_of_types" 
               type="number" 
               min="1"
               max="50"
-              {...register('number_of_rolls', { valueAsNumber: true })} 
+              {...register('number_of_types', { valueAsNumber: true })} 
               required 
             />
           </div>
         </div>
       </div>
 
-      {/* Roll Details */}
+      {/* Type Details */}
       <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
         <div className="flex items-center justify-between">
-          <h3 className="font-semibold text-foreground">Roll Details</h3>
+          <h3 className="font-semibold text-foreground">Type Details</h3>
           <div className="text-sm text-muted-foreground">
             Total Weight: <span className="font-bold text-primary">{totalWeight.toFixed(2)} kg</span>
           </div>
@@ -173,7 +170,7 @@ const BatchForm = ({ onClose }: BatchFormProps) => {
             <Card key={field.id} className="border-primary/20">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-medium text-sm">Roll {index + 1}</h4>
+                  <h4 className="font-medium text-sm">Type {index + 1}</h4>
                   {fields.length > 1 && (
                     <Button
                       type="button"
@@ -181,7 +178,7 @@ const BatchForm = ({ onClose }: BatchFormProps) => {
                       size="icon"
                       onClick={() => {
                         remove(index);
-                        setValue('number_of_rolls', fields.length - 1);
+                        setValue('number_of_types', fields.length - 1);
                       }}
                     >
                       <Trash2 className="h-4 w-4 text-destructive" />
@@ -189,14 +186,23 @@ const BatchForm = ({ onClose }: BatchFormProps) => {
                   )}
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="space-y-2 md:col-span-3">
+                    <Label htmlFor={`rolls.${index}.fabric_type`}>Fabric Type *</Label>
+                    <Input
+                      id={`rolls.${index}.fabric_type`}
+                      {...register(`rolls.${index}.fabric_type`)}
+                      required
+                      placeholder="Airtex Cotton"
+                    />
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor={`rolls.${index}.gsm`}>GSM *</Label>
                     <Input
                       id={`rolls.${index}.gsm`}
                       {...register(`rolls.${index}.gsm`)}
                       required
-                      placeholder="200"
+                      placeholder="220"
                     />
                   </div>
                   <div className="space-y-2">
@@ -205,18 +211,7 @@ const BatchForm = ({ onClose }: BatchFormProps) => {
                       id={`rolls.${index}.color`}
                       {...register(`rolls.${index}.color`)}
                       required
-                      placeholder="Navy Blue"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor={`rolls.${index}.weight`}>Weight (kg) *</Label>
-                    <Input
-                      id={`rolls.${index}.weight`}
-                      type="number"
-                      step="0.01"
-                      {...register(`rolls.${index}.weight`, { valueAsNumber: true })}
-                      required
-                      placeholder="25.5"
+                      placeholder="Red"
                     />
                   </div>
                   <div className="space-y-2">
@@ -227,6 +222,34 @@ const BatchForm = ({ onClose }: BatchFormProps) => {
                       required
                       placeholder='60"'
                     />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor={`rolls.${index}.weight`}>Weight per Roll (kg) *</Label>
+                    <Input
+                      id={`rolls.${index}.weight`}
+                      type="number"
+                      step="0.01"
+                      {...register(`rolls.${index}.weight`, { valueAsNumber: true })}
+                      required
+                      placeholder="25"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor={`rolls.${index}.number_of_rolls`}>Number of Rolls *</Label>
+                    <Input
+                      id={`rolls.${index}.number_of_rolls`}
+                      type="number"
+                      min="1"
+                      {...register(`rolls.${index}.number_of_rolls`, { valueAsNumber: true })}
+                      required
+                      placeholder="3"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-muted-foreground">Total Weight</Label>
+                    <div className="h-10 flex items-center px-3 bg-muted rounded-md font-semibold text-primary">
+                      {((Number(rolls[index]?.weight) || 0) * (Number(rolls[index]?.number_of_rolls) || 0)).toFixed(2)} kg
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -239,13 +262,13 @@ const BatchForm = ({ onClose }: BatchFormProps) => {
             type="button"
             variant="outline"
             onClick={() => {
-              append({ gsm: '', color: '', weight: 0, fabric_width: '' });
-              setValue('number_of_rolls', fields.length + 1);
+              append({ fabric_type: '', gsm: '', color: '', weight: 0, number_of_rolls: 1, fabric_width: '' });
+              setValue('number_of_types', fields.length + 1);
             }}
             className="w-full"
           >
             <Plus className="h-4 w-4 mr-2" />
-            Add Roll
+            Add Type
           </Button>
         )}
       </div>
