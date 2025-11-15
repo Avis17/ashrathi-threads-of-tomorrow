@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
-import { useJobBatches } from '@/hooks/useJobBatches';
+import { useJobBatches, useUpdateJobBatch } from '@/hooks/useJobBatches';
 import { useJobEmployees } from '@/hooks/useJobEmployees';
 import { useCreateJobProductionEntry, useJobProductionEntries } from '@/hooks/useJobProduction';
 import { toast } from 'sonner';
@@ -24,6 +24,7 @@ const ProductionEntryForm = ({ onClose }: ProductionEntryFormProps) => {
   const { data: batches } = useJobBatches();
   const { data: employees } = useJobEmployees();
   const createMutation = useCreateJobProductionEntry();
+  const updateBatch = useUpdateJobBatch();
   
   const { register, handleSubmit, setValue, watch } = useForm({
     defaultValues: {
@@ -94,8 +95,38 @@ const ProductionEntryForm = ({ onClose }: ProductionEntryFormProps) => {
       }
     }
     
-    await createMutation.mutateAsync(data);
-    onClose();
+    // Additional validation to ensure batch has cut_quantity
+    if (!selectedBatch?.cut_quantity || selectedBatch.cut_quantity <= 0) {
+      toast.error('Cutting completion must be recorded before adding production entries');
+      return;
+    }
+
+    if (data.quantity_completed <= 0) {
+      toast.error('Quantity must be greater than 0');
+      return;
+    }
+    
+    try {
+      await createMutation.mutateAsync(data);
+      
+      // Calculate new progress based on all production entries
+      const newTotalQuantity = totalUsedQuantity + data.quantity_completed;
+      const baseProgress = 35;
+      const productionProgressPercent = (newTotalQuantity / selectedBatch.cut_quantity) * 65;
+      const newOverallProgress = Math.min(100, baseProgress + productionProgressPercent);
+      
+      // Update batch progress
+      await updateBatch.mutateAsync({
+        id: selectedBatch.id,
+        data: {
+          overall_progress: Math.round(newOverallProgress)
+        }
+      });
+      
+      onClose();
+    } catch (error) {
+      console.error('Error creating production entry:', error);
+    }
   };
 
   return (
@@ -155,6 +186,17 @@ const ProductionEntryForm = ({ onClose }: ProductionEntryFormProps) => {
         </div>
 
         {/* Validation Alert */}
+        {selectedBatch && !selectedBatch.cutting_completed && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              <div className="text-sm font-semibold">
+                ⚠️ Cutting completion must be recorded first before adding production entries!
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
+
         {selectedBatch?.cutting_completed && (
           <Alert variant={exceedsLimit ? "destructive" : "default"}>
             <AlertCircle className="h-4 w-4" />
@@ -171,17 +213,6 @@ const ProductionEntryForm = ({ onClose }: ProductionEntryFormProps) => {
                     ⚠️ Cannot exceed cutting total! Maximum allowed: {remainingQuantity} pieces
                   </div>
                 )}
-              </div>
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {!selectedBatch?.cutting_completed && selectedBatch && (
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              <div className="text-sm">
-                ℹ️ Cutting not yet completed for this batch. No quantity validation applied.
               </div>
             </AlertDescription>
           </Alert>
@@ -254,7 +285,7 @@ const ProductionEntryForm = ({ onClose }: ProductionEntryFormProps) => {
         <Button 
           type="submit" 
           className="bg-gradient-to-r from-primary to-secondary"
-          disabled={createMutation.isPending || exceedsLimit}
+          disabled={createMutation.isPending || exceedsLimit || !selectedBatch?.cutting_completed}
         >
           {createMutation.isPending ? 'Saving...' : 'Save Entry'}
         </Button>

@@ -65,6 +65,11 @@ export const CuttingCompletion = ({ batch }: CuttingCompletionProps) => {
     // Calculate total cut quantity
     const totalCutQuantity = Object.values(cutQuantities).reduce((sum, qty) => sum + qty, 0);
 
+    if (totalCutQuantity <= 0) {
+      toast.error('Total cut quantity must be greater than 0');
+      return;
+    }
+
     try {
       await updateBatch.mutateAsync({
         id: batch.id,
@@ -177,7 +182,7 @@ export const CuttingCompletion = ({ batch }: CuttingCompletionProps) => {
             <Button 
               onClick={handleSubmit} 
               className="w-full"
-              disabled={updateBatch.isPending || totalCutQuantity === 0}
+              disabled={updateBatch.isPending || totalCutQuantity === 0 || batch.cutting_completed}
             >
               {updateBatch.isPending ? 'Saving...' : 'Complete Cutting Phase (35% Progress)'}
             </Button>
