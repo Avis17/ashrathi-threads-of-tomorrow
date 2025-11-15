@@ -69,14 +69,6 @@ const BatchSettlementForm = ({ employeeId, employeeName, onClose }: BatchSettlem
 
   const currentWeek = getCurrentWeek();
 
-  // Check if settlement already exists for current week
-  const weekAlreadySettled = useMemo(() => {
-    return settlements?.some(s => 
-      s.week_start_date === currentWeek.start && 
-      s.week_end_date === currentWeek.end
-    );
-  }, [settlements, currentWeek]);
-
   const { register, handleSubmit, watch, setValue } = useForm<FormData>({
     defaultValues: {
       payment_type: 'piece_rate',
@@ -90,6 +82,18 @@ const BatchSettlementForm = ({ employeeId, employeeName, onClose }: BatchSettlem
   const batchId = watch('batch_id');
   const department = watch('department');
   const quantity = watch('quantity');
+
+  // Check if settlement already exists for current week + batch + section
+  const weekAlreadySettled = useMemo(() => {
+    if (!batchId || !department) return false; // No validation until both are selected
+    
+    return settlements?.some(s => 
+      s.week_start_date === currentWeek.start && 
+      s.week_end_date === currentWeek.end &&
+      s.batch_id === batchId &&
+      s.section === department
+    );
+  }, [settlements, currentWeek, batchId, department]);
 
   const selectedBatch = batches?.find(b => b.id === batchId);
   const selectedStyle = styles?.find(s => s.id === selectedBatch?.style_id);
@@ -222,6 +226,7 @@ const BatchSettlementForm = ({ employeeId, employeeName, onClose }: BatchSettlem
         await createSettlement.mutateAsync({
           employee_id: employeeId,
           batch_id: formData.batch_id!,
+          section: formData.department!,
           week_start_date: currentWeek.start,
           week_end_date: currentWeek.end,
           total_production_amount: productionAmount,
@@ -231,6 +236,20 @@ const BatchSettlementForm = ({ employeeId, employeeName, onClose }: BatchSettlem
           payment_mode: formData.payment_mode,
           payment_status: 'paid',
           remarks: formData.remarks,
+        });
+
+        // Calculate and update batch progress
+        const updatedBatchProduction = allProductionEntries?.filter(p => p.batch_id === formData.batch_id) || [];
+        const newTotalQuantity = updatedBatchProduction.reduce((sum, p) => sum + p.quantity_completed, 0) + formData.quantity!;
+        const baseProgress = 35; // Cutting completion
+        const productionProgressPercent = (newTotalQuantity / selectedBatch!.cut_quantity) * 65;
+        const newOverallProgress = Math.min(100, baseProgress + productionProgressPercent);
+        
+        await updateBatch.mutateAsync({
+          id: formData.batch_id!,
+          data: {
+            overall_progress: Math.round(newOverallProgress)
+          }
         });
       }
 
@@ -273,8 +292,8 @@ const BatchSettlementForm = ({ employeeId, employeeName, onClose }: BatchSettlem
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              Settlement has already been completed for this week ({getWeekRange(currentWeek.start, currentWeek.end)}).
-              You cannot create another settlement for the same week.
+              Settlement for {department} has already been completed for this batch this week ({getWeekRange(currentWeek.start, currentWeek.end)}).
+              You can settle other skills/departments for this employee.
             </AlertDescription>
           </Alert>
         )}

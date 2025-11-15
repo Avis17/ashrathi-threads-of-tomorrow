@@ -14,7 +14,6 @@ import { Edit, DollarSign, Calendar, User, Phone, MapPin, Briefcase, Package, Tr
 import { format } from 'date-fns';
 import { getCurrentWeek, isSettlementDay, getWeekRange } from '@/lib/weekUtils';
 import PartPaymentForm from './PartPaymentForm';
-import WeeklySettlementForm from './WeeklySettlementForm';
 import BatchSettlementForm from './BatchSettlementForm';
 import EmployeeForm from './EmployeeForm';
 
@@ -32,20 +31,11 @@ const EmployeeDetails = ({ employeeId, onClose, onEdit }: EmployeeDetailsProps) 
   const { data: production } = useJobProductionEntries();
   const deleteMutation = useDeleteJobEmployee();
   const [showPaymentForm, setShowPaymentForm] = useState(false);
-  const [showSettlementForm, setShowSettlementForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [showBatchSettlement, setShowBatchSettlement] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const currentWeek = getCurrentWeek();
-  
-  // Check if current week is already settled
-  const weekAlreadySettled = useMemo(() => {
-    return settlements?.some(s => 
-      s.week_start_date === currentWeek.start && 
-      s.week_end_date === currentWeek.end
-    );
-  }, [settlements, currentWeek]);
 
   const weekProduction = production?.filter(p => 
     p.employee_id === employeeId &&
@@ -116,23 +106,10 @@ const EmployeeDetails = ({ employeeId, onClose, onEdit }: EmployeeDetailsProps) 
           <Button 
             onClick={() => setShowBatchSettlement(true)} 
             className="gap-2"
-            disabled={weekAlreadySettled}
           >
             <Package className="h-4 w-4" />
-            {weekAlreadySettled ? 'Week Settled' : 'Record & Settle Work'}
+            Record & Settle Work
           </Button>
-          {weekAlreadySettled && (
-            <Badge variant="secondary" className="gap-1">
-              <CheckCircle2 className="h-3 w-3" />
-              Week Settled
-            </Badge>
-          )}
-          {isSettlementDay() && (
-            <Button variant="secondary" onClick={() => setShowSettlementForm(true)} className="gap-2">
-              <Calendar className="h-4 w-4" />
-              Settle Week
-            </Button>
-          )}
           <Button variant="destructive" onClick={() => setShowDeleteDialog(true)} className="gap-2">
             <Trash2 className="h-4 w-4" />
             Delete
@@ -321,23 +298,6 @@ const EmployeeDetails = ({ employeeId, onClose, onEdit }: EmployeeDetailsProps) 
             employeeName={employee.name}
             onSuccess={() => setShowPaymentForm(false)}
             onCancel={() => setShowPaymentForm(false)}
-          />
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={showSettlementForm} onOpenChange={setShowSettlementForm}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Weekly Settlement</DialogTitle>
-            <DialogDescription>
-              Complete weekly salary settlement for {employee.name}
-            </DialogDescription>
-          </DialogHeader>
-          <WeeklySettlementForm
-            employeeId={employeeId}
-            employeeName={employee.name}
-            onSuccess={() => setShowSettlementForm(false)}
-            onCancel={() => setShowSettlementForm(false)}
           />
         </DialogContent>
       </Dialog>
