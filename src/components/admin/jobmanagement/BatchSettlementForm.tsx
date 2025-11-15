@@ -24,11 +24,11 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useJobBatches } from '@/hooks/useJobBatches';
+import { useJobBatches, useUpdateJobBatch } from '@/hooks/useJobBatches';
 import { useJobStyles } from '@/hooks/useJobStyles';
 import { usePartPayments, useUpdatePartPayment } from '@/hooks/usePartPayments';
 import { useWeeklySettlements, useCreateWeeklySettlement } from '@/hooks/useWeeklySettlements';
-import { useCreateJobProductionEntry } from '@/hooks/useJobProduction';
+import { useJobProductionEntries, useCreateJobProductionEntry } from '@/hooks/useJobProduction';
 import { useJobEmployee } from '@/hooks/useJobEmployees';
 import { getStyleRateForDepartment } from '@/lib/styleRateHelper';
 import { getCurrentWeek, getWeekRange } from '@/lib/weekUtils';
@@ -61,9 +61,11 @@ const BatchSettlementForm = ({ employeeId, employeeName, onClose }: BatchSettlem
   const { data: employee } = useJobEmployee(employeeId);
   const { data: partPayments } = usePartPayments(employeeId);
   const { data: settlements } = useWeeklySettlements(employeeId);
+  const { data: allProductionEntries } = useJobProductionEntries();
   const createSettlement = useCreateWeeklySettlement();
   const createProduction = useCreateJobProductionEntry();
   const updatePartPayment = useUpdatePartPayment();
+  const updateBatch = useUpdateJobBatch();
 
   const currentWeek = getCurrentWeek();
 
@@ -128,6 +130,43 @@ const BatchSettlementForm = ({ employeeId, employeeName, onClose }: BatchSettlem
 
   const totalWeekPartPayments = weekPartPayments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
   const netPayable = productionAmount - totalWeekPartPayments;
+
+  // Batch validation for piece-rate work
+  const batchValidation = useMemo(() => {
+    if (!selectedBatch || !batchId || paymentType !== 'piece_rate') {
+      return { isValid: true, message: '', remaining: 0, used: 0, total: 0 };
+    }
+    
+    // Check if cutting is completed
+    if (!selectedBatch.cutting_completed) {
+      return {
+        isValid: false,
+        message: 'Cutting completion must be recorded before adding production entries for this batch.',
+        remaining: 0,
+        used: 0,
+        total: 0
+      };
+    }
+    
+    // Calculate existing production entries for this batch
+    const batchProduction = allProductionEntries?.filter(p => p.batch_id === batchId) || [];
+    const totalUsed = batchProduction.reduce((sum, p) => sum + p.quantity_completed, 0);
+    const remaining = selectedBatch.cut_quantity - totalUsed;
+    
+    // Check if new quantity exceeds limit
+    const newQuantity = Number(quantity || 0);
+    const willExceed = (totalUsed + newQuantity) > selectedBatch.cut_quantity;
+    
+    return {
+      isValid: !willExceed && remaining > 0,
+      message: willExceed 
+        ? `Cannot exceed cutting total! Maximum allowed: ${remaining} pieces` 
+        : '',
+      remaining,
+      used: totalUsed,
+      total: selectedBatch.cut_quantity
+    };
+  }, [selectedBatch, batchId, allProductionEntries, quantity, paymentType]);
 
   const onSubmit = async (data: FormData) => {
     if (data.payment_type === 'piece_rate') {
@@ -302,12 +341,19 @@ const BatchSettlementForm = ({ employeeId, employeeName, onClose }: BatchSettlem
 
             <div className="space-y-2">
               <Label htmlFor="quantity">Quantity Completed *</Label>
-              <Input
-                id="quantity"
-                type="number"
-                min="1"
-                {...register('quantity', { valueAsNumber: true })}
-              />
+            <Input
+              id="quantity"
+              type="number"
+              min="1"
+              max={batchValidation.remaining || undefined}
+              className={!batchValidation.isValid ? "border-destructive" : ""}
+              {...register('quantity', { valueAsNumber: true })}
+            />
+            {selectedBatch?.cutting_completed && (
+              <p className="text-xs text-muted-foreground">
+                Maximum allowed: {batchValidation.remaining} pieces
+              </p>
+            )}
             </div>
           </div>
         )}
