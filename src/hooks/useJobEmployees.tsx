@@ -84,6 +84,25 @@ export const useDeleteJobEmployee = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
+      // Cascade delete related records to avoid orphaned entries
+      const { error: prodErr } = await supabase
+        .from('job_production_entries')
+        .delete()
+        .eq('employee_id', id);
+      if (prodErr) throw prodErr;
+
+      const { error: settErr } = await supabase
+        .from('job_weekly_settlements')
+        .delete()
+        .eq('employee_id', id);
+      if (settErr) throw settErr;
+
+      const { error: payErr } = await supabase
+        .from('job_part_payments')
+        .delete()
+        .eq('employee_id', id);
+      if (payErr) throw payErr;
+
       const { error } = await supabase
         .from('job_employees')
         .delete()
@@ -92,7 +111,11 @@ export const useDeleteJobEmployee = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['job-employees'] });
-      toast.success('Employee deleted successfully');
+      queryClient.invalidateQueries({ queryKey: ['job-production-entries'] });
+      queryClient.invalidateQueries({ queryKey: ['job-weekly-settlements'] });
+      queryClient.invalidateQueries({ queryKey: ['job-part-payments'] });
+      queryClient.invalidateQueries({ queryKey: ['job-batches'] });
+      toast.success('Employee and related records deleted successfully');
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to delete employee');
