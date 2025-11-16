@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { useCreatePartPayment } from '@/hooks/usePartPayments';
 import { useJobBatches } from '@/hooks/useJobBatches';
+import { toast } from 'sonner';
 
 interface PartPaymentFormProps {
   employeeId: string;
@@ -28,6 +29,15 @@ const PartPaymentForm = ({ employeeId, employeeName, onSuccess, onCancel }: Part
   const { data: batches } = useJobBatches();
 
   const onSubmit = async (formData: any) => {
+    // Validate batch is not completed
+    if (formData.batch_id) {
+      const selectedBatch = batches?.find(b => b.id === formData.batch_id);
+      if (selectedBatch?.status === 'completed') {
+        toast.error('Cannot record payment for completed batch');
+        return;
+      }
+    }
+    
     await createPayment.mutateAsync({
       employee_id: employeeId,
       payment_date: formData.payment_date,
@@ -77,11 +87,32 @@ const PartPaymentForm = ({ employeeId, employeeName, onSuccess, onCancel }: Part
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="none">None</SelectItem>
-            {batches?.map((batch) => (
-              <SelectItem key={batch.id} value={batch.id}>
-                {batch.batch_number} {batch.job_styles?.style_name ? `- ${batch.job_styles.style_name}` : ''}
-              </SelectItem>
-            ))}
+            {batches?.map((batch) => {
+              const isCompleted = batch.status === 'completed';
+              let statusLabel = '';
+              if (isCompleted) {
+                statusLabel = ' (Completed - Not Allowed)';
+              } else if (batch.packed_quantity && batch.packed_quantity > 0) {
+                statusLabel = ' (Packing in Progress)';
+              } else if (batch.checked_quantity && batch.checked_quantity > 0) {
+                statusLabel = ' (Checking in Progress)';
+              } else if (batch.ironing_quantity && batch.ironing_quantity > 0) {
+                statusLabel = ' (Ironing in Progress)';
+              } else if (batch.stitched_quantity && batch.stitched_quantity > 0) {
+                statusLabel = ' (Stitching in Progress)';
+              }
+              
+              return (
+                <SelectItem 
+                  key={batch.id} 
+                  value={batch.id}
+                  disabled={isCompleted}
+                  className={isCompleted ? 'opacity-50' : ''}
+                >
+                  {batch.batch_number} {batch.job_styles?.style_name ? `- ${batch.job_styles.style_name}` : ''}{statusLabel}
+                </SelectItem>
+              );
+            })}
           </SelectContent>
         </Select>
       </div>
