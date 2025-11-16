@@ -148,7 +148,7 @@ const EmployeePaymentRecords = ({ employeeId, employeeName }: EmployeePaymentRec
           <AlertDialogHeader>
             <AlertDialogTitle>Delete {deletingRecord?.type}?</AlertDialogTitle>
             <AlertDialogDescription>
-              {deletingRecord?.type === 'Weekly Settlement' ? (
+              {deletingRecord?.type === 'Settlement' ? (
                 <div className="space-y-2">
                   <p>This will permanently delete this settlement record and all associated data:</p>
                   <ul className="list-disc pl-6 space-y-1 text-sm">
@@ -159,14 +159,14 @@ const EmployeePaymentRecords = ({ employeeId, employeeName }: EmployeePaymentRec
                   <p className="font-semibold mt-2">This action cannot be undone.</p>
                 </div>
               ) : (
-                "This will permanently delete this part payment record. This action cannot be undone."
+                "This will permanently delete this advance payment record. This action cannot be undone."
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={async () => { 
-              if (deletingRecord.type === 'Part Payment') {
+              if (deletingRecord.type.includes('Advance')) {
                 await deletePartPayment.mutateAsync(deletingRecord.id);
               } else {
                 await deleteSettlement.mutateAsync(deletingRecord.originalData);
