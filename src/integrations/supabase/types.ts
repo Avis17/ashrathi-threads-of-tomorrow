@@ -1223,6 +1223,7 @@ export type Database = {
           note: string | null
           payment_date: string
           payment_mode: string | null
+          settlement_id: string | null
         }
         Insert: {
           amount: number
@@ -1234,6 +1235,7 @@ export type Database = {
           note?: string | null
           payment_date: string
           payment_mode?: string | null
+          settlement_id?: string | null
         }
         Update: {
           amount?: number
@@ -1245,6 +1247,7 @@ export type Database = {
           note?: string | null
           payment_date?: string
           payment_mode?: string | null
+          settlement_id?: string | null
         }
         Relationships: [
           {
@@ -1259,6 +1262,13 @@ export type Database = {
             columns: ["employee_id"]
             isOneToOne: false
             referencedRelation: "job_employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_part_payments_settlement_id_fkey"
+            columns: ["settlement_id"]
+            isOneToOne: false
+            referencedRelation: "job_weekly_settlements"
             referencedColumns: ["id"]
           },
         ]
@@ -1276,6 +1286,7 @@ export type Database = {
           rate_per_piece: number
           remarks: string | null
           section: string
+          settlement_id: string | null
           total_amount: number
         }
         Insert: {
@@ -1290,6 +1301,7 @@ export type Database = {
           rate_per_piece: number
           remarks?: string | null
           section: string
+          settlement_id?: string | null
           total_amount: number
         }
         Update: {
@@ -1304,6 +1316,7 @@ export type Database = {
           rate_per_piece?: number
           remarks?: string | null
           section?: string
+          settlement_id?: string | null
           total_amount?: number
         }
         Relationships: [
@@ -1319,6 +1332,13 @@ export type Database = {
             columns: ["employee_id"]
             isOneToOne: false
             referencedRelation: "job_employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_production_entries_settlement_id_fkey"
+            columns: ["settlement_id"]
+            isOneToOne: false
+            referencedRelation: "job_weekly_settlements"
             referencedColumns: ["id"]
           },
         ]
@@ -1406,6 +1426,7 @@ export type Database = {
       }
       job_weekly_settlements: {
         Row: {
+          advances_deducted: number | null
           batch_id: string | null
           created_at: string | null
           employee_id: string | null
@@ -1416,12 +1437,14 @@ export type Database = {
           payment_status: string | null
           remarks: string | null
           section: string | null
+          settlement_date: string
           total_part_payments: number | null
           total_production_amount: number | null
-          week_end_date: string
-          week_start_date: string
+          week_end_date: string | null
+          week_start_date: string | null
         }
         Insert: {
+          advances_deducted?: number | null
           batch_id?: string | null
           created_at?: string | null
           employee_id?: string | null
@@ -1432,12 +1455,14 @@ export type Database = {
           payment_status?: string | null
           remarks?: string | null
           section?: string | null
+          settlement_date?: string
           total_part_payments?: number | null
           total_production_amount?: number | null
-          week_end_date: string
-          week_start_date: string
+          week_end_date?: string | null
+          week_start_date?: string | null
         }
         Update: {
+          advances_deducted?: number | null
           batch_id?: string | null
           created_at?: string | null
           employee_id?: string | null
@@ -1448,10 +1473,11 @@ export type Database = {
           payment_status?: string | null
           remarks?: string | null
           section?: string | null
+          settlement_date?: string
           total_part_payments?: number | null
           total_production_amount?: number | null
-          week_end_date?: string
-          week_start_date?: string
+          week_end_date?: string | null
+          week_start_date?: string | null
         }
         Relationships: [
           {

@@ -11,7 +11,6 @@ import { useJobProductionEntries } from '@/hooks/useJobProduction';
 import { Banknote, Calendar, TrendingUp, Edit, Trash2 } from 'lucide-react';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, isWithinInterval, parseISO } from 'date-fns';
 import EditPartPaymentForm from './EditPartPaymentForm';
-import EditWeeklySettlementForm from './EditWeeklySettlementForm';
 
 interface EmployeePaymentRecordsProps {
   employeeId: string;
@@ -39,8 +38,26 @@ const EmployeePaymentRecords = ({ employeeId, employeeName }: EmployeePaymentRec
   }, [productionEntries, employeeId]);
 
   const allRecords = useMemo(() => {
-    const payments = (partPayments || []).map(p => ({ id: p.id, date: p.payment_date, type: 'Part Payment', amount: p.amount, mode: p.payment_mode, status: 'paid', note: p.note, originalData: p }));
-    const sRecords = (settlements || []).map(s => ({ id: s.id, date: s.payment_date || s.week_end_date, type: 'Weekly Settlement', amount: s.net_payable || 0, mode: s.payment_mode, status: s.payment_status || 'pending', note: s.remarks, originalData: s }));
+    const payments = (partPayments || []).map(p => ({ 
+      id: p.id, 
+      date: p.payment_date, 
+      type: p.is_settled ? 'Advance (Settled)' : 'Advance Payment', 
+      amount: p.amount, 
+      mode: p.payment_mode, 
+      status: p.is_settled ? 'settled' : 'pending', 
+      note: p.note, 
+      originalData: p 
+    }));
+    const sRecords = (settlements || []).map(s => ({ 
+      id: s.id, 
+      date: s.settlement_date || s.payment_date || s.week_end_date, 
+      type: 'Settlement', 
+      amount: s.net_payable || 0, 
+      mode: s.payment_mode, 
+      status: s.payment_status || 'paid', 
+      note: s.remarks, 
+      originalData: s 
+    }));
     return [...payments, ...sRecords].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [partPayments, settlements]);
 
@@ -85,11 +102,9 @@ const EmployeePaymentRecords = ({ employeeId, employeeName }: EmployeePaymentRec
           </Table>
         </CardContent>
       </Card>
-      {editingRecord && (
-        <Dialog open={!!editingRecord} onOpenChange={() => setEditingRecord(null)}>
-          <DialogContent>
-            {editingRecord.type === 'Part Payment' ? <EditPartPaymentForm partPayment={editingRecord.originalData} onClose={() => setEditingRecord(null)} /> : <EditWeeklySettlementForm settlement={editingRecord.originalData} onClose={() => setEditingRecord(null)} />}
-          </DialogContent>
+      {editingRecord && editingRecord.type.includes('Advance') && (
+        <Dialog open={true} onOpenChange={() => setEditingRecord(null)}>
+          <DialogContent><EditPartPaymentForm partPayment={editingRecord.originalData} onClose={() => setEditingRecord(null)} /></DialogContent>
         </Dialog>
       )}
       <AlertDialog open={!!deletingRecord} onOpenChange={() => setDeletingRecord(null)}>

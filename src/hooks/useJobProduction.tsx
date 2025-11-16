@@ -38,7 +38,7 @@ export const useCreateJobProductionEntry = () => {
         .select()
         .single();
       if (error) throw error;
-      return entry;
+      return entry as Database['public']['Tables']['job_production_entries']['Row'];
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['job-production-entries'] });

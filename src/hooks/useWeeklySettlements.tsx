@@ -5,6 +5,9 @@ import { toast } from 'sonner';
 
 export type WeeklySettlement = Database['public']['Tables']['job_weekly_settlements']['Row'];
 
+export type SettlementInsert = Database['public']['Tables']['job_weekly_settlements']['Insert'];
+export type SettlementUpdate = Database['public']['Tables']['job_weekly_settlements']['Update'];
+
 export const useWeeklySettlements = (employeeId?: string) => {
   return useQuery({
     queryKey: ['job-weekly-settlements', employeeId],
@@ -28,14 +31,14 @@ export const useWeeklySettlements = (employeeId?: string) => {
 export const useCreateWeeklySettlement = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: Database['public']['Tables']['job_weekly_settlements']['Insert']) => {
+    mutationFn: async (data: SettlementInsert) => {
       const { data: settlement, error } = await supabase
         .from('job_weekly_settlements')
         .insert([data])
         .select()
         .single();
       if (error) throw error;
-      return settlement;
+      return settlement as WeeklySettlement;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['job-weekly-settlements'] });
@@ -51,7 +54,7 @@ export const useCreateWeeklySettlement = () => {
 export const useUpdateWeeklySettlement = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Database['public']['Tables']['job_weekly_settlements']['Update'] }) => {
+    mutationFn: async ({ id, data }: { id: string; data: SettlementUpdate }) => {
       const { data: settlement, error } = await supabase
         .from('job_weekly_settlements')
         .update(data)
@@ -59,7 +62,7 @@ export const useUpdateWeeklySettlement = () => {
         .select()
         .single();
       if (error) throw error;
-      return settlement;
+      return settlement as WeeklySettlement;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['job-weekly-settlements'] });
