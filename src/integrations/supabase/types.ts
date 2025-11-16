@@ -812,6 +812,7 @@ export type Database = {
           final_quantity: number | null
           gsm: string
           id: string
+          ironing_quantity: number | null
           lot_number: string | null
           marker_efficiency: number | null
           number_of_rolls: number | null
@@ -844,6 +845,7 @@ export type Database = {
           final_quantity?: number | null
           gsm: string
           id?: string
+          ironing_quantity?: number | null
           lot_number?: string | null
           marker_efficiency?: number | null
           number_of_rolls?: number | null
@@ -876,6 +878,7 @@ export type Database = {
           final_quantity?: number | null
           gsm?: string
           id?: string
+          ironing_quantity?: number | null
           lot_number?: string | null
           marker_efficiency?: number | null
           number_of_rolls?: number | null

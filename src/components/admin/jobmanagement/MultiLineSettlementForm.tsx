@@ -78,7 +78,6 @@ const MultiLineSettlementForm = ({
   onClose,
 }: MultiLineSettlementFormProps) => {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [validationErrors, setValidationErrors] = useState<Record<number, string>>({});
 
   const { data: batches } = useJobBatches();
   const { data: styles } = useJobStyles();
@@ -121,62 +120,6 @@ const MultiLineSettlementForm = ({
     }
   };
 
-  // Validate batch limit for a row
-  const validateBatchLimit = async (index: number, batchId: string, quantity: number) => {
-    if (!batchId || quantity <= 0) {
-      setValidationErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[index];
-        return newErrors;
-      });
-      return true;
-    }
-
-    try {
-      const batch = batches?.find(b => b.id === batchId);
-      if (!batch) return true;
-
-      if (!batch.cutting_completed) {
-        setValidationErrors(prev => ({
-          ...prev,
-          [index]: 'Cutting must be completed before recording production',
-        }));
-        return false;
-      }
-
-      // Get existing production for this batch
-      const { data: existingProduction } = await supabase
-        .from('job_production_entries')
-        .select('quantity_completed')
-        .eq('batch_id', batchId);
-
-      const totalProduced = existingProduction?.reduce(
-        (sum, entry) => sum + entry.quantity_completed,
-        0
-      ) || 0;
-
-      const cutQuantity = batch.cut_quantity || 0;
-      const remaining = cutQuantity - totalProduced;
-
-      if (quantity > remaining) {
-        setValidationErrors(prev => ({
-          ...prev,
-          [index]: `Cannot exceed cutting total! Only ${remaining} pieces remaining out of ${cutQuantity}`,
-        }));
-        return false;
-      }
-
-      setValidationErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[index];
-        return newErrors;
-      });
-      return true;
-    } catch (error) {
-      console.error('Validation error:', error);
-      return false;
-    }
-  };
 
   // Handle batch selection - auto-fill rate based on style
   const handleBatchChange = (index: number, batchId: string) => {
@@ -219,19 +162,7 @@ const MultiLineSettlementForm = ({
   const advancesDeducted = watchDeductAdvances ? totalAdvances : 0;
   const netPayable = totalProductionAmount - advancesDeducted + (watchAdjustment || 0);
 
-  const onSubmit = async (data: FormData) => {
-    // Validate all rows
-    const validations = await Promise.all(
-      data.productionRows.map((row, index) =>
-        validateBatchLimit(index, row.batchId, row.quantity)
-      )
-    );
-
-    if (!validations.every(v => v)) {
-      toast.error('Please fix validation errors before submitting');
-      return;
-    }
-
+  const onSubmit = (data: FormData) => {
     if (data.productionRows.length === 0 || data.productionRows.some(r => !r.batchId || !r.department || r.quantity <= 0)) {
       toast.error('Please add at least one valid production entry');
       return;
@@ -266,8 +197,6 @@ const MultiLineSettlementForm = ({
 
       // Create production entries linked to settlement
       for (const row of data.productionRows) {
-        const batch = batches?.find(b => b.id === row.batchId);
-        
         await createProductionEntry.mutateAsync({
           batch_id: row.batchId,
           settlement_id: settlement.id,
@@ -281,29 +210,6 @@ const MultiLineSettlementForm = ({
           total_amount: row.amount,
           remarks: row.jobDescription || null,
         });
-
-        // Update batch progress
-        if (batch) {
-          const { data: allProduction } = await supabase
-            .from('job_production_entries')
-            .select('quantity_completed')
-            .eq('batch_id', row.batchId);
-
-          const totalProduced = allProduction?.reduce(
-            (sum, entry) => sum + entry.quantity_completed,
-            0
-          ) || 0;
-
-          const cutQuantity = batch.cut_quantity || 0;
-          const cuttingProgress = 35;
-          const productionProgress = cutQuantity > 0 ? (totalProduced / cutQuantity) * 65 : 0;
-          const overallProgress = cuttingProgress + productionProgress;
-
-          await supabase
-            .from('job_batches')
-            .update({ overall_progress: Math.min(overallProgress, 100) })
-            .eq('id', row.batchId);
-        }
       }
 
       // Mark advances as settled if deducted
@@ -417,14 +323,7 @@ const MultiLineSettlementForm = ({
                     type="number"
                     {...register(`productionRows.${index}.quantity`, {
                       valueAsNumber: true,
-                      onChange: () => {
-                        calculateRowAmount(index);
-                        validateBatchLimit(
-                          index,
-                          watchRows[index]?.batchId,
-                          watchRows[index]?.quantity
-                        );
-                      },
+                      onChange: () => calculateRowAmount(index),
                     })}
                     min="0"
                     placeholder="0"
@@ -470,14 +369,6 @@ const MultiLineSettlementForm = ({
                   </Button>
                 </div>
               </div>
-
-              {/* Validation Error */}
-              {validationErrors[index] && (
-                <Alert variant="destructive" className="mt-2">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{validationErrors[index]}</AlertDescription>
-                </Alert>
-              )}
             </Card>
           ))}
         </div>
@@ -623,7 +514,7 @@ const MultiLineSettlementForm = ({
           <Button type="button" variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="submit" disabled={Object.keys(validationErrors).length > 0}>
+          <Button type="submit">
             <DollarSign className="h-4 w-4 mr-2" />
             Record Settlement
           </Button>
