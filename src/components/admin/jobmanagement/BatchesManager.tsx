@@ -24,7 +24,7 @@ const BatchesManager = () => {
   const deleteBatchMutation = useDeleteJobBatch();
   const [searchTerm, setSearchTerm] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [selectedBatch, setSelectedBatch] = useState<any>(null);
+  const [selectedBatchId, setSelectedBatchId] = useState<string | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [deleteBatchId, setDeleteBatchId] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -47,7 +47,7 @@ const BatchesManager = () => {
   };
 
   const handleViewDetails = (batch: any) => {
-    setSelectedBatch(batch);
+    setSelectedBatchId(batch.id);
     setIsDetailsOpen(true);
   };
 
@@ -180,7 +180,7 @@ const BatchesManager = () => {
       {/* Batch Details Dialog */}
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
         <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-          {selectedBatch && <BatchDetails batch={selectedBatch} onClose={() => setIsDetailsOpen(false)} />}
+          {selectedBatchId && <BatchDetails batchId={selectedBatchId} onClose={() => setIsDetailsOpen(false)} />}
         </DialogContent>
       </Dialog>
 
