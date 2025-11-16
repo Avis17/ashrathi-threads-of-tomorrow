@@ -43,7 +43,9 @@ export const useCreateWeeklySettlement = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['job-weekly-settlements'] });
       queryClient.invalidateQueries({ queryKey: ['job-employees'] });
-      toast.success('Weekly settlement recorded successfully');
+      queryClient.invalidateQueries({ queryKey: ['job-part-payments'] });
+      queryClient.invalidateQueries({ queryKey: ['job-production-entries'] });
+      toast.success('Settlement recorded successfully');
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to record settlement');
