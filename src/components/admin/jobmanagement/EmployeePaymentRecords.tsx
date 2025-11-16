@@ -11,6 +11,8 @@ import { useJobProductionEntries } from '@/hooks/useJobProduction';
 import { Banknote, Calendar, TrendingUp, Edit, Trash2 } from 'lucide-react';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, isWithinInterval, parseISO } from 'date-fns';
 import EditPartPaymentForm from './EditPartPaymentForm';
+import { SettlementDetailsDialog } from './SettlementDetailsDialog';
+import { Eye } from 'lucide-react';
 
 interface EmployeePaymentRecordsProps {
   employeeId: string;
@@ -26,6 +28,7 @@ const EmployeePaymentRecords = ({ employeeId, employeeName }: EmployeePaymentRec
 
   const [editingRecord, setEditingRecord] = useState<any>(null);
   const [deletingRecord, setDeletingRecord] = useState<any>(null);
+  const [viewingSettlement, setViewingSettlement] = useState<WeeklySettlement | null>(null);
 
   const now = new Date();
   const earnings = useMemo(() => {
@@ -92,9 +95,42 @@ const EmployeePaymentRecords = ({ employeeId, employeeName }: EmployeePaymentRec
                   <TableCell>{r.mode || '-'}</TableCell>
                   <TableCell><Badge variant={r.status === 'paid' ? 'default' : 'outline'}>{r.status}</Badge></TableCell>
                   <TableCell>{r.note || '-'}</TableCell>
-                  <TableCell>
-                    <Button variant="ghost" size="sm" onClick={() => setEditingRecord(r)}><Edit className="h-4 w-4" /></Button>
-                    <Button variant="ghost" size="sm" onClick={() => setDeletingRecord(r)}><Trash2 className="h-4 w-4" /></Button>
+                  <TableCell className="text-right">
+                    {r.type === 'Settlement' ? (
+                      <div className="flex gap-2 justify-end">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => setViewingSettlement(r.originalData as WeeklySettlement)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => setDeletingRecord(r)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2 justify-end">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => setEditingRecord(r)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => setDeletingRecord(r)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
@@ -140,6 +176,12 @@ const EmployeePaymentRecords = ({ employeeId, employeeName }: EmployeePaymentRec
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      
+      <SettlementDetailsDialog 
+        settlement={viewingSettlement}
+        open={!!viewingSettlement}
+        onClose={() => setViewingSettlement(null)}
+      />
     </div>
   );
 };

@@ -39,6 +39,7 @@ import { supabase } from '@/integrations/supabase/client';
 interface ProductionRow {
   batchId: string;
   department: string;
+  jobDescription: string;
   quantity: number;
   rate: number;
   amount: number;
@@ -48,6 +49,8 @@ interface FormData {
   settlementDate: string;
   productionRows: ProductionRow[];
   deductAdvances: boolean;
+  adjustment: number;
+  adjustmentReason: string;
   paymentMode: string;
   remarks: string;
 }
@@ -91,9 +94,11 @@ const MultiLineSettlementForm = ({
     defaultValues: {
       settlementDate: format(new Date(), 'yyyy-MM-dd'),
       productionRows: [
-        { batchId: '', department: '', quantity: 0, rate: 0, amount: 0 },
+        { batchId: '', department: '', jobDescription: '', quantity: 0, rate: 0, amount: 0 },
       ],
-      deductAdvances: totalAdvances > 0,
+      deductAdvances: false,
+      adjustment: 0,
+      adjustmentReason: '',
       paymentMode: 'Cash',
       remarks: '',
     },
@@ -209,9 +214,10 @@ const MultiLineSettlementForm = ({
   };
 
   // Calculate totals
+  const watchAdjustment = watch('adjustment');
   const totalProductionAmount = watchRows.reduce((sum, row) => sum + (row.amount || 0), 0);
   const advancesDeducted = watchDeductAdvances ? totalAdvances : 0;
-  const netPayable = totalProductionAmount - advancesDeducted;
+  const netPayable = totalProductionAmount - advancesDeducted + (watchAdjustment || 0);
 
   const onSubmit = async (data: FormData) => {
     // Validate all rows
@@ -251,7 +257,7 @@ const MultiLineSettlementForm = ({
         payment_mode: data.paymentMode,
         payment_status: 'paid',
         payment_date: data.settlementDate,
-        remarks: data.remarks,
+        remarks: data.remarks + (data.adjustmentReason ? `\n\nAdjustment: ${data.adjustment > 0 ? '+' : ''}₹${data.adjustment} - ${data.adjustmentReason}` : ''),
         section: null,
         batch_id: null,
       };
@@ -273,7 +279,7 @@ const MultiLineSettlementForm = ({
           quantity_completed: row.quantity,
           rate_per_piece: row.rate,
           total_amount: row.amount,
-          remarks: null,
+          remarks: row.jobDescription || null,
         });
 
         // Update batch progress
@@ -344,7 +350,7 @@ const MultiLineSettlementForm = ({
               variant="outline"
               size="sm"
               onClick={() =>
-                append({ batchId: '', department: '', quantity: 0, rate: 0, amount: 0 })
+                append({ batchId: '', department: '', jobDescription: '', quantity: 0, rate: 0, amount: 0 })
               }
             >
               <Plus className="h-4 w-4 mr-2" />
@@ -354,7 +360,7 @@ const MultiLineSettlementForm = ({
 
           {fields.map((field, index) => (
             <Card key={field.id} className="p-4">
-              <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
+              <div className="grid grid-cols-1 md:grid-cols-7 gap-4 items-end">
                 {/* Batch Selector */}
                 <div>
                   <Label>Batch</Label>
@@ -393,6 +399,15 @@ const MultiLineSettlementForm = ({
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+
+                {/* Job Description */}
+                <div>
+                  <Label>Job Description</Label>
+                  <Input
+                    {...register(`productionRows.${index}.jobDescription`)}
+                    placeholder="e.g., Patti, Collar"
+                  />
                 </div>
 
                 {/* Quantity */}
@@ -503,31 +518,73 @@ const MultiLineSettlementForm = ({
           </Card>
         )}
 
-        {/* Settlement Summary */}
-        <Card className="p-4 bg-primary/5">
-          <h3 className="text-lg font-semibold mb-4">Settlement Summary</h3>
-          
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <span>Total Production Amount:</span>
-              <span className="font-medium">₹{totalProductionAmount.toFixed(2)}</span>
-            </div>
-
-            {advancesDeducted > 0 && (
-              <div className="flex justify-between text-destructive">
-                <span>Advances Deducted:</span>
-                <span className="font-medium">- ₹{advancesDeducted.toFixed(2)}</span>
+          {/* Adjustment Section */}
+          <Card className="p-4 bg-muted/30">
+            <h3 className="text-lg font-semibold mb-4">Adjustments (Optional)</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Add extra amount for bonuses or deduct for quality issues
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="adjustment">Adjustment Amount</Label>
+                <Input
+                  id="adjustment"
+                  type="number"
+                  step="0.01"
+                  {...register('adjustment', { valueAsNumber: true })}
+                  placeholder="0.00 (+ for bonus, - for penalty)"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Positive for bonus, negative for penalty
+                </p>
               </div>
-            )}
-
-            <Separator />
-
-            <div className="flex justify-between text-lg font-bold">
-              <span>Net Payable:</span>
-              <span className="text-primary">₹{netPayable.toFixed(2)}</span>
+              
+              <div>
+                <Label htmlFor="adjustmentReason">Reason</Label>
+                <Input
+                  id="adjustmentReason"
+                  {...register('adjustmentReason')}
+                  placeholder="e.g., Quality bonus, Late penalty"
+                />
+              </div>
             </div>
-          </div>
-        </Card>
+          </Card>
+
+          {/* Settlement Summary */}
+          <Card className="p-4 bg-primary/5">
+            <h3 className="text-lg font-semibold mb-4">Settlement Summary</h3>
+            
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span>Total Production Amount:</span>
+                <span className="font-medium">₹{totalProductionAmount.toFixed(2)}</span>
+              </div>
+
+              {advancesDeducted > 0 && (
+                <div className="flex justify-between text-destructive">
+                  <span>Advances Deducted:</span>
+                  <span className="font-medium">- ₹{advancesDeducted.toFixed(2)}</span>
+                </div>
+              )}
+
+              {watchAdjustment !== 0 && (
+                <div className={`flex justify-between ${watchAdjustment > 0 ? 'text-green-600' : 'text-destructive'}`}>
+                  <span>Adjustment ({watch('adjustmentReason') || 'N/A'}):</span>
+                  <span className="font-medium">
+                    {watchAdjustment > 0 ? '+' : ''} ₹{watchAdjustment.toFixed(2)}
+                  </span>
+                </div>
+              )}
+
+              <Separator />
+
+              <div className="flex justify-between text-lg font-bold">
+                <span>Net Payable:</span>
+                <span className="text-primary">₹{netPayable.toFixed(2)}</span>
+              </div>
+            </div>
+          </Card>
 
         {/* Payment Details */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
