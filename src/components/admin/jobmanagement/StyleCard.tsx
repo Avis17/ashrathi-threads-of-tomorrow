@@ -1,8 +1,20 @@
-import { Shirt, Edit, Eye } from 'lucide-react';
+import { Shirt, Edit, Eye, Trash2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import type { JobStyle } from '@/hooks/useJobStyles';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { useState } from 'react';
+import { useDeleteJobStyle } from '@/hooks/useJobStyles';
 
 interface StyleCardProps {
   style: JobStyle;
@@ -11,6 +23,9 @@ interface StyleCardProps {
 }
 
 const StyleCard = ({ style, onView, onEdit }: StyleCardProps) => {
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const deleteMutation = useDeleteJobStyle();
+
   const totalRate = 
     style.rate_cutting +
     style.rate_stitching_singer +
@@ -19,7 +34,33 @@ const StyleCard = ({ style, onView, onEdit }: StyleCardProps) => {
     style.rate_checking +
     style.rate_packing;
 
+  const handleDelete = async () => {
+    await deleteMutation.mutateAsync(style.id);
+    setDeleteDialogOpen(false);
+  };
+
   return (
+    <>
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Style?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete <span className="font-semibold">{style.style_name}</span> ({style.style_code})? 
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     <Card className="hover:shadow-2xl hover:scale-105 transition-all duration-300 border-l-4 border-l-primary overflow-hidden group">
       <div className="relative h-48 bg-gradient-to-br from-primary/10 to-secondary/10 overflow-hidden">
         {style.style_image_url ? (
@@ -104,9 +145,20 @@ const StyleCard = ({ style, onView, onEdit }: StyleCardProps) => {
             <Edit className="h-4 w-4 mr-1" />
             Edit
           </Button>
+          <Button 
+            size="sm" 
+            variant="destructive"
+            onClick={(e) => {
+              e.stopPropagation();
+              setDeleteDialogOpen(true);
+            }}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
         </div>
       </CardContent>
     </Card>
+    </>
   );
 };
 
