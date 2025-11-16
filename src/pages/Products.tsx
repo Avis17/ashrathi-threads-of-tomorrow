@@ -173,9 +173,17 @@ const Products = () => {
     products.forEach(product => {
       const selectedColor = selectedVariants[product.id]?.color;
       if (selectedColor && product.available_colors) {
-        const colorData = product.available_colors.find(c => c.name === selectedColor);
+        // Case-insensitive color matching
+        const colorData = product.available_colors.find(
+          c => c.name.toLowerCase() === selectedColor.toLowerCase()
+        );
         // Use color-specific image if available, otherwise use main product image
         newDisplayImages[product.id] = colorData?.image_url || product.image_url;
+        
+        // Debug log (remove after testing)
+        if (selectedColor && !colorData?.image_url) {
+          console.log(`No image_url for color "${selectedColor}" in product "${product.name}"`);
+        }
       } else {
         // No color selected, use main product image
         newDisplayImages[product.id] = product.image_url;

@@ -75,6 +75,37 @@ export function ViewEditProducts() {
     },
   });
 
+  const fetchProductWithInventory = async (productId: string) => {
+    // Fetch product
+    const { data: product, error: productError } = await supabase
+      .from('products')
+      .select('*')
+      .eq('id', productId)
+      .single();
+    
+    if (productError) throw productError;
+    
+    // Fetch inventory
+    const { data: inventory, error: invError } = await supabase
+      .from('product_inventory')
+      .select('size, color, available_quantity')
+      .eq('product_id', productId);
+    
+    if (invError) throw invError;
+    
+    // Map inventory to expected format
+    const inventoryMapped = inventory?.map(inv => ({
+      size: inv.size,
+      color: inv.color,
+      quantity: inv.available_quantity
+    })) || [];
+    
+    return {
+      ...product,
+      inventory: inventoryMapped
+    };
+  };
+
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: ProductFormData & { inventory?: any[] } }) => {
       const { inventory, ...productData } = data;
@@ -244,7 +275,18 @@ export function ViewEditProducts() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => setEditingProduct(product)}
+                        onClick={async () => {
+                          try {
+                            const productWithInventory = await fetchProductWithInventory(product.id);
+                            setEditingProduct(productWithInventory);
+                          } catch (error) {
+                            toast({
+                              title: 'Error',
+                              description: 'Failed to load product details',
+                              variant: 'destructive'
+                            });
+                          }
+                        }}
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
