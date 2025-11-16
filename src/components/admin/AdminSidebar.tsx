@@ -9,14 +9,12 @@ import {
   RotateCcw,
   LayoutDashboard,
   ClipboardList,
-  Factory,
   Contact,
   Building2,
   Receipt,
-  Warehouse,
-  Briefcase,
+  Shirt,
   Settings,
-  Shirt
+  Sparkles
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import {
@@ -39,6 +37,7 @@ const menuItems = [
   { title: 'Generate Invoice', url: '/admin/invoice', icon: FileText },
   { title: 'Customers', url: '/admin/customers', icon: Users },
   { title: 'Products', url: '/admin/products', icon: Package },
+  { title: 'Generate Products', url: '/admin/seed-products', icon: Sparkles },
   { title: 'Contacts', url: '/admin/contacts', icon: Contact },
   { title: 'History', url: '/admin/history', icon: History },
   { title: 'Contact Inquiries', url: '/admin/inquiries', icon: Mail },
