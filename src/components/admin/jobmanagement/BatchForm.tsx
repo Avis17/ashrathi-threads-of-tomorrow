@@ -75,6 +75,11 @@ const BatchForm = ({ onClose }: BatchFormProps) => {
   }, [numberOfTypes, fields.length, append, remove]);
 
   const onSubmit = async (data: any) => {
+    // Generate batch number: FF-01-YYYYMMDD-RRR (RRR = random 3 digits)
+    const dateStr = data.date_created.replace(/-/g, '');
+    const randomDigits = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    const batchNumber = `FF-01-${dateStr}-${randomDigits}`;
+    
     const batchData = {
       style_id: data.style_id,
       date_created: data.date_created,
@@ -90,7 +95,7 @@ const BatchForm = ({ onClose }: BatchFormProps) => {
       color: data.rolls[0]?.color || '',
       fabric_width: data.rolls[0]?.fabric_width || '',
       expected_pieces: 0, // Default value since we're not using it now
-      batch_number: `B-${Date.now()}`, // Auto-generate batch number
+      batch_number: batchNumber,
     };
 
     await createMutation.mutateAsync(batchData);

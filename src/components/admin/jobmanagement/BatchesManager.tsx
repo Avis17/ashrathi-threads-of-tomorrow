@@ -6,6 +6,13 @@ import { Badge } from '@/components/ui/badge';
 import { useJobBatches, useDeleteJobBatch } from '@/hooks/useJobBatches';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -23,16 +30,22 @@ const BatchesManager = () => {
   const { data: batches, isLoading } = useJobBatches();
   const deleteBatchMutation = useDeleteJobBatch();
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedBatchId, setSelectedBatchId] = useState<string | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [deleteBatchId, setDeleteBatchId] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
-  const filteredBatches = batches?.filter((batch: any) => 
-    batch.batch_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    batch.job_styles?.style_name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredBatches = batches?.filter((batch: any) => {
+    const matchesSearch = 
+      batch.batch_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      batch.job_styles?.style_name.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'all' || batch.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
 
   const getStatusColor = (status: string) => {
     const colors: any = {
@@ -68,14 +81,30 @@ const BatchesManager = () => {
     <div className="space-y-6">
       {/* Header Actions */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <div className="relative flex-1 max-w-md w-full">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search batches..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
+        <div className="flex gap-4 flex-1 w-full">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search batches..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="created">Created</SelectItem>
+              <SelectItem value="cutting">Cutting</SelectItem>
+              <SelectItem value="stitching">Stitching</SelectItem>
+              <SelectItem value="checking">Checking</SelectItem>
+              <SelectItem value="packing">Packing</SelectItem>
+              <SelectItem value="done">Done</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         <Button 
           onClick={() => setIsFormOpen(true)}
