@@ -78,6 +78,7 @@ const MultiLineSettlementForm = ({
   onClose,
 }: MultiLineSettlementFormProps) => {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [quantityErrors, setQuantityErrors] = useState<{ [key: number]: string }>({});
 
   const { data: batches } = useJobBatches();
   const { data: styles } = useJobStyles();
@@ -120,12 +121,47 @@ const MultiLineSettlementForm = ({
     }
   };
 
+  // Validate quantity against batch cut_quantity
+  const validateQuantity = (index: number, quantity: number) => {
+    const row = watchRows[index];
+    if (!row.batchId || !quantity) {
+      setQuantityErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[index];
+        return newErrors;
+      });
+      return true;
+    }
+    
+    const batch = batches?.find(b => b.id === row.batchId);
+    if (!batch) return true;
+    
+    if (quantity > (batch.cut_quantity || 0)) {
+      setQuantityErrors(prev => ({
+        ...prev,
+        [index]: `Cannot exceed cut quantity! Only ${batch.cut_quantity} pieces available`
+      }));
+      return false;
+    }
+    
+    setQuantityErrors(prev => {
+      const newErrors = { ...prev };
+      delete newErrors[index];
+      return newErrors;
+    });
+    return true;
+  };
 
   // Handle batch selection - auto-fill rate based on style
   const handleBatchChange = (index: number, batchId: string) => {
+    const batch = batches?.find(b => b.id === batchId);
+    if (batch?.status === 'completed') {
+      toast.error('Cannot add production entry for completed batch');
+      setValue(`productionRows.${index}.batchId`, '');
+      return;
+    }
     setValue(`productionRows.${index}.batchId`, batchId);
     
-    const batch = batches?.find(b => b.id === batchId);
     if (batch?.style_id) {
       const style = styles?.find(s => s.id === batch.style_id);
       const department = watchRows[index]?.department;
@@ -163,6 +199,26 @@ const MultiLineSettlementForm = ({
   const netPayable = totalProductionAmount - advancesDeducted + (watchAdjustment || 0);
 
   const onSubmit = (data: FormData) => {
+    // Validate all quantities against cut_quantity
+    let hasErrors = false;
+    data.productionRows.forEach((row, index) => {
+      if (row.batchId && row.quantity) {
+        const batch = batches?.find(b => b.id === row.batchId);
+        if (batch && row.quantity > (batch.cut_quantity || 0)) {
+          setQuantityErrors(prev => ({
+            ...prev,
+            [index]: `Cannot exceed cut quantity! Only ${batch.cut_quantity} pieces available`
+          }));
+          hasErrors = true;
+        }
+      }
+    });
+    
+    if (hasErrors) {
+      toast.error('Please fix quantity errors before submitting');
+      return;
+    }
+    
     if (data.productionRows.length === 0 || data.productionRows.some(r => !r.batchId || !r.department || r.quantity <= 0)) {
       toast.error('Please add at least one valid production entry');
       return;
@@ -278,11 +334,32 @@ const MultiLineSettlementForm = ({
                       <SelectValue placeholder="Select batch" />
                     </SelectTrigger>
                     <SelectContent>
-                      {batches?.filter(b => b.cutting_completed).map((batch) => (
-                        <SelectItem key={batch.id} value={batch.id}>
-                          {batch.batch_number}
-                        </SelectItem>
-                      ))}
+                      {batches?.filter(b => b.cutting_completed).map((batch) => {
+                        const isCompleted = batch.status === 'completed';
+                        let statusLabel = '';
+                        if (isCompleted) {
+                          statusLabel = ' (Completed - Not Allowed)';
+                        } else if (batch.packed_quantity && batch.packed_quantity > 0) {
+                          statusLabel = ' (Packing)';
+                        } else if (batch.checked_quantity && batch.checked_quantity > 0) {
+                          statusLabel = ' (Checking)';
+                        } else if (batch.ironing_quantity && batch.ironing_quantity > 0) {
+                          statusLabel = ' (Ironing)';
+                        } else if (batch.stitched_quantity && batch.stitched_quantity > 0) {
+                          statusLabel = ' (Stitching)';
+                        }
+                        
+                        return (
+                          <SelectItem 
+                            key={batch.id} 
+                            value={batch.id}
+                            disabled={isCompleted}
+                            className={isCompleted ? 'opacity-50' : ''}
+                          >
+                            {batch.batch_number}{statusLabel}
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
                 </div>
@@ -323,11 +400,23 @@ const MultiLineSettlementForm = ({
                     type="number"
                     {...register(`productionRows.${index}.quantity`, {
                       valueAsNumber: true,
-                      onChange: () => calculateRowAmount(index),
+                      onChange: (e) => {
+                        const qty = parseFloat(e.target.value) || 0;
+                        validateQuantity(index, qty);
+                        calculateRowAmount(index);
+                      }
                     })}
                     min="0"
                     placeholder="0"
                   />
+                  {quantityErrors[index] && (
+                    <Alert variant="destructive" className="mt-2">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription className="text-xs">
+                        {quantityErrors[index]}
+                      </AlertDescription>
+                    </Alert>
+                  )}
                 </div>
 
                 {/* Rate */}
@@ -514,7 +603,10 @@ const MultiLineSettlementForm = ({
           <Button type="button" variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="submit">
+          <Button 
+            type="submit"
+            disabled={Object.keys(quantityErrors).length > 0}
+          >
             <DollarSign className="h-4 w-4 mr-2" />
             Record Settlement
           </Button>

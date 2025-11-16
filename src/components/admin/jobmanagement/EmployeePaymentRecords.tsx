@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { usePartPayments, useDeletePartPayment, type PartPayment } from '@/hooks/usePartPayments';
 import { useWeeklySettlements, useDeleteWeeklySettlement, type WeeklySettlement } from '@/hooks/useWeeklySettlements';
 import { useJobProductionEntries } from '@/hooks/useJobProduction';
+import { useJobBatches } from '@/hooks/useJobBatches';
 import { Banknote, Calendar, TrendingUp, Edit, Trash2, Eye } from 'lucide-react';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, isWithinInterval, parseISO } from 'date-fns';
 import EditPartPaymentForm from './EditPartPaymentForm';
@@ -24,6 +25,7 @@ const EmployeePaymentRecords = ({ employeeId, employeeName }: EmployeePaymentRec
   const { data: partPayments } = usePartPayments(employeeId);
   const { data: settlements } = useWeeklySettlements(employeeId);
   const { data: productionEntries } = useJobProductionEntries();
+  const { data: batches } = useJobBatches();
   const deletePartPayment = useDeletePartPayment();
   const deleteSettlement = useDeleteWeeklySettlement();
 
@@ -44,26 +46,45 @@ const EmployeePaymentRecords = ({ employeeId, employeeName }: EmployeePaymentRec
   }, [productionEntries, employeeId]);
 
   const allRecords = useMemo(() => {
-    const payments = (partPayments || []).map(p => ({ 
-      id: p.id, 
-      date: p.payment_date, 
-      type: p.is_settled ? 'Advance (Settled)' : 'Advance Payment', 
-      amount: p.amount, 
-      mode: p.payment_mode, 
-      status: p.is_settled ? 'settled' : 'pending', 
-      note: p.note, 
-      originalData: p 
-    }));
-    const sRecords = (settlements || []).map(s => ({ 
-      id: s.id, 
-      date: s.settlement_date || s.payment_date || s.week_end_date, 
-      type: 'Settlement', 
-      amount: s.net_payable || 0, 
-      mode: s.payment_mode, 
-      status: s.payment_status || 'paid', 
-      note: s.remarks, 
-      originalData: s 
-    }));
+    const payments = (partPayments || []).map(p => {
+      const batch = batches?.find(b => b.id === p.batch_id);
+      return { 
+        id: p.id, 
+        date: p.payment_date, 
+        type: p.is_settled ? 'Advance (Settled)' : 'Advance Payment', 
+        amount: p.amount, 
+        mode: p.payment_mode, 
+        status: p.is_settled ? 'settled' : 'pending', 
+        note: p.note, 
+        batchInfo: batch ? {
+          batch_number: batch.batch_number,
+          style_name: batch.job_styles?.style_name
+        } : null,
+        originalData: p 
+      };
+    });
+    
+    const sRecords = (settlements || []).map(s => {
+      // Get production entries for this settlement
+      const settlementProduction = productionEntries?.filter(p => p.settlement_id === s.id) || [];
+      const batchIds = [...new Set(settlementProduction.map(p => p.batch_id).filter(Boolean))];
+      const settlementBatches = batches?.filter(b => batchIds.includes(b.id)) || [];
+      
+      return { 
+        id: s.id, 
+        date: s.settlement_date || s.payment_date || s.week_end_date, 
+        type: 'Settlement', 
+        amount: s.net_payable || 0, 
+        mode: s.payment_mode, 
+        status: s.payment_status || 'paid', 
+        note: s.remarks,
+        batchInfo: settlementBatches.map(b => ({
+          batch_number: b.batch_number,
+          style_name: b.job_styles?.style_name
+        })),
+        originalData: s 
+      };
+    });
     
     let filtered = [...payments, ...sRecords];
     
@@ -78,7 +99,7 @@ const EmployeePaymentRecords = ({ employeeId, employeeName }: EmployeePaymentRec
     }
     
     return filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [partPayments, settlements, statusFilter, modeFilter]);
+  }, [partPayments, settlements, productionEntries, batches, statusFilter, modeFilter]);
 
   return (
     <div className="space-y-6">
@@ -143,6 +164,7 @@ const EmployeePaymentRecords = ({ employeeId, employeeName }: EmployeePaymentRec
               <TableRow>
                 <TableHead>Date</TableHead>
                 <TableHead>Type</TableHead>
+                <TableHead>Batch</TableHead>
                 <TableHead>Amount</TableHead>
                 <TableHead>Mode</TableHead>
                 <TableHead>Status</TableHead>
@@ -155,6 +177,26 @@ const EmployeePaymentRecords = ({ employeeId, employeeName }: EmployeePaymentRec
                 <TableRow key={r.id}>
                   <TableCell>{format(parseISO(r.date), 'MMM dd, yyyy')}</TableCell>
                   <TableCell><Badge>{r.type}</Badge></TableCell>
+                  <TableCell>
+                    {r.batchInfo && (
+                      Array.isArray(r.batchInfo) ? (
+                        <div className="text-xs">
+                          {r.batchInfo.map((batch: any, idx: number) => (
+                            <div key={idx}>
+                              {batch.batch_number}
+                              {batch.style_name && ` - ${batch.style_name}`}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-xs">
+                          {r.batchInfo.batch_number}
+                          {r.batchInfo.style_name && ` - ${r.batchInfo.style_name}`}
+                        </div>
+                      )
+                    )}
+                    {!r.batchInfo && '-'}
+                  </TableCell>
                   <TableCell>₹{r.amount.toFixed(2)}</TableCell>
                   <TableCell>{r.mode || '-'}</TableCell>
                   <TableCell><Badge variant={r.status === 'paid' ? 'default' : 'outline'}>{r.status}</Badge></TableCell>

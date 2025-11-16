@@ -4,6 +4,7 @@ import { useJobEmployee, useDeleteJobEmployee } from '@/hooks/useJobEmployees';
 import { usePartPayments } from '@/hooks/usePartPayments';
 import { useWeeklySettlements } from '@/hooks/useWeeklySettlements';
 import { useJobProductionEntries } from '@/hooks/useJobProduction';
+import { useJobBatches } from '@/hooks/useJobBatches';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -28,16 +29,51 @@ const EmployeeDetails = ({ employeeId, onClose, onEdit }: EmployeeDetailsProps) 
   const { data: partPayments } = usePartPayments(employeeId);
   const { data: settlements } = useWeeklySettlements(employeeId);
   const { data: production } = useJobProductionEntries();
+  const { data: batches } = useJobBatches();
   const deleteMutation = useDeleteJobEmployee();
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [showSettlementForm, setShowSettlementForm] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-  // Calculate accumulated unsettled advances
+  // Calculate accumulated unsettled advances with batch info
+  const unsettledAdvancesWithBatch = useMemo(() => 
+    partPayments?.filter(p => !p.is_settled).map(payment => {
+      const batch = batches?.find(b => b.id === payment.batch_id);
+      return {
+        ...payment,
+        batchInfo: batch ? {
+          batch_number: batch.batch_number,
+          style_name: batch.job_styles?.style_name
+        } : null
+      };
+    }) || [],
+    [partPayments, batches]
+  );
+  
   const unsettledAdvances = useMemo(() => 
-    partPayments?.filter(p => !p.is_settled).reduce((sum, p) => sum + (p.amount || 0), 0) || 0,
-    [partPayments]
+    unsettledAdvancesWithBatch.reduce((sum, p) => sum + (p.amount || 0), 0),
+    [unsettledAdvancesWithBatch]
+  );
+  
+  // Settlements with batch info
+  const settlementsWithBatch = useMemo(() => 
+    settlements?.map(settlement => {
+      // Get production entries for this settlement
+      const settlementProduction = production?.filter(p => p.settlement_id === settlement.id) || [];
+      // Get unique batches from production entries
+      const batchIds = [...new Set(settlementProduction.map(p => p.batch_id).filter(Boolean))];
+      const settlementBatches = batches?.filter(b => batchIds.includes(b.id)) || [];
+      
+      return {
+        ...settlement,
+        batchInfo: settlementBatches.map(b => ({
+          batch_number: b.batch_number,
+          style_name: b.job_styles?.style_name
+        }))
+      };
+    }) || [],
+    [settlements, production, batches]
   );
 
   // Calculate overall earnings
@@ -197,14 +233,25 @@ const EmployeeDetails = ({ employeeId, onClose, onEdit }: EmployeeDetailsProps) 
           <Card className="p-6">
             <h3 className="font-semibold mb-4">Recent Advances</h3>
             <div className="space-y-2 max-h-[300px] overflow-y-auto">
-              {partPayments && partPayments.filter(p => !p.is_settled).length > 0 ? (
-                partPayments.filter(p => !p.is_settled).slice(0, 10).map((payment) => (
+              {unsettledAdvancesWithBatch.length > 0 ? (
+                unsettledAdvancesWithBatch.slice(0, 10).map((payment) => (
                   <div key={payment.id} className="flex justify-between items-center text-sm p-2 hover:bg-muted/50 rounded">
-                    <div>
+                    <div className="flex-1">
                       <p className="font-medium">{format(new Date(payment.payment_date), 'MMM dd, yyyy')}</p>
+                      {payment.batchInfo && (
+                        <p className="text-xs text-muted-foreground">
+                          Batch: {payment.batchInfo.batch_number}
+                          {payment.batchInfo.style_name && ` - ${payment.batchInfo.style_name}`}
+                        </p>
+                      )}
                       <p className="text-xs text-muted-foreground">{payment.payment_mode}</p>
+                      {payment.note && (
+                        <p className="text-xs text-muted-foreground">{payment.note}</p>
+                      )}
                     </div>
-                    <span className="font-semibold">₹{payment.amount}</span>
+                    <Badge variant="outline" className="ml-2">
+                      ₹{payment.amount.toFixed(2)}
+                    </Badge>
                   </div>
                 ))
               ) : (
@@ -219,14 +266,25 @@ const EmployeeDetails = ({ employeeId, onClose, onEdit }: EmployeeDetailsProps) 
           <Card className="p-6">
             <h3 className="font-semibold mb-4">Settlement History</h3>
             <div className="space-y-2 max-h-[400px] overflow-y-auto">
-              {settlements && settlements.length > 0 ? (
-                settlements.slice(0, 5).map((settlement) => (
+              {settlementsWithBatch.length > 0 ? (
+                settlementsWithBatch.slice(0, 5).map((settlement) => (
                   <div key={settlement.id} className="p-3 border rounded-lg hover:bg-muted/50 transition-colors">
                     <div className="flex justify-between items-start mb-2">
-                      <div>
+                      <div className="flex-1">
                         <p className="text-sm font-medium">
                           {format(new Date(settlement.settlement_date || settlement.payment_date || ''), 'MMM dd, yyyy')}
                         </p>
+                        {settlement.batchInfo && settlement.batchInfo.length > 0 && (
+                          <div className="text-xs text-muted-foreground mt-1">
+                            {settlement.batchInfo.map((batch, idx) => (
+                              <span key={idx}>
+                                {batch.batch_number}
+                                {batch.style_name && ` - ${batch.style_name}`}
+                                {idx < settlement.batchInfo.length - 1 && ', '}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                         <Badge 
                           variant={settlement.payment_status === 'paid' ? 'default' : 'secondary'}
                           className="mt-1"
@@ -234,7 +292,7 @@ const EmployeeDetails = ({ employeeId, onClose, onEdit }: EmployeeDetailsProps) 
                           {settlement.payment_status}
                         </Badge>
                       </div>
-                      <span className="font-bold text-primary">₹{settlement.net_payable?.toFixed(2) || '0.00'}</span>
+                      <Badge className="ml-2">₹{settlement.net_payable?.toFixed(2) || '0.00'}</Badge>
                     </div>
                     <div className="text-xs text-muted-foreground space-y-1">
                       <div className="flex justify-between">
@@ -246,6 +304,9 @@ const EmployeeDetails = ({ employeeId, onClose, onEdit }: EmployeeDetailsProps) 
                           <span>Advances Deducted:</span>
                           <span>-₹{settlement.advances_deducted?.toFixed(2) || '0.00'}</span>
                         </div>
+                      )}
+                      {settlement.remarks && (
+                        <p className="text-xs text-muted-foreground mt-1">{settlement.remarks}</p>
                       )}
                     </div>
                   </div>
