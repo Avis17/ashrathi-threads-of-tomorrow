@@ -116,33 +116,41 @@ export function ViewEditProducts() {
         .eq('id', id);
       if (productError) throw productError;
       
-      // Update inventory if provided (check for undefined to allow empty arrays)
-      if (inventory !== undefined) {
+      // Update inventory ONLY if explicitly provided and has entries
+      if (inventory !== undefined && inventory.length > 0) {
         // Delete existing inventory
         await supabase.from('product_inventory').delete().eq('product_id', id);
         
         // Insert new inventory
-        if (inventory.length > 0) {
-          const inventoryEntries = inventory.map(inv => ({
-            product_id: id,
-            size: inv.size,
-            color: inv.color,
-            available_quantity: inv.quantity,
-          }));
-          
-          const { error: invError } = await supabase
-            .from('product_inventory')
-            .insert(inventoryEntries);
-          
-          if (invError) throw invError;
-          
-          // Update product total stock
-          const totalStock = inventory.reduce((sum, inv) => sum + inv.quantity, 0);
-          await supabase
-            .from('products')
-            .update({ current_total_stock: totalStock })
-            .eq('id', id);
-        }
+        const inventoryEntries = inventory.map(inv => ({
+          product_id: id,
+          size: inv.size,
+          color: inv.color,
+          available_quantity: inv.quantity,
+          original_quantity: inv.quantity,
+          reserved_quantity: 0,
+          ordered_quantity: 0,
+        }));
+        
+        const { error: invError } = await supabase
+          .from('product_inventory')
+          .insert(inventoryEntries);
+        
+        if (invError) throw invError;
+        
+        // Update product total stock
+        const totalStock = inventory.reduce((sum, inv) => sum + inv.quantity, 0);
+        await supabase
+          .from('products')
+          .update({ current_total_stock: totalStock })
+          .eq('id', id);
+      } else if (inventory !== undefined && inventory.length === 0) {
+        // If inventory is explicitly set to empty array, clear it
+        await supabase.from('product_inventory').delete().eq('product_id', id);
+        await supabase
+          .from('products')
+          .update({ current_total_stock: 0 })
+          .eq('id', id);
       }
     },
     onSuccess: () => {

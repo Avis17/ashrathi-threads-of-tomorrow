@@ -350,6 +350,17 @@ White background, professional ecommerce product photography, realistic fabric t
 
       if (inventoryError) {
         console.error(`Error creating inventory for ${template.name}:`, inventoryError);
+      } else {
+        // Update product's current_total_stock
+        const totalStock = inventoryEntries.reduce((sum, entry) => sum + entry.available_quantity, 0);
+        const { error: stockError } = await supabase
+          .from('products')
+          .update({ current_total_stock: totalStock })
+          .eq('id', product.id);
+        
+        if (stockError) {
+          console.error(`Error updating stock for ${template.name}:`, stockError);
+        }
       }
 
       createdProducts.push({

@@ -86,6 +86,7 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
   const [inventory, setInventory] = useState<Array<{size: string; color: string; quantity: number}>>(
     initialData?.inventory || []
   );
+  const [inventoryModified, setInventoryModified] = useState(false);
 
   const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
@@ -135,15 +136,21 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
   const shouldRemove = watch('should_remove');
 
   const handleFormSubmit = (data: ProductFormData) => {
-    onSubmit({ 
+    const submitData: any = { 
       ...data, 
       available_sizes: sizes, 
       available_colors: colors, 
       additional_images: additionalImages, 
       offer_messages: offerMessages,
       combo_offers: comboOffers,
-      inventory: inventory,
-    });
+    };
+    
+    // Only include inventory if it was explicitly modified
+    if (inventoryModified || !initialData) {
+      submitData.inventory = inventory;
+    }
+    
+    onSubmit(submitData);
   };
 
   const handleAddImage = () => {
@@ -469,7 +476,10 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
         inventory={inventory}
         availableSizes={sizes}
         availableColors={colors}
-        onInventoryChange={setInventory}
+        onInventoryChange={(newInventory) => {
+          setInventory(newInventory);
+          setInventoryModified(true);
+        }}
       />
 
       <div className="flex flex-wrap gap-6">
