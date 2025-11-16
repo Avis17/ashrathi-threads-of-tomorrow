@@ -5,14 +5,15 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { usePartPayments, useDeletePartPayment, type PartPayment } from '@/hooks/usePartPayments';
 import { useWeeklySettlements, useDeleteWeeklySettlement, type WeeklySettlement } from '@/hooks/useWeeklySettlements';
 import { useJobProductionEntries } from '@/hooks/useJobProduction';
-import { Banknote, Calendar, TrendingUp, Edit, Trash2 } from 'lucide-react';
+import { Banknote, Calendar, TrendingUp, Edit, Trash2, Eye } from 'lucide-react';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, isWithinInterval, parseISO } from 'date-fns';
 import EditPartPaymentForm from './EditPartPaymentForm';
 import { SettlementDetailsDialog } from './SettlementDetailsDialog';
-import { Eye } from 'lucide-react';
 
 interface EmployeePaymentRecordsProps {
   employeeId: string;
@@ -29,6 +30,8 @@ const EmployeePaymentRecords = ({ employeeId, employeeName }: EmployeePaymentRec
   const [editingRecord, setEditingRecord] = useState<any>(null);
   const [deletingRecord, setDeletingRecord] = useState<any>(null);
   const [viewingSettlement, setViewingSettlement] = useState<WeeklySettlement | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [modeFilter, setModeFilter] = useState<string>('all');
 
   const now = new Date();
   const earnings = useMemo(() => {
@@ -61,8 +64,21 @@ const EmployeePaymentRecords = ({ employeeId, employeeName }: EmployeePaymentRec
       note: s.remarks, 
       originalData: s 
     }));
-    return [...payments, ...sRecords].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [partPayments, settlements]);
+    
+    let filtered = [...payments, ...sRecords];
+    
+    // Apply status filter
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(r => r.status === statusFilter);
+    }
+    
+    // Apply payment mode filter
+    if (modeFilter !== 'all') {
+      filtered = filtered.filter(r => r.mode?.toLowerCase() === modeFilter.toLowerCase());
+    }
+    
+    return filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [partPayments, settlements, statusFilter, modeFilter]);
 
   return (
     <div className="space-y-6">
@@ -74,6 +90,54 @@ const EmployeePaymentRecords = ({ employeeId, employeeName }: EmployeePaymentRec
       <Card>
         <CardHeader><CardTitle>Payment History</CardTitle></CardHeader>
         <CardContent>
+          {/* Filters */}
+          <div className="flex gap-4 mb-4">
+            <div className="flex-1">
+              <Label htmlFor="statusFilter">Filter by Status</Label>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger id="statusFilter">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="paid">Paid</SelectItem>
+                  <SelectItem value="settled">Settled</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="flex-1">
+              <Label htmlFor="modeFilter">Filter by Payment Mode</Label>
+              <Select value={modeFilter} onValueChange={setModeFilter}>
+                <SelectTrigger id="modeFilter">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Modes</SelectItem>
+                  <SelectItem value="cash">Cash</SelectItem>
+                  <SelectItem value="bank transfer">Bank Transfer</SelectItem>
+                  <SelectItem value="upi">UPI</SelectItem>
+                  <SelectItem value="cheque">Cheque</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {(statusFilter !== 'all' || modeFilter !== 'all') && (
+              <div className="flex items-end">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setStatusFilter('all');
+                    setModeFilter('all');
+                  }}
+                >
+                  Clear Filters
+                </Button>
+              </div>
+            )}
+          </div>
+          
           <Table>
             <TableHeader>
               <TableRow>

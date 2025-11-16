@@ -7,6 +7,10 @@ import { useJobProductionEntries } from '@/hooks/useJobProduction';
 import { useJobBatchExpenses } from '@/hooks/useJobExpenses';
 import { format } from 'date-fns';
 import { CuttingCompletion } from './CuttingCompletion';
+import { StitchingCompletion } from './StitchingCompletion';
+import { IroningCompletion } from './IroningCompletion';
+import { CheckingCompletion } from './CheckingCompletion';
+import { PackingCompletion } from './PackingCompletion';
 
 interface BatchDetailsProps {
   batch: any;
@@ -20,22 +24,10 @@ const BatchDetails = ({ batch }: BatchDetailsProps) => {
   const sections = [
     { name: 'Cutting', qty: batch.cut_quantity, icon: Scissors, color: 'text-blue-500' },
     { name: 'Stitching', qty: batch.stitched_quantity, icon: Zap, color: 'text-purple-500' },
-    { name: 'Ironing', qty: batch.checked_quantity, icon: Flame, color: 'text-orange-500' },
+    { name: 'Ironing', qty: batch.ironing_quantity, icon: Flame, color: 'text-orange-500' },
     { name: 'Checking', qty: batch.checked_quantity, icon: CheckCircle, color: 'text-green-500' },
     { name: 'Packing', qty: batch.packed_quantity, icon: Package, color: 'text-pink-500' },
   ];
-
-  const calculateProgress = (qty: number) => {
-    // If cutting not completed, no progress
-    if (!batch.cutting_completed || !batch.cut_quantity) return 0;
-    
-    // After cutting: 35% base + 65% based on production progress
-    const baseProgress = 35;
-    const remainingProgress = 65;
-    const productionProgress = (qty / batch.cut_quantity) * remainingProgress;
-    
-    return baseProgress + productionProgress;
-  };
 
   const totalLabourCost = productionEntries?.reduce((sum, entry) => sum + entry.total_amount, 0) || 0;
   const totalExpenses = expenses?.reduce((sum, exp) => sum + exp.amount, 0) || 0;
@@ -64,6 +56,26 @@ const BatchDetails = ({ batch }: BatchDetailsProps) => {
       {/* Cutting Completion */}
       <CuttingCompletion batch={batch} />
 
+      {/* Stitching Completion - Only show if cutting is completed */}
+      {batch.cutting_completed && !batch.stitched_quantity && (
+        <StitchingCompletion batch={batch} />
+      )}
+
+      {/* Ironing Completion - Only show if stitching is completed */}
+      {batch.stitched_quantity > 0 && !batch.ironing_quantity && (
+        <IroningCompletion batch={batch} />
+      )}
+
+      {/* Checking Completion - Only show if ironing is completed */}
+      {batch.ironing_quantity > 0 && !batch.checked_quantity && (
+        <CheckingCompletion batch={batch} />
+      )}
+
+      {/* Packing Completion - Only show if checking is completed */}
+      {batch.checked_quantity > 0 && !batch.packed_quantity && (
+        <PackingCompletion batch={batch} />
+      )}
+
       {/* Production Progress */}
       {batch.cutting_completed && (
         <Card className="border-l-4 border-l-primary">
@@ -83,19 +95,23 @@ const BatchDetails = ({ batch }: BatchDetailsProps) => {
               </div>
               {sections.map((section) => {
                 const Icon = section.icon;
-                const progress = calculateProgress(section.qty);
+                const isCompleted = section.qty > 0;
                 return (
-                  <div key={section.name} className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-2">
-                        <Icon className={`h-4 w-4 ${section.color}`} />
-                        <span className="font-medium">{section.name}</span>
-                      </div>
-                      <span className="font-semibold">
-                        {section.qty}/{batch.cut_quantity} ({((section.qty / batch.cut_quantity) * 100).toFixed(0)}%)
-                      </span>
+                  <div key={section.name} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Icon className={`h-5 w-5 ${section.color}`} />
+                      <span className="font-medium">{section.name}</span>
                     </div>
-                    <Progress value={(section.qty / batch.cut_quantity) * 100} className="h-2" />
+                    <div className="flex items-center gap-2">
+                      {isCompleted ? (
+                        <>
+                          <span className="font-semibold text-green-600">{section.qty} pieces</span>
+                          <Badge variant="default" className="bg-green-500">Completed</Badge>
+                        </>
+                      ) : (
+                        <Badge variant="secondary">Pending</Badge>
+                      )}
+                    </div>
                   </div>
                 );
               })}
