@@ -92,6 +92,7 @@ const Products = () => {
   const [selectedImage, setSelectedImage] = useState<{ src: string; alt: string } | null>(null);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [selectedVariants, setSelectedVariants] = useState<Record<string, { size?: string; color?: string }>>({});
+  const [displayImages, setDisplayImages] = useState<Record<string, string>>({});
   const { data: products = [], isLoading, error } = useProducts();
 
   // Fetch inventory data for all products
@@ -163,6 +164,25 @@ const Products = () => {
       [productId]: { ...prev[productId], color },
     }));
   };
+
+  // Update display images when color selection changes
+  useEffect(() => {
+    if (!products) return;
+    
+    const newDisplayImages: Record<string, string> = {};
+    products.forEach(product => {
+      const selectedColor = selectedVariants[product.id]?.color;
+      if (selectedColor && product.available_colors) {
+        const colorData = product.available_colors.find(c => c.name === selectedColor);
+        // Use color-specific image if available, otherwise use main product image
+        newDisplayImages[product.id] = colorData?.image_url || product.image_url;
+      } else {
+        // No color selected, use main product image
+        newDisplayImages[product.id] = product.image_url;
+      }
+    });
+    setDisplayImages(newDisplayImages);
+  }, [selectedVariants, products]);
 
   const handleAddToCart = async (product: any) => {
     if (!user) {
@@ -394,7 +414,7 @@ const Products = () => {
                   <CardContent className="p-0">
                     <div className="relative aspect-square group">
                       <img
-                        src={product.image_url || PLACEHOLDER_IMAGE}
+                        src={displayImages[product.id] || product.image_url || PLACEHOLDER_IMAGE}
                         alt={product.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
@@ -404,7 +424,10 @@ const Products = () => {
                         className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setSelectedImage({ src: product.image_url, alt: product.name });
+                          setSelectedImage({ 
+                            src: displayImages[product.id] || product.image_url, 
+                            alt: product.name 
+                          });
                         }}
                       >
                         <Maximize className="h-4 w-4" />
