@@ -81,30 +81,23 @@ export const useDeleteWeeklySettlement = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (settlement: WeeklySettlement) => {
-      const { employee_id, batch_id, week_start_date, week_end_date } = settlement;
-      
-      // Step 1: Delete associated production entries
+      // Step 1: Delete associated production entries (linked via settlement_id)
       const { error: prodError } = await supabase
         .from('job_production_entries')
         .delete()
-        .eq('employee_id', employee_id)
-        .gte('date', week_start_date)
-        .lte('date', week_end_date)
-        .match(batch_id ? { batch_id } : {});
+        .eq('settlement_id', settlement.id);
       
       if (prodError) throw prodError;
       
-      // Step 2: Mark part payments as un-settled for this week
+      // Step 2: Mark part payments as un-settled for this settlement
       const { error: paymentError } = await supabase
         .from('job_part_payments')
-        .update({ is_settled: false })
-        .eq('employee_id', employee_id)
-        .eq('is_settled', true)
-        .gte('payment_date', week_start_date)
-        .lte('payment_date', week_end_date);
+        .update({ is_settled: false, settlement_id: null })
+        .eq('settlement_id', settlement.id);
       
       if (paymentError) throw paymentError;
       
+      // Step 3: Delete the settlement record
       // Step 3: Delete the settlement record
       const { error: settlementError } = await supabase
         .from('job_weekly_settlements')
