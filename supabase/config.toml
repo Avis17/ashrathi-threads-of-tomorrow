@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.send-order-alert]
 verify_jwt = false
+
+[functions.product-color-image]
+verify_jwt = false
