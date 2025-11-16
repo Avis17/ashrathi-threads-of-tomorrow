@@ -197,6 +197,11 @@ const productTemplates: ProductTemplate[] = [
   }
 ];
 
+// Helper to add delay between requests to avoid rate limits
+async function delay(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 async function generateImage(prompt: string, supabase: any): Promise<string> {
   const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
   
@@ -261,10 +266,38 @@ serve(async (req) => {
     const createdProducts = [];
 
     for (const template of productTemplates) {
-      console.log(`Generating image for: ${template.name}`);
+      console.log(`Generating images for: ${template.name}`);
       
       // Generate main product image
       const imageUrl = await generateImage(template.imagePrompt, supabase);
+      await delay(2000);
+      
+      // Generate color-specific images
+      const colorImages: Record<string, string> = {};
+      const additionalImages: string[] = [];
+      
+      for (const color of template.colors) {
+        try {
+          const colorPrompt = `${template.imagePrompt}
+Primary garment color: ${color.name} (${color.hex}).
+Use ${color.name} as the dominant color for the clothing item.
+White background, professional ecommerce product photography, realistic fabric texture, studio lighting.`;
+          
+          console.log(`  - Generating ${color.name} variant`);
+          const colorImageUrl = await generateImage(colorPrompt, supabase);
+          colorImages[color.name] = colorImageUrl;
+          additionalImages.push(colorImageUrl);
+          await delay(2000);
+        } catch (colorError) {
+          console.error(`  - Failed for ${color.name}:`, colorError);
+        }
+      }
+      
+      // Build colors with image URLs
+      const colorsWithImages = template.colors.map(c => ({
+        ...c,
+        image_url: colorImages[c.name] || imageUrl
+      }));
       
       // Create product
       const { data: product, error: productError } = await supabase
@@ -275,11 +308,11 @@ serve(async (req) => {
           fabric: template.fabric,
           description: template.description,
           image_url: imageUrl,
-          additional_images: [],
+          additional_images: additionalImages.length > 0 ? additionalImages : [],
           price: template.price,
           quality_tier: template.quality_tier,
           available_sizes: template.sizes,
-          available_colors: template.colors,
+          available_colors: colorsWithImages,
           is_featured: false,
           is_active: true,
           display_order: 0,
@@ -322,10 +355,11 @@ serve(async (req) => {
       createdProducts.push({
         name: template.name,
         id: product.id,
-        imageUrl
+        imageUrl,
+        colorVariants: Object.keys(colorImages).length
       });
 
-      console.log(`Created: ${template.name}`);
+      console.log(`Created: ${template.name} with ${Object.keys(colorImages).length} color variants`);
     }
 
     return new Response(

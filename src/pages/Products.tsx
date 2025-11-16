@@ -93,7 +93,7 @@ const Products = () => {
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [selectedVariants, setSelectedVariants] = useState<Record<string, { size?: string; color?: string }>>({});
   const [displayImages, setDisplayImages] = useState<Record<string, string>>({});
-  const { data: products = [], isLoading, error } = useProducts();
+  const { data: products = [], isLoading, error, refetch } = useProducts();
 
   // Fetch inventory data for all products
   const productIds = products.map(p => p.id);
@@ -158,11 +158,43 @@ const Products = () => {
     }));
   };
 
-  const handleColorSelect = (productId: string, color: string) => {
+  const handleColorSelect = async (productId: string, color: string) => {
     setSelectedVariants((prev) => ({
       ...prev,
       [productId]: { ...prev[productId], color },
     }));
+
+    // Check if color image exists, generate if missing
+    const product = filteredProducts.find(p => p.id === productId);
+    const colorData = product?.available_colors?.find(
+      c => c.name.toLowerCase() === color.toLowerCase()
+    );
+
+    if (product && (!colorData || !colorData.image_url)) {
+      setDisplayImages(prev => ({ ...prev, [productId]: product.image_url }));
+      
+      try {
+        const { data, error } = await supabase.functions.invoke('product-color-image', {
+          body: { 
+            productId, 
+            colorName: color, 
+            colorHex: colorData?.hex 
+          }
+        });
+
+        if (!error && data?.imageUrl) {
+          setDisplayImages(prev => ({ ...prev, [productId]: data.imageUrl }));
+          refetch();
+        }
+      } catch (e) {
+        console.error('Failed to generate color image:', e);
+        toast({
+          title: "Image generation failed",
+          description: "Using default image",
+          variant: "destructive"
+        });
+      }
+    }
   };
 
   // Update display images when color selection changes
