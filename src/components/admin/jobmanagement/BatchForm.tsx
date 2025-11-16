@@ -197,51 +197,46 @@ const BatchForm = ({ onClose }: BatchFormProps) => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor={`rolls.${index}.gsm`}>GSM *</Label>
+                    <Label htmlFor={`rolls.${index}.gsm`}>GSM</Label>
                     <Input
                       id={`rolls.${index}.gsm`}
                       {...register(`rolls.${index}.gsm`)}
-                      required
                       placeholder="220"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor={`rolls.${index}.color`}>Color *</Label>
+                    <Label htmlFor={`rolls.${index}.color`}>Color</Label>
                     <Input
                       id={`rolls.${index}.color`}
                       {...register(`rolls.${index}.color`)}
-                      required
                       placeholder="Red"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor={`rolls.${index}.fabric_width`}>Fabric Width *</Label>
+                    <Label htmlFor={`rolls.${index}.fabric_width`}>Fabric Width</Label>
                     <Input
                       id={`rolls.${index}.fabric_width`}
                       {...register(`rolls.${index}.fabric_width`)}
-                      required
                       placeholder='60"'
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor={`rolls.${index}.weight`}>Weight per Roll (kg) *</Label>
+                    <Label htmlFor={`rolls.${index}.weight`}>Weight per Roll (kg)</Label>
                     <Input
                       id={`rolls.${index}.weight`}
                       type="number"
                       step="0.01"
                       {...register(`rolls.${index}.weight`, { valueAsNumber: true })}
-                      required
                       placeholder="25"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor={`rolls.${index}.number_of_rolls`}>Number of Rolls *</Label>
+                    <Label htmlFor={`rolls.${index}.number_of_rolls`}>Number of Rolls</Label>
                     <Input
                       id={`rolls.${index}.number_of_rolls`}
                       type="number"
                       min="1"
                       {...register(`rolls.${index}.number_of_rolls`, { valueAsNumber: true })}
-                      required
                       placeholder="3"
                     />
                   </div>

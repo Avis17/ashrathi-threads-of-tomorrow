@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useJobProductionEntries } from '@/hooks/useJobProduction';
 import { useJobBatchExpenses } from '@/hooks/useJobExpenses';
+import { useJobBatch } from '@/hooks/useJobBatches';
 import { format } from 'date-fns';
 import { CuttingCompletion } from './CuttingCompletion';
 import { StitchingCompletion } from './StitchingCompletion';
@@ -13,13 +14,18 @@ import { CheckingCompletion } from './CheckingCompletion';
 import { PackingCompletion } from './PackingCompletion';
 
 interface BatchDetailsProps {
-  batch: any;
+  batchId: string;
   onClose: () => void;
 }
 
-const BatchDetails = ({ batch }: BatchDetailsProps) => {
-  const { data: productionEntries } = useJobProductionEntries(batch.id);
-  const { data: expenses } = useJobBatchExpenses(batch.id);
+const BatchDetails = ({ batchId }: BatchDetailsProps) => {
+  const { data: batch, isLoading } = useJobBatch(batchId);
+  const { data: productionEntries } = useJobProductionEntries(batchId);
+  const { data: expenses } = useJobBatchExpenses(batchId);
+
+  if (isLoading || !batch) {
+    return <div className="flex items-center justify-center p-8">Loading batch details...</div>;
+  }
 
   const sections = [
     { name: 'Cutting', qty: batch.cut_quantity, icon: Scissors, color: 'text-blue-500' },
