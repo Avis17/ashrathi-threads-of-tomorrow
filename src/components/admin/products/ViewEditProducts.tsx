@@ -116,8 +116,8 @@ export function ViewEditProducts() {
         .eq('id', id);
       if (productError) throw productError;
       
-      // Update inventory if provided
-      if (inventory) {
+      // Update inventory if provided (check for undefined to allow empty arrays)
+      if (inventory !== undefined) {
         // Delete existing inventory
         await supabase.from('product_inventory').delete().eq('product_id', id);
         
