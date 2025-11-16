@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -113,6 +113,18 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
       available_colors: initialData?.available_colors || [],
     },
   });
+
+  // Sync local state when initialData changes (for edit mode)
+  useEffect(() => {
+    if (initialData) {
+      setSizes(initialData.available_sizes || []);
+      setColors(initialData.available_colors || []);
+      setAdditionalImages(initialData.additional_images || []);
+      setOfferMessages(initialData.offer_messages || []);
+      setComboOffers(initialData.combo_offers || []);
+      setInventory(initialData.inventory || []);
+    }
+  }, [initialData]);
 
   const selectedCategory = watch('category');
   const qualityTier = watch('quality_tier');
