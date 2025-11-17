@@ -20,6 +20,17 @@ import { PRODUCT_CATEGORIES } from '@/lib/constants';
 import { SizeColorManager } from './SizeColorManager';
 import { InventoryManager } from './InventoryManager';
 
+// HSN Code mapping for categories
+const HSN_CODES: Record<string, string> = {
+  "Men's Wear": "6109",
+  "Women's Wear": "6109",
+  "Kids Wear": "6111",
+  "Unisex": "6109",
+  "Loungewear": "6108",
+  "Sleepwear": "6208",
+  "Activewear": "6114",
+};
+
 const productSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters').max(200),
   category: z.string().min(1, 'Category is required'),
@@ -115,6 +126,22 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
     },
   });
 
+  // Watch form fields
+  const selectedCategory = watch('category');
+  const qualityTier = watch('quality_tier');
+  const isActive = watch('is_active');
+  const isFeatured = watch('is_featured');
+  const isNewArrival = watch('is_new_arrival');
+  const isSignature = watch('is_signature');
+  const shouldRemove = watch('should_remove');
+
+  // Auto-fill HSN code when category changes
+  useEffect(() => {
+    if (selectedCategory && HSN_CODES[selectedCategory] && !initialData) {
+      setValue('hsn_code', HSN_CODES[selectedCategory]);
+    }
+  }, [selectedCategory, setValue, initialData]);
+
   // Sync local state when initialData changes (for edit mode)
   useEffect(() => {
     if (initialData) {
@@ -126,14 +153,6 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
       setInventory(initialData.inventory || []);
     }
   }, [initialData]);
-
-  const selectedCategory = watch('category');
-  const qualityTier = watch('quality_tier');
-  const isActive = watch('is_active');
-  const isFeatured = watch('is_featured');
-  const isNewArrival = watch('is_new_arrival');
-  const isSignature = watch('is_signature');
-  const shouldRemove = watch('should_remove');
 
   const handleFormSubmit = (data: ProductFormData) => {
     const submitData: any = { 
@@ -291,6 +310,7 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
         <div className="space-y-2">
           <Label htmlFor="hsn_code">HSN Code</Label>
           <Input id="hsn_code" {...register('hsn_code')} placeholder="e.g., 6203" />
+          <p className="text-xs text-muted-foreground">Auto-filled based on category (editable)</p>
           {errors.hsn_code && (
             <p className="text-sm text-destructive">{errors.hsn_code.message}</p>
           )}

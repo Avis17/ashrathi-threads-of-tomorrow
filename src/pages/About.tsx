@@ -58,6 +58,29 @@ const About = () => {
           </div>
         </div>
 
+        {/* Pillar of Our Success Section */}
+        <Card className="bg-gradient-to-br from-accent/10 to-primary/10 border-2 border-accent/30 mb-20">
+          <CardContent className="p-8">
+            <div className="text-center mb-6">
+              <Award className="w-12 h-12 text-accent mx-auto mb-4" />
+              <h3 className="text-2xl font-bold mb-2">The Pillar of Our Success</h3>
+              <div className="divider-accent mb-4" />
+            </div>
+            <div className="max-w-3xl mx-auto">
+              <p className="text-lg leading-relaxed mb-4 text-center">
+                At the heart of Feather Fashions stands <span className="font-bold text-accent">Mr. Vadivel Palanisamy</span>, 
+                the backbone and guiding force of our organization. His unwavering dedication, business acumen, and 
+                commitment to excellence have been instrumental in shaping our company's growth and success.
+              </p>
+              <p className="text-lg leading-relaxed text-center">
+                With years of experience in the garment industry, Mr. Vadivel Palanisamy oversees our day-to-day operations, 
+                ensuring that every aspect of our business runs smoothly. His leadership and vision continue to inspire our 
+                team to maintain the highest standards of quality and customer satisfaction.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Mission & Vision */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-20">
           <Card className="bg-gradient-to-br from-secondary/10 to-secondary/5 border-2 border-secondary/20">
