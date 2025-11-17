@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, AlertTriangle } from 'lucide-react';
+import { RefreshCw, Trash2, AlertTriangle } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 
 interface InventoryEntry {
@@ -25,38 +25,34 @@ export function InventoryManager({
   availableColors, 
   onInventoryChange 
 }: InventoryManagerProps) {
-  const [selectedSize, setSelectedSize] = useState('');
-  const [selectedColor, setSelectedColor] = useState('');
-  const [quantity, setQuantity] = useState('');
-
-  const addInventoryEntry = () => {
-    if (!selectedSize || !selectedColor || !quantity) {
-      alert('Please fill all fields');
-      return;
+  // Auto-generate inventory combinations when sizes or colors change
+  useEffect(() => {
+    if (availableSizes.length > 0 && availableColors.length > 0) {
+      syncInventoryWithCombinations();
     }
+  }, [availableSizes, availableColors]);
 
-    const qty = parseInt(quantity);
-    if (isNaN(qty) || qty < 0) {
-      alert('Quantity must be a positive number');
-      return;
-    }
-
-    const exists = inventory.some(
-      inv => inv.size === selectedSize && inv.color === selectedColor
-    );
-    if (exists) {
-      alert('This size-color combination already exists');
-      return;
-    }
-
-    onInventoryChange([
-      ...inventory,
-      { size: selectedSize, color: selectedColor, quantity: qty }
-    ]);
-
-    setSelectedSize('');
-    setSelectedColor('');
-    setQuantity('');
+  const syncInventoryWithCombinations = () => {
+    const newInventory: InventoryEntry[] = [];
+    
+    // Generate all possible combinations
+    availableSizes.forEach(size => {
+      availableColors.forEach(color => {
+        // Check if this combination already exists
+        const existing = inventory.find(
+          inv => inv.size === size && inv.color === color.name
+        );
+        
+        // Preserve existing quantity or default to 0
+        newInventory.push({
+          size,
+          color: color.name,
+          quantity: existing?.quantity || 0
+        });
+      });
+    });
+    
+    onInventoryChange(newInventory);
   };
 
   const removeEntry = (index: number) => {
@@ -78,63 +74,19 @@ export function InventoryManager({
     <div className="space-y-4 border rounded-lg p-4 bg-muted/20">
       <div className="flex items-center justify-between">
         <Label className="text-base font-semibold">📦 Inventory Management</Label>
-        <Badge variant="secondary" className="text-sm">
-          Total Stock: {totalStock} pieces
-        </Badge>
-      </div>
-
-      {/* Add New Entry Form */}
-      <div className="grid grid-cols-4 gap-2 p-3 bg-background rounded-lg border">
-        <div>
-          <Label className="text-xs mb-1">Size</Label>
-          <select
-            value={selectedSize}
-            onChange={(e) => setSelectedSize(e.target.value)}
-            className="w-full p-2 border rounded-md text-sm bg-background"
-          >
-            <option value="">Select Size</option>
-            {availableSizes.map(size => (
-              <option key={size} value={size}>{size}</option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <Label className="text-xs mb-1">Color</Label>
-          <select
-            value={selectedColor}
-            onChange={(e) => setSelectedColor(e.target.value)}
-            className="w-full p-2 border rounded-md text-sm bg-background"
-          >
-            <option value="">Select Color</option>
-            {availableColors.map(color => (
-              <option key={color.name} value={color.name}>{color.name}</option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <Label className="text-xs mb-1">Quantity</Label>
-          <Input
-            type="number"
-            min="0"
-            value={quantity}
-            onChange={(e) => setQuantity(e.target.value)}
-            placeholder="0"
-            className="text-sm"
-          />
-        </div>
-
-        <div className="flex items-end">
+        <div className="flex items-center gap-3">
+          <Badge variant="secondary" className="text-sm">
+            Total Stock: {totalStock} pieces
+          </Badge>
           <Button
             type="button"
-            onClick={addInventoryEntry}
+            onClick={syncInventoryWithCombinations}
             size="sm"
-            className="w-full"
+            variant="outline"
             disabled={!availableSizes.length || !availableColors.length}
           >
-            <Plus className="h-4 w-4 mr-1" />
-            Add
+            <RefreshCw className="h-4 w-4 mr-1" />
+            Sync Grid
           </Button>
         </div>
       </div>
@@ -143,7 +95,7 @@ export function InventoryManager({
         <div className="flex items-center gap-2 p-3 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg border border-yellow-200 dark:border-yellow-900">
           <AlertTriangle className="h-5 w-5 text-yellow-600" />
           <p className="text-sm text-yellow-800 dark:text-yellow-200">
-            Please add sizes and colors first to manage inventory
+            Please add sizes and colors first. Inventory will auto-generate all size-color combinations.
           </p>
         </div>
       ) : null}
