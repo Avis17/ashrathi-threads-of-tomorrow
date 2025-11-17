@@ -34,10 +34,9 @@ const Navbar = () => {
   const { user, isAdmin, signOut } = useAuth();
 
   const navLinks = [
-    { name: "Home", path: "/" },
-    { name: "Products", path: "/products" },
+    { name: "Home", path: "/home" },
+    { name: "Products", path: "/" },
     { name: "Services", path: "/services" },
-    { name: "New Collections", path: "/collections" },
     { name: "About Us", path: "/about" },
     { name: "Contact", path: "/contact" },
   ];
@@ -78,13 +77,8 @@ const Navbar = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
-          <Link to="/" className="group flex flex-col items-start transition-all">
-            <span className="text-2xl font-bold tracking-wider bg-gradient-to-r from-primary via-primary to-secondary bg-clip-text text-transparent leading-none transition-all duration-300 group-hover:from-secondary group-hover:via-primary group-hover:to-primary">
-              FEATHER
-            </span>
-            <span className="text-lg font-light tracking-[0.3em] text-secondary leading-none -mt-1 transition-all duration-300 group-hover:tracking-[0.35em] group-hover:text-primary">
-              FASHIONS
-            </span>
+          <Link to="/" className="flex items-center group">
+            <img src="/logo.png" alt="Feather Fashions" className="h-12 w-auto transition-transform duration-300 group-hover:scale-110" />
           </Link>
 
           {/* Desktop Navigation */}

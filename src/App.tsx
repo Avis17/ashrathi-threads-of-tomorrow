@@ -10,7 +10,6 @@ import Footer from "./components/Footer";
 import Home from "./pages/Home";
 import Products from "./pages/Products";
 import Services from "./pages/Services";
-import Collections from "./pages/Collections";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Auth from "./pages/Auth";
@@ -67,11 +66,11 @@ const App = () => (
                   <Navbar />
                   <main className="flex-1">
                     <Routes>
-                      <Route path="/" element={<Home />} />
+                      <Route path="/" element={<Products />} />
+          <Route path="/home" element={<Home />} />
           <Route path="/products" element={<Products />} />
           <Route path="/product/:id" element={<ProductDetail />} />
                       <Route path="/services" element={<Services />} />
-                      <Route path="/collections" element={<Collections />} />
                       <Route path="/about" element={<About />} />
                       <Route path="/contact" element={<Contact />} />
                       <Route path="/auth" element={<Auth />} />
