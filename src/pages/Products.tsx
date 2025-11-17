@@ -689,7 +689,7 @@ const Products = () => {
                   <CardContent className="p-0">
                     <div className="relative aspect-square group">
                       <img
-                        src={product.image_url || PLACEHOLDER_IMAGE}
+                        src={displayImages[product.id] || product.image_url || PLACEHOLDER_IMAGE}
                         alt={product.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
@@ -699,7 +699,7 @@ const Products = () => {
                         className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setSelectedImage({ src: product.image_url, alt: product.name });
+                          setSelectedImage({ src: displayImages[product.id] || product.image_url, alt: product.name });
                         }}
                       >
                         <Maximize className="h-4 w-4" />
