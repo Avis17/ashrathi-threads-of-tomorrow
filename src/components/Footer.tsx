@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import { Mail, Phone, MapPin, Facebook, Instagram, Linkedin } from "lucide-react";
-import logo from "@/assets/logo.png";
 import NewsletterSignup from "./NewsletterSignup";
 
 const Footer = () => {
@@ -10,7 +9,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand */}
           <div>
-            <img src={logo} alt="Feather Fashions" className="h-32 mb-4 brightness-0 invert" />
+            <img src="/logo.png" alt="Feather Fashions" className="h-24 mb-4" />
             <p className="text-sm text-primary-foreground/80 leading-relaxed">
               Premium sustainable fashion crafted with ultra-soft fabrics. Where comfort meets style and innovation.
             </p>

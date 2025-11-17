@@ -78,7 +78,7 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center group">
-            <img src="/logo.png" alt="Feather Fashions" className="h-12 w-auto transition-transform duration-300 group-hover:scale-110" />
+            <img src="/logo.png" alt="Feather Fashions" className="h-16 w-auto transition-transform duration-300 group-hover:scale-110" />
           </Link>
 
           {/* Desktop Navigation */}
