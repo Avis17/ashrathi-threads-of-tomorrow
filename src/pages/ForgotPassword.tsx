@@ -52,7 +52,7 @@ const ForgotPassword = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <div className="flex justify-center mb-4">
-            <img src="/logo.png" alt="Feather Fashions" className="h-16 w-auto" />
+            <img src="/logo.png" alt="Feather Fashions" className="h-32 w-auto" />
           </div>
           <CardTitle className="text-2xl font-bold text-center">
             Reset Password

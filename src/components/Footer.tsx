@@ -9,7 +9,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand */}
           <div>
-            <img src="/logo.png" alt="Feather Fashions" className="h-24 mb-4" />
+            <img src="/logo.png" alt="Feather Fashions" className="h-36 mb-4" />
             <p className="text-sm text-primary-foreground/80 leading-relaxed">
               Premium sustainable fashion crafted with ultra-soft fabrics. Where comfort meets style and innovation.
             </p>
