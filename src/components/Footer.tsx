@@ -52,7 +52,7 @@ const Footer = () => {
                 <Mail className="h-4 w-4 mt-0.5 text-secondary" />
                 <a 
                   href="mailto:hello@featherfashions.in"
-                  className="font-medium text-secondary hover:text-accent transition-colors duration-200 underline decoration-secondary/30 hover:decoration-accent"
+                  className="font-medium hover:text-accent transition-colors duration-200 underline decoration-secondary/30 hover:decoration-accent"
                 >
                   hello@featherfashions.in
                 </a>
