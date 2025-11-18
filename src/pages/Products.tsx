@@ -31,6 +31,13 @@ import heroModelMan3 from "@/assets/hero-model-man-3.jpg";
 import heroModelKid3 from "@/assets/hero-model-kid-3.jpg";
 import heroModelWoman4 from "@/assets/hero-model-woman-4.jpg";
 
+// Leggings collection images
+import leggingsActive from "@/assets/leggings-active-78.jpg";
+import leggingsAnkle from "@/assets/leggings-ankle-length.jpg";
+import leggingsCotton from "@/assets/leggings-cotton-lycra.jpg";
+import leggingsStraight from "@/assets/leggings-straight-fit.jpg";
+import leggingsMaternity from "@/assets/leggings-maternity.jpg";
+
 const PLACEHOLDER_IMAGE = '/placeholder.svg';
 
 const modelShowcaseImages = [
@@ -44,6 +51,44 @@ const modelShowcaseImages = [
   { src: heroModelMan3, alt: "Men's Casual Collection", category: "Men" },
   { src: heroModelKid3, alt: "Kids' Comfortable Wear", category: "Kids" },
   { src: heroModelWoman4, alt: "Women's Casual Comfort", category: "Women" },
+];
+
+const leggingsCollection = [
+  { 
+    src: leggingsActive, 
+    alt: "High-Rise 7/8 Length Active Leggings",
+    title: "High-Rise 7/8 Length Active",
+    description: "Perfect for workouts, yoga & active lifestyle",
+    link: "/size-chart/womens-leggings"
+  },
+  { 
+    src: leggingsAnkle, 
+    alt: "High-Rise Ankle Length Leggings",
+    title: "High-Rise Ankle Length",
+    description: "Elegant everyday wear & office casual",
+    link: "/size-chart/womens-leggings"
+  },
+  { 
+    src: leggingsCotton, 
+    alt: "Everyday Cotton Lycra Leggings",
+    title: "Everyday Cotton Lycra",
+    description: "Daily comfort & premium loungewear",
+    link: "/size-chart/womens-leggings"
+  },
+  { 
+    src: leggingsStraight, 
+    alt: "Straight Fit Leggings",
+    title: "Straight Fit",
+    description: "Relaxed fit for ultimate comfort",
+    link: "/size-chart/womens-leggings"
+  },
+  { 
+    src: leggingsMaternity, 
+    alt: "Maternity Leggings",
+    title: "Maternity Leggings",
+    description: "Supportive comfort for all trimesters",
+    link: "/size-chart/womens-leggings"
+  },
 ];
 
 const OfferMessageCycle = ({ messages }: { messages: string[] }) => {
@@ -359,6 +404,75 @@ const Products = () => {
           <CarouselPrevious className="left-2" />
           <CarouselNext className="right-2" />
         </Carousel>
+      </div>
+
+      {/* Women's Leggings Collection Showcase */}
+      <div className="bg-gradient-to-r from-purple-50 via-pink-50 to-purple-50 dark:from-purple-950/20 dark:via-pink-950/20 dark:to-purple-950/20 py-12 md:py-16">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-8 md:mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold mb-3 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+              Women's Leggings Collection
+            </h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Discover your perfect fit from our range of premium leggings designed for every lifestyle
+            </p>
+          </div>
+          
+          <Carousel
+            opts={{ align: "start", loop: true }}
+            plugins={[Autoplay({ delay: 4000 })]}
+            className="w-full"
+          >
+            <CarouselContent className="-ml-2 md:-ml-4">
+              {leggingsCollection.map((legging, index) => (
+                <CarouselItem key={index} className="pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/4">
+                  <Link to={legging.link}>
+                    <Card className="overflow-hidden group cursor-pointer hover:shadow-2xl transition-all duration-500 border-2 border-transparent hover:border-purple-200 dark:hover:border-purple-800">
+                      <CardContent className="p-0 relative">
+                        <div className="aspect-[3/4] relative overflow-hidden bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/20 dark:to-pink-900/20">
+                          <img
+                            src={legging.src}
+                            alt={legging.alt}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                        </div>
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-4 md:p-6 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
+                          <Badge className="mb-2 bg-gradient-to-r from-purple-500 to-pink-500 border-0">
+                            Premium Leggings
+                          </Badge>
+                          <h3 className="text-white font-bold text-base md:text-lg mb-1">
+                            {legging.title}
+                          </h3>
+                          <p className="text-white/90 text-xs md:text-sm">
+                            {legging.description}
+                          </p>
+                          <Button 
+                            variant="secondary" 
+                            size="sm" 
+                            className="mt-3 w-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-white text-purple-600 hover:bg-purple-50"
+                          >
+                            View Size Chart →
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious className="left-2" />
+            <CarouselNext className="right-2" />
+          </Carousel>
+          
+          <div className="text-center mt-8">
+            <Link to="/size-chart/womens-leggings">
+              <Button size="lg" className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transition-all duration-300">
+                📏 Interactive Size Chart & Calculator
+              </Button>
+            </Link>
+          </div>
+        </div>
       </div>
 
       {/* Two-Tier Tab System */}
