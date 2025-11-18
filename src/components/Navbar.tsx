@@ -84,12 +84,20 @@ const Navbar = () => {
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center space-x-1">
             <Link
+              to="/home"
+              className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                isActive("/home") ? "text-secondary" : "text-foreground hover:text-secondary"
+              }`}
+            >
+              Home
+            </Link>
+            <Link
               to="/"
               className={`px-4 py-2 rounded-md font-medium transition-colors ${
                 isActive("/") ? "text-secondary" : "text-foreground hover:text-secondary"
               }`}
             >
-              Home
+              Products
             </Link>
             
             <NavigationMenu>
@@ -258,6 +266,17 @@ const Navbar = () => {
                 </div>
               )}
               <Link
+                to="/home"
+                onClick={() => setIsOpen(false)}
+                className={`px-4 py-3 rounded-md font-medium transition-colors ${
+                  isActive("/home")
+                    ? "bg-secondary/10 text-secondary"
+                    : "text-foreground hover:bg-muted"
+                }`}
+              >
+                Home
+              </Link>
+              <Link
                 to="/"
                 onClick={() => setIsOpen(false)}
                 className={`px-4 py-3 rounded-md font-medium transition-colors ${
@@ -266,7 +285,7 @@ const Navbar = () => {
                     : "text-foreground hover:bg-muted"
                 }`}
               >
-                Home
+                Products
               </Link>
               
               <Accordion type="single" collapsible className="w-full">
