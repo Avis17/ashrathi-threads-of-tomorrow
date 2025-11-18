@@ -28,6 +28,7 @@ import WomenLongSleeveTShirt from "./pages/women/WomenLongSleeveTShirt";
 import WomenVNeckTShirt from "./pages/women/WomenVNeckTShirt";
 import WomenPoloTShirt from "./pages/women/WomenPoloTShirt";
 import WomenLeggings from "./pages/women/WomenLeggings";
+import LeggingsSizeChart from "./pages/LeggingsSizeChart";
 import MenFullSleeveTShirt from "./pages/men/MenFullSleeveTShirt";
 import MenPoloTShirt from "./pages/men/MenPoloTShirt";
 import MenPrintedTShirt from "./pages/men/MenPrintedTShirt";
@@ -88,6 +89,7 @@ const App = () => (
                       <Route path="/women/vneck-tshirt" element={<WomenVNeckTShirt />} />
                       <Route path="/women/polo-tshirt" element={<WomenPoloTShirt />} />
                       <Route path="/women/leggings" element={<WomenLeggings />} />
+                      <Route path="/size-chart/womens-leggings" element={<LeggingsSizeChart />} />
                       
                       {/* Men's Category Pages */}
                       <Route path="/men/full-sleeve-tshirt" element={<MenFullSleeveTShirt />} />
