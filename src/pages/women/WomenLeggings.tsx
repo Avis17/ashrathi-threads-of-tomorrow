@@ -87,12 +87,20 @@ export default function WomenLeggings() {
           <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
             Contact us today for bulk orders, custom designs, and competitive pricing
           </p>
-          <a
-            href="/contact"
-            className="inline-block bg-secondary text-secondary-foreground px-8 py-4 rounded-lg font-semibold text-lg hover:bg-secondary/90 transition-colors shadow-lg"
-          >
-            Get in Touch
-          </a>
+          <div className="flex flex-wrap gap-4 justify-center">
+            <a
+              href="/contact"
+              className="inline-block bg-secondary text-secondary-foreground px-8 py-4 rounded-lg font-semibold text-lg hover:bg-secondary/90 transition-colors shadow-lg"
+            >
+              Get in Touch
+            </a>
+            <a
+              href="/size-chart/womens-leggings"
+              className="inline-block bg-primary text-primary-foreground px-8 py-4 rounded-lg font-semibold text-lg hover:bg-primary/90 transition-colors shadow-lg"
+            >
+              📏 Interactive Size Chart
+            </a>
+          </div>
         </div>
       </section>
     </div>
