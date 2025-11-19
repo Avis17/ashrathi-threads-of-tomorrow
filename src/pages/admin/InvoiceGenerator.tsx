@@ -293,16 +293,16 @@ export default function InvoiceGenerator() {
 
     // Function to add watermark on page
     const addWatermark = () => {
-      // Add logo watermark diagonally at center with reduced opacity
-      const logoWidth = 100;
-      const logoHeight = 100;
+      // Add logo watermark diagonally at center with visible opacity
+      const logoWidth = 150;  // Increased size for better visibility
+      const logoHeight = 150;
       const centerX = pageWidth / 2;
       const centerY = pageHeight / 2;
       
       try {
-        // Set reduced opacity for watermark effect
+        // Set opacity for watermark effect
         doc.saveGraphicsState();
-        doc.setGState({ opacity: 0.12 });
+        doc.setGState({ opacity: 0.15 }); // Increased opacity to 15%
         
         // Add rotated logo at center
         doc.addImage(
