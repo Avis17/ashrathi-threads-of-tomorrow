@@ -154,6 +154,16 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
     }
   }, [initialData]);
 
+  // Sync offer messages with form
+  useEffect(() => {
+    setValue('offer_messages', offerMessages);
+  }, [offerMessages, setValue]);
+
+  // Sync combo offers with form
+  useEffect(() => {
+    setValue('combo_offers', comboOffers);
+  }, [comboOffers, setValue]);
+
   const handleFormSubmit = (data: ProductFormData) => {
     const submitData: any = { 
       ...data, 
