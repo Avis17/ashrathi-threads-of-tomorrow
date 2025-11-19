@@ -24,6 +24,7 @@ import { format } from 'date-fns';
 import logo from '@/assets/logo.png';
 import signature from '@/assets/signature.png';
 import { formatCurrency, numberToWords, formatCurrencyAscii, sanitizePdfText, formatInvoiceNumber, groupByHSN, maskBankAccount } from '@/lib/invoiceUtils';
+import { getHSNCodeByCategory } from '@/lib/hsnCodes';
 
 interface InvoiceItem {
   product_id: string;
@@ -116,10 +117,12 @@ export default function InvoiceGenerator() {
     const product = products?.find(p => p.id === productId);
     if (product) {
       const newItems = [...items];
+      // Auto-fill HSN code from product or category mapping
+      const hsnCode = product.hsn_code || getHSNCodeByCategory(product.category);
       newItems[index] = {
         ...newItems[index],
         product_id: productId,
-        hsn_code: product.hsn_code || '',
+        hsn_code: hsnCode,
         product_code: product.product_code || '',
         price: Number(product.price) || 0,
         amount: Number(product.price) * newItems[index].quantity,
@@ -242,35 +245,39 @@ export default function InvoiceGenerator() {
 
     // Helper function to add header on each page
     const addHeader = (isFirstPage: boolean = false) => {
-      // Logo and Company Info
+      // Company details on LEFT, Logo on RIGHT
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(45, 64, 87); // Feather Navy #2D4057
+      doc.text('Feather Fashions', 15, 18);
+      
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'italic');
+      doc.setTextColor(100, 100, 100);
+      doc.text('Crafted with Precision, Designed for Comfort', 15, 23);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.5);
+      doc.setTextColor(60, 60, 60);
+      const addressLines = doc.splitTextToSize('Vadivel Nagar, 538-C, Boyampalayam, PO, Pooluvapatti, Tiruppur, Tamil Nadu 641602', 90);
+      let yPos = 28;
+      addressLines.forEach((line: string) => {
+        doc.text(line, 15, yPos);
+        yPos += 4;
+      });
+      doc.text('GST: 33FWTPS1281P1ZJ', 15, yPos);
+      doc.text('Email: hello@featherfashions.in', 15, yPos + 4);
+      doc.text('Website: featherfashions.in', 15, yPos + 8);
+
+      // Logo on the RIGHT
       try {
-        doc.addImage(logo, 'PNG', 15, 12, 25, 25);
+        doc.addImage(logo, 'PNG', pageWidth - 45, 12, 30, 30);
       } catch (error) {
         console.error('Failed to add logo:', error);
       }
-      
-      doc.setFontSize(18);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(31, 120, 110);
-      doc.text(invoiceSettings.company_name || 'Feather Fashions', 45, 20);
-      
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'italic');
-      doc.setTextColor(100, 100, 100);
-      doc.text(invoiceSettings.company_tagline || 'Feather-Light Comfort. Limitless Style.', 45, 26);
 
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(8);
-      doc.setTextColor(60, 60, 60);
-      doc.text(invoiceSettings.company_address || '', 15, 34);
-      doc.text(
-        `GSTIN: ${invoiceSettings.company_gst_number || 'N/A'} | Phone: ${invoiceSettings.company_phone || ''} | Email: ${invoiceSettings.company_email || ''}`,
-        15, 39
-      );
-      doc.text(`Website: ${invoiceSettings.company_website || ''}`, 15, 44);
-
-      doc.setDrawColor(200, 200, 200);
-      doc.setLineWidth(0.5);
+      doc.setDrawColor(184, 134, 11); // Feather Gold accent
+      doc.setLineWidth(1);
       doc.line(15, 48, pageWidth - 15, 48);
     };
 
@@ -286,16 +293,21 @@ export default function InvoiceGenerator() {
 
     // Function to add watermark on page
     const addWatermark = () => {
-      // Use very light gray color (simulates 10% opacity)
-      doc.setTextColor(245, 245, 245);
-      doc.setFontSize(70);
+      // Premium feather watermark pattern (5-8% opacity via very light color)
+      doc.setTextColor(248, 248, 248); // Very light gray for subtle watermark
+      doc.setFontSize(60);
       doc.setFont('helvetica', 'bold');
       
       const centerX = pageWidth / 2;
       const centerY = pageHeight / 2;
       
-      // Draw watermark text at 45-degree angle
-      doc.text('FEATHER FASHIONS', centerX, centerY, {
+      // Draw feather brand watermark at 45-degree angle
+      doc.text('FEATHER', centerX, centerY - 10, {
+        align: 'center',
+        angle: -45
+      });
+      doc.setFontSize(50);
+      doc.text('FASHIONS', centerX, centerY + 10, {
         align: 'center',
         angle: -45
       });
@@ -308,32 +320,34 @@ export default function InvoiceGenerator() {
     addHeader(true);
     addWatermark();
 
-    // Header drawn by addHeader(); removing duplicate drawing block
-
-    // TAX INVOICE header - larger and bolder
-    currentY = 57;
-    doc.setFontSize(20);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(0, 0, 0);
-    doc.text('TAX INVOICE', pageWidth / 2, currentY, { align: 'center' });
-
-    // Invoice number (FY format) and date
-    currentY = 65;
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Invoice No: ${formattedInvoiceNumber}`, 15, currentY);
-    doc.text(`Date: ${format(new Date(invoiceDate), 'dd/MM/yyyy')}`, 140, currentY);
+    // Premium styled invoice header bar
+    currentY = 55;
+    doc.setFillColor(45, 64, 87); // Feather Navy
+    doc.roundedRect(15, currentY, pageWidth - 30, 10, 1, 1, 'F');
     
-    currentY = 71;
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(255, 255, 255);
+    const formattedInvoiceNumberHeader = formatInvoiceNumber(invoiceNumber, new Date(invoiceDate));
+    doc.text(`TAX INVOICE — ${formattedInvoiceNumberHeader}`, pageWidth / 2, currentY + 7, { align: 'center' });
+
+    // Invoice details
+    currentY = 70;
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(60, 60, 60);
+    doc.text(`Date: ${format(new Date(invoiceDate), 'dd/MM/yyyy')}`, 15, currentY);
+    
+    currentY = 75;
     if (purchaseOrderNo) {
       doc.text(`PO No: ${purchaseOrderNo}`, 15, currentY);
     }
     doc.text(`Packages: ${numberOfPackages}`, 140, currentY);
 
     // ========== BILL TO & DELIVERY ADDRESS SECTION ==========
-    currentY = 76;
+    currentY = 80;
     doc.setDrawColor(220, 220, 220);
-    doc.setFillColor(250, 250, 250);
+    doc.setFillColor(255, 253, 247); // Warm cream tint
     doc.roundedRect(15, currentY, 85, 28, 2, 2, 'FD');
     doc.roundedRect(110, currentY, 85, 28, 2, 2, 'FD');
 
@@ -396,7 +410,7 @@ export default function InvoiceGenerator() {
       }),
       theme: 'grid',
       headStyles: { 
-        fillColor: [31, 120, 110],
+        fillColor: [45, 64, 87], // Feather Navy
         textColor: 255,
         fontStyle: 'bold',
         fontSize: 9,
@@ -416,22 +430,24 @@ export default function InvoiceGenerator() {
         overflow: 'linebreak',
         cellWidth: 'wrap'
       },
-      alternateRowStyles: { fillColor: [248, 248, 248] },
+      alternateRowStyles: { fillColor: [255, 253, 247] }, // Warm cream
       margin: { left: 15, right: 15 },
       didDrawPage: (data) => {
         const pageW = (doc as any).internal.pageSize.getWidth();
         const pageH = (doc as any).internal.pageSize.getHeight();
         // Header on every page
         addHeader();
-        // Enhanced footer bar
-        doc.setFillColor(52, 180, 148);
-        doc.rect(0, pageH - 15, pageW, 15, 'F');
+        // Premium footer bar with brand message
+        doc.setFillColor(45, 64, 87); // Feather Navy
+        doc.rect(0, pageH - 18, pageW, 18, 'F');
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(8);
         doc.setFont('helvetica', 'bold');
-        doc.text('Feather Fashions • Comfort • Style • Sustainability', pageW / 2, pageH - 10, { align: 'center' });
-        doc.setFont('helvetica', 'normal');
+        doc.text('Thank you for supporting Feather Fashions', pageW / 2, pageH - 12, { align: 'center' });
+        doc.setFont('helvetica', 'italic');
         doc.setFontSize(7);
+        doc.text('Crafted with precision, designed for comfort', pageW / 2, pageH - 7, { align: 'center' });
+        doc.setFont('helvetica', 'normal');
         const pageCount = (doc as any).internal.getNumberOfPages();
         const currentPage = (doc as any).internal.getCurrentPageInfo().pageNumber;
         doc.text(`featherfashions.shop | Page ${currentPage} of ${pageCount}`, pageW / 2, pageH - 5, { align: 'center' });
@@ -547,7 +563,7 @@ export default function InvoiceGenerator() {
     // ========== PAYMENT & BANK DETAILS ==========
     ensureSpace(26);
     doc.setDrawColor(220, 220, 220);
-    doc.setFillColor(250, 250, 250);
+    doc.setFillColor(255, 253, 247); // Warm cream
     doc.roundedRect(15, currentY, 180, 20, 2, 2, 'FD');
 
     doc.setFont('helvetica', 'bold');
