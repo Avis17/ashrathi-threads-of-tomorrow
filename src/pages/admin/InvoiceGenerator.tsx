@@ -448,9 +448,12 @@ export default function InvoiceGenerator() {
         doc.setFontSize(7);
         doc.text('Crafted with precision, designed for comfort', pageW / 2, pageH - 7, { align: 'center' });
         doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
         const pageCount = (doc as any).internal.getNumberOfPages();
         const currentPage = (doc as any).internal.getCurrentPageInfo().pageNumber;
-        doc.text(`featherfashions.shop | Page ${currentPage} of ${pageCount}`, pageW / 2, pageH - 5, { align: 'center' });
+        doc.text('featherfashions.in', pageW / 2, pageH - 3.5, { align: 'center' });
+        doc.setFontSize(7);
+        doc.text(`Page ${currentPage} of ${pageCount}`, pageW / 2, pageH - 1, { align: 'center' });
         doc.setTextColor(0, 0, 0);
       }
     });
@@ -583,16 +586,19 @@ export default function InvoiceGenerator() {
     currentY += 26;
 
     // ========== TERMS & CONDITIONS ==========
+    const terms = Array.isArray(invoiceSettings.default_terms) 
+      ? invoiceSettings.default_terms 
+      : termsAndConditions;
+    const termsHeight = 5 + (terms.length * 4) + 5;
+    
+    // Ensure entire terms section stays together on one page
+    ensureSpace(termsHeight);
+    
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9);
     doc.text('Terms & Conditions:', 15, currentY);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
-    const terms = Array.isArray(invoiceSettings.default_terms) 
-      ? invoiceSettings.default_terms 
-      : termsAndConditions;
-    const termsHeight = 5 + (terms.length * 4) + 5;
-    ensureSpace(termsHeight);
     terms.forEach((term: string, index: number) => {
       doc.text(`${index + 1}. ${term}`, 15, currentY + 5 + (index * 4));
     });
