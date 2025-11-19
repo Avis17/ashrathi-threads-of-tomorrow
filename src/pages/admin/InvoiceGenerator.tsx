@@ -494,9 +494,9 @@ export default function InvoiceGenerator() {
         textColor: [0, 0, 0]
       },
       columnStyles: {
-        0: { cellWidth: 40 },
-        1: { halign: 'right', cellWidth: 30 },
-        2: { halign: 'right', cellWidth: 40 }
+        0: { cellWidth: 40, halign: 'left' },
+        1: { halign: 'left', cellWidth: 30 },
+        2: { halign: 'left', cellWidth: 40 }
       },
       margin: { left: 15, right: 15 },
       tableWidth: 110
