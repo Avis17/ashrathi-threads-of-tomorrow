@@ -36,6 +36,9 @@ import leggingsActive from "@/assets/leggings-active-78.jpg";
 import leggingsAnkle from "@/assets/leggings-ankle-length.jpg";
 import leggingsCotton from "@/assets/leggings-cotton-lycra.jpg";
 import leggingsStraight from "@/assets/leggings-straight-fit.jpg";
+import leggingsBurgundy from "@/assets/leggings-burgundy.jpg";
+import leggingsGreen from "@/assets/leggings-green.jpg";
+import leggingsCharcoal from "@/assets/leggings-charcoal.jpg";
 
 const PLACEHOLDER_IMAGE = '/placeholder.svg';
 
@@ -57,29 +60,43 @@ const leggingsCollection = [
     src: leggingsActive, 
     alt: "High-Rise 7/8 Length Active Leggings",
     title: "High-Rise 7/8 Length Active",
-    description: "Perfect for workouts, yoga & active lifestyle",
-    link: "/size-chart/womens-leggings"
+    description: "Perfect for workouts, yoga & active lifestyle"
   },
   { 
     src: leggingsStraight, 
     alt: "Straight Fit Leggings",
     title: "Straight Fit",
-    description: "Relaxed fit for ultimate comfort",
-    link: "/size-chart/womens-leggings"
+    description: "Relaxed fit for ultimate comfort"
   },
   { 
     src: leggingsCotton, 
     alt: "Everyday Cotton Lycra Leggings",
     title: "Everyday Cotton Lycra",
-    description: "Daily comfort & premium loungewear",
-    link: "/size-chart/womens-leggings"
+    description: "Daily comfort & premium loungewear"
   },
   { 
     src: leggingsAnkle, 
     alt: "High-Rise Ankle Length Leggings",
     title: "High-Rise Ankle Length",
-    description: "Elegant everyday wear & office casual",
-    link: "/size-chart/womens-leggings"
+    description: "Elegant everyday wear & office casual"
+  },
+  { 
+    src: leggingsBurgundy, 
+    alt: "Premium Burgundy Leggings",
+    title: "Premium Burgundy",
+    description: "Bold style with athletic performance"
+  },
+  { 
+    src: leggingsGreen, 
+    alt: "Forest Green Athletic Leggings",
+    title: "Forest Green Athletic",
+    description: "Nature-inspired activewear"
+  },
+  { 
+    src: leggingsCharcoal, 
+    alt: "Charcoal Gray Performance Leggings",
+    title: "Charcoal Gray Performance",
+    description: "Versatile everyday performance"
   },
 ];
 
@@ -418,38 +435,29 @@ const Products = () => {
             <CarouselContent className="-ml-2 md:-ml-4">
               {leggingsCollection.map((legging, index) => (
                 <CarouselItem key={index} className="pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/4">
-                  <Link to={legging.link}>
-                    <Card className="overflow-hidden group cursor-pointer hover:shadow-2xl transition-all duration-500 border-2 border-transparent hover:border-purple-200 dark:hover:border-purple-800">
-                      <CardContent className="p-0 relative">
-                        <div className="aspect-[3/4] relative overflow-hidden bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/20 dark:to-pink-900/20">
-                          <img
-                            src={legging.src}
-                            alt={legging.alt}
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                        </div>
-                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-4 md:p-6 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
-                          <Badge className="mb-2 bg-gradient-to-r from-purple-500 to-pink-500 border-0">
-                            Premium Leggings
-                          </Badge>
-                          <h3 className="text-white font-bold text-base md:text-lg mb-1">
-                            {legging.title}
-                          </h3>
-                          <p className="text-white/90 text-xs md:text-sm">
-                            {legging.description}
-                          </p>
-                          <Button 
-                            variant="secondary" 
-                            size="sm" 
-                            className="mt-3 w-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-white text-purple-600 hover:bg-purple-50"
-                          >
-                            View Size Chart →
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </Link>
+                  <Card className="overflow-hidden group hover:shadow-2xl transition-all duration-500 border-2 border-transparent hover:border-purple-200 dark:hover:border-purple-800">
+                    <CardContent className="p-0 relative">
+                      <div className="aspect-[3/4] relative overflow-hidden bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/20 dark:to-pink-900/20">
+                        <img
+                          src={legging.src}
+                          alt={legging.alt}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                      </div>
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-4 md:p-6 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
+                        <Badge className="mb-2 bg-gradient-to-r from-purple-500 to-pink-500 border-0">
+                          Premium Leggings
+                        </Badge>
+                        <h3 className="text-white font-bold text-base md:text-lg mb-1">
+                          {legging.title}
+                        </h3>
+                        <p className="text-white/90 text-xs md:text-sm">
+                          {legging.description}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </CarouselItem>
               ))}
             </CarouselContent>
