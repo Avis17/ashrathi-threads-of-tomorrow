@@ -293,27 +293,27 @@ export default function InvoiceGenerator() {
 
     // Function to add watermark on page
     const addWatermark = () => {
-      // Premium feather watermark pattern (5-8% opacity via very light color)
-      doc.setTextColor(248, 248, 248); // Very light gray for subtle watermark
-      doc.setFontSize(60);
-      doc.setFont('helvetica', 'bold');
+      // Add logo watermark at center with 6% opacity
+      const logoWidth = 80;
+      const logoHeight = 80;
+      const centerX = (pageWidth - logoWidth) / 2;
+      const centerY = (pageHeight - logoHeight) / 2;
       
-      const centerX = pageWidth / 2;
-      const centerY = pageHeight / 2;
-      
-      // Draw feather brand watermark at 45-degree angle
-      doc.text('FEATHER', centerX, centerY - 10, {
-        align: 'center',
-        angle: -45
-      });
-      doc.setFontSize(50);
-      doc.text('FASHIONS', centerX, centerY + 10, {
-        align: 'center',
-        angle: -45
-      });
-      
-      // Reset text color
-      doc.setTextColor(0, 0, 0);
+      try {
+        doc.addImage(
+          logo,
+          'PNG',
+          centerX,
+          centerY,
+          logoWidth,
+          logoHeight,
+          undefined,
+          'NONE',
+          0.06 // 6% opacity
+        );
+      } catch (error) {
+        console.error('Failed to add watermark logo:', error);
+      }
     };
 
     // Add header and watermark for first page
@@ -586,9 +586,9 @@ export default function InvoiceGenerator() {
     currentY += 26;
 
     // ========== TERMS & CONDITIONS ==========
-    const terms = Array.isArray(invoiceSettings.default_terms) 
-      ? invoiceSettings.default_terms 
-      : termsAndConditions;
+    const terms = termsAndConditions.length > 0 && termsAndConditions.some(t => t.trim() !== '')
+      ? termsAndConditions.filter(t => t.trim() !== '')
+      : (Array.isArray(invoiceSettings.default_terms) ? invoiceSettings.default_terms : []);
     const termsHeight = 5 + (terms.length * 4) + 5;
     
     // Ensure entire terms section stays together on one page
@@ -600,7 +600,9 @@ export default function InvoiceGenerator() {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
     terms.forEach((term: string, index: number) => {
-      doc.text(`${index + 1}. ${term}`, 15, currentY + 5 + (index * 4));
+      if (term.trim()) {
+        doc.text(`${index + 1}. ${term}`, 15, currentY + 5 + (index * 4));
+      }
     });
     
     currentY += termsHeight;
@@ -770,7 +772,7 @@ export default function InvoiceGenerator() {
             <Label>Terms and Conditions</Label>
             <Textarea
               value={termsAndConditions.join('\n')}
-              onChange={(e) => setTermsAndConditions(e.target.value.split('\n').filter(Boolean))}
+              onChange={(e) => setTermsAndConditions(e.target.value.split('\n'))}
               rows={5}
               placeholder="Enter terms and conditions (one per line)"
             />
