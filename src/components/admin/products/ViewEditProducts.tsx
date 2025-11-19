@@ -61,6 +61,7 @@ export function ViewEditProducts() {
       let query = supabase
         .from('products')
         .select('*', { count: 'exact' })
+        .eq('should_remove', false)
         .order('display_order', { ascending: true });
 
       if (debouncedSearch) {
@@ -169,7 +170,7 @@ export function ViewEditProducts() {
     mutationFn: async (id: string) => {
       const { error } = await supabase
         .from('products')
-        .delete()
+        .update({ should_remove: true })
         .eq('id', id);
       if (error) throw error;
     },
