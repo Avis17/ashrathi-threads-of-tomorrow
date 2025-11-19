@@ -293,24 +293,32 @@ export default function InvoiceGenerator() {
 
     // Function to add watermark on page
     const addWatermark = () => {
-      // Add logo watermark at center with 6% opacity
-      const logoWidth = 80;
-      const logoHeight = 80;
-      const centerX = (pageWidth - logoWidth) / 2;
-      const centerY = (pageHeight - logoHeight) / 2;
+      // Add logo watermark diagonally at center with reduced opacity
+      const logoWidth = 100;
+      const logoHeight = 100;
+      const centerX = pageWidth / 2;
+      const centerY = pageHeight / 2;
       
       try {
+        // Set reduced opacity for watermark effect
+        doc.saveGraphicsState();
+        doc.setGState({ opacity: 0.08 });
+        
+        // Add rotated logo at center
         doc.addImage(
           logo,
           'PNG',
-          centerX,
-          centerY,
+          centerX - (logoWidth / 2),
+          centerY - (logoHeight / 2),
           logoWidth,
           logoHeight,
           undefined,
           'NONE',
-          0.06 // 6% opacity
+          -45 // Rotate 45 degrees counter-clockwise for diagonal effect
         );
+        
+        // Restore normal opacity for rest of content
+        doc.restoreGraphicsState();
       } catch (error) {
         console.error('Failed to add watermark logo:', error);
       }
