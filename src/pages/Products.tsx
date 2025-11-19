@@ -36,7 +36,6 @@ import leggingsActive from "@/assets/leggings-active-78.jpg";
 import leggingsAnkle from "@/assets/leggings-ankle-length.jpg";
 import leggingsCotton from "@/assets/leggings-cotton-lycra.jpg";
 import leggingsStraight from "@/assets/leggings-straight-fit.jpg";
-import leggingsMaternity from "@/assets/leggings-maternity.jpg";
 
 const PLACEHOLDER_IMAGE = '/placeholder.svg';
 
@@ -62,10 +61,10 @@ const leggingsCollection = [
     link: "/size-chart/womens-leggings"
   },
   { 
-    src: leggingsAnkle, 
-    alt: "High-Rise Ankle Length Leggings",
-    title: "High-Rise Ankle Length",
-    description: "Elegant everyday wear & office casual",
+    src: leggingsStraight, 
+    alt: "Straight Fit Leggings",
+    title: "Straight Fit",
+    description: "Relaxed fit for ultimate comfort",
     link: "/size-chart/womens-leggings"
   },
   { 
@@ -76,17 +75,10 @@ const leggingsCollection = [
     link: "/size-chart/womens-leggings"
   },
   { 
-    src: leggingsStraight, 
-    alt: "Straight Fit Leggings",
-    title: "Straight Fit",
-    description: "Relaxed fit for ultimate comfort",
-    link: "/size-chart/womens-leggings"
-  },
-  { 
-    src: leggingsMaternity, 
-    alt: "Maternity Leggings",
-    title: "Maternity Leggings",
-    description: "Supportive comfort for all trimesters",
+    src: leggingsAnkle, 
+    alt: "High-Rise Ankle Length Leggings",
+    title: "High-Rise Ankle Length",
+    description: "Elegant everyday wear & office casual",
     link: "/size-chart/womens-leggings"
   },
 ];
