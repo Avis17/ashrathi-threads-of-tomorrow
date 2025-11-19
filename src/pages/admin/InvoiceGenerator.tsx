@@ -302,7 +302,7 @@ export default function InvoiceGenerator() {
       try {
         // Set reduced opacity for watermark effect
         doc.saveGraphicsState();
-        doc.setGState({ opacity: 0.08 });
+        doc.setGState({ opacity: 0.12 });
         
         // Add rotated logo at center
         doc.addImage(
@@ -451,17 +451,15 @@ export default function InvoiceGenerator() {
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(8);
         doc.setFont('helvetica', 'bold');
-        doc.text('Thank you for supporting Feather Fashions', pageW / 2, pageH - 12, { align: 'center' });
+        doc.text('Thank you for supporting Feather Fashions', pageW / 2, pageH - 11, { align: 'center' });
         doc.setFont('helvetica', 'italic');
         doc.setFontSize(7);
-        doc.text('Crafted with precision, designed for comfort', pageW / 2, pageH - 7, { align: 'center' });
+        doc.text('Crafted with precision, designed for comfort', pageW / 2, pageH - 6.5, { align: 'center' });
         doc.setFont('helvetica', 'normal');
-        doc.setFontSize(8);
+        doc.setFontSize(7);
         const pageCount = (doc as any).internal.getNumberOfPages();
         const currentPage = (doc as any).internal.getCurrentPageInfo().pageNumber;
-        doc.text('featherfashions.in', pageW / 2, pageH - 3.5, { align: 'center' });
-        doc.setFontSize(7);
-        doc.text(`Page ${currentPage} of ${pageCount}`, pageW / 2, pageH - 1, { align: 'center' });
+        doc.text(`Page ${currentPage} of ${pageCount}`, pageW / 2, pageH - 2.5, { align: 'center' });
         doc.setTextColor(0, 0, 0);
       }
     });
@@ -587,8 +585,8 @@ export default function InvoiceGenerator() {
     doc.text('Bank Details:', 18, currentY + 11);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
-    const maskedAccount = invoiceSettings.bank_account_display || maskBankAccount(invoiceSettings.bank_account_number || 'N/A');
-    const bankDetails = `Bank: ${invoiceSettings.bank_name || 'N/A'} | A/C No: ${maskedAccount} | IFSC: ${invoiceSettings.bank_ifsc_code || 'N/A'} | Branch: ${invoiceSettings.bank_branch || 'N/A'}`;
+    const accountNumber = invoiceSettings.bank_account_number || 'N/A';
+    const bankDetails = `Bank: ${invoiceSettings.bank_name || 'N/A'} | A/C No: ${accountNumber} | IFSC: ${invoiceSettings.bank_ifsc_code || 'N/A'} | Branch: ${invoiceSettings.bank_branch || 'N/A'}`;
     doc.text(bankDetails, 18, currentY + 15);
     
     currentY += 26;
