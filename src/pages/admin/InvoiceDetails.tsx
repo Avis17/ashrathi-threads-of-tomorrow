@@ -85,7 +85,7 @@ export default function InvoiceDetails() {
         throw new Error('Please enter a valid amount');
       }
       
-      const remainingBalance = (invoice?.balance_amount || 0);
+      const remainingBalance = invoice?.balance_amount ?? (invoice?.total_amount || 0);
       if (amount > remainingBalance) {
         throw new Error(`Amount cannot exceed remaining balance of ₹${remainingBalance.toFixed(2)}`);
       }
@@ -117,7 +117,7 @@ export default function InvoiceDetails() {
 
   const completePaymentMutation = useMutation({
     mutationFn: async () => {
-      const remainingBalance = invoice?.balance_amount || 0;
+      const remainingBalance = invoice?.balance_amount ?? (invoice?.total_amount || 0);
       
       const { error } = await supabase
         .from('invoice_payments')
@@ -251,7 +251,7 @@ export default function InvoiceDetails() {
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Balance</span>
-                <span className="font-semibold text-rose-600">₹{(invoice.balance_amount || 0).toFixed(2)}</span>
+                <span className="font-semibold text-rose-600">₹{((invoice.balance_amount ?? invoice.total_amount) || 0).toFixed(2)}</span>
               </div>
             </div>
             
@@ -385,7 +385,7 @@ export default function InvoiceDetails() {
           <DialogHeader>
             <DialogTitle>Record Payment</DialogTitle>
             <DialogDescription>
-              Balance: ₹{(invoice.balance_amount || 0).toFixed(2)}
+              Balance: ₹{((invoice.balance_amount ?? invoice.total_amount) || 0).toFixed(2)}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -461,7 +461,7 @@ export default function InvoiceDetails() {
           <DialogHeader>
             <DialogTitle>Complete Payment</DialogTitle>
             <DialogDescription>
-              This will mark the invoice as fully paid with the remaining balance of ₹{(invoice.balance_amount || 0).toFixed(2)}
+              This will mark the invoice as fully paid with the remaining balance of ₹{((invoice.balance_amount ?? invoice.total_amount) || 0).toFixed(2)}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
