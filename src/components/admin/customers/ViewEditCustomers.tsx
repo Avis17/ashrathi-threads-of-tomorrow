@@ -12,7 +12,8 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Pencil, Trash2, Search } from 'lucide-react';
+import { Pencil, Trash2, Search, Eye } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
   DialogContent,
@@ -51,6 +52,7 @@ export function ViewEditCustomers() {
   const [deletingCustomer, setDeletingCustomer] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const { data: customers, isLoading } = useQuery({
     queryKey: ['customers', debouncedSearch, currentPage],
@@ -177,7 +179,16 @@ export function ViewEditCustomers() {
                       <Button
                         variant="ghost"
                         size="icon"
+                        onClick={() => navigate(`/admin/customers/${customer.id}`)}
+                        title="View Details"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         onClick={() => setEditingCustomer(customer)}
+                        title="Edit"
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
@@ -185,6 +196,7 @@ export function ViewEditCustomers() {
                         variant="ghost"
                         size="icon"
                         onClick={() => setDeletingCustomer(customer.id)}
+                        title="Delete"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
