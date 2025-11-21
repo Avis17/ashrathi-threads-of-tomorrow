@@ -212,7 +212,7 @@ export default function InvoiceDetails() {
             <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
               Invoice {formattedInvoiceNumber}
             </h1>
-            <p className="text-muted-foreground">{invoice.customers.company_name}</p>
+            <p className="text-muted-foreground">{invoice.customers?.company_name || 'N/A'}</p>
           </div>
         </div>
         <div className="flex gap-2">
