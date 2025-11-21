@@ -32,7 +32,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { ArrowLeft, Download, Plus, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Download, Plus, CheckCircle2, Clock, AlertCircle, Edit2, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
@@ -44,6 +44,9 @@ export default function InvoiceDetails() {
   const queryClient = useQueryClient();
   const [addPaymentOpen, setAddPaymentOpen] = useState(false);
   const [completePaymentOpen, setCompletePaymentOpen] = useState(false);
+  const [editPaymentOpen, setEditPaymentOpen] = useState(false);
+  const [editingPayment, setEditingPayment] = useState<any>(null);
+  const [deletePaymentId, setDeletePaymentId] = useState<string | null>(null);
 
   // Payment form state
   const [paymentDate, setPaymentDate] = useState(format(new Date(), 'yyyy-MM-dd'));
@@ -115,6 +118,61 @@ export default function InvoiceDetails() {
     },
   });
 
+  const editPaymentMutation = useMutation({
+    mutationFn: async () => {
+      if (!editingPayment) return;
+      
+      const amount = parseFloat(amountPaid);
+      if (!amount || amount <= 0) {
+        throw new Error('Please enter a valid amount');
+      }
+
+      const { error } = await supabase
+        .from('invoice_payments')
+        .update({
+          payment_date: paymentDate,
+          amount_paid: amount,
+          payment_mode: paymentMode,
+          reference_number: referenceNumber || null,
+          notes: notes || null,
+        })
+        .eq('id', editingPayment.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['invoice', id] });
+      queryClient.invalidateQueries({ queryKey: ['invoice-payments', id] });
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      toast({ title: 'Payment updated successfully' });
+      setEditPaymentOpen(false);
+      setEditingPayment(null);
+      resetPaymentForm();
+    },
+    onError: (error: Error) => {
+      toast({ title: error.message || 'Failed to update payment', variant: 'destructive' });
+    },
+  });
+
+  const deletePaymentMutation = useMutation({
+    mutationFn: async (paymentId: string) => {
+      const { error } = await supabase
+        .from('invoice_payments')
+        .delete()
+        .eq('id', paymentId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['invoice', id] });
+      queryClient.invalidateQueries({ queryKey: ['invoice-payments', id] });
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      toast({ title: 'Payment deleted successfully' });
+      setDeletePaymentId(null);
+    },
+    onError: (error: Error) => {
+      toast({ title: error.message || 'Failed to delete payment', variant: 'destructive' });
+    },
+  });
+
   const updatePaymentStatusMutation = useMutation({
     mutationFn: async (newStatus: string) => {
       const { error } = await supabase
@@ -168,6 +226,16 @@ export default function InvoiceDetails() {
     setPaymentMode('cash');
     setReferenceNumber('');
     setNotes('');
+  };
+
+  const handleEditPayment = (payment: any) => {
+    setEditingPayment(payment);
+    setPaymentDate(payment.payment_date);
+    setAmountPaid(payment.amount_paid.toString());
+    setPaymentMode(payment.payment_mode);
+    setReferenceNumber(payment.reference_number || '');
+    setNotes(payment.notes || '');
+    setEditPaymentOpen(true);
   };
 
   const getPaymentStatusBadge = (status: string) => {
@@ -385,6 +453,7 @@ export default function InvoiceDetails() {
                   <TableHead>Mode</TableHead>
                   <TableHead>Reference</TableHead>
                   <TableHead>Notes</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -397,6 +466,24 @@ export default function InvoiceDetails() {
                     <TableCell className="capitalize">{payment.payment_mode.replace('_', ' ')}</TableCell>
                     <TableCell>{payment.reference_number || '-'}</TableCell>
                     <TableCell>{payment.notes || '-'}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEditPayment(payment)}
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setDeletePaymentId(payment.id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -476,6 +563,109 @@ export default function InvoiceDetails() {
             </Button>
             <Button onClick={() => addPaymentMutation.mutate()}>
               Record Payment
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Payment Dialog */}
+      <Dialog open={editPaymentOpen} onOpenChange={setEditPaymentOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Payment</DialogTitle>
+            <DialogDescription>
+              Update the payment details
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="edit-payment-date">Payment Date</Label>
+              <Input
+                id="edit-payment-date"
+                type="date"
+                value={paymentDate}
+                onChange={(e) => setPaymentDate(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-amount">Amount Paid *</Label>
+              <Input
+                id="edit-amount"
+                type="number"
+                placeholder="0.00"
+                value={amountPaid}
+                onChange={(e) => setAmountPaid(e.target.value)}
+                step="0.01"
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-payment-mode">Payment Mode</Label>
+              <Select value={paymentMode} onValueChange={setPaymentMode}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cash">Cash</SelectItem>
+                  <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                  <SelectItem value="upi">UPI</SelectItem>
+                  <SelectItem value="cheque">Cheque</SelectItem>
+                  <SelectItem value="card">Card</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="edit-reference">Reference Number</Label>
+              <Input
+                id="edit-reference"
+                placeholder="Transaction ID / Cheque No."
+                value={referenceNumber}
+                onChange={(e) => setReferenceNumber(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-notes">Notes</Label>
+              <Textarea
+                id="edit-notes"
+                placeholder="Additional notes..."
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setEditPaymentOpen(false);
+              setEditingPayment(null);
+              resetPaymentForm();
+            }}>
+              Cancel
+            </Button>
+            <Button onClick={() => editPaymentMutation.mutate()}>
+              Update Payment
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Payment Confirmation */}
+      <Dialog open={!!deletePaymentId} onOpenChange={() => setDeletePaymentId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Payment</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this payment record? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeletePaymentId(null)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={() => {
+              if (deletePaymentId) {
+                deletePaymentMutation.mutate(deletePaymentId);
+              }
+            }}>
+              Delete Payment
             </Button>
           </DialogFooter>
         </DialogContent>
