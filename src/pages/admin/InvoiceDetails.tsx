@@ -57,7 +57,7 @@ export default function InvoiceDetails() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('invoices')
-        .select('*, customers(*), invoice_items(*, products(name))')
+        .select('*, customers(*), invoice_items(*, products!left(name))')
         .eq('id', id)
         .single();
       if (error) throw error;
@@ -203,7 +203,7 @@ export default function InvoiceDetails() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate('/admin/invoices')}
+            onClick={() => navigate('/admin/history')}
             className="hover-scale"
           >
             <ArrowLeft className="h-5 w-5" />
@@ -332,7 +332,7 @@ export default function InvoiceDetails() {
             <TableBody>
               {invoice.invoice_items.map((item: any) => (
                 <TableRow key={item.id}>
-                  <TableCell className="font-medium">{item.products.name}</TableCell>
+                  <TableCell className="font-medium">{item.products?.name || 'Product Unavailable'}</TableCell>
                   <TableCell>{item.hsn_code}</TableCell>
                   <TableCell>{item.quantity}</TableCell>
                   <TableCell>₹{item.price.toFixed(2)}</TableCell>
