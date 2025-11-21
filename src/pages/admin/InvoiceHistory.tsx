@@ -12,6 +12,13 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Download, Trash2, Search, Eye, Edit } from 'lucide-react';
 import {
   AlertDialog,
@@ -48,12 +55,13 @@ export default function InvoiceHistory() {
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearch = useDebounce(searchTerm, 500);
   const [currentPage, setCurrentPage] = useState(1);
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState<string>('all');
   const [deletingInvoice, setDeletingInvoice] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: invoices, isLoading } = useQuery({
-    queryKey: ['invoices', debouncedSearch, currentPage],
+    queryKey: ['invoices', debouncedSearch, currentPage, paymentStatusFilter],
     queryFn: async () => {
       let query = supabase
         .from('invoices')
@@ -62,6 +70,10 @@ export default function InvoiceHistory() {
 
       if (debouncedSearch) {
         query = query.or(`invoice_number.eq.${debouncedSearch},customers.company_name.ilike.%${debouncedSearch}%`);
+      }
+
+      if (paymentStatusFilter !== 'all') {
+        query = query.eq('payment_status', paymentStatusFilter);
       }
 
       const { data, error, count } = await query
@@ -345,6 +357,20 @@ export default function InvoiceHistory() {
             className="pl-10"
           />
         </div>
+        <Select value={paymentStatusFilter} onValueChange={(value) => {
+          setPaymentStatusFilter(value);
+          setCurrentPage(1);
+        }}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Payment Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Statuses</SelectItem>
+            <SelectItem value="unpaid">Unpaid</SelectItem>
+            <SelectItem value="partial">Partial</SelectItem>
+            <SelectItem value="paid">Paid</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="border rounded-lg overflow-hidden">

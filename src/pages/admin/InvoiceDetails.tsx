@@ -267,14 +267,14 @@ export default function InvoiceDetails() {
                     <Plus className="w-4 h-4 mr-2" />
                     Add Payment
                   </Button>
-                  <Button
-                    className="w-full"
-                    onClick={() => setCompletePaymentOpen(true)}
-                    disabled={invoice.balance_amount <= 0}
-                  >
-                    <CheckCircle2 className="w-4 h-4 mr-2" />
-                    Mark as Paid
-                  </Button>
+              <Button
+                className="w-full"
+                onClick={() => setCompletePaymentOpen(true)}
+                disabled={!invoice.balance_amount || invoice.balance_amount <= 0}
+              >
+                <CheckCircle2 className="w-4 h-4 mr-2" />
+                Mark as Paid
+              </Button>
                 </div>
               </>
             )}
