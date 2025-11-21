@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Download, Trash2, Search } from 'lucide-react';
+import { Download, Trash2, Search, Eye, Edit } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,14 +34,17 @@ import {
   PaginationPrevious,
 } from '@/components/ui/pagination';
 import { format } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import logo from '@/assets/logo.png';
 import signature from '@/assets/signature.png';
+import { Badge } from '@/components/ui/badge';
 
 const ITEMS_PER_PAGE = 10;
 
 export default function InvoiceHistory() {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearch = useDebounce(searchTerm, 500);
   const [currentPage, setCurrentPage] = useState(1);
@@ -353,6 +356,7 @@ export default function InvoiceHistory() {
               <TableHead>Customer</TableHead>
               <TableHead>Delivery Address</TableHead>
               <TableHead>Amount</TableHead>
+              <TableHead>Payment Status</TableHead>
               <TableHead>Invoice Date</TableHead>
               <TableHead>Created At</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -361,7 +365,7 @@ export default function InvoiceHistory() {
           <TableBody>
             {invoices?.data?.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="h-64">
+                <TableCell colSpan={9} className="h-64">
                   <div className="flex flex-col items-center justify-center space-y-4 text-center">
                     <img src="/src/assets/no-data.png" alt="No data found" className="w-48 h-36 object-contain opacity-50" />
                     <div>
@@ -372,35 +376,69 @@ export default function InvoiceHistory() {
                 </TableCell>
               </TableRow>
             ) : (
-              invoices?.data?.map((invoice: any, index: number) => (
-                <TableRow key={invoice.id}>
-                  <TableCell>{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}</TableCell>
-                  <TableCell className="font-medium">{invoice.invoice_number}</TableCell>
-                  <TableCell>{invoice.customers.company_name}</TableCell>
-                  <TableCell className="max-w-xs truncate">{invoice.delivery_address}</TableCell>
-                  <TableCell>₹{invoice.total_amount.toFixed(2)}</TableCell>
-                  <TableCell>{format(new Date(invoice.invoice_date), 'dd/MM/yyyy')}</TableCell>
-                  <TableCell>{format(new Date(invoice.created_at), 'dd/MM/yyyy HH:mm')}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => downloadInvoice(invoice)}
-                      >
-                        <Download className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setDeletingInvoice(invoice.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
+              invoices?.data?.map((invoice: any, index: number) => {
+                const getPaymentStatusBadge = (status: string) => {
+                  const styles = {
+                    paid: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
+                    partial: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
+                    unpaid: 'bg-rose-500/10 text-rose-600 border-rose-500/20',
+                  };
+                  return (
+                    <Badge className={styles[status as keyof typeof styles] || styles.unpaid}>
+                      {status.toUpperCase()}
+                    </Badge>
+                  );
+                };
+                
+                return (
+                  <TableRow key={invoice.id}>
+                    <TableCell>{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}</TableCell>
+                    <TableCell className="font-medium">{invoice.invoice_number}</TableCell>
+                    <TableCell>{invoice.customers.company_name}</TableCell>
+                    <TableCell className="max-w-xs truncate">{invoice.delivery_address}</TableCell>
+                    <TableCell>₹{invoice.total_amount.toFixed(2)}</TableCell>
+                    <TableCell>{getPaymentStatusBadge(invoice.payment_status || 'unpaid')}</TableCell>
+                    <TableCell>{format(new Date(invoice.invoice_date), 'dd/MM/yyyy')}</TableCell>
+                    <TableCell>{format(new Date(invoice.created_at), 'dd/MM/yyyy HH:mm')}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => navigate(`/admin/invoices/${invoice.id}`)}
+                          title="View Details"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => navigate(`/admin/invoices/edit/${invoice.id}`)}
+                          title="Edit Invoice"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => downloadInvoice(invoice)}
+                          title="Download PDF"
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setDeletingInvoice(invoice.id)}
+                          title="Delete Invoice"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
         </Table>

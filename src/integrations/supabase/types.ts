@@ -592,6 +592,50 @@ export type Database = {
           },
         ]
       }
+      invoice_payments: {
+        Row: {
+          amount_paid: number
+          created_at: string | null
+          id: string
+          invoice_id: string
+          notes: string | null
+          payment_date: string
+          payment_mode: string
+          recorded_by: string | null
+          reference_number: string | null
+        }
+        Insert: {
+          amount_paid: number
+          created_at?: string | null
+          id?: string
+          invoice_id: string
+          notes?: string | null
+          payment_date?: string
+          payment_mode?: string
+          recorded_by?: string | null
+          reference_number?: string | null
+        }
+        Update: {
+          amount_paid?: number
+          created_at?: string | null
+          id?: string
+          invoice_id?: string
+          notes?: string | null
+          payment_date?: string
+          payment_mode?: string
+          recorded_by?: string | null
+          reference_number?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_payments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoice_settings: {
         Row: {
           bank_account_display: string | null
@@ -663,6 +707,7 @@ export type Database = {
       }
       invoices: {
         Row: {
+          balance_amount: number | null
           cgst_amount: number
           cgst_rate: number
           created_at: string
@@ -676,6 +721,8 @@ export type Database = {
           invoice_number: number
           invoice_type: string
           number_of_packages: number
+          paid_amount: number | null
+          payment_status: string | null
           purchase_order_no: string | null
           sgst_amount: number
           sgst_rate: number
@@ -685,6 +732,7 @@ export type Database = {
           total_amount: number
         }
         Insert: {
+          balance_amount?: number | null
           cgst_amount?: number
           cgst_rate?: number
           created_at?: string
@@ -698,6 +746,8 @@ export type Database = {
           invoice_number: number
           invoice_type: string
           number_of_packages: number
+          paid_amount?: number | null
+          payment_status?: string | null
           purchase_order_no?: string | null
           sgst_amount?: number
           sgst_rate?: number
@@ -707,6 +757,7 @@ export type Database = {
           total_amount: number
         }
         Update: {
+          balance_amount?: number | null
           cgst_amount?: number
           cgst_rate?: number
           created_at?: string
@@ -720,6 +771,8 @@ export type Database = {
           invoice_number?: number
           invoice_type?: string
           number_of_packages?: number
+          paid_amount?: number | null
+          payment_status?: string | null
           purchase_order_no?: string | null
           sgst_amount?: number
           sgst_rate?: number
