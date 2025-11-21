@@ -115,6 +115,24 @@ export default function InvoiceDetails() {
     },
   });
 
+  const updatePaymentStatusMutation = useMutation({
+    mutationFn: async (newStatus: string) => {
+      const { error } = await supabase
+        .from('invoices')
+        .update({ payment_status: newStatus })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['invoice', id] });
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      toast({ title: 'Payment status updated' });
+    },
+    onError: (error: Error) => {
+      toast({ title: error.message || 'Failed to update payment status', variant: 'destructive' });
+    },
+  });
+
   const completePaymentMutation = useMutation({
     mutationFn: async () => {
       const remainingBalance = invoice?.balance_amount ?? (invoice?.total_amount || 0);
@@ -235,9 +253,21 @@ export default function InvoiceDetails() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm">Status</span>
-              {getPaymentStatusBadge(invoice.payment_status)}
+            <div className="space-y-2">
+              <Label htmlFor="payment-status">Payment Status</Label>
+              <Select
+                value={invoice.payment_status || 'unpaid'}
+                onValueChange={(value) => updatePaymentStatusMutation.mutate(value)}
+              >
+                <SelectTrigger id="payment-status">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="unpaid">Unpaid</SelectItem>
+                  <SelectItem value="partial">Partial</SelectItem>
+                  <SelectItem value="paid">Paid</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <Separator />
             <div className="space-y-2">
@@ -255,29 +285,25 @@ export default function InvoiceDetails() {
               </div>
             </div>
             
-            {invoice.payment_status !== 'paid' && (
-              <>
-                <Separator />
-                <div className="space-y-2">
-                  <Button
-                    className="w-full"
-                    variant="outline"
-                    onClick={() => setAddPaymentOpen(true)}
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Payment
-                  </Button>
+            <Separator />
+            <div className="space-y-2">
+              <Button
+                className="w-full"
+                variant="outline"
+                onClick={() => setAddPaymentOpen(true)}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Payment
+              </Button>
               <Button
                 className="w-full"
                 onClick={() => setCompletePaymentOpen(true)}
-                disabled={!invoice.balance_amount || invoice.balance_amount <= 0}
+                disabled={invoice.balance_amount > 0}
               >
                 <CheckCircle2 className="w-4 h-4 mr-2" />
                 Mark as Paid
               </Button>
-                </div>
-              </>
-            )}
+            </div>
           </CardContent>
         </Card>
 
