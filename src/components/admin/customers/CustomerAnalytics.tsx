@@ -17,10 +17,7 @@ export function CustomerAnalytics({ customerId }: CustomerAnalyticsProps) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('invoices')
-        .select(`
-          *,
-          invoice_items(*)
-        `)
+        .select('*, invoice_items(*, products(category)), invoice_payments(*)')
         .eq('customer_id', customerId);
       if (error) throw error;
       return data;
@@ -53,15 +50,15 @@ export function CustomerAnalytics({ customerId }: CustomerAnalyticsProps) {
   // Payment status distribution
   const paymentStatusData = (() => {
     if (!invoices) return [];
-    const statusCounts = invoices.reduce((acc: any, inv) => {
-      acc[inv.status] = (acc[inv.status] || 0) + 1;
-      return acc;
-    }, {});
-
-    return Object.entries(statusCounts).map(([status, count]) => ({
-      name: status.charAt(0).toUpperCase() + status.slice(1),
-      value: count,
-    }));
+    const paid = invoices.filter(inv => inv.payment_status === 'paid').length;
+    const partial = invoices.filter(inv => inv.payment_status === 'partial').length;
+    const unpaid = invoices.filter(inv => inv.payment_status === 'unpaid' || !inv.payment_status).length;
+    
+    return [
+      { name: 'Paid', value: paid, fill: 'hsl(var(--chart-2))' },
+      { name: 'Partial', value: partial, fill: 'hsl(var(--chart-4))' },
+      { name: 'Unpaid', value: unpaid, fill: 'hsl(var(--chart-3))' },
+    ].filter(item => item.value > 0);
   })();
 
   // Category-wise purchases

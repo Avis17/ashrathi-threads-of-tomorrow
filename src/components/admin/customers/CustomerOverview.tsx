@@ -26,7 +26,7 @@ export function CustomerOverview({ customer }: CustomerOverviewProps) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('invoices')
-        .select('*')
+        .select('*, invoice_payments(*)')
         .eq('customer_id', customer.id)
         .order('created_at', { ascending: false });
       if (error) throw error;
@@ -35,10 +35,15 @@ export function CustomerOverview({ customer }: CustomerOverviewProps) {
   });
 
   const totalInvoices = invoices?.length || 0;
-  const completedInvoices = invoices?.filter(inv => inv.status === 'paid')?.length || 0;
-  const overdueInvoices = invoices?.filter(inv => inv.status === 'overdue')?.length || 0;
+  const completedInvoices = invoices?.filter(inv => inv.payment_status === 'paid')?.length || 0;
   const totalRevenue = invoices?.reduce((sum, inv) => sum + Number(inv.total_amount), 0) || 0;
-  const pendingAmount = invoices?.filter(inv => inv.status !== 'paid').reduce((sum, inv) => sum + Number(inv.total_amount), 0) || 0;
+  const totalPaid = invoices?.reduce((sum, inv) => sum + Number(inv.paid_amount || 0), 0) || 0;
+  const pendingAmount = invoices?.reduce((sum, inv) => sum + Number(inv.balance_amount || 0), 0) || 0;
+  const overdueInvoices = invoices?.filter(inv => {
+    const dueDate = new Date(inv.invoice_date);
+    dueDate.setDate(dueDate.getDate() + 30);
+    return inv.payment_status !== 'paid' && dueDate < new Date();
+  }).length || 0;
 
   return (
     <div className="space-y-6">

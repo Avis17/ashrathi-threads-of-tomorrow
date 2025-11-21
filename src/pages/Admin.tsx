@@ -16,6 +16,8 @@ import BranchesManager from '@/components/admin/BranchesManager';
 import ExpensesManager from '@/components/admin/ExpensesManager';
 import InvoiceGenerator from './admin/InvoiceGenerator';
 import InvoiceHistory from './admin/InvoiceHistory';
+import InvoiceDetails from './admin/InvoiceDetails';
+import InvoiceEdit from './admin/InvoiceEdit';
 import InvoiceReset from './admin/InvoiceReset';
 import Dashboard from './admin/Dashboard';
 import AdminOrderDetails from './admin/OrderDetails';
@@ -73,6 +75,8 @@ const Admin = () => {
               <Route path="/seed-products" element={<SeedProducts />} />
               <Route path="/contacts" element={<EmployeeContactsManager />} />
               <Route path="/history" element={<InvoiceHistory />} />
+              <Route path="/invoices/:id" element={<InvoiceDetails />} />
+              <Route path="/invoices/edit/:id" element={<InvoiceEdit />} />
               <Route path="/inquiries" element={<ContactInquiries />} />
               <Route path="/bulk-orders" element={<BulkOrdersManager />} />
               <Route path="/newsletter" element={<NewsletterManager />} />
