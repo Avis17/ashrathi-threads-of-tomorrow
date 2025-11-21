@@ -9,6 +9,7 @@ import ProductsManager from '@/components/admin/ProductsManager';
 import BulkOrdersManager from '@/components/admin/BulkOrdersManager';
 import NewsletterManager from '@/components/admin/NewsletterManager';
 import CustomersManager from '@/components/admin/CustomersManager';
+import CustomerDetails from './admin/CustomerDetails';
 import { OrdersManager } from '@/components/admin/OrdersManager';
 import { EmployeeContactsManager } from '@/components/admin/EmployeeContactsManager';
 import BranchesManager from '@/components/admin/BranchesManager';
@@ -67,6 +68,7 @@ const Admin = () => {
               <Route path="/expenses" element={<ExpensesManager />} />
               <Route path="/invoice" element={<InvoiceGenerator />} />
               <Route path="/customers" element={<CustomersManager />} />
+              <Route path="/customers/:id" element={<CustomerDetails />} />
               <Route path="/products" element={<ProductsManager />} />
               <Route path="/seed-products" element={<SeedProducts />} />
               <Route path="/contacts" element={<EmployeeContactsManager />} />
