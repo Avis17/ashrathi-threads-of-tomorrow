@@ -22,14 +22,45 @@ import { InventoryManager } from './InventoryManager';
 
 // HSN Code mapping for categories
 const HSN_CODES: Record<string, string> = {
-  "Men's Wear": "6109",
-  "Women's Wear": "6109",
-  "Kids Wear": "6111",
-  "Unisex": "6109",
-  "Loungewear": "6108",
-  "Sleepwear": "6208",
-  "Activewear": "6114",
+  // Tops
+  "Mens T-Shirt": "6109",
+  "Womens T-Shirt": "6109",
+  "Kids T-Shirt": "6109",
+  "Polo T-Shirt": "6105",
+  "Sleeveless / Tanks": "6109",
+
+  // Leggings
+  "Cotton Lycra Leggings": "6104",
+  "Polyester Spandex Leggings": "6104",
+  "Nylon Spandex Leggings": "6104",
+  "7/8 Leggings": "6104",
+  "Ankle Leggings": "6104",
+  "Straight Fit Leggings": "6104",
+
+  // Bottomwear
+  "Track Pants": "6103",
+  "Joggers": "6103",
+  "Shorts (Knit)": "6104",
+
+  // Kids
+  "Kids Coord Set": "6111",
+  "Babywear": "6111",
+
+  // Sleepwear & Loungewear
+  "Women Nightwear": "6108",
+  "Men Nightwear": "6107",
+  "Pyjamas": "6108",
+
+  // Innerwear
+  "Mens Trunks": "6107",
+  "Womens Panties": "6108",
+  "Camisole / Slip": "6109",
+
+  // Activewear
+  "Sports Bra": "6212",
+  "Compression Wear": "6104"
 };
+
 
 const productSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters').max(200),
