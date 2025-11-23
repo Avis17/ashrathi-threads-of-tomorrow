@@ -27,6 +27,7 @@ import JobManagement from './admin/JobManagement';
 import EmployeeDetailsPage from './admin/EmployeeDetailsPage';
 import Settings from './admin/Settings';
 import SeedProducts from './admin/SeedProducts';
+import AddProduct from './admin/AddProduct';
 
 const Admin = () => {
   const { isAdmin, loading } = useAuth();
@@ -72,6 +73,7 @@ const Admin = () => {
               <Route path="/customers" element={<CustomersManager />} />
               <Route path="/customers/:id" element={<CustomerDetails />} />
               <Route path="/products" element={<ProductsManager />} />
+              <Route path="/products/add" element={<AddProduct />} />
               <Route path="/seed-products" element={<SeedProducts />} />
               <Route path="/contacts" element={<EmployeeContactsManager />} />
               <Route path="/history" element={<InvoiceHistory />} />

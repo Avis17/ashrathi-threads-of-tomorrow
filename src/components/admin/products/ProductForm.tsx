@@ -165,6 +165,13 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
   }, [comboOffers, setValue]);
 
   const handleFormSubmit = (data: ProductFormData) => {
+    // Ensure latest state values are synced before submission
+    setValue('offer_messages', offerMessages, { shouldValidate: false });
+    setValue('combo_offers', comboOffers, { shouldValidate: false });
+    setValue('available_sizes', sizes, { shouldValidate: false });
+    setValue('available_colors', colors, { shouldValidate: false });
+    setValue('additional_images', additionalImages, { shouldValidate: false });
+    
     const submitData: any = { 
       ...data, 
       available_sizes: sizes, 
