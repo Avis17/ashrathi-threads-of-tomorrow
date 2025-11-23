@@ -25,15 +25,13 @@ import {
 } from "@/components/ui/select";
 import { useExternalJobCompanies, useCreateExternalJobOrder } from "@/hooks/useExternalJobOrders";
 import { format } from "date-fns";
+import { OPERATIONS, JOB_ORDER_CATEGORIES } from "@/lib/jobOrderCategories";
 
-const OPERATIONS = [
-  "Cutting",
-  "Stitching (Singer)",
-  "Stitching (Power Table)",
-  "Checking",
-  "Ironing",
-  "Packing",
-];
+type CategoryItem = { 
+  name: string; 
+  rate: number;
+  customName?: string;
+};
 
 const jobSchema = z.object({
   company_id: z.string().min(1, "Company is required"),
@@ -54,7 +52,7 @@ const AddJob = () => {
   const createJob = useCreateExternalJobOrder();
 
   const [selectedOperations, setSelectedOperations] = useState<string[]>([]);
-  const [operationCategories, setOperationCategories] = useState<Record<string, Array<{ name: string; rate: number }>>>({});
+  const [operationCategories, setOperationCategories] = useState<Record<string, CategoryItem[]>>({});
 
   const form = useForm<JobFormData>({
     resolver: zodResolver(jobSchema),
@@ -96,17 +94,23 @@ const AddJob = () => {
       ...operationCategories,
       [operation]: [
         ...(operationCategories[operation] || []),
-        { name: "", rate: 0 },
+        { name: "", rate: 0, customName: "" },
       ],
     });
   };
 
-  const updateCategory = (operation: string, index: number, field: "name" | "rate", value: string | number) => {
+  const updateCategory = (operation: string, index: number, field: "name" | "rate" | "customName", value: string | number) => {
     const newCategories = { ...operationCategories };
     if (field === "name") {
       newCategories[operation][index].name = value as string;
-    } else {
+      // Reset custom name if switching away from "Other"
+      if (value !== "Other") {
+        newCategories[operation][index].customName = "";
+      }
+    } else if (field === "rate") {
       newCategories[operation][index].rate = value as number;
+    } else if (field === "customName") {
+      newCategories[operation][index].customName = value as string;
     }
     setOperationCategories(newCategories);
   };
@@ -151,7 +155,7 @@ const AddJob = () => {
     const operations = selectedOperations.map((op) => ({
       operation_name: op,
       categories: (operationCategories[op] || []).map((cat) => ({
-        category_name: cat.name,
+        category_name: cat.name === "Other" && cat.customName ? cat.customName : cat.name,
         rate: cat.rate,
       })),
     }));
@@ -289,28 +293,47 @@ const AddJob = () => {
                   {selectedOperations.includes(operation) && (
                     <div className="ml-6 space-y-2">
                       {operationCategories[operation]?.map((category, index) => (
-                        <div key={index} className="flex gap-2">
-                          <Input
-                            placeholder="Category name"
-                            value={category.name}
-                            onChange={(e) => updateCategory(operation, index, "name", e.target.value)}
-                            className="flex-1"
-                          />
-                          <Input
-                            type="number"
-                            placeholder="Rate"
-                            value={category.rate}
-                            onChange={(e) => updateCategory(operation, index, "rate", parseFloat(e.target.value) || 0)}
-                            className="w-32"
-                          />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => removeCategory(operation, index)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                        <div key={index} className="space-y-2">
+                          <div className="flex gap-2">
+                            <Select
+                              value={category.name}
+                              onValueChange={(value) => updateCategory(operation, index, "name", value)}
+                            >
+                              <SelectTrigger className="flex-1">
+                                <SelectValue placeholder="Select category" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {JOB_ORDER_CATEGORIES[operation as keyof typeof JOB_ORDER_CATEGORIES]?.map((cat) => (
+                                  <SelectItem key={cat} value={cat}>
+                                    {cat}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <Input
+                              type="number"
+                              placeholder="Rate"
+                              value={category.rate}
+                              onChange={(e) => updateCategory(operation, index, "rate", parseFloat(e.target.value) || 0)}
+                              className="w-32"
+                            />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => removeCategory(operation, index)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          {category.name === "Other" && (
+                            <Input
+                              placeholder="Enter custom category name"
+                              value={category.customName || ""}
+                              onChange={(e) => updateCategory(operation, index, "customName", e.target.value)}
+                              className="ml-0"
+                            />
+                          )}
                         </div>
                       ))}
                       <Button
