@@ -28,6 +28,11 @@ import EmployeeDetailsPage from './admin/EmployeeDetailsPage';
 import Settings from './admin/Settings';
 import SeedProducts from './admin/SeedProducts';
 import AddProduct from './admin/AddProduct';
+import ExternalJobOrders from './admin/external-jobs/ExternalJobOrders';
+import RegisterCompany from './admin/external-jobs/RegisterCompany';
+import AddJob from './admin/external-jobs/AddJob';
+import JobDetails from './admin/external-jobs/JobDetails';
+import ExternalJobDashboard from './admin/external-jobs/Dashboard';
 
 const Admin = () => {
   const { isAdmin, loading } = useAuth();
@@ -84,6 +89,11 @@ const Admin = () => {
               <Route path="/newsletter" element={<NewsletterManager />} />
               <Route path="/invoice-reset" element={<InvoiceReset />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/external-jobs" element={<ExternalJobOrders />} />
+              <Route path="/external-jobs/register-company" element={<RegisterCompany />} />
+              <Route path="/external-jobs/add-job" element={<AddJob />} />
+              <Route path="/external-jobs/details/:id" element={<JobDetails />} />
+              <Route path="/external-jobs/dashboard" element={<ExternalJobDashboard />} />
             </Routes>
           </main>
         </div>

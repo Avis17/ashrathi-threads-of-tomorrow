@@ -14,7 +14,8 @@ import {
   Receipt,
   Shirt,
   Settings,
-  Sparkles
+  Sparkles,
+  Briefcase
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import {
@@ -31,6 +32,7 @@ import {
 const menuItems = [
   { title: 'Dashboard', url: '/admin/dashboard', icon: LayoutDashboard },
   { title: 'Orders', url: '/admin/orders', icon: ClipboardList },
+  { title: 'External Job Orders', url: '/admin/external-jobs', icon: Briefcase },
   { title: 'Job Management', url: '/admin/job-management', icon: Shirt },
   { title: 'Branches', url: '/admin/branches', icon: Building2 },
   { title: 'Expenses', url: '/admin/expenses', icon: Receipt },
