@@ -80,19 +80,19 @@ const GenerateInvoice = () => {
     const pageWidth = doc.internal.pageSize.width;
     const company = jobOrder.external_job_companies;
 
-    // Add logo
-    doc.addImage(logo, "PNG", 14, 10, 30, 15);
-
     // Company details (left side)
     doc.setFontSize(16);
     doc.setFont("helvetica", "bold");
-    doc.text("Feather Fashions", 50, 15);
+    doc.text("Feather Fashions", 14, 15);
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
-    doc.text("Vadivel Nagar, 538-C, Boyampalayam PO", 50, 20);
-    doc.text("Pooluvapatti, Tiruppur, TN - 641602", 50, 24);
-    doc.text("GST: 33FWTPS1281P1ZJ", 50, 28);
-    doc.text("Ph: +91 97892 25510", 50, 32);
+    doc.text("Vadivel Nagar, 538-C, Boyampalayam PO", 14, 20);
+    doc.text("Pooluvapatti, Tiruppur, TN - 641602", 14, 24);
+    doc.text("GST: 33FWTPS1281P1ZJ", 14, 28);
+    doc.text("Ph: +91 97892 25510", 14, 32);
+
+    // Add logo (right side)
+    doc.addImage(logo, "PNG", pageWidth - 44, 10, 30, 15);
 
     // Invoice title
     doc.setFontSize(18);
