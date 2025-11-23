@@ -62,7 +62,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card className="p-6">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-primary/10 rounded-lg">
@@ -95,6 +95,18 @@ const Dashboard = () => {
             <div>
               <p className="text-sm text-muted-foreground">Pending Amount</p>
               <p className="text-2xl font-bold">₹{stats.pendingAmount.toFixed(2)}</p>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="p-6">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-purple-500/10 rounded-lg">
+              <DollarSign className="h-6 w-6 text-purple-600" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Total Commission</p>
+              <p className="text-2xl font-bold text-purple-600">₹{stats.totalCommission.toFixed(2)}</p>
             </div>
           </div>
         </Card>

@@ -1,7 +1,17 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Eye, Calendar, Filter } from "lucide-react";
-import { useExternalJobOrders } from "@/hooks/useExternalJobOrders";
+import { Search, Eye, Calendar, Filter, Trash2 } from "lucide-react";
+import { useExternalJobOrders, useDeleteExternalJobOrder } from "@/hooks/useExternalJobOrders";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,9 +37,25 @@ import { format } from "date-fns";
 export const ExternalJobOrdersList = () => {
   const navigate = useNavigate();
   const { data: orders, isLoading } = useExternalJobOrders();
+  const deleteJobOrder = useDeleteExternalJobOrder();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [jobStatusFilter, setJobStatusFilter] = useState<string>("all");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [orderToDelete, setOrderToDelete] = useState<string | null>(null);
+
+  const handleDeleteClick = (orderId: string) => {
+    setOrderToDelete(orderId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (orderToDelete) {
+      await deleteJobOrder.mutateAsync(orderToDelete);
+      setDeleteDialogOpen(false);
+      setOrderToDelete(null);
+    }
+  };
 
   const filteredOrders = orders?.filter((order) => {
     const matchesSearch =
@@ -83,8 +109,9 @@ export const ExternalJobOrdersList = () => {
   }
 
   return (
-    <Card className="p-6">
-      <div className="space-y-4">
+    <>
+      <Card className="p-6">
+        <div className="space-y-4">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -163,6 +190,13 @@ export const ExternalJobOrdersList = () => {
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteClick(order.id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -179,5 +213,23 @@ export const ExternalJobOrdersList = () => {
         </div>
       </div>
     </Card>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Job Order</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this job order? This action cannot be undone and will remove all associated operations, categories, and payment records.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };

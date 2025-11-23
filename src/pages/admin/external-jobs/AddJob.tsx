@@ -128,28 +128,56 @@ const AddJob = () => {
     const profitType = form.watch("company_profit_type");
     const profitValue = form.watch("company_profit_value") || 0;
 
-    let operationsTotal = 0;
+    // Calculate operations with percentage-based categories
+    const operationBreakdown: Record<string, { categories: Array<{name: string, rate: number, percentage: number}>, total: number, commission: number }> = {};
+    let totalOperationsCost = 0;
+
     selectedOperations.forEach((op) => {
       const cats = operationCategories[op] || [];
-      operationsTotal += cats.reduce((sum, cat) => sum + (cat.rate || 0), 0);
+      
+      // First sum up all non-commission categories
+      let opBaseTotal = 0;
+      const regularCats: Array<{name: string, rate: number, percentage: number}> = [];
+      let commissionPercentage = 0;
+      
+      cats.forEach((cat) => {
+        if (cat.name === "Contract Commission") {
+          commissionPercentage = cat.rate || 0;
+        } else {
+          opBaseTotal += (cat.rate || 0);
+          regularCats.push({ name: cat.name, rate: cat.rate || 0, percentage: cat.rate || 0 });
+        }
+      });
+      
+      // Calculate commission as percentage of base total
+      const commissionAmount = (opBaseTotal * commissionPercentage) / 100;
+      const opTotal = opBaseTotal + commissionAmount;
+      
+      operationBreakdown[op] = {
+        categories: regularCats,
+        total: opTotal,
+        commission: commissionAmount
+      };
+      
+      totalOperationsCost += opTotal;
     });
 
     // Calculate profit per piece
     let profitPerPiece = 0;
     if (profitType === "percent") {
-      profitPerPiece = (operationsTotal * profitValue) / 100;
+      profitPerPiece = (totalOperationsCost * profitValue) / 100;
     } else {
       profitPerPiece = profitValue;
     }
 
-    const ratePerPiece = operationsTotal + profitPerPiece;
+    const ratePerPiece = totalOperationsCost + profitPerPiece;
     const subtotal = ratePerPiece * pieces;
     const total = subtotal + accessories + delivery;
 
-    return { ratePerPiece, total };
+    return { ratePerPiece, total, operationBreakdown, totalOperationsCost };
   };
 
-  const { ratePerPiece, total } = calculateTotals();
+  const { ratePerPiece, total, operationBreakdown, totalOperationsCost } = calculateTotals();
 
   const onSubmit = async (data: JobFormData) => {
     const operations = selectedOperations.map((op) => ({
@@ -312,7 +340,7 @@ const AddJob = () => {
                             </Select>
                             <Input
                               type="number"
-                              placeholder="Rate"
+                              placeholder={category.name === "Contract Commission" ? "Commission %" : "Rate %"}
                               value={category.rate}
                               onChange={(e) => updateCategory(operation, index, "rate", parseFloat(e.target.value) || 0)}
                               className="w-32"
@@ -437,16 +465,90 @@ const AddJob = () => {
             </div>
           </Card>
 
-          <Card className="p-6 bg-primary/5">
-            <h3 className="text-lg font-semibold mb-4">Summary</h3>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Rate per Piece:</span>
-                <span className="font-medium">₹{ratePerPiece.toFixed(2)}</span>
+          <Card className="p-6 bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary/20">
+            <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+              Cost Summary
+            </h3>
+            
+            <div className="space-y-6">
+              {/* Operations Breakdown */}
+              {Object.entries(operationBreakdown).map(([op, breakdown]) => (
+                <div key={op} className="bg-white/50 p-4 rounded-lg space-y-2">
+                  <h4 className="font-semibold text-primary">{op}</h4>
+                  {breakdown.categories.map((cat, idx) => (
+                    <div key={idx} className="flex justify-between text-sm ml-4">
+                      <span className="text-muted-foreground">{cat.name}</span>
+                      <span className="font-medium">{cat.percentage}% = ₹{cat.rate.toFixed(2)}</span>
+                    </div>
+                  ))}
+                  {breakdown.commission > 0 && (
+                    <div className="flex justify-between text-sm ml-4 text-orange-600">
+                      <span className="font-medium">Contract Commission</span>
+                      <span className="font-semibold">₹{breakdown.commission.toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between font-semibold pt-2 border-t">
+                    <span>{op} Total:</span>
+                    <span>₹{breakdown.total.toFixed(2)}</span>
+                  </div>
+                </div>
+              ))}
+
+              {/* Total Operations */}
+              <div className="flex justify-between text-base font-semibold border-t-2 pt-3">
+                <span>Operations Total (per piece):</span>
+                <span className="text-primary">₹{totalOperationsCost.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between text-lg font-bold border-t pt-2">
+
+              {/* Company Profit */}
+              {form.watch("company_profit_value") > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span>Company Profit ({form.watch("company_profit_type") === "percent" ? `${form.watch("company_profit_value")}%` : "Fixed"}):</span>
+                  <span className="font-medium">₹{(ratePerPiece - totalOperationsCost).toFixed(2)}</span>
+                </div>
+              )}
+
+              {/* Rate Per Piece */}
+              <div className="flex justify-between text-lg font-bold bg-primary/10 p-3 rounded-lg">
+                <span>Rate per Piece:</span>
+                <span className="text-primary">₹{ratePerPiece.toFixed(2)}</span>
+              </div>
+
+              {/* Quantity & Subtotal */}
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span>Number of Pieces:</span>
+                  <span className="font-medium">{form.watch("number_of_pieces") || 0}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Subtotal:</span>
+                  <span className="font-medium">₹{(ratePerPiece * (form.watch("number_of_pieces") || 0)).toFixed(2)}</span>
+                </div>
+              </div>
+
+              {/* Additional Costs */}
+              {(form.watch("accessories_cost") > 0 || form.watch("delivery_charge") > 0) && (
+                <div className="space-y-2 text-sm border-t pt-3">
+                  {form.watch("accessories_cost") > 0 && (
+                    <div className="flex justify-between">
+                      <span>Accessories Cost:</span>
+                      <span className="font-medium">₹{form.watch("accessories_cost").toFixed(2)}</span>
+                    </div>
+                  )}
+                  {form.watch("delivery_charge") > 0 && (
+                    <div className="flex justify-between">
+                      <span>Delivery Charge:</span>
+                      <span className="font-medium">₹{form.watch("delivery_charge").toFixed(2)}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Grand Total */}
+              <div className="flex justify-between text-2xl font-bold border-t-4 border-primary pt-4">
                 <span>Total Amount:</span>
-                <span>₹{total.toFixed(2)}</span>
+                <span className="text-primary">₹{total.toFixed(2)}</span>
               </div>
             </div>
           </Card>
