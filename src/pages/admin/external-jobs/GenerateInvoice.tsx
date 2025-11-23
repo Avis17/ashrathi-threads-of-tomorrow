@@ -14,7 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
-import { formatCurrencyAscii, numberToWords, sanitizePdfText } from "@/lib/invoiceUtils";
+import { formatCurrencyAscii, numberToWords, sanitizePdfText, formatInvoiceNumber } from "@/lib/invoiceUtils";
 import logo from "@/assets/logo.png";
 import signature from "@/assets/signature.png";
 import { toast } from "sonner";
@@ -102,7 +102,8 @@ const GenerateInvoice = () => {
     // Invoice number and date
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
-    doc.text(`Invoice No: ${invoiceNumber || 'PENDING'}`, 14, 55);
+    const formattedInvoiceNumber = invoiceNumber ? formatInvoiceNumber(parseInt(invoiceNumber), new Date()) : 'PENDING';
+    doc.text(`Invoice No: ${formattedInvoiceNumber}`, 14, 55);
     doc.text(`Date: ${format(new Date(), 'dd-MM-yyyy')}`, pageWidth - 14, 55, { align: "right" });
 
     // Bill to

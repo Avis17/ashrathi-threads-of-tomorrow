@@ -197,6 +197,71 @@ export const useUpdateExternalJobOrder = () => {
   });
 };
 
+export const useDeleteExternalJobOrder = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('external_job_orders')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['external-job-orders'] });
+      toast.success('Job order deleted successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to delete job order');
+    },
+  });
+};
+
+export const useUpdateExternalJobPayment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Database['public']['Tables']['external_job_payments']['Update'] }) => {
+      const { data: payment, error } = await supabase
+        .from('external_job_payments')
+        .update(data)
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return payment;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['external-job-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['external-job-order'] });
+      toast.success('Payment updated successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to update payment');
+    },
+  });
+};
+
+export const useDeleteExternalJobPayment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('external_job_payments')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['external-job-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['external-job-order'] });
+      toast.success('Payment deleted successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to delete payment');
+    },
+  });
+};
+
 // Stats for dashboard
 export const useExternalJobOrderStats = () => {
   return useQuery({
@@ -204,7 +269,13 @@ export const useExternalJobOrderStats = () => {
     queryFn: async () => {
       const { data: orders, error } = await supabase
         .from('external_job_orders')
-        .select('total_amount, paid_amount, balance_amount, payment_status, job_status');
+        .select(`
+          *,
+          external_job_operations (
+            *,
+            external_job_operation_categories (*)
+          )
+        `);
       if (error) throw error;
 
       const totalAmount = orders.reduce((sum, order) => sum + (order.total_amount || 0), 0);
@@ -221,6 +292,24 @@ export const useExternalJobOrderStats = () => {
         return acc;
       }, {} as Record<string, number>);
 
+      // Calculate total commission
+      let totalCommission = 0;
+      orders.forEach(order => {
+        order.external_job_operations?.forEach((op: any) => {
+          const baseTotal = op.external_job_operation_categories
+            .filter((cat: any) => cat.category_name !== "Contract Commission")
+            .reduce((sum: number, cat: any) => sum + cat.rate, 0);
+          
+          const commissionCat = op.external_job_operation_categories
+            .find((cat: any) => cat.category_name === "Contract Commission");
+          
+          if (commissionCat) {
+            const commissionAmount = (baseTotal * commissionCat.rate) / 100;
+            totalCommission += commissionAmount * order.number_of_pieces;
+          }
+        });
+      });
+
       return {
         totalAmount,
         paidAmount,
@@ -228,6 +317,7 @@ export const useExternalJobOrderStats = () => {
         totalOrders: orders.length,
         statusCounts,
         jobStatusCounts,
+        totalCommission,
       };
     },
   });

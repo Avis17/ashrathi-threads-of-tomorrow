@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Calendar, DollarSign, Package, Clock, Edit, FileText, Building2 } from "lucide-react";
+import { ArrowLeft, Calendar, DollarSign, Package, Clock, Edit, FileText, Building2, Trash2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,10 +12,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useExternalJobOrder, useUpdateExternalJobOrder } from "@/hooks/useExternalJobOrders";
+import { useExternalJobOrder, useUpdateExternalJobOrder, useDeleteExternalJobPayment } from "@/hooks/useExternalJobOrders";
 import { format } from "date-fns";
 import { useState } from "react";
 import { AddPaymentDialog } from "@/components/admin/external-jobs/AddPaymentDialog";
+import { EditPaymentDialog } from "@/components/admin/external-jobs/EditPaymentDialog";
 import {
   Select,
   SelectContent,
@@ -23,13 +24,46 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const JobDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { data: jobOrder, isLoading } = useExternalJobOrder(id!);
   const updateStatus = useUpdateExternalJobOrder();
+  const deletePayment = useDeleteExternalJobPayment();
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [showEditPaymentDialog, setShowEditPaymentDialog] = useState(false);
+  const [selectedPayment, setSelectedPayment] = useState<any>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [paymentToDelete, setPaymentToDelete] = useState<string | null>(null);
+
+  const handleEditPayment = (payment: any) => {
+    setSelectedPayment(payment);
+    setShowEditPaymentDialog(true);
+  };
+
+  const handleDeleteClick = (paymentId: string) => {
+    setPaymentToDelete(paymentId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (paymentToDelete) {
+      await deletePayment.mutateAsync(paymentToDelete);
+      setDeleteDialogOpen(false);
+      setPaymentToDelete(null);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -199,35 +233,92 @@ const JobDetails = () => {
         </div>
       </Card>
 
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4">Operations & Categories</h3>
-        <div className="space-y-4">
-          {jobOrder.external_job_operations.map((operation: any) => (
-            <div key={operation.id} className="border rounded-lg p-4">
-              <div className="flex justify-between items-center mb-3">
-                <h4 className="font-semibold">{operation.operation_name}</h4>
-                <span className="text-sm font-medium">Total: ₹{operation.total_rate.toFixed(2)}</span>
+      {/* Detailed Cost Breakdown */}
+      <Card className="p-6 bg-gradient-to-br from-primary/10 to-primary/5">
+        <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+          <DollarSign className="h-5 w-5" />
+          Detailed Cost Breakdown
+        </h3>
+        <div className="space-y-6">
+          {jobOrder.external_job_operations.map((operation: any) => {
+            const baseTotal = operation.external_job_operation_categories
+              .filter((cat: any) => cat.category_name !== "Contract Commission")
+              .reduce((sum: number, cat: any) => sum + cat.rate, 0);
+            
+            const commissionCat = operation.external_job_operation_categories
+              .find((cat: any) => cat.category_name === "Contract Commission");
+            
+            const commissionAmount = commissionCat ? (baseTotal * commissionCat.rate) / 100 : 0;
+            
+            return (
+              <div key={operation.id} className="bg-white/50 p-5 rounded-lg space-y-3 border-l-4 border-primary">
+                <div className="flex justify-between items-center">
+                  <h4 className="font-bold text-lg text-primary">{operation.operation_name}</h4>
+                  <span className="text-lg font-bold">₹{operation.total_rate.toFixed(2)}</span>
+                </div>
+                
+                {operation.external_job_operation_categories.length > 0 && (
+                  <div className="space-y-2 ml-4">
+                    {operation.external_job_operation_categories
+                      .filter((cat: any) => cat.category_name !== "Contract Commission")
+                      .map((category: any) => (
+                        <div key={category.id} className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">{category.category_name}</span>
+                          <span className="font-medium">{category.rate}% = ₹{category.rate.toFixed(2)}</span>
+                        </div>
+                      ))}
+                    
+                    {commissionCat && (
+                      <>
+                        <div className="flex justify-between text-sm pt-2 border-t">
+                          <span className="font-medium">Base Total:</span>
+                          <span className="font-semibold">₹{baseTotal.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-sm text-orange-600">
+                          <span className="font-medium">Contract Commission ({commissionCat.rate}%):</span>
+                          <span className="font-semibold">₹{commissionAmount.toFixed(2)}</span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
-              {operation.external_job_operation_categories.length > 0 && (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Category</TableHead>
-                      <TableHead className="text-right">Rate</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {operation.external_job_operation_categories.map((category: any) => (
-                      <TableRow key={category.id}>
-                        <TableCell>{category.category_name}</TableCell>
-                        <TableCell className="text-right">₹{category.rate.toFixed(2)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
+            );
+          })}
+
+          <div className="border-t-2 pt-4 space-y-2">
+            <div className="flex justify-between text-lg font-semibold">
+              <span>Rate per Piece:</span>
+              <span className="text-primary">₹{jobOrder.rate_per_piece.toFixed(2)}</span>
             </div>
-          ))}
+            <div className="flex justify-between text-sm">
+              <span>Number of Pieces:</span>
+              <span className="font-medium">{jobOrder.number_of_pieces}</span>
+            </div>
+            <div className="flex justify-between text-base font-semibold">
+              <span>Subtotal:</span>
+              <span>₹{(jobOrder.rate_per_piece * jobOrder.number_of_pieces).toFixed(2)}</span>
+            </div>
+            
+            {jobOrder.accessories_cost > 0 && (
+              <div className="flex justify-between text-sm">
+                <span>Accessories:</span>
+                <span className="font-medium">₹{jobOrder.accessories_cost.toFixed(2)}</span>
+              </div>
+            )}
+            
+            {jobOrder.delivery_charge > 0 && (
+              <div className="flex justify-between text-sm">
+                <span>Delivery:</span>
+                <span className="font-medium">₹{jobOrder.delivery_charge.toFixed(2)}</span>
+              </div>
+            )}
+
+            <div className="flex justify-between text-2xl font-bold pt-3 border-t-2">
+              <span>Total Amount:</span>
+              <span className="text-primary">₹{jobOrder.total_amount.toFixed(2)}</span>
+            </div>
+          </div>
         </div>
       </Card>
 
@@ -246,6 +337,7 @@ const JobDetails = () => {
                 <TableHead>Mode</TableHead>
                 <TableHead>Reference</TableHead>
                 <TableHead>Notes</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -256,6 +348,24 @@ const JobDetails = () => {
                   <TableCell>{payment.payment_mode}</TableCell>
                   <TableCell>{payment.reference_number || '-'}</TableCell>
                   <TableCell>{payment.notes || '-'}</TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex gap-2 justify-end">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEditPayment(payment)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteClick(payment.id)}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -271,6 +381,32 @@ const JobDetails = () => {
         jobOrderId={jobOrder.id}
         balanceAmount={jobOrder.balance_amount}
       />
+
+      {selectedPayment && (
+        <EditPaymentDialog
+          open={showEditPaymentDialog}
+          onOpenChange={setShowEditPaymentDialog}
+          payment={selectedPayment}
+          balanceAmount={jobOrder.balance_amount}
+        />
+      )}
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Payment Record</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this payment record? This action cannot be undone and will affect the balance calculations.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
