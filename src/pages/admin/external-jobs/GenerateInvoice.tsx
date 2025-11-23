@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,21 +7,71 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
 import { useExternalJobOrder } from "@/hooks/useExternalJobOrders";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
 import { formatCurrencyAscii, numberToWords, sanitizePdfText } from "@/lib/invoiceUtils";
 import logo from "@/assets/logo.png";
 import signature from "@/assets/signature.png";
+import { toast } from "sonner";
 
 const GenerateInvoice = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { data: jobOrder, isLoading } = useExternalJobOrder(id!);
   const [invoiceType, setInvoiceType] = useState<"with_gst" | "without_gst">("without_gst");
   const [gstRate, setGstRate] = useState("18");
   const [invoiceNumber, setInvoiceNumber] = useState("");
+  const [accountType, setAccountType] = useState<"company" | "personal">("company");
+  
+  // Company account details
+  const [bankName, setBankName] = useState("Kotak Mahindra Bank");
+  const [accountNumber, setAccountNumber] = useState("1600000017");
+  const [ifscCode, setIfscCode] = useState("KKBK0008823");
+  const [branch, setBranch] = useState("PN Road, Tirupur");
+  
+  // Personal account details
+  const [phoneNumber, setPhoneNumber] = useState("9629336553");
+  const [upiId, setUpiId] = useState("pvadivelsiva1@ybl");
+
+  const { data: invoiceSettings } = useQuery({
+    queryKey: ['job-order-invoice-settings'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('job_order_invoice_settings')
+        .select('*')
+        .single();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  useEffect(() => {
+    if (invoiceSettings) {
+      setInvoiceNumber(invoiceSettings.current_invoice_number.toString());
+    }
+  }, [invoiceSettings]);
+
+  const updateInvoiceNumberMutation = useMutation({
+    mutationFn: async (currentNumber: number) => {
+      const { error } = await supabase
+        .from('job_order_invoice_settings')
+        .update({ 
+          current_invoice_number: currentNumber + 1,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', invoiceSettings?.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['job-order-invoice-settings'] });
+    },
+  });
 
   const generatePDF = () => {
     if (!jobOrder) return;
@@ -163,10 +213,16 @@ const GenerateInvoice = () => {
     doc.text("Payment Details:", 14, finalY + 35);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
-    doc.text("Bank: Kotak Mahindra Bank", 14, finalY + 40);
-    doc.text("A/c: 1600000017", 14, finalY + 45);
-    doc.text("IFSC: KKBK0008823", 14, finalY + 50);
-    doc.text("Branch: PN Road, Tirupur", 14, finalY + 55);
+    
+    if (accountType === "company") {
+      doc.text(`Bank: ${bankName}`, 14, finalY + 40);
+      doc.text(`A/c: ${accountNumber}`, 14, finalY + 45);
+      doc.text(`IFSC: ${ifscCode}`, 14, finalY + 50);
+      doc.text(`Branch: ${branch}`, 14, finalY + 55);
+    } else {
+      doc.text(`Phone/GPay/PhonePe: ${phoneNumber}`, 14, finalY + 40);
+      doc.text(`UPI ID: ${upiId}`, 14, finalY + 45);
+    }
 
     // Signature
     doc.addImage(signature, "PNG", pageWidth - 50, finalY + 35, 35, 20);
@@ -180,8 +236,14 @@ const GenerateInvoice = () => {
     doc.text("Thank you for your business!", pageWidth / 2, footerY, { align: "center" });
     doc.text("Feather Fashions - Crafted with precision, designed for comfort", pageWidth / 2, footerY + 5, { align: "center" });
 
-    // Save
+    // Save and update invoice number
     doc.save(`Job-Invoice-${jobOrder.job_id}.pdf`);
+    
+    // Update invoice number for next invoice
+    if (invoiceSettings) {
+      updateInvoiceNumberMutation.mutate(invoiceSettings.current_invoice_number);
+      toast.success('Invoice generated successfully');
+    }
   };
 
   if (isLoading) {
@@ -222,9 +284,12 @@ const GenerateInvoice = () => {
             <Input
               value={invoiceNumber}
               onChange={(e) => setInvoiceNumber(e.target.value)}
-              placeholder="Enter invoice number"
+              placeholder="Auto-generated"
               className="mt-2"
             />
+            <p className="text-xs text-muted-foreground mt-1">
+              This number will auto-increment after generating the invoice
+            </p>
           </div>
 
           <div>
@@ -250,6 +315,82 @@ const GenerateInvoice = () => {
                 onChange={(e) => setGstRate(e.target.value)}
                 className="mt-2"
               />
+            </div>
+          )}
+
+          <div>
+            <Label className="mb-3 block">Account Type</Label>
+            <RadioGroup value={accountType} onValueChange={(value: any) => setAccountType(value)}>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="company" id="company" />
+                <Label htmlFor="company">Company Account</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="personal" id="personal" />
+                <Label htmlFor="personal">Personal Account</Label>
+              </div>
+            </RadioGroup>
+          </div>
+
+          {accountType === "company" ? (
+            <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+              <h4 className="font-semibold text-sm">Company Bank Details (Editable)</h4>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs">Bank Name</Label>
+                  <Input
+                    value={bankName}
+                    onChange={(e) => setBankName(e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Account Number</Label>
+                  <Input
+                    value={accountNumber}
+                    onChange={(e) => setAccountNumber(e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">IFSC Code</Label>
+                  <Input
+                    value={ifscCode}
+                    onChange={(e) => setIfscCode(e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Branch</Label>
+                  <Input
+                    value={branch}
+                    onChange={(e) => setBranch(e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+              <h4 className="font-semibold text-sm">Personal UPI Details (Editable)</h4>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs">Phone Number (GPay/PhonePe)</Label>
+                  <Input
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">UPI ID</Label>
+                  <Input
+                    value={upiId}
+                    onChange={(e) => setUpiId(e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+              </div>
             </div>
           )}
 
