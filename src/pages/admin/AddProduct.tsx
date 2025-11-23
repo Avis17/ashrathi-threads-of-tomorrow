@@ -15,13 +15,6 @@ export default function AddProduct() {
     mutationFn: async (data: ProductFormData & { inventory?: any[] }) => {
       const { inventory, ...productData } = data;
       
-      // Log the data being submitted
-      console.log('Creating product with data:', {
-        offer_messages: productData.offer_messages,
-        combo_offers: productData.combo_offers,
-        fullData: productData
-      });
-      
       // Insert product
       const { data: product, error: productError } = await supabase
         .from('products')
@@ -33,12 +26,6 @@ export default function AddProduct() {
         console.error('Product insert error:', productError);
         throw productError;
       }
-      
-      console.log('Product created successfully:', {
-        id: product.id,
-        offer_messages: product.offer_messages,
-        combo_offers: product.combo_offers
-      });
       
       // Insert inventory entries if provided
       if (inventory && inventory.length > 0) {
