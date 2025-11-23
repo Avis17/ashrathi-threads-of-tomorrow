@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_settings: {
+        Row: {
+          created_at: string | null
+          id: string
+          low_stock_alerts_enabled: boolean
+          low_stock_threshold: number
+          notification_emails: string[]
+          order_alerts_enabled: boolean
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          low_stock_alerts_enabled?: boolean
+          low_stock_threshold?: number
+          notification_emails?: string[]
+          order_alerts_enabled?: boolean
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          low_stock_alerts_enabled?: boolean
+          low_stock_threshold?: number
+          notification_emails?: string[]
+          order_alerts_enabled?: boolean
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       batch_costs: {
         Row: {
           amount: number
