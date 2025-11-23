@@ -18,6 +18,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import Autoplay from "embla-carousel-autoplay";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { ProductImageLoader } from "@/components/product/ProductImageLoader";
 
 // Model showcase images
 import heroModelWoman1 from "@/assets/hero-model-woman-1.jpg";
@@ -147,6 +148,7 @@ const Products = () => {
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [selectedVariants, setSelectedVariants] = useState<Record<string, { size?: string; color?: string }>>({});
   const [displayImages, setDisplayImages] = useState<Record<string, string>>({});
+  const [loadingImages, setLoadingImages] = useState<Record<string, boolean>>({});
   const { data: products = [], isLoading, error, refetch } = useProducts();
 
   // Fetch inventory data for all products
@@ -218,6 +220,9 @@ const Products = () => {
       [productId]: { ...prev[productId], color },
     }));
 
+    // Set loading state
+    setLoadingImages(prev => ({ ...prev, [productId]: true }));
+
     // Check if color image exists, generate if missing
     const product = filteredProducts.find(p => p.id === productId);
     const colorData = product?.available_colors?.find(
@@ -249,6 +254,11 @@ const Products = () => {
         });
       }
     }
+    
+    // Simulate loading time for smooth transition (minimum 500ms)
+    setTimeout(() => {
+      setLoadingImages(prev => ({ ...prev, [productId]: false }));
+    }, 500);
   };
 
   // Update display images when color selection changes
@@ -572,6 +582,7 @@ const Products = () => {
                         alt={product.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
+                      {loadingImages[product.id] && <ProductImageLoader />}
                       <Button
                         size="icon"
                         variant="secondary"
@@ -833,6 +844,7 @@ const Products = () => {
                         alt={product.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
+                      {loadingImages[product.id] && <ProductImageLoader />}
                       <Button
                         size="icon"
                         variant="secondary"
