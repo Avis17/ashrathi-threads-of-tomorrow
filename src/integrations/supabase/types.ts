@@ -338,6 +338,7 @@ export type Database = {
           address_line_2: string | null
           city: string
           created_at: string | null
+          district: string | null
           full_name: string
           id: string
           is_default: boolean | null
@@ -352,6 +353,7 @@ export type Database = {
           address_line_2?: string | null
           city: string
           created_at?: string | null
+          district?: string | null
           full_name: string
           id?: string
           is_default?: boolean | null
@@ -366,6 +368,7 @@ export type Database = {
           address_line_2?: string | null
           city?: string
           created_at?: string | null
+          district?: string | null
           full_name?: string
           id?: string
           is_default?: boolean | null
@@ -1953,6 +1956,7 @@ export type Database = {
           quality_tier: string
           reorder_level: number | null
           should_remove: boolean | null
+          weight_grams: number
         }
         Insert: {
           additional_images?: Json | null
@@ -1981,6 +1985,7 @@ export type Database = {
           quality_tier?: string
           reorder_level?: number | null
           should_remove?: boolean | null
+          weight_grams?: number
         }
         Update: {
           additional_images?: Json | null
@@ -2009,6 +2014,7 @@ export type Database = {
           quality_tier?: string
           reorder_level?: number | null
           should_remove?: boolean | null
+          weight_grams?: number
         }
         Relationships: []
       }
@@ -2156,6 +2162,54 @@ export type Database = {
           is_system_role?: boolean | null
           name?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      shipping_config: {
+        Row: {
+          id: string
+          min_items_for_free_delivery: number
+          min_order_value: number
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          min_items_for_free_delivery?: number
+          min_order_value?: number
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          min_items_for_free_delivery?: number
+          min_order_value?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      shipping_settings: {
+        Row: {
+          charge_amount: number
+          created_at: string | null
+          id: string
+          states: string[]
+          updated_at: string | null
+          zone_name: string
+        }
+        Insert: {
+          charge_amount?: number
+          created_at?: string | null
+          id?: string
+          states: string[]
+          updated_at?: string | null
+          zone_name: string
+        }
+        Update: {
+          charge_amount?: number
+          created_at?: string | null
+          id?: string
+          states?: string[]
+          updated_at?: string | null
+          zone_name?: string
         }
         Relationships: []
       }

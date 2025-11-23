@@ -7,13 +7,18 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { Settings as SettingsIcon, Bell, Package, ShoppingCart, Mail, Plus, Trash2 } from 'lucide-react';
+import { Settings as SettingsIcon, Bell, Package, ShoppingCart, Mail, Plus, Trash2, Truck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { useShippingSettings } from '@/hooks/useShippingSettings';
+import { ShippingZone } from '@/lib/shippingConstants';
 
 export default function Settings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [newEmail, setNewEmail] = useState('');
+  
+  // Fetch shipping settings
+  const { data: shippingSettings, isLoading: isLoadingShipping } = useShippingSettings();
 
   // Fetch settings
   const { data: settings, isLoading } = useQuery({
@@ -88,7 +93,59 @@ export default function Settings() {
     });
   };
 
-  if (isLoading) {
+  // Update shipping config mutation
+  const updateShippingConfigMutation = useMutation({
+    mutationFn: async (updates: { min_order_value?: number; min_items_for_free_delivery?: number }) => {
+      const { error } = await supabase
+        .from('shipping_config')
+        .update(updates)
+        .eq('id', (await supabase.from('shipping_config').select('id').single()).data?.id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['shipping-settings'] });
+      toast({
+        title: 'Updated',
+        description: 'Shipping configuration updated successfully.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Update Failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Update zone charge mutation
+  const updateZoneChargeMutation = useMutation({
+    mutationFn: async ({ zoneName, charge }: { zoneName: ShippingZone; charge: number }) => {
+      const { error } = await supabase
+        .from('shipping_settings')
+        .update({ charge_amount: charge })
+        .eq('zone_name', zoneName);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['shipping-settings'] });
+      toast({
+        title: 'Updated',
+        description: 'Zone charge updated successfully.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Update Failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  if (isLoading || isLoadingShipping) {
     return (
       <div className="p-6">
         <p className="text-muted-foreground">Loading settings...</p>
@@ -271,6 +328,111 @@ export default function Settings() {
           <p className="text-xs text-muted-foreground mt-4">
             Recipients: {settings?.notification_emails?.length || 0} email address(es) configured
           </p>
+        </CardContent>
+      </Card>
+
+      {/* Shipping & Delivery Configuration */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Truck className="h-5 w-5 text-purple-600" />
+            Shipping & Delivery Configuration
+          </CardTitle>
+          <CardDescription>
+            Configure zone-based delivery charges and free delivery criteria
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Free Delivery Settings */}
+          <div className="space-y-4 border-b pb-4">
+            <h3 className="font-semibold text-lg">Free Delivery Criteria</h3>
+            
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="minOrderValue">Minimum Order Value (₹)</Label>
+                <Input 
+                  id="minOrderValue"
+                  type="number" 
+                  min="0"
+                  value={shippingSettings?.config.minOrderValue || 0}
+                  onChange={(e) => {
+                    const value = parseFloat(e.target.value);
+                    if (value >= 0) {
+                      updateShippingConfigMutation.mutate({ min_order_value: value });
+                    }
+                  }}
+                  className="max-w-[200px]"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Orders above this amount get free delivery
+                </p>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="minItems">Minimum Items Count</Label>
+                <Input 
+                  id="minItems"
+                  type="number" 
+                  min="1"
+                  value={shippingSettings?.config.minItemsForFreeDelivery || 0}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value);
+                    if (value > 0) {
+                      updateShippingConfigMutation.mutate({ min_items_for_free_delivery: value });
+                    }
+                  }}
+                  className="max-w-[200px]"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Orders with this many items get free delivery
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Zone-based Charges */}
+          <div className="space-y-4">
+            <h3 className="font-semibold text-lg">Zone-based Delivery Charges</h3>
+            
+            <div className="space-y-3">
+              {shippingSettings?.zones.map((zone) => (
+                <div key={zone.name} className="flex items-center gap-4 p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors">
+                  <div className="flex-1">
+                    <p className="font-medium">{zone.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {zone.states.join(', ')}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Label className="text-sm">₹</Label>
+                    <Input 
+                      type="number"
+                      min="0"
+                      step="1"
+                      className="w-24"
+                      value={zone.charge}
+                      onChange={(e) => {
+                        const value = parseFloat(e.target.value);
+                        if (value >= 0) {
+                          updateZoneChargeMutation.mutate({ 
+                            zoneName: zone.name, 
+                            charge: value 
+                          });
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-lg p-4">
+              <p className="text-sm text-blue-800 dark:text-blue-200">
+                <strong>Note:</strong> Delivery charges are automatically calculated based on the customer's delivery state. 
+                Free delivery is applied when order value ≥ ₹{shippingSettings?.config.minOrderValue} or items ≥ {shippingSettings?.config.minItemsForFreeDelivery}.
+              </p>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>

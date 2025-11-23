@@ -15,6 +15,7 @@ interface DeliveryAddress {
   phone: string;
   address_line_1: string;
   address_line_2?: string | null;
+  district?: string | null;
   city: string;
   state: string;
   pincode: string;
@@ -94,7 +95,7 @@ export const AddressSelector = ({ selectedAddress, onSelectAddress }: AddressSel
                   {address.address_line_2 && `, ${address.address_line_2}`}
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  {address.city}, {address.state} - {address.pincode}
+                  {address.district && `${address.district}, `}{address.city}, {address.state} - {address.pincode}
                 </div>
                 <div className="text-sm text-muted-foreground mt-1">
                   Phone: {address.phone}
