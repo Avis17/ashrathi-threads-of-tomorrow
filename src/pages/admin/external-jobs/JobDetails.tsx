@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Calendar, DollarSign, Package, Clock, Edit } from "lucide-react";
+import { ArrowLeft, Calendar, DollarSign, Package, Clock, Edit, FileText, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -95,9 +95,21 @@ const JobDetails = () => {
           </div>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" size="sm">
-            <Edit className="h-4 w-4 mr-2" />
-            Edit Job
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate(`/admin/external-jobs/company/${jobOrder.external_job_companies.id}`)}
+          >
+            <Building2 className="h-4 w-4 mr-2" />
+            View Company
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate(`/admin/external-jobs/invoice/${jobOrder.id}`)}
+          >
+            <FileText className="h-4 w-4 mr-2" />
+            Generate Invoice
           </Button>
         </div>
       </div>

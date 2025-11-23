@@ -130,18 +130,17 @@ const AddJob = () => {
       operationsTotal += cats.reduce((sum, cat) => sum + (cat.rate || 0), 0);
     });
 
-    const ratePerPiece = operationsTotal;
-    const subtotal = ratePerPiece * pieces;
-    const withExtras = subtotal + accessories + delivery;
-    
-    let profit = 0;
+    // Calculate profit per piece
+    let profitPerPiece = 0;
     if (profitType === "percent") {
-      profit = (withExtras * profitValue) / 100;
+      profitPerPiece = (operationsTotal * profitValue) / 100;
     } else {
-      profit = profitValue;
+      profitPerPiece = profitValue;
     }
 
-    const total = withExtras + profit;
+    const ratePerPiece = operationsTotal + profitPerPiece;
+    const subtotal = ratePerPiece * pieces;
+    const total = subtotal + accessories + delivery;
 
     return { ratePerPiece, total };
   };
