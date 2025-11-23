@@ -577,6 +577,271 @@ export type Database = {
           },
         ]
       }
+      external_job_companies: {
+        Row: {
+          account_details: string | null
+          address: string
+          alternate_number: string | null
+          company_name: string
+          contact_number: string
+          contact_person: string
+          created_at: string | null
+          email: string | null
+          gst_number: string | null
+          id: string
+          is_active: boolean | null
+          notes: string | null
+          updated_at: string | null
+          upi_id: string | null
+        }
+        Insert: {
+          account_details?: string | null
+          address: string
+          alternate_number?: string | null
+          company_name: string
+          contact_number: string
+          contact_person: string
+          created_at?: string | null
+          email?: string | null
+          gst_number?: string | null
+          id?: string
+          is_active?: boolean | null
+          notes?: string | null
+          updated_at?: string | null
+          upi_id?: string | null
+        }
+        Update: {
+          account_details?: string | null
+          address?: string
+          alternate_number?: string | null
+          company_name?: string
+          contact_number?: string
+          contact_person?: string
+          created_at?: string | null
+          email?: string | null
+          gst_number?: string | null
+          id?: string
+          is_active?: boolean | null
+          notes?: string | null
+          updated_at?: string | null
+          upi_id?: string | null
+        }
+        Relationships: []
+      }
+      external_job_invoices: {
+        Row: {
+          created_at: string | null
+          id: string
+          invoice_data: Json | null
+          invoice_date: string | null
+          invoice_number: string
+          job_order_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          invoice_data?: Json | null
+          invoice_date?: string | null
+          invoice_number: string
+          job_order_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          invoice_data?: Json | null
+          invoice_date?: string | null
+          invoice_number?: string
+          job_order_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "external_job_invoices_job_order_id_fkey"
+            columns: ["job_order_id"]
+            isOneToOne: false
+            referencedRelation: "external_job_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      external_job_operation_categories: {
+        Row: {
+          category_name: string
+          created_at: string | null
+          id: string
+          operation_id: string
+          rate: number
+        }
+        Insert: {
+          category_name: string
+          created_at?: string | null
+          id?: string
+          operation_id: string
+          rate: number
+        }
+        Update: {
+          category_name?: string
+          created_at?: string | null
+          id?: string
+          operation_id?: string
+          rate?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "external_job_operation_categories_operation_id_fkey"
+            columns: ["operation_id"]
+            isOneToOne: false
+            referencedRelation: "external_job_operations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      external_job_operations: {
+        Row: {
+          created_at: string | null
+          id: string
+          job_order_id: string
+          operation_name: string
+          total_rate: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          job_order_id: string
+          operation_name: string
+          total_rate?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          job_order_id?: string
+          operation_name?: string
+          total_rate?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "external_job_operations_job_order_id_fkey"
+            columns: ["job_order_id"]
+            isOneToOne: false
+            referencedRelation: "external_job_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      external_job_orders: {
+        Row: {
+          accessories_cost: number | null
+          balance_amount: number | null
+          company_id: string
+          company_profit_type: string | null
+          company_profit_value: number | null
+          created_at: string | null
+          delivery_charge: number | null
+          delivery_date: string
+          id: string
+          job_id: string
+          job_status: string | null
+          number_of_pieces: number
+          paid_amount: number | null
+          payment_status: string | null
+          rate_per_piece: number
+          style_name: string
+          total_amount: number
+          updated_at: string | null
+        }
+        Insert: {
+          accessories_cost?: number | null
+          balance_amount?: number | null
+          company_id: string
+          company_profit_type?: string | null
+          company_profit_value?: number | null
+          created_at?: string | null
+          delivery_charge?: number | null
+          delivery_date: string
+          id?: string
+          job_id: string
+          job_status?: string | null
+          number_of_pieces: number
+          paid_amount?: number | null
+          payment_status?: string | null
+          rate_per_piece?: number
+          style_name: string
+          total_amount?: number
+          updated_at?: string | null
+        }
+        Update: {
+          accessories_cost?: number | null
+          balance_amount?: number | null
+          company_id?: string
+          company_profit_type?: string | null
+          company_profit_value?: number | null
+          created_at?: string | null
+          delivery_charge?: number | null
+          delivery_date?: string
+          id?: string
+          job_id?: string
+          job_status?: string | null
+          number_of_pieces?: number
+          paid_amount?: number | null
+          payment_status?: string | null
+          rate_per_piece?: number
+          style_name?: string
+          total_amount?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "external_job_orders_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "external_job_companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      external_job_payments: {
+        Row: {
+          created_at: string | null
+          id: string
+          job_order_id: string
+          notes: string | null
+          payment_amount: number
+          payment_date: string | null
+          payment_mode: string | null
+          recorded_by: string | null
+          reference_number: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          job_order_id: string
+          notes?: string | null
+          payment_amount: number
+          payment_date?: string | null
+          payment_mode?: string | null
+          recorded_by?: string | null
+          reference_number?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          job_order_id?: string
+          notes?: string | null
+          payment_amount?: number
+          payment_date?: string | null
+          payment_mode?: string | null
+          recorded_by?: string | null
+          reference_number?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "external_job_payments_job_order_id_fkey"
+            columns: ["job_order_id"]
+            isOneToOne: false
+            referencedRelation: "external_job_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoice_items: {
         Row: {
           amount: number
