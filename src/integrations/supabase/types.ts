@@ -1409,6 +1409,24 @@ export type Database = {
           },
         ]
       }
+      job_order_invoice_settings: {
+        Row: {
+          current_invoice_number: number
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          current_invoice_number?: number
+          id?: string
+          updated_at?: string | null
+        }
+        Update: {
+          current_invoice_number?: number
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       job_order_labours: {
         Row: {
           created_at: string
