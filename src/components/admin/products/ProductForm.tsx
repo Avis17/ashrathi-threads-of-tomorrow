@@ -67,6 +67,11 @@ const productSchema = z.object({
     hex: z.string(),
     image_url: z.string().optional(),
   })).default([]),
+  offer_messages: z.array(z.string()).default([]),
+  combo_offers: z.array(z.object({
+    quantity: z.number().int().min(2, 'Quantity must be at least 2'),
+    price: z.number().positive('Price must be positive'),
+  })).default([]),
 });
 
 export type ProductFormData = z.infer<typeof productSchema>;
@@ -116,6 +121,8 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
       product_code: initialData?.product_code || '',
       available_sizes: initialData?.available_sizes || [],
       available_colors: initialData?.available_colors || [],
+      offer_messages: initialData?.offer_messages || [],
+      combo_offers: initialData?.combo_offers || [],
     },
   });
 
@@ -151,15 +158,23 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
     }
   }, [initialData]);
 
+  // Sync offer messages to form state
+  useEffect(() => {
+    setValue('offer_messages', offerMessages, { shouldValidate: false, shouldDirty: true });
+  }, [offerMessages, setValue]);
+
+  // Sync combo offers to form state
+  useEffect(() => {
+    setValue('combo_offers', comboOffers, { shouldValidate: false, shouldDirty: true });
+  }, [comboOffers, setValue]);
+
   const handleFormSubmit = (data: ProductFormData) => {
     // Build submission data with current state values
     const submitData: any = { 
       ...data, 
       available_sizes: sizes, 
       available_colors: colors, 
-      additional_images: additionalImages, 
-      offer_messages: offerMessages.length > 0 ? offerMessages : null,
-      combo_offers: comboOffers.length > 0 ? comboOffers : null,
+      additional_images: additionalImages,
     };
     
     // Only include inventory if it was explicitly modified
