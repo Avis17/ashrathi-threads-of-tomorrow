@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -53,11 +53,11 @@ const productSchema = z.object({
     .transform((val) => (val === '' ? 0 : parseInt(val)))
     .refine((val) => val >= 0 && val <= 99, 'Discount must be between 0-99%')
     .default('0'),
-  offer_messages: z.array(z.string()).default([]),
+  offer_messages: z.array(z.string()).optional(),
   combo_offers: z.array(z.object({
     quantity: z.number().int().positive(),
     price: z.number().positive(),
-  })).default([]),
+  })).optional(),
   display_order: z.string()
     .transform((val) => (val === '' ? 0 : parseInt(val)))
     .refine((val) => Number.isInteger(val), 'Must be a whole number'),
@@ -99,7 +99,7 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
   );
   const [inventoryModified, setInventoryModified] = useState(false);
 
-  const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<ProductFormData>({
+  const { register, handleSubmit, formState: { errors }, setValue, watch, control } = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
     defaultValues: {
       is_active: initialData?.is_active ?? true,
@@ -165,21 +165,20 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
   }, [comboOffers, setValue]);
 
   const handleFormSubmit = (data: ProductFormData) => {
-    // Ensure latest state values are synced before submission
-    setValue('offer_messages', offerMessages, { shouldValidate: false });
-    setValue('combo_offers', comboOffers, { shouldValidate: false });
-    setValue('available_sizes', sizes, { shouldValidate: false });
-    setValue('available_colors', colors, { shouldValidate: false });
-    setValue('additional_images', additionalImages, { shouldValidate: false });
-    
+    // Build submission data with current state values
     const submitData: any = { 
       ...data, 
       available_sizes: sizes, 
       available_colors: colors, 
       additional_images: additionalImages, 
-      offer_messages: offerMessages,
-      combo_offers: comboOffers,
+      offer_messages: offerMessages.length > 0 ? offerMessages : [],
+      combo_offers: comboOffers.length > 0 ? comboOffers : [],
     };
+    
+    console.log('Submitting product data:', {
+      offer_messages: submitData.offer_messages,
+      combo_offers: submitData.combo_offers,
+    });
     
     // Only include inventory if it was explicitly modified
     if (inventoryModified || !initialData) {
@@ -241,6 +240,18 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+      {/* Hidden controllers to ensure form registration */}
+      <Controller
+        name="offer_messages"
+        control={control}
+        render={() => <input type="hidden" />}
+      />
+      <Controller
+        name="combo_offers"
+        control={control}
+        render={() => <input type="hidden" />}
+      />
+      
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="name">Product Name *</Label>

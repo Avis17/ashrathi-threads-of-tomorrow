@@ -602,17 +602,43 @@ const Products = () => {
                         )}
 
                         {product.price && (
-                          <div className="flex items-baseline gap-2">
-                            {product.discount_percentage && product.discount_percentage > 0 ? (
-                              <>
-                                <span className="text-2xl font-bold text-amber-600">
-                                  ₹{(product.price * (1 - product.discount_percentage / 100)).toFixed(2)}
-                                </span>
-                                <span className="text-sm text-muted-foreground line-through">₹{product.price}</span>
-                                <Badge variant="destructive" className="ml-auto">{product.discount_percentage}% OFF</Badge>
-                              </>
-                            ) : (
-                              <span className="text-2xl font-bold text-amber-600">₹{product.price}</span>
+                          <div className="space-y-2">
+                            <div className="flex items-baseline gap-2">
+                              {product.discount_percentage && product.discount_percentage > 0 ? (
+                                <>
+                                  <span className="text-2xl font-bold text-amber-600">
+                                    ₹{(product.price * (1 - product.discount_percentage / 100)).toFixed(2)}
+                                  </span>
+                                  <span className="text-sm text-muted-foreground line-through">₹{product.price}</span>
+                                  <Badge variant="destructive" className="ml-auto">{product.discount_percentage}% OFF</Badge>
+                                </>
+                              ) : (
+                                <span className="text-2xl font-bold text-amber-600">₹{product.price}</span>
+                              )}
+                            </div>
+                            
+                            {/* Combo Offers Display */}
+                            {product.combo_offers && product.combo_offers.length > 0 && (
+                              <div className="space-y-1">
+                                <p className="text-xs font-semibold text-amber-700 dark:text-amber-400">🎁 Bulk Discounts Available:</p>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {product.combo_offers.map((combo: { quantity: number; price: number }, idx: number) => {
+                                    const regularPrice = product.price * combo.quantity;
+                                    const savings = regularPrice - combo.price;
+                                    const savingsPercent = ((savings / regularPrice) * 100).toFixed(0);
+                                    
+                                    return (
+                                      <Badge 
+                                        key={idx}
+                                        variant="secondary"
+                                        className="bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30 text-amber-800 dark:text-amber-200 border border-amber-300 dark:border-amber-700 text-xs"
+                                      >
+                                        Buy {combo.quantity} @ ₹{combo.price} <span className="ml-1 font-semibold">Save {savingsPercent}%</span>
+                                      </Badge>
+                                    );
+                                  })}
+                                </div>
+                              </div>
                             )}
                           </div>
                         )}
@@ -834,17 +860,43 @@ const Products = () => {
                         )}
 
                         {product.price && (
-                          <div className="flex items-baseline gap-2">
-                            {product.discount_percentage && product.discount_percentage > 0 ? (
-                              <>
-                                <span className="text-2xl font-bold text-green-600">
-                                  ₹{(product.price * (1 - product.discount_percentage / 100)).toFixed(2)}
-                                </span>
-                                <span className="text-sm text-muted-foreground line-through">₹{product.price}</span>
-                                <Badge variant="destructive" className="ml-auto">{product.discount_percentage}% OFF</Badge>
-                              </>
-                            ) : (
-                              <span className="text-2xl font-bold text-green-600">₹{product.price}</span>
+                          <div className="space-y-2">
+                            <div className="flex items-baseline gap-2">
+                              {product.discount_percentage && product.discount_percentage > 0 ? (
+                                <>
+                                  <span className="text-2xl font-bold text-green-600">
+                                    ₹{(product.price * (1 - product.discount_percentage / 100)).toFixed(2)}
+                                  </span>
+                                  <span className="text-sm text-muted-foreground line-through">₹{product.price}</span>
+                                  <Badge variant="destructive" className="ml-auto">{product.discount_percentage}% OFF</Badge>
+                                </>
+                              ) : (
+                                <span className="text-2xl font-bold text-green-600">₹{product.price}</span>
+                              )}
+                            </div>
+                            
+                            {/* Combo Offers Display */}
+                            {product.combo_offers && product.combo_offers.length > 0 && (
+                              <div className="space-y-1">
+                                <p className="text-xs font-semibold text-green-700 dark:text-green-400">🎁 Bulk Discounts Available:</p>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {product.combo_offers.map((combo: { quantity: number; price: number }, idx: number) => {
+                                    const regularPrice = product.price * combo.quantity;
+                                    const savings = regularPrice - combo.price;
+                                    const savingsPercent = ((savings / regularPrice) * 100).toFixed(0);
+                                    
+                                    return (
+                                      <Badge 
+                                        key={idx}
+                                        variant="secondary"
+                                        className="bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 text-green-800 dark:text-green-200 border border-green-300 dark:border-green-700 text-xs"
+                                      >
+                                        Buy {combo.quantity} @ ₹{combo.price} <span className="ml-1 font-semibold">Save {savingsPercent}%</span>
+                                      </Badge>
+                                    );
+                                  })}
+                                </div>
+                              </div>
                             )}
                           </div>
                         )}
