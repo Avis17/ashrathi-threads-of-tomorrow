@@ -24,12 +24,15 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { INDIAN_STATES, INDIAN_DISTRICTS } from '@/lib/shippingConstants';
 
 const addressSchema = z.object({
   full_name: z.string().min(1, 'Full name is required'),
   phone: z.string().min(10, 'Valid phone number required'),
   address_line_1: z.string().min(1, 'Address is required'),
   address_line_2: z.string().optional(),
+  district: z.string().min(1, 'District is required'),
   city: z.string().min(1, 'City is required'),
   state: z.string().min(1, 'State is required'),
   pincode: z.string().min(6, 'Valid pincode required'),
@@ -55,6 +58,7 @@ export const AddressDialog = ({ open, onOpenChange }: AddressDialogProps) => {
       phone: '',
       address_line_1: '',
       address_line_2: '',
+      district: '',
       city: '',
       state: '',
       pincode: '',
@@ -71,6 +75,7 @@ export const AddressDialog = ({ open, onOpenChange }: AddressDialogProps) => {
           phone: data.phone,
           address_line_1: data.address_line_1,
           address_line_2: data.address_line_2 || null,
+          district: data.district,
           city: data.city,
           state: data.state,
           pincode: data.pincode,
@@ -169,6 +174,67 @@ export const AddressDialog = ({ open, onOpenChange }: AddressDialogProps) => {
               )}
             />
 
+            <FormField
+              control={form.control}
+              name="state"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>State</FormLabel>
+                  <Select 
+                    value={field.value} 
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      form.setValue('district', '');
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select state" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[300px]">
+                      {INDIAN_STATES.map((state) => (
+                        <SelectItem key={state} value={state}>
+                          {state}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="district"
+              render={({ field }) => {
+                const selectedState = form.watch('state');
+                const districts = selectedState ? INDIAN_DISTRICTS[selectedState] || [] : [];
+                
+                return (
+                  <FormItem>
+                    <FormLabel>District</FormLabel>
+                    <Select 
+                      value={field.value} 
+                      onValueChange={field.onChange}
+                      disabled={!selectedState}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={selectedState ? "Select district" : "Select state first"} />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[300px]">
+                        {districts.map((district) => (
+                          <SelectItem key={district} value={district}>
+                            {district}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
+            />
+
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -186,10 +252,10 @@ export const AddressDialog = ({ open, onOpenChange }: AddressDialogProps) => {
 
               <FormField
                 control={form.control}
-                name="state"
+                name="pincode"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>State</FormLabel>
+                    <FormLabel>Pincode</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -198,20 +264,6 @@ export const AddressDialog = ({ open, onOpenChange }: AddressDialogProps) => {
                 )}
               />
             </div>
-
-            <FormField
-              control={form.control}
-              name="pincode"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Pincode</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
             <FormField
               control={form.control}

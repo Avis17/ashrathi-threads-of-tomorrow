@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useCart } from '@/hooks/useCart';
@@ -13,6 +13,8 @@ import { AddressSelector } from '@/components/checkout/AddressSelector';
 import { Loader2, ArrowLeft } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { calculateComboPrice } from '@/lib/calculateComboPrice';
+import { calculateDeliveryCharge } from '@/lib/calculateDeliveryCharge';
+import { useShippingSettings } from '@/hooks/useShippingSettings';
 
 interface DeliveryAddress {
   id: string;
@@ -20,6 +22,7 @@ interface DeliveryAddress {
   phone: string;
   address_line_1: string;
   address_line_2?: string;
+  district?: string;
   city: string;
   state: string;
   pincode: string;
@@ -30,9 +33,27 @@ export default function Checkout() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { cartItems, selectedCartItems, selectedCartTotal, clearSelectedItems } = useCart();
+  const { data: shippingSettings } = useShippingSettings();
   const [selectedAddress, setSelectedAddress] = useState<DeliveryAddress | null>(null);
   const [customerNotes, setCustomerNotes] = useState('');
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+
+  // Calculate delivery charge
+  const deliveryCharge = useMemo(() => {
+    if (!selectedAddress || !shippingSettings) {
+      return { charge: 0, isFree: false };
+    }
+    
+    const totalItems = selectedCartItems.reduce((sum, item) => sum + item.quantity, 0);
+    
+    return calculateDeliveryCharge({
+      state: selectedAddress.state,
+      orderAmount: selectedCartTotal,
+      itemCount: totalItems,
+      zoneCharges: shippingSettings.zoneCharges,
+      config: shippingSettings.config,
+    });
+  }, [selectedAddress, selectedCartTotal, selectedCartItems, shippingSettings]);
 
   useEffect(() => {
     if (!user) {
@@ -91,8 +112,8 @@ export default function Checkout() {
           delivery_state: selectedAddress.state,
           delivery_pincode: selectedAddress.pincode,
           subtotal: selectedCartTotal,
-          shipping_charges: 0,
-          total_amount: selectedCartTotal,
+          shipping_charges: deliveryCharge.charge,
+          total_amount: selectedCartTotal + deliveryCharge.charge,
           customer_notes: customerNotes || null,
         })
         .select()
@@ -377,7 +398,21 @@ export default function Checkout() {
 
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Delivery Charges</span>
-                        <span className="text-green-600 dark:text-green-400 font-semibold">FREE</span>
+                        {deliveryCharge.isFree ? (
+                          <div className="flex items-center gap-2">
+                            <span className="text-green-600 dark:text-green-400 font-semibold">FREE</span>
+                            {deliveryCharge.reason && (
+                              <Badge variant="secondary" className="text-xs">{deliveryCharge.reason}</Badge>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold">₹{deliveryCharge.charge.toFixed(2)}</span>
+                            {deliveryCharge.zone && (
+                              <Badge className="text-xs bg-purple-600">{deliveryCharge.zone}</Badge>
+                            )}
+                          </div>
+                        )}
                       </div>
 
                       {selectedCartItems.length < cartItems.length && (
@@ -419,7 +454,9 @@ export default function Checkout() {
                 <div className="flex justify-between items-center">
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Total Amount</p>
-                    <p className="text-2xl font-bold text-foreground">₹{selectedCartTotal.toFixed(2)}</p>
+                    <p className="text-2xl font-bold text-foreground">
+                      ₹{(selectedCartTotal + deliveryCharge.charge).toFixed(2)}
+                    </p>
                   </div>
                   <div className="text-right">
                     <Badge variant="default" className="bg-primary text-primary-foreground">

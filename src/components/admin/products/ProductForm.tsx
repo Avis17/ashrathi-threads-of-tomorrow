@@ -44,6 +44,9 @@ const productSchema = z.object({
     .or(z.literal(''))
     .nullable(),
   product_code: z.string().max(50).optional().or(z.literal('')).nullable(),
+  weight_grams: z.string()
+    .transform((val) => parseFloat(val))
+    .refine((val) => val > 0, 'Weight must be greater than 0'),
   price: z.string()
     .transform((val) => (val === '' ? null : parseFloat(val)))
     .refine((val) => val === null || val > 0, 'Price must be positive')
@@ -119,6 +122,7 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
       additional_images: initialData?.additional_images || [],
       hsn_code: initialData?.hsn_code || '',
       product_code: initialData?.product_code || '',
+      weight_grams: initialData?.weight_grams?.toString() || '250',
       available_sizes: initialData?.available_sizes || [],
       available_colors: initialData?.available_colors || [],
       offer_messages: initialData?.offer_messages || [],
@@ -273,6 +277,21 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
           <Input id="fabric" {...register('fabric')} />
           {errors.fabric && (
             <p className="text-sm text-destructive">{errors.fabric.message}</p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="weight_grams">Product Weight (grams) *</Label>
+          <Input 
+            id="weight_grams" 
+            type="number" 
+            step="0.1" 
+            min="1" 
+            {...register('weight_grams')} 
+          />
+          <p className="text-xs text-muted-foreground">Single piece weight</p>
+          {errors.weight_grams && (
+            <p className="text-sm text-destructive">{errors.weight_grams.message}</p>
           )}
         </div>
 
