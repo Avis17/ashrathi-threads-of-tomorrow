@@ -53,11 +53,6 @@ const productSchema = z.object({
     .transform((val) => (val === '' ? 0 : parseInt(val)))
     .refine((val) => val >= 0 && val <= 99, 'Discount must be between 0-99%')
     .default('0'),
-  offer_messages: z.array(z.string()).optional(),
-  combo_offers: z.array(z.object({
-    quantity: z.number().int().positive(),
-    price: z.number().positive(),
-  })).optional(),
   display_order: z.string()
     .transform((val) => (val === '' ? 0 : parseInt(val)))
     .refine((val) => Number.isInteger(val), 'Must be a whole number'),
@@ -99,7 +94,7 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
   );
   const [inventoryModified, setInventoryModified] = useState(false);
 
-  const { register, handleSubmit, formState: { errors }, setValue, watch, control } = useForm<ProductFormData>({
+  const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
     defaultValues: {
       is_active: initialData?.is_active ?? true,
@@ -111,8 +106,6 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
       price: initialData?.price?.toString() || '',
       quality_tier: initialData?.quality_tier || 'smart_basics',
       discount_percentage: initialData?.discount_percentage?.toString() || '0',
-      offer_messages: initialData?.offer_messages || [],
-      combo_offers: initialData?.combo_offers || [],
       name: initialData?.name || '',
       category: initialData?.category || '',
       fabric: initialData?.fabric || '',
@@ -148,21 +141,15 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
       setSizes(initialData.available_sizes || []);
       setColors(initialData.available_colors || []);
       setAdditionalImages(initialData.additional_images || []);
-      setOfferMessages(initialData.offer_messages || []);
-      setComboOffers(initialData.combo_offers || []);
+      setOfferMessages(
+        Array.isArray(initialData.offer_messages) ? initialData.offer_messages : []
+      );
+      setComboOffers(
+        Array.isArray(initialData.combo_offers) ? initialData.combo_offers : []
+      );
       setInventory(initialData.inventory || []);
     }
   }, [initialData]);
-
-  // Sync offer messages with form
-  useEffect(() => {
-    setValue('offer_messages', offerMessages);
-  }, [offerMessages, setValue]);
-
-  // Sync combo offers with form
-  useEffect(() => {
-    setValue('combo_offers', comboOffers);
-  }, [comboOffers, setValue]);
 
   const handleFormSubmit = (data: ProductFormData) => {
     // Build submission data with current state values
@@ -171,14 +158,9 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
       available_sizes: sizes, 
       available_colors: colors, 
       additional_images: additionalImages, 
-      offer_messages: offerMessages.length > 0 ? offerMessages : [],
-      combo_offers: comboOffers.length > 0 ? comboOffers : [],
+      offer_messages: offerMessages.length > 0 ? offerMessages : null,
+      combo_offers: comboOffers.length > 0 ? comboOffers : null,
     };
-    
-    console.log('Submitting product data:', {
-      offer_messages: submitData.offer_messages,
-      combo_offers: submitData.combo_offers,
-    });
     
     // Only include inventory if it was explicitly modified
     if (inventoryModified || !initialData) {
@@ -240,18 +222,6 @@ export function ProductForm({ onSubmit, initialData, isLoading }: ProductFormPro
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
-      {/* Hidden controllers to ensure form registration */}
-      <Controller
-        name="offer_messages"
-        control={control}
-        render={() => <input type="hidden" />}
-      />
-      <Controller
-        name="combo_offers"
-        control={control}
-        render={() => <input type="hidden" />}
-      />
-      
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="name">Product Name *</Label>

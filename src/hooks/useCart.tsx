@@ -51,7 +51,18 @@ export const useCart = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as unknown as CartItemWithProduct[];
+
+      // Normalize combo_offers for cart items
+      const items = (data || []) as any[];
+      return items.map(item => ({
+        ...item,
+        products: {
+          ...item.products,
+          combo_offers: Array.isArray(item.products?.combo_offers)
+            ? item.products.combo_offers
+            : [],
+        },
+      })) as CartItemWithProduct[];
     },
     enabled: !!user,
   });

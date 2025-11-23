@@ -32,7 +32,16 @@ export const useProducts = () => {
         .order('display_order', { ascending: true });
 
       if (error) throw error;
-      return data as unknown as Product[];
+
+      // Normalize JSON fields to ensure proper types
+      return (data || []).map((row: any) => ({
+        ...row,
+        additional_images: Array.isArray(row.additional_images) ? row.additional_images : [],
+        available_sizes: Array.isArray(row.available_sizes) ? row.available_sizes : [],
+        available_colors: Array.isArray(row.available_colors) ? row.available_colors : [],
+        offer_messages: Array.isArray(row.offer_messages) ? row.offer_messages : [],
+        combo_offers: Array.isArray(row.combo_offers) ? row.combo_offers : [],
+      })) as Product[];
     },
   });
 };
