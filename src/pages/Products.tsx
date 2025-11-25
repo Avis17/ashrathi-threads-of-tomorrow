@@ -432,9 +432,18 @@ const Products = () => {
             <h2 className="text-3xl md:text-4xl font-bold mb-3 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
               Women's Leggings Collection
             </h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-muted-foreground max-w-2xl mx-auto mb-6">
               Discover your perfect fit from our range of premium leggings designed for every lifestyle
             </p>
+            <Link to="/leggings-features">
+              <Button 
+                size="lg" 
+                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 px-8 group"
+              >
+                ✨ Discover Premium Features
+                <Sparkles className="ml-2 h-5 w-5 group-hover:scale-110 transition-transform" />
+              </Button>
+            </Link>
           </div>
           
           <Carousel
