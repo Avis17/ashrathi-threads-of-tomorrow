@@ -33,13 +33,16 @@ import heroModelKid3 from "@/assets/hero-model-kid-3.jpg";
 import heroModelWoman4 from "@/assets/hero-model-woman-4.jpg";
 
 // Leggings collection images
-import leggingsActive from "@/assets/leggings-active-78.jpg";
-import leggingsAnkle from "@/assets/leggings-ankle-length.jpg";
-import leggingsCotton from "@/assets/leggings-cotton-lycra.jpg";
-import leggingsStraight from "@/assets/leggings-straight-fit.jpg";
-import leggingsBurgundy from "@/assets/leggings-burgundy.jpg";
-import leggingsGreen from "@/assets/leggings-green.jpg";
-import leggingsCharcoal from "@/assets/leggings-charcoal.jpg";
+import leggingsYogaPose from "@/assets/leggings-carousel/yoga-pose.jpg";
+import leggingsStanding from "@/assets/leggings-carousel/standing-pose.jpg";
+import leggingsOffice from "@/assets/leggings-carousel/office-style.jpg";
+import leggingsStreet from "@/assets/leggings-carousel/street-style.jpg";
+import leggingsCozy from "@/assets/leggings-carousel/cozy-home.jpg";
+import leggingsProfessional from "@/assets/leggings-carousel/professional-look.jpg";
+import leggingsSidePocket from "@/assets/leggings-carousel/side-pocket.jpg";
+import leggingsPhonePocket from "@/assets/leggings-carousel/phone-pocket.jpg";
+import leggingsAthletic from "@/assets/leggings-carousel/athletic-pose.jpg";
+import leggingsSeated from "@/assets/leggings-carousel/seated-stretch.jpg";
 
 const PLACEHOLDER_IMAGE = '/placeholder.svg';
 
@@ -58,46 +61,64 @@ const modelShowcaseImages = [
 
 const leggingsCollection = [
   { 
-    src: leggingsActive, 
-    alt: "High-Rise 7/8 Length Active Leggings",
-    title: "High-Rise 7/8 Length Active",
-    description: "Perfect for workouts, yoga & active lifestyle"
+    src: leggingsYogaPose, 
+    alt: "Premium Leggings - Yoga Pose",
+    title: "Yoga & Wellness",
+    description: "Maximum flexibility for your practice"
   },
   { 
-    src: leggingsStraight, 
-    alt: "Straight Fit Leggings",
-    title: "Straight Fit",
-    description: "Relaxed fit for ultimate comfort"
+    src: leggingsStanding, 
+    alt: "Premium Leggings - Standing Studio",
+    title: "Studio Performance",
+    description: "Premium support for every move"
   },
   { 
-    src: leggingsCotton, 
-    alt: "Everyday Cotton Lycra Leggings",
-    title: "Everyday Cotton Lycra",
-    description: "Daily comfort & premium loungewear"
+    src: leggingsOffice, 
+    alt: "Premium Leggings - Office Style",
+    title: "Professional Elegance",
+    description: "Sophisticated style meets comfort"
   },
   { 
-    src: leggingsAnkle, 
-    alt: "High-Rise Ankle Length Leggings",
-    title: "High-Rise Ankle Length",
-    description: "Elegant everyday wear & office casual"
+    src: leggingsStreet, 
+    alt: "Premium Leggings - Street Fashion",
+    title: "Urban Lifestyle",
+    description: "Fashion-forward street style"
   },
   { 
-    src: leggingsBurgundy, 
-    alt: "Premium Burgundy Leggings",
-    title: "Premium Burgundy",
-    description: "Bold style with athletic performance"
+    src: leggingsCozy, 
+    alt: "Premium Leggings - Cozy Home",
+    title: "Home Comfort",
+    description: "Ultimate relaxation & loungewear"
   },
   { 
-    src: leggingsGreen, 
-    alt: "Forest Green Athletic Leggings",
-    title: "Forest Green Athletic",
-    description: "Nature-inspired activewear"
+    src: leggingsProfessional, 
+    alt: "Premium Leggings - Professional Look",
+    title: "Business Casual",
+    description: "Polished elegance for the office"
   },
   { 
-    src: leggingsCharcoal, 
-    alt: "Charcoal Gray Performance Leggings",
-    title: "Charcoal Gray Performance",
-    description: "Versatile everyday performance"
+    src: leggingsSidePocket, 
+    alt: "Premium Leggings - Side Pocket Feature",
+    title: "Functional Design",
+    description: "Deep pockets for active lifestyle"
+  },
+  { 
+    src: leggingsPhonePocket, 
+    alt: "Premium Leggings - Phone Pocket",
+    title: "Smart Storage",
+    description: "Secure phone pocket for workouts"
+  },
+  { 
+    src: leggingsAthletic, 
+    alt: "Premium Leggings - Athletic Performance",
+    title: "Peak Performance",
+    description: "High-intensity training ready"
+  },
+  { 
+    src: leggingsSeated, 
+    alt: "Premium Leggings - Seated Stretch",
+    title: "Flexibility & Stretch",
+    description: "4-way stretch for total freedom"
   },
 ];
 
