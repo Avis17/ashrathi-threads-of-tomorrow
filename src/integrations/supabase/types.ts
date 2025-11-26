@@ -1540,6 +1540,8 @@ export type Database = {
           contact_person: string
           created_at: string
           delivery_date: string
+          gst_amount: number | null
+          gst_percentage: number | null
           id: string
           job_type: string
           overall_progress: number
@@ -1548,6 +1550,7 @@ export type Database = {
           start_date: string
           status: string
           total_pieces: number
+          total_with_gst: number | null
           updated_at: string
         }
         Insert: {
@@ -1556,6 +1559,8 @@ export type Database = {
           contact_person: string
           created_at?: string
           delivery_date: string
+          gst_amount?: number | null
+          gst_percentage?: number | null
           id?: string
           job_type: string
           overall_progress?: number
@@ -1564,6 +1569,7 @@ export type Database = {
           start_date: string
           status?: string
           total_pieces: number
+          total_with_gst?: number | null
           updated_at?: string
         }
         Update: {
@@ -1572,6 +1578,8 @@ export type Database = {
           contact_person?: string
           created_at?: string
           delivery_date?: string
+          gst_amount?: number | null
+          gst_percentage?: number | null
           id?: string
           job_type?: string
           overall_progress?: number
@@ -1580,6 +1588,7 @@ export type Database = {
           start_date?: string
           status?: string
           total_pieces?: number
+          total_with_gst?: number | null
           updated_at?: string
         }
         Relationships: []
