@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Edit, Trash2, Search } from "lucide-react";
+import { Plus, Edit, Trash2, Search, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -57,11 +57,20 @@ const RateCards = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Rate Cards</h1>
-          <p className="text-muted-foreground mt-1">
-            Manage reusable rate card templates for job orders
-          </p>
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate("/admin/external-jobs")}
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold">Rate Cards</h1>
+            <p className="text-muted-foreground mt-1">
+              Manage reusable rate card templates for job orders
+            </p>
+          </div>
         </div>
         <Button onClick={() => navigate("/admin/external-jobs/add-rate-card")} className="gap-2">
           <Plus className="h-4 w-4" />
