@@ -183,7 +183,12 @@ const JobDetails = () => {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Total Amount</p>
-              <p className="text-2xl font-bold">₹{jobOrder.total_amount.toFixed(2)}</p>
+              <p className="text-2xl font-bold">
+                ₹{(jobOrder.gst_percentage > 0 ? jobOrder.total_with_gst : jobOrder.total_amount).toFixed(2)}
+              </p>
+              {jobOrder.gst_percentage > 0 && (
+                <p className="text-xs text-muted-foreground">Incl. {jobOrder.gst_percentage}% GST</p>
+              )}
             </div>
           </div>
         </Card>
@@ -207,7 +212,9 @@ const JobDetails = () => {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Balance</p>
-              <p className="text-2xl font-bold">₹{jobOrder.balance_amount.toFixed(2)}</p>
+              <p className="text-2xl font-bold">
+                ₹{((jobOrder.gst_percentage > 0 ? jobOrder.total_with_gst : jobOrder.total_amount) - jobOrder.paid_amount).toFixed(2)}
+              </p>
             </div>
           </div>
         </Card>
@@ -405,7 +412,7 @@ const JobDetails = () => {
       <Card className="p-6">
         <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
           <Receipt className="h-5 w-5" />
-          GST & Final Total
+          GST Configuration
         </h3>
         <div className="space-y-6">
           <div className="flex items-center space-x-2">
@@ -435,12 +442,12 @@ const JobDetails = () => {
                 />
               </div>
               <Button onClick={handleGstUpdate} className="w-full">
-                Update GST
+                {jobOrder.gst_percentage > 0 ? 'Update GST' : 'Add GST'}
               </Button>
             </div>
           )}
 
-          {!gstEnabled && baseTotal > 0 && (
+          {!gstEnabled && jobOrder.gst_percentage > 0 && (
             <Button onClick={handleGstUpdate} variant="outline" className="w-full">
               Remove GST
             </Button>
