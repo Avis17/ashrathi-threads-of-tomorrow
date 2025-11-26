@@ -15,6 +15,9 @@ export interface JobOrder {
   remarks: string | null;
   status: string;
   overall_progress: number;
+  gst_percentage: number;
+  gst_amount: number;
+  total_with_gst: number;
   created_at: string;
   updated_at: string;
 }

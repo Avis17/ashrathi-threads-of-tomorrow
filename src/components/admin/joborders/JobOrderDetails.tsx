@@ -1,10 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useJobOrderDetails, useUpdateJobOrder } from "@/hooks/useJobOrders";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, Calendar, Package, User, Phone, FileText, Printer } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ArrowLeft, Calendar, Package, User, Phone, FileText, Printer, Receipt } from "lucide-react";
 import { format } from "date-fns";
 import { ProcessesTable } from "./ProcessesTable";
 import { LaboursTable } from "./LaboursTable";
@@ -19,12 +22,35 @@ interface JobOrderDetailsProps {
 export const JobOrderDetails = ({ jobOrderId, onBack }: JobOrderDetailsProps) => {
   const { data: details, isLoading } = useJobOrderDetails(jobOrderId);
   const updateJobOrder = useUpdateJobOrder();
+  
+  const [gstEnabled, setGstEnabled] = useState(false);
+  const [gstPercentage, setGstPercentage] = useState<number>(0);
+
+  useEffect(() => {
+    if (details?.order) {
+      setGstEnabled((details.order.gst_percentage || 0) > 0);
+      setGstPercentage(details.order.gst_percentage || 0);
+    }
+  }, [details?.order]);
 
   if (isLoading || !details) {
     return <div className="p-8 text-center">Loading job order details...</div>;
   }
 
   const { order, processes, labours, costs } = details;
+
+  const baseTotal = costs?.total_cost || 0;
+  const gstAmount = gstEnabled ? (baseTotal * gstPercentage) / 100 : 0;
+  const totalWithGst = baseTotal + gstAmount;
+
+  const handleGstUpdate = () => {
+    updateJobOrder.mutate({
+      id: jobOrderId,
+      gst_percentage: gstEnabled ? gstPercentage : 0,
+      gst_amount: gstAmount,
+      total_with_gst: totalWithGst,
+    });
+  };
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
@@ -141,6 +167,71 @@ export const JobOrderDetails = ({ jobOrderId, onBack }: JobOrderDetailsProps) =>
       <LaboursTable jobOrderId={jobOrderId} labours={labours} processes={processes} />
 
       <CostSummary jobOrderId={jobOrderId} costs={costs} />
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Receipt className="h-5 w-5" />
+            GST & Final Total
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="gst-enabled"
+              checked={gstEnabled}
+              onCheckedChange={(checked) => setGstEnabled(!!checked)}
+            />
+            <Label htmlFor="gst-enabled" className="cursor-pointer">
+              Apply GST
+            </Label>
+          </div>
+
+          {gstEnabled && (
+            <div className="space-y-4">
+              <div className="grid gap-2">
+                <Label htmlFor="gst-percentage">GST Percentage (%)</Label>
+                <Input
+                  id="gst-percentage"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  value={gstPercentage}
+                  onChange={(e) => setGstPercentage(parseFloat(e.target.value) || 0)}
+                  placeholder="Enter GST percentage"
+                />
+              </div>
+              <Button onClick={handleGstUpdate} className="w-full">
+                Update GST
+              </Button>
+            </div>
+          )}
+
+          {!gstEnabled && baseTotal > 0 && (
+            <Button onClick={handleGstUpdate} variant="outline" className="w-full">
+              Remove GST
+            </Button>
+          )}
+
+          <div className="space-y-3 pt-4 border-t">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Base Total:</span>
+              <span className="font-medium">{formatCurrency(baseTotal)}</span>
+            </div>
+            {gstEnabled && (
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">GST ({gstPercentage}%):</span>
+                <span className="font-medium">{formatCurrency(gstAmount)}</span>
+              </div>
+            )}
+            <div className="flex justify-between text-lg font-bold pt-2 border-t">
+              <span>Final Total:</span>
+              <span className="text-primary">{formatCurrency(totalWithGst)}</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
