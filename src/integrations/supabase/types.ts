@@ -851,6 +851,54 @@ export type Database = {
           },
         ]
       }
+      external_job_rate_cards: {
+        Row: {
+          accessories_cost: number
+          category: string
+          company_profit_type: string | null
+          company_profit_value: number | null
+          created_at: string
+          delivery_charge: number
+          id: string
+          is_active: boolean
+          operations_data: Json
+          rate_per_piece: number
+          style_id: string
+          style_name: string
+          updated_at: string
+        }
+        Insert: {
+          accessories_cost?: number
+          category: string
+          company_profit_type?: string | null
+          company_profit_value?: number | null
+          created_at?: string
+          delivery_charge?: number
+          id?: string
+          is_active?: boolean
+          operations_data?: Json
+          rate_per_piece?: number
+          style_id: string
+          style_name: string
+          updated_at?: string
+        }
+        Update: {
+          accessories_cost?: number
+          category?: string
+          company_profit_type?: string | null
+          company_profit_value?: number | null
+          created_at?: string
+          delivery_charge?: number
+          id?: string
+          is_active?: boolean
+          operations_data?: Json
+          rate_per_piece?: number
+          style_id?: string
+          style_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       invoice_items: {
         Row: {
           amount: number

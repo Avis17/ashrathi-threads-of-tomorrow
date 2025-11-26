@@ -36,6 +36,8 @@ import ExternalJobDashboard from './admin/external-jobs/Dashboard';
 import CompanyDetails from './admin/external-jobs/CompanyDetails';
 import CompanyEdit from './admin/external-jobs/CompanyEdit';
 import GenerateInvoice from './admin/external-jobs/GenerateInvoice';
+import RateCards from './admin/external-jobs/RateCards';
+import AddRateCard from './admin/external-jobs/AddRateCard';
 
 const Admin = () => {
   const { isAdmin, loading } = useAuth();
@@ -100,6 +102,9 @@ const Admin = () => {
               <Route path="/external-jobs/company/:id" element={<CompanyDetails />} />
               <Route path="/external-jobs/company/edit/:id" element={<CompanyEdit />} />
               <Route path="/external-jobs/invoice/:id" element={<GenerateInvoice />} />
+              <Route path="/external-jobs/rate-cards" element={<RateCards />} />
+              <Route path="/external-jobs/add-rate-card" element={<AddRateCard />} />
+              <Route path="/external-jobs/edit-rate-card/:id" element={<AddRateCard />} />
             </Routes>
           </main>
         </div>
