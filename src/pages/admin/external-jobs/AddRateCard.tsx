@@ -3,7 +3,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Check } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -28,7 +29,8 @@ import {
   useUpdateExternalJobRateCard,
   useExternalJobRateCard,
 } from "@/hooks/useExternalJobRateCards";
-import { OPERATIONS, JOB_ORDER_CATEGORIES } from "@/lib/jobOrderCategories";
+import { OPERATIONS } from "@/lib/jobOrderCategories";
+import { useCustomCategories } from "@/hooks/useCustomCategories";
 
 type CategoryItem = {
   name: string;
@@ -71,6 +73,7 @@ const AddRateCard = () => {
   const { data: existingCard } = useExternalJobRateCard(id || "");
   const createRateCard = useCreateExternalJobRateCard();
   const updateRateCard = useUpdateExternalJobRateCard();
+  const { getCategories, addCustomCategory } = useCustomCategories();
 
   const [selectedOperations, setSelectedOperations] = useState<string[]>([]);
   const [operationCategories, setOperationCategories] = useState<Record<string, CategoryItem[]>>({});
@@ -400,65 +403,86 @@ const AddRateCard = () => {
                   {selectedOperations.includes(operation) && (
                     <div className="ml-6 space-y-2">
                       {operationCategories[operation]?.map((category, index) => (
-                        <div key={index} className="space-y-2">
-                          <div className="flex gap-2">
-                            <Select
-                              value={category.name}
-                              onValueChange={(value) =>
-                                updateCategory(operation, index, "name", value)
-                              }
-                            >
-                              <SelectTrigger className="flex-1">
-                                <SelectValue placeholder="Select category" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {JOB_ORDER_CATEGORIES[
-                                  operation as keyof typeof JOB_ORDER_CATEGORIES
-                                ]?.map((cat) => (
-                                  <SelectItem key={cat} value={cat}>
-                                    {cat}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <Input
-                              type="number"
-                              placeholder={
-                                category.name === "Contract Commission"
-                                  ? "Commission %"
-                                  : "Rate %"
-                              }
-                              value={category.rate}
-                              onChange={(e) =>
-                                updateCategory(
-                                  operation,
-                                  index,
-                                  "rate",
-                                  parseFloat(e.target.value) || 0
-                                )
-                              }
-                              className="w-32"
-                            />
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => removeCategory(operation, index)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                          {category.name === "Other" && (
-                            <Input
-                              placeholder="Enter custom category name"
-                              value={category.customName || ""}
-                              onChange={(e) =>
-                                updateCategory(operation, index, "customName", e.target.value)
-                              }
-                              className="ml-0"
-                            />
-                          )}
-                        </div>
+                         <div key={index} className="space-y-2">
+                           <div className="flex gap-2">
+                             <Select
+                               value={category.name}
+                               onValueChange={(value) =>
+                                 updateCategory(operation, index, "name", value)
+                               }
+                             >
+                               <SelectTrigger className="flex-1">
+                                 <SelectValue placeholder="Select category" />
+                               </SelectTrigger>
+                               <SelectContent>
+                                 {getCategories(operation).map((cat) => (
+                                   <SelectItem key={cat} value={cat}>
+                                     {cat}
+                                   </SelectItem>
+                                 ))}
+                               </SelectContent>
+                             </Select>
+                             <Input
+                               type="number"
+                               placeholder={
+                                 category.name === "Contract Commission"
+                                   ? "Commission %"
+                                   : "Rate %"
+                               }
+                               value={category.rate}
+                               onChange={(e) =>
+                                 updateCategory(
+                                   operation,
+                                   index,
+                                   "rate",
+                                   parseFloat(e.target.value) || 0
+                                 )
+                               }
+                               className="w-32"
+                             />
+                             <Button
+                               type="button"
+                               variant="ghost"
+                               size="icon"
+                               onClick={() => removeCategory(operation, index)}
+                             >
+                               <Trash2 className="h-4 w-4" />
+                             </Button>
+                           </div>
+                           {category.name === "Other" && (
+                             <div className="flex gap-2 items-center ml-0">
+                               <Input
+                                 placeholder="Enter custom category name"
+                                 value={category.customName || ""}
+                                 onChange={(e) =>
+                                   updateCategory(operation, index, "customName", e.target.value)
+                                 }
+                                 className="flex-1"
+                               />
+                               <Button
+                                 type="button"
+                                 variant="outline"
+                                 size="icon"
+                                 onClick={() => {
+                                   const customName = category.customName?.trim();
+                                   if (customName) {
+                                     const result = addCustomCategory(operation, customName);
+                                     if (result.success) {
+                                       toast.success(result.message);
+                                     } else {
+                                       toast.error(result.message);
+                                     }
+                                   } else {
+                                     toast.error("Please enter a category name");
+                                   }
+                                 }}
+                                 title="Add to category list"
+                               >
+                                 <Check className="h-4 w-4" />
+                               </Button>
+                             </div>
+                           )}
+                         </div>
                       ))}
                       <Button
                         type="button"
@@ -616,9 +640,35 @@ const AddRateCard = () => {
               )}
 
               <div className="pt-4 border-t-2 border-primary/20 space-y-2">
-                <div className="flex justify-between text-lg">
-                  <span className="font-medium">Rate per Piece:</span>
-                  <span className="font-bold text-primary">₹{ratePerPiece.toFixed(2)}</span>
+                <div className="flex justify-between text-sm">
+                  <span>Operations Total:</span>
+                  <span className="font-medium">₹{totalOperationsCost.toFixed(2)}</span>
+                </div>
+                
+                {form.watch("company_profit_value") > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span>Company Profit ({form.watch("company_profit_type") === "percent" ? `${form.watch("company_profit_value")}%` : "Fixed"}):</span>
+                    <span className="font-medium">
+                      ₹{(form.watch("company_profit_type") === "percent" 
+                        ? (totalOperationsCost * (form.watch("company_profit_value") || 0)) / 100 
+                        : (form.watch("company_profit_value") || 0)
+                      ).toFixed(2)}
+                    </span>
+                  </div>
+                )}
+
+                {form.watch("adjustment") !== 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span>Adjustment (per piece):</span>
+                    <span className={`font-medium ${form.watch("adjustment") > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {form.watch("adjustment") > 0 ? '+' : ''}₹{form.watch("adjustment").toFixed(2)}
+                    </span>
+                  </div>
+                )}
+                
+                <div className="flex justify-between text-lg font-bold bg-primary/10 p-3 rounded-lg mt-3">
+                  <span>Rate per Piece:</span>
+                  <span className="text-primary">₹{ratePerPiece.toFixed(2)}</span>
                 </div>
               </div>
             </div>
