@@ -16,8 +16,7 @@ import { useCreateJobStyle, useUpdateJobStyle, type JobStyle } from '@/hooks/use
 import { supabase } from '@/integrations/supabase/client';
 import { Upload, Link as LinkIcon, X, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { JOB_DEPARTMENTS } from '@/lib/jobDepartments';
-import { JOB_ORDER_CATEGORIES } from '@/lib/jobOrderCategories';
+import { JOB_ORDER_CATEGORIES, OPERATIONS } from '@/lib/jobOrderCategories';
 
 interface StyleFormProps {
   style?: JobStyle | null;
@@ -210,8 +209,10 @@ const StyleForm = ({ style, onClose }: StyleFormProps) => {
     // Calculate total rates for each operation
     const rates = {
       rate_cutting: calculateOperationTotal("Cutting"),
-      rate_stitching_singer: calculateOperationTotal("Stitching(Singer)"),
-      rate_stitching_power_table: calculateOperationTotal("Stitching(Powertable)"),
+      rate_stitching_singer: calculateOperationTotal("Stitching (Singer)"),
+      rate_stitching_power_table: 
+        calculateOperationTotal("Stitching (Power Table) - Overlock") + 
+        calculateOperationTotal("Stitching (Power Table) - Flatlock"),
       rate_ironing: calculateOperationTotal("Ironing"),
       rate_checking: calculateOperationTotal("Checking"),
       rate_packing: calculateOperationTotal("Packing"),
@@ -359,7 +360,7 @@ const StyleForm = ({ style, onClose }: StyleFormProps) => {
           Select operations and add categories with rates. Total rate per operation will be calculated automatically.
         </p>
         <div className="space-y-6">
-          {JOB_DEPARTMENTS.filter(dept => dept !== "Maintenance").map((operation) => (
+          {OPERATIONS.map((operation) => (
             <div key={operation} className="space-y-3">
               <div className="flex items-center gap-2">
                 <Checkbox
