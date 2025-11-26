@@ -1,9 +1,12 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Calendar, DollarSign, Package, Clock, Edit, FileText, Building2, Trash2, Pencil } from "lucide-react";
+import { ArrowLeft, Calendar, DollarSign, Package, Clock, Edit, FileText, Building2, Trash2, Pencil, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -14,7 +17,7 @@ import {
 } from "@/components/ui/table";
 import { useExternalJobOrder, useUpdateExternalJobOrder, useDeleteExternalJobPayment } from "@/hooks/useExternalJobOrders";
 import { format } from "date-fns";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AddPaymentDialog } from "@/components/admin/external-jobs/AddPaymentDialog";
 import { EditPaymentDialog } from "@/components/admin/external-jobs/EditPaymentDialog";
 import {
@@ -46,6 +49,15 @@ const JobDetails = () => {
   const [selectedPayment, setSelectedPayment] = useState<any>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [paymentToDelete, setPaymentToDelete] = useState<string | null>(null);
+  const [gstEnabled, setGstEnabled] = useState(false);
+  const [gstPercentage, setGstPercentage] = useState<number>(0);
+
+  useEffect(() => {
+    if (jobOrder) {
+      setGstEnabled((jobOrder.gst_percentage || 0) > 0);
+      setGstPercentage(jobOrder.gst_percentage || 0);
+    }
+  }, [jobOrder]);
 
   const handleEditPayment = (payment: any) => {
     setSelectedPayment(payment);
@@ -109,6 +121,21 @@ const JobDetails = () => {
     await updateStatus.mutateAsync({
       id: jobOrder.id,
       data: { job_status: newStatus },
+    });
+  };
+
+  const baseTotal = jobOrder?.total_amount || 0;
+  const gstAmount = gstEnabled ? (baseTotal * gstPercentage) / 100 : 0;
+  const totalWithGst = baseTotal + gstAmount;
+
+  const handleGstUpdate = () => {
+    updateStatus.mutateAsync({
+      id: jobOrder.id,
+      data: {
+        gst_percentage: gstEnabled ? gstPercentage : 0,
+        gst_amount: gstAmount,
+        total_with_gst: totalWithGst,
+      },
     });
   };
 
@@ -373,6 +400,69 @@ const JobDetails = () => {
         ) : (
           <p className="text-center text-muted-foreground py-8">No payments recorded yet</p>
         )}
+      </Card>
+
+      <Card className="p-6">
+        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+          <Receipt className="h-5 w-5" />
+          GST & Final Total
+        </h3>
+        <div className="space-y-6">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="gst-enabled"
+              checked={gstEnabled}
+              onCheckedChange={(checked) => setGstEnabled(!!checked)}
+            />
+            <Label htmlFor="gst-enabled" className="cursor-pointer">
+              Apply GST
+            </Label>
+          </div>
+
+          {gstEnabled && (
+            <div className="space-y-4">
+              <div className="grid gap-2">
+                <Label htmlFor="gst-percentage">GST Percentage (%)</Label>
+                <Input
+                  id="gst-percentage"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  value={gstPercentage}
+                  onChange={(e) => setGstPercentage(parseFloat(e.target.value) || 0)}
+                  placeholder="Enter GST percentage"
+                />
+              </div>
+              <Button onClick={handleGstUpdate} className="w-full">
+                Update GST
+              </Button>
+            </div>
+          )}
+
+          {!gstEnabled && baseTotal > 0 && (
+            <Button onClick={handleGstUpdate} variant="outline" className="w-full">
+              Remove GST
+            </Button>
+          )}
+
+          <div className="space-y-3 pt-4 border-t">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Base Total:</span>
+              <span className="font-medium">₹{baseTotal.toFixed(2)}</span>
+            </div>
+            {gstEnabled && (
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">GST ({gstPercentage}%):</span>
+                <span className="font-medium">₹{gstAmount.toFixed(2)}</span>
+              </div>
+            )}
+            <div className="flex justify-between text-lg font-bold pt-2 border-t">
+              <span>Final Total:</span>
+              <span className="text-primary">₹{totalWithGst.toFixed(2)}</span>
+            </div>
+          </div>
+        </div>
       </Card>
 
       <AddPaymentDialog
