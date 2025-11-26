@@ -172,7 +172,34 @@ export const JobOrderDetails = ({ jobOrderId, onBack }: JobOrderDetailsProps) =>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Receipt className="h-5 w-5" />
-            GST & Final Total
+            Total Summary
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">Base Total (Costs):</span>
+            <span className="font-medium">{formatCurrency(baseTotal)}</span>
+          </div>
+          {order.gst_percentage > 0 && (
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">GST ({order.gst_percentage}%):</span>
+              <span className="font-medium">{formatCurrency(order.gst_amount)}</span>
+            </div>
+          )}
+          <div className="flex justify-between text-lg font-bold pt-2 border-t">
+            <span>Final Total Amount:</span>
+            <span className="text-primary">
+              {formatCurrency(order.gst_percentage > 0 ? order.total_with_gst : baseTotal)}
+            </span>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Receipt className="h-5 w-5" />
+            GST Configuration
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -203,12 +230,12 @@ export const JobOrderDetails = ({ jobOrderId, onBack }: JobOrderDetailsProps) =>
                 />
               </div>
               <Button onClick={handleGstUpdate} className="w-full">
-                Update GST
+                {order.gst_percentage > 0 ? 'Update GST' : 'Add GST'}
               </Button>
             </div>
           )}
 
-          {!gstEnabled && baseTotal > 0 && (
+          {!gstEnabled && order.gst_percentage > 0 && (
             <Button onClick={handleGstUpdate} variant="outline" className="w-full">
               Remove GST
             </Button>
