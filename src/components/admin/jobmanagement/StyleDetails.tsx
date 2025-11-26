@@ -15,17 +15,28 @@ interface StyleDetailsProps {
 const StyleDetails = ({ style, open, onClose, onEdit }: StyleDetailsProps) => {
   if (!style) return null;
 
+  // Check if we have detailed rate breakdown
+  const hasDetailedRates = style.process_rate_details && Array.isArray(style.process_rate_details) && (style.process_rate_details as any[]).length > 0;
+  
   const processRates = [
-    { name: 'Cutting', value: style.rate_cutting, icon: '✂️' },
-    { name: 'Stitching (Singer)', value: style.rate_stitching_singer, icon: '🧵' },
-    { name: 'Stitching (Power)', value: style.rate_stitching_power_table, icon: '⚡' },
-    { name: 'Ironing', value: style.rate_ironing, icon: '👔' },
-    { name: 'Checking', value: style.rate_checking, icon: '✓' },
-    { name: 'Packing', value: style.rate_packing, icon: '📦' },
+    { name: 'Cutting', value: style.rate_cutting, icon: '✂️', key: 'Cutting' },
+    { name: 'Stitching (Singer)', value: style.rate_stitching_singer, icon: '🧵', key: 'Stitching(Singer)' },
+    { name: 'Stitching (Power)', value: style.rate_stitching_power_table, icon: '⚡', key: 'Stitching(Powertable)' },
+    { name: 'Ironing', value: style.rate_ironing, icon: '👔', key: 'Ironing' },
+    { name: 'Checking', value: style.rate_checking, icon: '✓', key: 'Checking' },
+    { name: 'Packing', value: style.rate_packing, icon: '📦', key: 'Packing' },
   ];
 
   const totalRate = processRates.reduce((sum, rate) => sum + (rate.value || 0), 0);
   const maxRate = Math.max(...processRates.map(r => r.value || 0));
+
+  // Build a map of operation to details
+  const operationDetails: Record<string, any> = {};
+  if (hasDetailedRates) {
+    (style.process_rate_details as any[]).forEach((op: any) => {
+      operationDetails[op.operation] = op;
+    });
+  }
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -86,25 +97,41 @@ const StyleDetails = ({ style, open, onClose, onEdit }: StyleDetailsProps) => {
               Process Rates
             </h3>
             <div className="space-y-3">
-              {processRates.map((rate) => (
-                <div key={rate.name} className="space-y-1">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="flex items-center gap-2">
-                      <span>{rate.icon}</span>
-                      <span>{rate.name}</span>
-                    </span>
-                    <span className="font-medium">
-                      ₹{(rate.value || 0).toFixed(2)}
-                    </span>
+              {processRates.map((rate) => {
+                const hasDetails = hasDetailedRates && operationDetails[rate.key];
+                return (
+                  <div key={rate.name} className="space-y-1">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="flex items-center gap-2">
+                        <span>{rate.icon}</span>
+                        <span>{rate.name}</span>
+                      </span>
+                      <span className="font-medium">
+                        ₹{(rate.value || 0).toFixed(2)}
+                      </span>
+                    </div>
+                    
+                    {/* Show detailed category breakdown if available */}
+                    {hasDetails && operationDetails[rate.key].categories && operationDetails[rate.key].categories.length > 0 && (
+                      <div className="ml-8 space-y-1 text-xs text-muted-foreground">
+                        {operationDetails[rate.key].categories.map((cat: any, idx: number) => (
+                          <div key={idx} className="flex justify-between">
+                            <span>• {cat.name}</span>
+                            <span>₹{(cat.rate || 0).toFixed(2)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    
+                    <div className="h-2 bg-muted rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-primary transition-all"
+                        style={{ width: `${((rate.value || 0) / maxRate) * 100}%` }}
+                      />
+                    </div>
                   </div>
-                  <div className="h-2 bg-muted rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-primary transition-all"
-                      style={{ width: `${((rate.value || 0) / maxRate) * 100}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
+                );
+              })}
               <Separator className="my-2" />
               <div className="flex items-center justify-between font-semibold">
                 <span>Total per Piece</span>

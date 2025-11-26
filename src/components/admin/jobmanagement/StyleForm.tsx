@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
@@ -13,13 +14,21 @@ import {
 } from '@/components/ui/select';
 import { useCreateJobStyle, useUpdateJobStyle, type JobStyle } from '@/hooks/useJobStyles';
 import { supabase } from '@/integrations/supabase/client';
-import { Upload, Link as LinkIcon, X } from 'lucide-react';
+import { Upload, Link as LinkIcon, X, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { JOB_DEPARTMENTS } from '@/lib/jobDepartments';
+import { JOB_ORDER_CATEGORIES } from '@/lib/jobOrderCategories';
 
 interface StyleFormProps {
   style?: JobStyle | null;
   onClose: () => void;
 }
+
+type CategoryItem = { 
+  name: string; 
+  rate: number;
+  customName?: string;
+};
 
 type FormData = {
   style_code: string;
@@ -46,6 +55,25 @@ const StyleForm = ({ style, onClose }: StyleFormProps) => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>(style?.style_image_url || '');
   const [uploadMode, setUploadMode] = useState<'file' | 'url'>('file');
+  
+  // State for operations and categories
+  const [selectedOperations, setSelectedOperations] = useState<string[]>(() => {
+    if (style?.process_rate_details && Array.isArray(style.process_rate_details)) {
+      return (style.process_rate_details as any[]).map((op: any) => op.operation);
+    }
+    return [];
+  });
+  
+  const [operationCategories, setOperationCategories] = useState<Record<string, CategoryItem[]>>(() => {
+    if (style?.process_rate_details && Array.isArray(style.process_rate_details)) {
+      const result: Record<string, CategoryItem[]> = {};
+      (style.process_rate_details as any[]).forEach((op: any) => {
+        result[op.operation] = op.categories || [];
+      });
+      return result;
+    }
+    return {};
+  });
 
   const { register, handleSubmit, setValue, watch } = useForm<FormData>({
     defaultValues: {
@@ -85,6 +113,57 @@ const StyleForm = ({ style, onClose }: StyleFormProps) => {
     setValue('style_image_url', url);
   };
 
+  const toggleOperation = (operation: string) => {
+    if (selectedOperations.includes(operation)) {
+      setSelectedOperations(selectedOperations.filter((op) => op !== operation));
+      const newCategories = { ...operationCategories };
+      delete newCategories[operation];
+      setOperationCategories(newCategories);
+    } else {
+      setSelectedOperations([...selectedOperations, operation]);
+      setOperationCategories({
+        ...operationCategories,
+        [operation]: [],
+      });
+    }
+  };
+
+  const addCategory = (operation: string) => {
+    setOperationCategories({
+      ...operationCategories,
+      [operation]: [
+        ...(operationCategories[operation] || []),
+        { name: "", rate: 0, customName: "" },
+      ],
+    });
+  };
+
+  const updateCategory = (operation: string, index: number, field: "name" | "rate" | "customName", value: string | number) => {
+    const newCategories = { ...operationCategories };
+    if (field === "name") {
+      newCategories[operation][index].name = value as string;
+      if (value !== "Other") {
+        newCategories[operation][index].customName = "";
+      }
+    } else if (field === "rate") {
+      newCategories[operation][index].rate = value as number;
+    } else if (field === "customName") {
+      newCategories[operation][index].customName = value as string;
+    }
+    setOperationCategories(newCategories);
+  };
+
+  const removeCategory = (operation: string, index: number) => {
+    const newCategories = { ...operationCategories };
+    newCategories[operation].splice(index, 1);
+    setOperationCategories(newCategories);
+  };
+
+  const calculateOperationTotal = (operation: string): number => {
+    const cats = operationCategories[operation] || [];
+    return cats.reduce((sum, cat) => sum + (cat.rate || 0), 0);
+  };
+
   const uploadImage = async (): Promise<string | null> => {
     if (!imageFile) return null;
 
@@ -119,9 +198,30 @@ const StyleForm = ({ style, onClose }: StyleFormProps) => {
       }
     }
 
+    // Build process_rate_details from selected operations
+    const processRateDetails = selectedOperations.map((op) => ({
+      operation: op,
+      categories: (operationCategories[op] || []).map((cat) => ({
+        name: cat.name === "Other" && cat.customName ? cat.customName : cat.name,
+        rate: cat.rate,
+      })),
+    }));
+
+    // Calculate total rates for each operation
+    const rates = {
+      rate_cutting: calculateOperationTotal("Cutting"),
+      rate_stitching_singer: calculateOperationTotal("Stitching(Singer)"),
+      rate_stitching_power_table: calculateOperationTotal("Stitching(Powertable)"),
+      rate_ironing: calculateOperationTotal("Ironing"),
+      rate_checking: calculateOperationTotal("Checking"),
+      rate_packing: calculateOperationTotal("Packing"),
+    };
+
     const submitData = {
       ...data,
+      ...rates,
       style_image_url: imageUrl || null,
+      process_rate_details: processRateDetails as any,
     };
 
     if (style) {
@@ -255,31 +355,86 @@ const StyleForm = ({ style, onClose }: StyleFormProps) => {
       {/* Process Rates */}
       <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
         <h3 className="font-semibold">Process Rates (₹ per piece)</h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <Label>Cutting</Label>
-            <Input type="number" step="0.01" {...register('rate_cutting', { valueAsNumber: true })} />
-          </div>
-          <div className="space-y-2">
-            <Label>Stitching (Singer)</Label>
-            <Input type="number" step="0.01" {...register('rate_stitching_singer', { valueAsNumber: true })} />
-          </div>
-          <div className="space-y-2">
-            <Label>Stitching (Power Table)</Label>
-            <Input type="number" step="0.01" {...register('rate_stitching_power_table', { valueAsNumber: true })} />
-          </div>
-          <div className="space-y-2">
-            <Label>Ironing</Label>
-            <Input type="number" step="0.01" {...register('rate_ironing', { valueAsNumber: true })} />
-          </div>
-          <div className="space-y-2">
-            <Label>Checking</Label>
-            <Input type="number" step="0.01" {...register('rate_checking', { valueAsNumber: true })} />
-          </div>
-          <div className="space-y-2">
-            <Label>Packing</Label>
-            <Input type="number" step="0.01" {...register('rate_packing', { valueAsNumber: true })} />
-          </div>
+        <p className="text-sm text-muted-foreground">
+          Select operations and add categories with rates. Total rate per operation will be calculated automatically.
+        </p>
+        <div className="space-y-6">
+          {JOB_DEPARTMENTS.filter(dept => dept !== "Maintenance").map((operation) => (
+            <div key={operation} className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  checked={selectedOperations.includes(operation)}
+                  onCheckedChange={() => toggleOperation(operation)}
+                />
+                <span className="font-medium">{operation}</span>
+                {selectedOperations.includes(operation) && (
+                  <span className="ml-auto text-sm font-semibold text-primary">
+                    Total: ₹{calculateOperationTotal(operation).toFixed(2)}
+                  </span>
+                )}
+              </div>
+
+              {selectedOperations.includes(operation) && (
+                <div className="ml-6 space-y-2">
+                  {operationCategories[operation]?.map((category, index) => (
+                    <div key={index} className="space-y-2">
+                      <div className="flex gap-2">
+                        <Select
+                          value={category.name}
+                          onValueChange={(value) => updateCategory(operation, index, "name", value)}
+                        >
+                          <SelectTrigger className="flex-1">
+                            <SelectValue placeholder="Select category" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {JOB_ORDER_CATEGORIES[operation as keyof typeof JOB_ORDER_CATEGORIES]?.map((cat) => (
+                              <SelectItem key={cat} value={cat}>
+                                {cat}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          placeholder="Rate ₹"
+                          value={category.rate || ''}
+                          onChange={(e) => updateCategory(operation, index, "rate", parseFloat(e.target.value) || 0)}
+                          className="w-32"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeCategory(operation, index)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      {category.name === "Other" && (
+                        <Input
+                          placeholder="Enter custom category name"
+                          value={category.customName || ""}
+                          onChange={(e) => updateCategory(operation, index, "customName", e.target.value)}
+                          className="ml-0"
+                        />
+                      )}
+                    </div>
+                  ))}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => addCategory(operation)}
+                    className="gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add Category
+                  </Button>
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       </div>
 
