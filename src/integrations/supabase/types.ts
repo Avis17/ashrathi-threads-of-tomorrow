@@ -737,6 +737,8 @@ export type Database = {
           created_at: string | null
           delivery_charge: number | null
           delivery_date: string
+          gst_amount: number | null
+          gst_percentage: number | null
           id: string
           job_id: string
           job_status: string | null
@@ -746,6 +748,7 @@ export type Database = {
           rate_per_piece: number
           style_name: string
           total_amount: number
+          total_with_gst: number | null
           updated_at: string | null
         }
         Insert: {
@@ -757,6 +760,8 @@ export type Database = {
           created_at?: string | null
           delivery_charge?: number | null
           delivery_date: string
+          gst_amount?: number | null
+          gst_percentage?: number | null
           id?: string
           job_id: string
           job_status?: string | null
@@ -766,6 +771,7 @@ export type Database = {
           rate_per_piece?: number
           style_name: string
           total_amount?: number
+          total_with_gst?: number | null
           updated_at?: string | null
         }
         Update: {
@@ -777,6 +783,8 @@ export type Database = {
           created_at?: string | null
           delivery_charge?: number | null
           delivery_date?: string
+          gst_amount?: number | null
+          gst_percentage?: number | null
           id?: string
           job_id?: string
           job_status?: string | null
@@ -786,6 +794,7 @@ export type Database = {
           rate_per_piece?: number
           style_name?: string
           total_amount?: number
+          total_with_gst?: number | null
           updated_at?: string | null
         }
         Relationships: [
