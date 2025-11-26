@@ -854,6 +854,7 @@ export type Database = {
       external_job_rate_cards: {
         Row: {
           accessories_cost: number
+          adjustment: number | null
           category: string
           company_profit_type: string | null
           company_profit_value: number | null
@@ -869,6 +870,7 @@ export type Database = {
         }
         Insert: {
           accessories_cost?: number
+          adjustment?: number | null
           category: string
           company_profit_type?: string | null
           company_profit_value?: number | null
@@ -884,6 +886,7 @@ export type Database = {
         }
         Update: {
           accessories_cost?: number
+          adjustment?: number | null
           category?: string
           company_profit_type?: string | null
           company_profit_value?: number | null

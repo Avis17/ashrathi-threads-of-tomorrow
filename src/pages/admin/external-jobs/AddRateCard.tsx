@@ -58,6 +58,7 @@ const rateCardSchema = z.object({
   delivery_charge: z.number().min(0).optional(),
   company_profit_type: z.enum(["amount", "percent"]).optional(),
   company_profit_value: z.number().min(0).optional(),
+  adjustment: z.number().optional(),
 });
 
 type RateCardFormData = z.infer<typeof rateCardSchema>;
@@ -85,6 +86,7 @@ const AddRateCard = () => {
       delivery_charge: 0,
       company_profit_type: "amount",
       company_profit_value: 0,
+      adjustment: 0,
     },
   });
 
@@ -96,6 +98,7 @@ const AddRateCard = () => {
       form.setValue("delivery_charge", existingCard.delivery_charge);
       form.setValue("company_profit_type", existingCard.company_profit_type as "amount" | "percent");
       form.setValue("company_profit_value", existingCard.company_profit_value || 0);
+      form.setValue("adjustment", (existingCard as any).adjustment || 0);
       setGeneratedStyleId(existingCard.style_id);
 
       const operations = existingCard.operations_data as any[];
@@ -194,6 +197,7 @@ const AddRateCard = () => {
     const delivery = form.watch("delivery_charge") || 0;
     const profitType = form.watch("company_profit_type");
     const profitValue = form.watch("company_profit_value") || 0;
+    const adjustment = form.watch("adjustment") || 0;
 
     const operationBreakdown: Record<
       string,
@@ -236,7 +240,7 @@ const AddRateCard = () => {
       profitPerPiece = profitValue;
     }
 
-    const ratePerPiece = totalOperationsCost + profitPerPiece;
+    const ratePerPiece = totalOperationsCost + profitPerPiece + adjustment;
 
     return { ratePerPiece, operationBreakdown, totalOperationsCost };
   };
@@ -267,6 +271,7 @@ const AddRateCard = () => {
       delivery_charge: data.delivery_charge || 0,
       company_profit_type: data.company_profit_type,
       company_profit_value: data.company_profit_value || 0,
+      adjustment: data.adjustment || 0,
       rate_per_piece: ratePerPiece,
     };
 
@@ -541,6 +546,25 @@ const AddRateCard = () => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Company Profit Value</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        placeholder="0"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="adjustment"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Adjustment (+/-)</FormLabel>
                     <FormControl>
                       <Input
                         type="number"

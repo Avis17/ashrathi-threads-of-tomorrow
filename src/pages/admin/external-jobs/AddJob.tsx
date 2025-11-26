@@ -81,6 +81,19 @@ const AddJob = () => {
   };
 
   const handleRateCardSelect = (rateCardId: string) => {
+    // Handle "None" selection - clear all fields
+    if (rateCardId === "none" || !rateCardId) {
+      form.setValue("style_name", "");
+      form.setValue("accessories_cost", 0);
+      form.setValue("delivery_charge", 0);
+      form.setValue("company_profit_type", "amount");
+      form.setValue("company_profit_value", 0);
+      form.setValue("adjustment", 0);
+      setSelectedOperations([]);
+      setOperationCategories({});
+      return;
+    }
+
     const rateCard = rateCards?.find((rc) => rc.id === rateCardId);
     if (!rateCard) return;
 
@@ -89,6 +102,7 @@ const AddJob = () => {
     form.setValue("delivery_charge", rateCard.delivery_charge);
     form.setValue("company_profit_type", rateCard.company_profit_type as "amount" | "percent");
     form.setValue("company_profit_value", rateCard.company_profit_value || 0);
+    form.setValue("adjustment", (rateCard as any).adjustment || 0);
 
     const operations = rateCard.operations_data as any[];
     const ops: string[] = [];
@@ -96,7 +110,18 @@ const AddJob = () => {
 
     operations.forEach((op: any) => {
       ops.push(op.operation_name);
-      cats[op.operation_name] = op.categories;
+      // Map categories - check if custom names exist in predefined list
+      const operationKey = op.operation_name as keyof typeof JOB_ORDER_CATEGORIES;
+      const predefinedCategories = JOB_ORDER_CATEGORIES[operationKey] ? [...JOB_ORDER_CATEGORIES[operationKey]] : [];
+      const mappedCategories = op.categories.map((cat: any) => {
+        const isCustom = !predefinedCategories.includes(cat.name) && cat.name !== "Contract Commission";
+        return {
+          name: isCustom ? "Other" : cat.name,
+          rate: cat.rate,
+          customName: isCustom ? cat.name : (cat.customName || ""),
+        };
+      });
+      cats[op.operation_name] = mappedCategories;
     });
 
     setSelectedOperations(ops);
@@ -200,9 +225,11 @@ const AddJob = () => {
       profitPerPiece = profitValue;
     }
 
-    const ratePerPiece = totalOperationsCost + profitPerPiece;
+    // Include adjustment in rate per piece calculation
+    const adjustmentPerPiece = pieces > 0 ? adjustment / pieces : 0;
+    const ratePerPiece = totalOperationsCost + profitPerPiece + adjustmentPerPiece;
     const subtotal = ratePerPiece * pieces;
-    const total = subtotal + accessories + delivery + adjustment;
+    const total = subtotal + accessories + delivery;
 
     return { ratePerPiece, total, operationBreakdown, totalOperationsCost };
   };
