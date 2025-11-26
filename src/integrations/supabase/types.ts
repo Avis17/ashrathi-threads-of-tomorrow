@@ -1729,6 +1729,7 @@ export type Database = {
           is_active: boolean | null
           min_order_qty: number | null
           pattern_number: string
+          process_rate_details: Json | null
           rate_checking: number | null
           rate_cutting: number | null
           rate_ironing: number | null
@@ -1755,6 +1756,7 @@ export type Database = {
           is_active?: boolean | null
           min_order_qty?: number | null
           pattern_number: string
+          process_rate_details?: Json | null
           rate_checking?: number | null
           rate_cutting?: number | null
           rate_ironing?: number | null
@@ -1781,6 +1783,7 @@ export type Database = {
           is_active?: boolean | null
           min_order_qty?: number | null
           pattern_number?: string
+          process_rate_details?: Json | null
           rate_checking?: number | null
           rate_cutting?: number | null
           rate_ironing?: number | null
