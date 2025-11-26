@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +18,20 @@ import { Upload, Link as LinkIcon, X, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { JOB_ORDER_CATEGORIES, OPERATIONS } from '@/lib/jobOrderCategories';
 
+const CATEGORIES = ['Men', 'Women', 'Kids', 'Unisex'];
+const STYLE_NAMES = [
+  'T-Shirt',
+  'Polo T-Shirt',
+  'Leggings',
+  'Track Pants',
+  'Shorts',
+  'Joggers',
+  'Nightwear',
+  'Innerwear',
+  'Other'
+];
+const FIT_OPTIONS = ['Regular', 'Slim', 'Relaxed', 'Loose', 'Tight'];
+
 interface StyleFormProps {
   style?: JobStyle | null;
   onClose: () => void;
@@ -33,6 +47,7 @@ type FormData = {
   style_code: string;
   pattern_number: string;
   style_name: string;
+  custom_style_name?: string;
   garment_type: string;
   category: string;
   season: string;
@@ -54,6 +69,7 @@ const StyleForm = ({ style, onClose }: StyleFormProps) => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>(style?.style_image_url || '');
   const [uploadMode, setUploadMode] = useState<'file' | 'url'>('file');
+  const [showCustomStyleName, setShowCustomStyleName] = useState(false);
   
   // State for operations and categories
   const [selectedOperations, setSelectedOperations] = useState<string[]>(() => {
@@ -79,6 +95,7 @@ const StyleForm = ({ style, onClose }: StyleFormProps) => {
       style_code: style?.style_code || '',
       pattern_number: style?.pattern_number || '',
       style_name: style?.style_name || '',
+      custom_style_name: '',
       garment_type: style?.garment_type || '',
       category: style?.category || '',
       season: style?.season || '',
@@ -94,6 +111,39 @@ const StyleForm = ({ style, onClose }: StyleFormProps) => {
       style_image_url: style?.style_image_url || '',
     },
   });
+
+  // Auto-generate style code when category changes (only for new styles)
+  useEffect(() => {
+    if (!style && watch('category')) {
+      generateStyleCode();
+    }
+  }, [watch('category')]);
+
+  const generateStyleCode = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('job_styles')
+        .select('style_code')
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (error) throw error;
+
+      let nextNumber = 1;
+      if (data && data.length > 0) {
+        const lastCode = data[0].style_code;
+        const match = lastCode.match(/FF-(\d+)/);
+        if (match) {
+          nextNumber = parseInt(match[1]) + 1;
+        }
+      }
+
+      const newCode = `FF-${String(nextNumber).padStart(3, '0')}`;
+      setValue('style_code', newCode);
+    } catch (error) {
+      console.error('Error generating style code:', error);
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -218,8 +268,14 @@ const StyleForm = ({ style, onClose }: StyleFormProps) => {
       rate_packing: calculateOperationTotal("Packing"),
     };
 
+    // Use custom style name if "Other" is selected
+    const finalStyleName = data.style_name === 'Other' && data.custom_style_name 
+      ? data.custom_style_name 
+      : data.style_name;
+
     const submitData = {
       ...data,
+      style_name: finalStyleName,
       ...rates,
       style_image_url: imageUrl || null,
       process_rate_details: processRateDetails as any,
@@ -246,24 +302,59 @@ const StyleForm = ({ style, onClose }: StyleFormProps) => {
         <h3 className="font-semibold">Basic Information</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label>Style Code *</Label>
-            <Input {...register('style_code')} required placeholder="FF-001" />
+            <Label>Category *</Label>
+            <Select value={watch('category')} onValueChange={(value) => setValue('category', value)} required>
+              <SelectTrigger>
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent>
+                {CATEGORIES.map((cat) => (
+                  <SelectItem key={cat} value={cat}>
+                    {cat}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
+          <div className="space-y-2">
+            <Label>Style Code *</Label>
+            <Input {...register('style_code')} required placeholder="FF-001" disabled={!style} />
+          </div>
+          <div className="space-y-2">
+            <Label>Style Name *</Label>
+            <Select 
+              value={watch('style_name')} 
+              onValueChange={(value) => {
+                setValue('style_name', value);
+                setShowCustomStyleName(value === 'Other');
+              }} 
+              required
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select style name" />
+              </SelectTrigger>
+              <SelectContent>
+                {STYLE_NAMES.map((name) => (
+                  <SelectItem key={name} value={name}>
+                    {name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {showCustomStyleName && (
+            <div className="space-y-2">
+              <Label>Custom Style Name *</Label>
+              <Input {...register('custom_style_name')} required placeholder="Enter custom style name" />
+            </div>
+          )}
           <div className="space-y-2">
             <Label>Pattern Number *</Label>
             <Input {...register('pattern_number')} required placeholder="P001" />
           </div>
-          <div className="space-y-2 md:col-span-2">
-            <Label>Style Name *</Label>
-            <Input {...register('style_name')} required placeholder="Girls Leggings" />
-          </div>
           <div className="space-y-2">
             <Label>Garment Type</Label>
             <Input {...register('garment_type')} placeholder="Leggings" />
-          </div>
-          <div className="space-y-2">
-            <Label>Category</Label>
-            <Input {...register('category')} placeholder="Kids > Leggings" />
           </div>
           <div className="space-y-2">
             <Label>Season</Label>
@@ -280,7 +371,18 @@ const StyleForm = ({ style, onClose }: StyleFormProps) => {
           </div>
           <div className="space-y-2">
             <Label>Fit</Label>
-            <Input {...register('fit')} placeholder="Regular" />
+            <Select value={watch('fit')} onValueChange={(value) => setValue('fit', value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select fit" />
+              </SelectTrigger>
+              <SelectContent>
+                {FIT_OPTIONS.map((fit) => (
+                  <SelectItem key={fit} value={fit}>
+                    {fit}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </div>
