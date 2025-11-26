@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useExternalJobCompanies, useCreateExternalJobOrder } from "@/hooks/useExternalJobOrders";
+import { useExternalJobRateCards } from "@/hooks/useExternalJobRateCards";
 import { format } from "date-fns";
 import { OPERATIONS, JOB_ORDER_CATEGORIES } from "@/lib/jobOrderCategories";
 
@@ -34,6 +35,7 @@ type CategoryItem = {
 };
 
 const jobSchema = z.object({
+  rate_card_id: z.string().optional(),
   company_id: z.string().min(1, "Company is required"),
   style_name: z.string().min(1, "Style name is required"),
   number_of_pieces: z.number().min(1, "Number of pieces must be at least 1"),
@@ -42,6 +44,7 @@ const jobSchema = z.object({
   delivery_charge: z.number().min(0).optional(),
   company_profit_type: z.enum(["amount", "percent"]).optional(),
   company_profit_value: z.number().min(0).optional(),
+  adjustment: z.number().optional(),
 });
 
 type JobFormData = z.infer<typeof jobSchema>;
@@ -49,6 +52,7 @@ type JobFormData = z.infer<typeof jobSchema>;
 const AddJob = () => {
   const navigate = useNavigate();
   const { data: companies } = useExternalJobCompanies();
+  const { data: rateCards } = useExternalJobRateCards();
   const createJob = useCreateExternalJobOrder();
 
   const [selectedOperations, setSelectedOperations] = useState<string[]>([]);
@@ -57,6 +61,7 @@ const AddJob = () => {
   const form = useForm<JobFormData>({
     resolver: zodResolver(jobSchema),
     defaultValues: {
+      rate_card_id: "",
       company_id: "",
       style_name: "",
       number_of_pieces: 0,
@@ -65,6 +70,7 @@ const AddJob = () => {
       delivery_charge: 0,
       company_profit_type: "amount",
       company_profit_value: 0,
+      adjustment: 0,
     },
   });
 
@@ -72,6 +78,29 @@ const AddJob = () => {
     const date = format(new Date(), "yyyyMMdd");
     const random = Math.floor(1000 + Math.random() * 9000);
     return `FFJ-${date}-${random}`;
+  };
+
+  const handleRateCardSelect = (rateCardId: string) => {
+    const rateCard = rateCards?.find((rc) => rc.id === rateCardId);
+    if (!rateCard) return;
+
+    form.setValue("style_name", rateCard.style_name);
+    form.setValue("accessories_cost", rateCard.accessories_cost);
+    form.setValue("delivery_charge", rateCard.delivery_charge);
+    form.setValue("company_profit_type", rateCard.company_profit_type as "amount" | "percent");
+    form.setValue("company_profit_value", rateCard.company_profit_value || 0);
+
+    const operations = rateCard.operations_data as any[];
+    const ops: string[] = [];
+    const cats: Record<string, CategoryItem[]> = {};
+
+    operations.forEach((op: any) => {
+      ops.push(op.operation_name);
+      cats[op.operation_name] = op.categories;
+    });
+
+    setSelectedOperations(ops);
+    setOperationCategories(cats);
   };
 
   const toggleOperation = (operation: string) => {
@@ -127,6 +156,7 @@ const AddJob = () => {
     const delivery = form.watch("delivery_charge") || 0;
     const profitType = form.watch("company_profit_type");
     const profitValue = form.watch("company_profit_value") || 0;
+    const adjustment = form.watch("adjustment") || 0;
 
     // Calculate operations with percentage-based categories
     const operationBreakdown: Record<string, { categories: Array<{name: string, rate: number, percentage: number}>, total: number, commission: number }> = {};
@@ -172,7 +202,7 @@ const AddJob = () => {
 
     const ratePerPiece = totalOperationsCost + profitPerPiece;
     const subtotal = ratePerPiece * pieces;
-    const total = subtotal + accessories + delivery;
+    const total = subtotal + accessories + delivery + adjustment;
 
     return { ratePerPiece, total, operationBreakdown, totalOperationsCost };
   };
@@ -228,6 +258,41 @@ const AddJob = () => {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold mb-4">Select Rate Card (Optional)</h3>
+            <FormField
+              control={form.control}
+              name="rate_card_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Rate Card</FormLabel>
+                  <Select
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      handleRateCardSelect(value);
+                    }}
+                    value={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a rate card to pre-fill details" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="none">None (Manual Entry)</SelectItem>
+                      {rateCards?.map((rateCard) => (
+                        <SelectItem key={rateCard.id} value={rateCard.id}>
+                          {rateCard.style_id} - {rateCard.style_name} ({rateCard.category})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </Card>
+
           <Card className="p-6">
             <h3 className="text-lg font-semibold mb-4">Basic Details</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -462,6 +527,28 @@ const AddJob = () => {
                   </FormItem>
                 )}
               />
+
+              <FormField
+                control={form.control}
+                name="adjustment"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Adjustment (+/-)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        placeholder="0"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                    <p className="text-xs text-muted-foreground">
+                      Positive value to add, negative to subtract from total
+                    </p>
+                  </FormItem>
+                )}
+              />
             </div>
           </Card>
 
@@ -528,7 +615,7 @@ const AddJob = () => {
               </div>
 
               {/* Additional Costs */}
-              {(form.watch("accessories_cost") > 0 || form.watch("delivery_charge") > 0) && (
+              {(form.watch("accessories_cost") > 0 || form.watch("delivery_charge") > 0 || form.watch("adjustment") !== 0) && (
                 <div className="space-y-2 text-sm border-t pt-3">
                   {form.watch("accessories_cost") > 0 && (
                     <div className="flex justify-between">
@@ -540,6 +627,14 @@ const AddJob = () => {
                     <div className="flex justify-between">
                       <span>Delivery Charge:</span>
                       <span className="font-medium">₹{form.watch("delivery_charge").toFixed(2)}</span>
+                    </div>
+                  )}
+                  {form.watch("adjustment") !== 0 && (
+                    <div className="flex justify-between">
+                      <span>Adjustment:</span>
+                      <span className={`font-medium ${form.watch("adjustment") > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {form.watch("adjustment") > 0 ? '+' : ''}₹{form.watch("adjustment").toFixed(2)}
+                      </span>
                     </div>
                   )}
                 </div>
