@@ -124,6 +124,13 @@ const JobDetails = () => {
     });
   };
 
+  const handlePaymentStatusChange = async (newStatus: string) => {
+    await updateStatus.mutateAsync({
+      id: jobOrder.id,
+      data: { payment_status: newStatus },
+    });
+  };
+
   const baseTotal = jobOrder?.total_amount || 0;
   const gstAmount = gstEnabled ? (baseTotal * gstPercentage) / 100 : 0;
   const totalWithGst = baseTotal + gstAmount;
@@ -261,8 +268,19 @@ const JobDetails = () => {
             </Select>
           </div>
           <div>
-            <p className="text-sm text-muted-foreground">Payment Status</p>
-            <div className="mt-1">{getPaymentStatusBadge(jobOrder.payment_status)}</div>
+            <p className="text-sm text-muted-foreground mb-2">Payment Status</p>
+            <Select value={jobOrder.payment_status} onValueChange={handlePaymentStatusChange}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="unpaid">Unpaid</SelectItem>
+                <SelectItem value="partial">Partial</SelectItem>
+                <SelectItem value="paid">Paid</SelectItem>
+                <SelectItem value="delayed">Delayed</SelectItem>
+                <SelectItem value="hold">Hold</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </Card>
