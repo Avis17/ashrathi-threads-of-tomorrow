@@ -29,6 +29,12 @@ import {
   useUpdateExternalJobRateCard,
   useExternalJobRateCard,
 } from "@/hooks/useExternalJobRateCards";
+import { 
+  useExternalJobProducts, 
+  useCreateExternalJobProduct,
+  useExternalJobTasks,
+  useCreateExternalJobTask
+} from "@/hooks/useExternalJobProducts";
 import { OPERATIONS } from "@/lib/jobOrderCategories";
 import { useCustomCategories } from "@/hooks/useCustomCategories";
 
@@ -36,6 +42,8 @@ type CategoryItem = {
   name: string;
   rate: number;
   customName?: string;
+  jobName?: string;
+  customJobName?: string;
 };
 
 const CATEGORIES = ["Men", "Women", "Kids", "Unisex"];
@@ -71,13 +79,20 @@ const AddRateCard = () => {
   const isEditing = !!id;
 
   const { data: existingCard } = useExternalJobRateCard(id || "");
+  const { data: products } = useExternalJobProducts();
   const createRateCard = useCreateExternalJobRateCard();
   const updateRateCard = useUpdateExternalJobRateCard();
+  const createProduct = useCreateExternalJobProduct();
+  const createTask = useCreateExternalJobTask();
   const { getCategories, addCustomCategory } = useCustomCategories();
 
+  const [selectedProduct, setSelectedProduct] = useState<string>("");
+  const [customProductName, setCustomProductName] = useState("");
   const [selectedOperations, setSelectedOperations] = useState<string[]>([]);
   const [operationCategories, setOperationCategories] = useState<Record<string, CategoryItem[]>>({});
   const [generatedStyleId, setGeneratedStyleId] = useState("");
+  
+  const { data: tasks } = useExternalJobTasks(selectedProduct || undefined);
 
   const form = useForm<RateCardFormData>({
     resolver: zodResolver(rateCardSchema),
@@ -164,7 +179,7 @@ const AddRateCard = () => {
       ...operationCategories,
       [operation]: [
         ...(operationCategories[operation] || []),
-        { name: "", rate: 0, customName: "" },
+        { name: "", rate: 0, customName: "", jobName: "", customJobName: "" },
       ],
     });
   };
@@ -172,7 +187,7 @@ const AddRateCard = () => {
   const updateCategory = (
     operation: string,
     index: number,
-    field: "name" | "rate" | "customName",
+    field: "name" | "rate" | "customName" | "jobName" | "customJobName",
     value: string | number
   ) => {
     const newCategories = { ...operationCategories };
@@ -185,6 +200,13 @@ const AddRateCard = () => {
       newCategories[operation][index].rate = value as number;
     } else if (field === "customName") {
       newCategories[operation][index].customName = value as string;
+    } else if (field === "jobName") {
+      newCategories[operation][index].jobName = value as string;
+      if (value !== "Other") {
+        newCategories[operation][index].customJobName = "";
+      }
+    } else if (field === "customJobName") {
+      newCategories[operation][index].customJobName = value as string;
     }
     setOperationCategories(newCategories);
   };
@@ -250,10 +272,31 @@ const AddRateCard = () => {
 
   const { ratePerPiece, operationBreakdown, totalOperationsCost } = calculateTotals();
 
+  const handleAddProduct = async () => {
+    if (!customProductName.trim()) {
+      toast.error("Please enter a product name");
+      return;
+    }
+    await createProduct.mutateAsync(customProductName);
+    setCustomProductName("");
+  };
+
+  const handleAddTask = async (categoryJobName: string) => {
+    if (!categoryJobName.trim()) {
+      toast.error("Please enter a job name");
+      return;
+    }
+    await createTask.mutateAsync({ 
+      taskName: categoryJobName, 
+      productId: selectedProduct || undefined 
+    });
+  };
+
   const onSubmit = async (data: RateCardFormData) => {
     const operations = selectedOperations.map((op) => ({
       operation_name: op,
       categories: (operationCategories[op] || []).map((cat) => ({
+        job_name: cat.jobName === "Other" && cat.customJobName ? cat.customJobName : cat.jobName,
         name: cat.name === "Other" && cat.customName ? cat.customName : cat.name,
         rate: cat.rate,
         customName: cat.customName,
@@ -389,6 +432,45 @@ const AddRateCard = () => {
 
           <Card className="p-6">
             <h3 className="text-lg font-semibold mb-4">Operations & Categories</h3>
+            
+            {/* Product Selection */}
+            <div className="mb-6 p-4 bg-muted/30 rounded-lg">
+              <FormLabel className="text-base font-semibold mb-2 block">Product Selection</FormLabel>
+              <div className="flex gap-2">
+                <Select value={selectedProduct} onValueChange={setSelectedProduct}>
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="Select a product type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {products?.map((product) => (
+                      <SelectItem key={product.id} value={product.id}>
+                        {product.product_name} {product.category && `(${product.category})`}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+                {selectedProduct === "other" && (
+                  <>
+                    <Input
+                      placeholder="Enter custom product name"
+                      value={customProductName}
+                      onChange={(e) => setCustomProductName(e.target.value)}
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={handleAddProduct}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+
             <div className="space-y-6">
               {OPERATIONS.map((operation) => (
                 <div key={operation} className="space-y-3">
@@ -405,6 +487,27 @@ const AddRateCard = () => {
                       {operationCategories[operation]?.map((category, index) => (
                          <div key={index} className="space-y-2">
                            <div className="flex gap-2">
+                             {/* Job Dropdown */}
+                             <Select
+                               value={category.jobName}
+                               onValueChange={(value) =>
+                                 updateCategory(operation, index, "jobName", value)
+                               }
+                             >
+                               <SelectTrigger className="flex-1">
+                                 <SelectValue placeholder="Select job" />
+                               </SelectTrigger>
+                               <SelectContent>
+                                 {tasks?.map((task) => (
+                                   <SelectItem key={task.id} value={task.task_name}>
+                                     {task.task_name}
+                                   </SelectItem>
+                                 ))}
+                                 <SelectItem value="Other">Other</SelectItem>
+                               </SelectContent>
+                             </Select>
+                             
+                             {/* Category Dropdown */}
                              <Select
                                value={category.name}
                                onValueChange={(value) =>
@@ -449,6 +552,37 @@ const AddRateCard = () => {
                                <Trash2 className="h-4 w-4" />
                              </Button>
                            </div>
+                           
+                           {/* Custom Job Name Input */}
+                           {category.jobName === "Other" && (
+                             <div className="flex gap-2 items-center ml-0">
+                               <Input
+                                 placeholder="Enter custom job name"
+                                 value={category.customJobName || ""}
+                                 onChange={(e) =>
+                                   updateCategory(operation, index, "customJobName", e.target.value)
+                                 }
+                                 className="flex-1"
+                               />
+                               <Button
+                                 type="button"
+                                 variant="outline"
+                                 size="icon"
+                                 onClick={() => {
+                                   const customJob = category.customJobName?.trim();
+                                   if (customJob) {
+                                     handleAddTask(customJob);
+                                   } else {
+                                     toast.error("Please enter a job name");
+                                   }
+                                 }}
+                               >
+                                 <Plus className="h-4 w-4" />
+                               </Button>
+                             </div>
+                           )}
+                           
+                           {/* Custom Category Name Input */}
                            {category.name === "Other" && (
                              <div className="flex gap-2 items-center ml-0">
                                <Input
