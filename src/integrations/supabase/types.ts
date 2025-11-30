@@ -851,6 +851,30 @@ export type Database = {
           },
         ]
       }
+      external_job_products: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          product_name: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          product_name: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          product_name?: string
+        }
+        Relationships: []
+      }
       external_job_rate_cards: {
         Row: {
           accessories_cost: number
@@ -901,6 +925,41 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      external_job_tasks: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          is_common: boolean | null
+          product_id: string | null
+          task_name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_common?: boolean | null
+          product_id?: string | null
+          task_name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_common?: boolean | null
+          product_id?: string | null
+          task_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "external_job_tasks_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "external_job_products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       invoice_items: {
         Row: {
