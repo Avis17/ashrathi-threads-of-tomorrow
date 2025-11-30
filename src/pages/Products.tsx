@@ -74,10 +74,16 @@ const leggingsCollection = [
     description: "Premium support for every move"
   },
   { 
-    src: leggingsOffice, 
-    alt: "Premium Leggings - Office Style",
-    title: "Professional Elegance",
-    description: "Sophisticated style meets comfort"
+    src: leggingsSidePocket, 
+    alt: "Premium Leggings - Side Pocket Feature",
+    title: "Functional Design",
+    description: "Deep pockets for active lifestyle"
+  },
+  { 
+    src: leggingsPhonePocket, 
+    alt: "Premium Leggings - Phone Pocket",
+    title: "Smart Storage",
+    description: "Secure phone pocket for workouts"
   },
   { 
     src: leggingsStreet, 
@@ -96,18 +102,6 @@ const leggingsCollection = [
     alt: "Premium Leggings - Professional Look",
     title: "Business Casual",
     description: "Polished elegance for the office"
-  },
-  { 
-    src: leggingsSidePocket, 
-    alt: "Premium Leggings - Side Pocket Feature",
-    title: "Functional Design",
-    description: "Deep pockets for active lifestyle"
-  },
-  { 
-    src: leggingsPhonePocket, 
-    alt: "Premium Leggings - Phone Pocket",
-    title: "Smart Storage",
-    description: "Secure phone pocket for workouts"
   },
   { 
     src: leggingsAthletic, 
