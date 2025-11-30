@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
-import { Maximize, ShoppingCart, Plus, Minus, Check, Shield, Award, Sparkles } from "lucide-react";
+import { Maximize, ShoppingCart, Plus, Minus, Check, Shield, Award, Sparkles, PackageSearch } from "lucide-react";
 import ImageZoomDialog from "@/components/ImageZoomDialog";
 import { useProducts } from "@/hooks/useProducts";
 import { useCart } from "@/hooks/useCart";
@@ -19,6 +19,7 @@ import Autoplay from "embla-carousel-autoplay";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ProductImageLoader } from "@/components/product/ProductImageLoader";
+import noDataImage from "@/assets/no-data.png";
 
 // Model showcase images
 import heroModelWoman1 from "@/assets/hero-model-woman-1.jpg";
@@ -163,7 +164,7 @@ const Products = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { addToCart } = useCart();
-  const [selectedTier, setSelectedTier] = useState<'elite' | 'smart_basics'>('elite');
+  const [selectedTier, setSelectedTier] = useState<'elite' | 'smart_basics'>('smart_basics');
   const [activeCategory, setActiveCategory] = useState("All");
   const [selectedImage, setSelectedImage] = useState<{ src: string; alt: string } | null>(null);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
@@ -520,18 +521,6 @@ const Products = () => {
         <Tabs value={selectedTier} onValueChange={(value) => setSelectedTier(value as 'elite' | 'smart_basics')} className="w-full">
           <TabsList className="grid w-full grid-cols-2 h-auto p-1 md:p-2 bg-muted/50 gap-1">
             <TabsTrigger 
-              value="elite" 
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-500 data-[state=active]:text-white py-2 md:py-4 px-2 md:px-6 text-left"
-            >
-              <div className="flex flex-col gap-0.5 md:gap-1">
-                <div className="flex items-center gap-1 md:gap-2 font-bold text-sm md:text-lg">
-                  <span className="text-base md:text-xl">💎</span>
-                  <span className="leading-tight">Elite Collection</span>
-                </div>
-                <p className="text-[10px] md:text-xs opacity-80 font-normal hidden sm:block">Premium quality • Higher GSM</p>
-              </div>
-            </TabsTrigger>
-            <TabsTrigger 
               value="smart_basics"
               className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-600 data-[state=active]:to-emerald-600 data-[state=active]:text-white py-2 md:py-4 px-2 md:px-6 text-left"
             >
@@ -543,269 +532,19 @@ const Products = () => {
                 <p className="text-[10px] md:text-xs opacity-80 font-normal hidden sm:block">Everyday comfort • Smart value</p>
               </div>
             </TabsTrigger>
+            <TabsTrigger 
+              value="elite" 
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-500 data-[state=active]:text-white py-2 md:py-4 px-2 md:px-6 text-left"
+            >
+              <div className="flex flex-col gap-0.5 md:gap-1">
+                <div className="flex items-center gap-1 md:gap-2 font-bold text-sm md:text-lg">
+                  <span className="text-base md:text-xl">💎</span>
+                  <span className="leading-tight">Elite Collection</span>
+                </div>
+                <p className="text-[10px] md:text-xs opacity-80 font-normal hidden sm:block">Premium quality • Higher GSM</p>
+              </div>
+            </TabsTrigger>
           </TabsList>
-
-          {/* Elite Collection Tab */}
-          <TabsContent value="elite" className="mt-8">
-            <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 rounded-lg p-4 md:p-6 mb-6 md:mb-8 border border-amber-200 dark:border-amber-900">
-              <h2 className="text-lg md:text-2xl font-bold mb-2 text-amber-900 dark:text-amber-100">Premium Craftsmanship, Lasting Quality</h2>
-              <p className="text-sm md:text-base text-amber-800 dark:text-amber-200 mb-3 md:mb-4">
-                Experience the finest fabrics with superior stitching, higher GSM for durability, and designer-level finishing.
-              </p>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 text-xs md:text-sm">
-                <div className="flex items-center gap-1.5 md:gap-2">
-                  <Check className="h-3 w-3 md:h-4 md:w-4 text-amber-600 flex-shrink-0" />
-                  <span className="font-medium">Higher GSM</span>
-                </div>
-                <div className="flex items-center gap-1.5 md:gap-2">
-                  <Check className="h-3 w-3 md:h-4 md:w-4 text-amber-600 flex-shrink-0" />
-                  <span className="font-medium">Designer Finish</span>
-                </div>
-                <div className="flex items-center gap-1.5 md:gap-2">
-                  <Check className="h-3 w-3 md:h-4 md:w-4 text-amber-600 flex-shrink-0" />
-                  <span className="font-medium">Superior Stitch</span>
-                </div>
-                <div className="flex items-center gap-1.5 md:gap-2">
-                  <Check className="h-3 w-3 md:h-4 md:w-4 text-amber-600 flex-shrink-0" />
-                  <span className="font-medium">Durability</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Category Filter */}
-            <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
-              {categories.map((category) => (
-                <Button
-                  key={category}
-                  variant={activeCategory === category ? "default" : "outline"}
-                  onClick={() => setActiveCategory(category)}
-                  className="whitespace-nowrap text-xs md:text-sm px-3 md:px-4 py-1.5 md:py-2 flex-shrink-0"
-                  size="sm"
-                >
-                  {category}
-                </Button>
-              ))}
-            </div>
-
-            {/* Products Grid */}
-            {isLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[...Array(6)].map((_, i) => (
-                  <Skeleton key={i} className="h-[500px]" />
-                ))}
-              </div>
-            ) : filteredProducts.length === 0 ? (
-              <div className="text-center py-16">
-                <p className="text-muted-foreground text-lg">No products found in this category.</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredProducts.map((product) => (
-                <Card 
-                  key={product.id} 
-                  className="overflow-hidden hover:shadow-xl transition-all duration-300 border-amber-200/50"
-                >
-                  <CardContent className="p-0">
-                    <div className="relative aspect-square group">
-                      <img
-                        src={displayImages[product.id] || product.image_url || PLACEHOLDER_IMAGE}
-                        alt={product.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                      {loadingImages[product.id] && <ProductImageLoader />}
-                      <Button
-                        size="icon"
-                        variant="secondary"
-                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedImage({ 
-                            src: displayImages[product.id] || product.image_url, 
-                            alt: product.name 
-                          });
-                        }}
-                      >
-                        <Maximize className="h-4 w-4" />
-                      </Button>
-                        <Badge className="absolute top-2 left-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white">
-                          ✨ Premium Quality
-                        </Badge>
-                      </div>
-
-                      <div className="p-4 space-y-3">
-                        {product.offer_messages && product.offer_messages.length > 0 && (
-                          <OfferMessageCycle messages={product.offer_messages} />
-                        )}
-
-                        <h3 className="font-semibold text-lg line-clamp-2">{product.name}</h3>
-                        {product.description && (
-                          <p className="text-sm text-muted-foreground line-clamp-2">{product.description}</p>
-                        )}
-
-                        {product.price && (
-                          <div className="space-y-2">
-                            <div className="flex items-baseline gap-2">
-                              {product.discount_percentage && product.discount_percentage > 0 ? (
-                                <>
-                                  <span className="text-2xl font-bold text-amber-600">
-                                    ₹{(product.price * (1 - product.discount_percentage / 100)).toFixed(2)}
-                                  </span>
-                                  <span className="text-sm text-muted-foreground line-through">₹{product.price}</span>
-                                  <Badge variant="destructive" className="ml-auto">{product.discount_percentage}% OFF</Badge>
-                                </>
-                              ) : (
-                                <span className="text-2xl font-bold text-amber-600">₹{product.price}</span>
-                              )}
-                            </div>
-                            
-                            {/* Combo Offers Display */}
-                            {product.combo_offers && product.combo_offers.length > 0 && (
-                              <div className="space-y-1">
-                                <p className="text-xs font-semibold text-amber-700 dark:text-amber-400">🎁 Bulk Discounts Available:</p>
-                                <div className="flex flex-wrap gap-1.5">
-                                  {product.combo_offers.map((combo: { quantity: number; price: number }, idx: number) => {
-                                    const regularPrice = product.price * combo.quantity;
-                                    const savings = regularPrice - combo.price;
-                                    const savingsPercent = ((savings / regularPrice) * 100).toFixed(0);
-                                    
-                                    return (
-                                      <Badge 
-                                        key={idx}
-                                        variant="secondary"
-                                        className="bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30 text-amber-800 dark:text-amber-200 border border-amber-300 dark:border-amber-700 text-xs"
-                                      >
-                                        Buy {combo.quantity} @ ₹{combo.price} <span className="ml-1 font-semibold">Save {savingsPercent}%</span>
-                                      </Badge>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Size Selection */}
-                        {product.available_sizes && product.available_sizes.length > 0 && (
-                          <div className="space-y-2">
-                            <Label className="text-sm font-medium">Size</Label>
-                            <RadioGroup
-                              value={selectedVariants[product.id]?.size || ""}
-                              onValueChange={(value) => handleSizeSelect(product.id, value)}
-                              className="flex flex-wrap gap-2"
-                            >
-                              {product.available_sizes.map((size: string) => {
-                                const availableSizes = getAvailableSizes(product.id, selectedVariants[product.id]?.color);
-                                const isAvailable = availableSizes.includes(size);
-                                
-                                return (
-                                  <div key={size} className="flex items-center">
-                                    <RadioGroupItem 
-                                      value={size} 
-                                      id={`${product.id}-size-${size}`} 
-                                      className="sr-only" 
-                                      disabled={!isAvailable}
-                                    />
-                                    <Label
-                                      htmlFor={`${product.id}-size-${size}`}
-                                      className={`px-3 py-1.5 rounded-md border-2 text-sm font-medium transition-all ${
-                                        !isAvailable 
-                                          ? "opacity-40 cursor-not-allowed line-through border-muted-foreground/30" 
-                                          : selectedVariants[product.id]?.size === size
-                                          ? "border-amber-500 bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 cursor-pointer"
-                                          : "border-border hover:border-amber-300 cursor-pointer"
-                                      }`}
-                                      title={!isAvailable ? "Not available in selected color" : ""}
-                                    >
-                                      {size}
-                                    </Label>
-                                  </div>
-                                );
-                              })}
-                            </RadioGroup>
-                          </div>
-                        )}
-
-                        {/* Color Selection */}
-                        {product.available_colors && product.available_colors.length > 0 && (
-                          <div className="space-y-2">
-                            <Label className="text-sm font-medium">Color</Label>
-                            <RadioGroup
-                              value={selectedVariants[product.id]?.color || ""}
-                              onValueChange={(value) => handleColorSelect(product.id, value)}
-                              className="flex flex-wrap gap-2"
-                            >
-                              {product.available_colors.map((color: { name: string; hex: string }) => {
-                                const availableColors = getAvailableColors(product.id, selectedVariants[product.id]?.size);
-                                const isAvailable = availableColors.includes(color.name);
-                                
-                                return (
-                                  <div key={color.name} className="flex items-center">
-                                    <RadioGroupItem 
-                                      value={color.name} 
-                                      id={`${product.id}-color-${color.name}`} 
-                                      className="sr-only"
-                                      disabled={!isAvailable}
-                                    />
-                                    <Label
-                                      htmlFor={`${product.id}-color-${color.name}`}
-                                      className={`px-3 py-1.5 rounded-md border-2 text-sm font-medium transition-all flex items-center gap-2 ${
-                                        !isAvailable
-                                          ? "opacity-40 cursor-not-allowed border-muted-foreground/30"
-                                          : selectedVariants[product.id]?.color === color.name
-                                          ? "border-amber-500 bg-amber-50 dark:bg-amber-950 cursor-pointer"
-                                          : "border-border hover:border-amber-300 cursor-pointer"
-                                      }`}
-                                      title={!isAvailable ? "Not available in selected size" : ""}
-                                    >
-                                      <span
-                                        className="w-4 h-4 rounded-full border border-border"
-                                        style={{ backgroundColor: color.hex }}
-                                      />
-                                      {color.name}
-                                      {!isAvailable && <span className="text-xs ml-1">✕</span>}
-                                    </Label>
-                                  </div>
-                                );
-                              })}
-                            </RadioGroup>
-                          </div>
-                        )}
-
-                        {/* Quantity and Add to Cart */}
-                        <div className="flex items-center gap-2 pt-2">
-                          <div className="flex items-center border rounded-md">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleQuantityChange(product.id, -1)}
-                              disabled={quantities[product.id] === 1}
-                            >
-                              <Minus className="h-4 w-4" />
-                            </Button>
-                            <span className="w-12 text-center font-medium">{quantities[product.id] || 1}</span>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleQuantityChange(product.id, 1)}
-                            >
-                              <Plus className="h-4 w-4" />
-                            </Button>
-                          </div>
-                          <Button
-                            className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
-                            onClick={() => handleAddToCart(product)}
-                          >
-                            <ShoppingCart className="h-4 w-4 mr-2" />
-                            Add to Cart
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </TabsContent>
 
           {/* Smart Basics Tab */}
           <TabsContent value="smart_basics" className="mt-8">
@@ -857,8 +596,31 @@ const Products = () => {
                 ))}
               </div>
             ) : filteredProducts.length === 0 ? (
-              <div className="text-center py-16">
-                <p className="text-muted-foreground text-lg">No products found in this category.</p>
+              <div className="flex flex-col items-center justify-center py-16 px-4">
+                <div className="relative mb-8">
+                  <div className="absolute inset-0 bg-gradient-to-r from-green-500/20 to-emerald-500/20 blur-3xl rounded-full" />
+                  <img 
+                    src={noDataImage} 
+                    alt="Products coming soon" 
+                    className="w-48 h-48 object-contain relative z-10 animate-pulse"
+                  />
+                </div>
+                <div className="max-w-md text-center space-y-3">
+                  <div className="flex items-center justify-center gap-2 mb-4">
+                    <PackageSearch className="h-8 w-8 text-green-600 dark:text-green-400" />
+                  </div>
+                  <h3 className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                    Exciting Products Coming Soon
+                  </h3>
+                  <p className="text-muted-foreground text-base leading-relaxed">
+                    We're curating a premium selection of Smart Basics collection just for you. Our team is working diligently to bring you quality products at smart values.
+                  </p>
+                  <div className="pt-4">
+                    <Badge className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-4 py-2 text-sm">
+                      🔔 Stay Tuned for Updates
+                    </Badge>
+                  </div>
+                </div>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -881,7 +643,10 @@ const Products = () => {
                         className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setSelectedImage({ src: displayImages[product.id] || product.image_url, alt: product.name });
+                          setSelectedImage({ 
+                            src: displayImages[product.id] || product.image_url, 
+                            alt: product.name 
+                          });
                         }}
                       >
                         <Maximize className="h-4 w-4" />
@@ -961,14 +726,14 @@ const Products = () => {
                                     <RadioGroupItem 
                                       value={size} 
                                       id={`${product.id}-size-${size}`} 
-                                      className="sr-only"
+                                      className="sr-only" 
                                       disabled={!isAvailable}
                                     />
                                     <Label
                                       htmlFor={`${product.id}-size-${size}`}
                                       className={`px-3 py-1.5 rounded-md border-2 text-sm font-medium transition-all ${
-                                        !isAvailable
-                                          ? "opacity-40 cursor-not-allowed line-through border-muted-foreground/30"
+                                        !isAvailable 
+                                          ? "opacity-40 cursor-not-allowed line-through border-muted-foreground/30" 
                                           : selectedVariants[product.id]?.size === size
                                           ? "border-green-500 bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300 cursor-pointer"
                                           : "border-border hover:border-green-300 cursor-pointer"
@@ -1052,6 +817,288 @@ const Products = () => {
                           </div>
                           <Button
                             className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                            onClick={() => handleAddToCart(product)}
+                          >
+                            <ShoppingCart className="h-4 w-4 mr-2" />
+                            Add to Cart
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Elite Collection Tab */}
+          <TabsContent value="elite" className="mt-8">
+            <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 rounded-lg p-4 md:p-6 mb-6 md:mb-8 border border-amber-200 dark:border-amber-900">
+              <h2 className="text-lg md:text-2xl font-bold mb-2 text-amber-900 dark:text-amber-100">Premium Craftsmanship, Lasting Quality</h2>
+              <p className="text-sm md:text-base text-amber-800 dark:text-amber-200 mb-3 md:mb-4">
+                Experience the finest fabrics with superior stitching, higher GSM for durability, and designer-level finishing.
+              </p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 text-xs md:text-sm">
+                <div className="flex items-center gap-1.5 md:gap-2">
+                  <Check className="h-3 w-3 md:h-4 md:w-4 text-amber-600 flex-shrink-0" />
+                  <span className="font-medium">Higher GSM</span>
+                </div>
+                <div className="flex items-center gap-1.5 md:gap-2">
+                  <Check className="h-3 w-3 md:h-4 md:w-4 text-amber-600 flex-shrink-0" />
+                  <span className="font-medium">Designer Finish</span>
+                </div>
+                <div className="flex items-center gap-1.5 md:gap-2">
+                  <Check className="h-3 w-3 md:h-4 md:w-4 text-amber-600 flex-shrink-0" />
+                  <span className="font-medium">Superior Stitch</span>
+                </div>
+                <div className="flex items-center gap-1.5 md:gap-2">
+                  <Check className="h-3 w-3 md:h-4 md:w-4 text-amber-600 flex-shrink-0" />
+                  <span className="font-medium">Durability</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Category Filter */}
+            <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+              {categories.map((category) => (
+                <Button
+                  key={category}
+                  variant={activeCategory === category ? "default" : "outline"}
+                  onClick={() => setActiveCategory(category)}
+                  className="whitespace-nowrap text-xs md:text-sm px-3 md:px-4 py-1.5 md:py-2 flex-shrink-0"
+                  size="sm"
+                >
+                  {category}
+                </Button>
+              ))}
+            </div>
+
+            {/* Products Grid */}
+            {isLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[...Array(6)].map((_, i) => (
+                  <Skeleton key={i} className="h-[500px]" />
+                ))}
+              </div>
+            ) : filteredProducts.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 px-4">
+                <div className="relative mb-8">
+                  <div className="absolute inset-0 bg-gradient-to-r from-amber-500/20 to-orange-500/20 blur-3xl rounded-full" />
+                  <img 
+                    src={noDataImage} 
+                    alt="Products coming soon" 
+                    className="w-48 h-48 object-contain relative z-10 animate-pulse"
+                  />
+                </div>
+                <div className="max-w-md text-center space-y-3">
+                  <div className="flex items-center justify-center gap-2 mb-4">
+                    <PackageSearch className="h-8 w-8 text-amber-600 dark:text-amber-400" />
+                  </div>
+                  <h3 className="text-2xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
+                    Exciting Products Coming Soon
+                  </h3>
+                  <p className="text-muted-foreground text-base leading-relaxed">
+                    We're curating a premium selection of Elite collection just for you. Our team is working diligently to bring you superior quality products with exceptional craftsmanship.
+                  </p>
+                  <div className="pt-4">
+                    <Badge className="bg-gradient-to-r from-amber-600 to-orange-600 text-white px-4 py-2 text-sm">
+                      🔔 Stay Tuned for Updates
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredProducts.map((product) => (
+                <Card 
+                  key={product.id} 
+                  className="overflow-hidden hover:shadow-xl transition-all duration-300 border-amber-200/50"
+                >
+                  <CardContent className="p-0">
+                    <div className="relative aspect-square group">
+                      <img
+                        src={displayImages[product.id] || product.image_url || PLACEHOLDER_IMAGE}
+                        alt={product.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      {loadingImages[product.id] && <ProductImageLoader />}
+                      <Button
+                        size="icon"
+                        variant="secondary"
+                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedImage({ src: displayImages[product.id] || product.image_url, alt: product.name });
+                        }}
+                      >
+                        <Maximize className="h-4 w-4" />
+                      </Button>
+                        <Badge className="absolute top-2 left-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white">
+                          ✨ Premium Quality
+                        </Badge>
+                      </div>
+
+                      <div className="p-4 space-y-3">
+                        {product.offer_messages && product.offer_messages.length > 0 && (
+                          <OfferMessageCycle messages={product.offer_messages} />
+                        )}
+
+                        <h3 className="font-semibold text-lg line-clamp-2">{product.name}</h3>
+                        {product.description && (
+                          <p className="text-sm text-muted-foreground line-clamp-2">{product.description}</p>
+                        )}
+
+                        {product.price && (
+                          <div className="space-y-2">
+                            <div className="flex items-baseline gap-2">
+                              {product.discount_percentage && product.discount_percentage > 0 ? (
+                                <>
+                                  <span className="text-2xl font-bold text-amber-600">
+                                    ₹{(product.price * (1 - product.discount_percentage / 100)).toFixed(2)}
+                                  </span>
+                                  <span className="text-sm text-muted-foreground line-through">₹{product.price}</span>
+                                  <Badge variant="destructive" className="ml-auto">{product.discount_percentage}% OFF</Badge>
+                                </>
+                              ) : (
+                                <span className="text-2xl font-bold text-amber-600">₹{product.price}</span>
+                              )}
+                            </div>
+                            
+                            {/* Combo Offers Display */}
+                            {product.combo_offers && product.combo_offers.length > 0 && (
+                              <div className="space-y-1">
+                                <p className="text-xs font-semibold text-amber-700 dark:text-amber-400">🎁 Bulk Discounts Available:</p>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {product.combo_offers.map((combo: { quantity: number; price: number }, idx: number) => {
+                                    const regularPrice = product.price * combo.quantity;
+                                    const savings = regularPrice - combo.price;
+                                    const savingsPercent = ((savings / regularPrice) * 100).toFixed(0);
+                                    
+                                    return (
+                                      <Badge 
+                                        key={idx}
+                                        variant="secondary"
+                                        className="bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30 text-amber-800 dark:text-amber-200 border border-amber-300 dark:border-amber-700 text-xs"
+                                      >
+                                        Buy {combo.quantity} @ ₹{combo.price} <span className="ml-1 font-semibold">Save {savingsPercent}%</span>
+                                      </Badge>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Size Selection */}
+                        {product.available_sizes && product.available_sizes.length > 0 && (
+                          <div className="space-y-2">
+                            <Label className="text-sm font-medium">Size</Label>
+                            <RadioGroup
+                              value={selectedVariants[product.id]?.size || ""}
+                              onValueChange={(value) => handleSizeSelect(product.id, value)}
+                              className="flex flex-wrap gap-2"
+                            >
+                              {product.available_sizes.map((size: string) => {
+                                const availableSizes = getAvailableSizes(product.id, selectedVariants[product.id]?.color);
+                                const isAvailable = availableSizes.includes(size);
+                                
+                                return (
+                                  <div key={size} className="flex items-center">
+                                    <RadioGroupItem 
+                                      value={size} 
+                                      id={`${product.id}-size-${size}`} 
+                                      className="sr-only"
+                                      disabled={!isAvailable}
+                                    />
+                                    <Label
+                                      htmlFor={`${product.id}-size-${size}`}
+                                      className={`px-3 py-1.5 rounded-md border-2 text-sm font-medium transition-all ${
+                                        !isAvailable
+                                          ? "opacity-40 cursor-not-allowed line-through border-muted-foreground/30"
+                                          : selectedVariants[product.id]?.size === size
+                                          ? "border-amber-500 bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 cursor-pointer"
+                                          : "border-border hover:border-amber-300 cursor-pointer"
+                                      }`}
+                                      title={!isAvailable ? "Not available in selected color" : ""}
+                                    >
+                                      {size}
+                                    </Label>
+                                  </div>
+                                );
+                              })}
+                            </RadioGroup>
+                          </div>
+                        )}
+
+                        {/* Color Selection */}
+                        {product.available_colors && product.available_colors.length > 0 && (
+                          <div className="space-y-2">
+                            <Label className="text-sm font-medium">Color</Label>
+                            <RadioGroup
+                              value={selectedVariants[product.id]?.color || ""}
+                              onValueChange={(value) => handleColorSelect(product.id, value)}
+                              className="flex flex-wrap gap-2"
+                            >
+                              {product.available_colors.map((color: { name: string; hex: string }) => {
+                                const availableColors = getAvailableColors(product.id, selectedVariants[product.id]?.size);
+                                const isAvailable = availableColors.includes(color.name);
+                                
+                                return (
+                                  <div key={color.name} className="flex items-center">
+                                    <RadioGroupItem 
+                                      value={color.name} 
+                                      id={`${product.id}-color-${color.name}`} 
+                                      className="sr-only"
+                                      disabled={!isAvailable}
+                                    />
+                                    <Label
+                                      htmlFor={`${product.id}-color-${color.name}`}
+                                      className={`px-3 py-1.5 rounded-md border-2 text-sm font-medium transition-all flex items-center gap-2 ${
+                                        !isAvailable
+                                          ? "opacity-40 cursor-not-allowed border-muted-foreground/30"
+                                          : selectedVariants[product.id]?.color === color.name
+                                          ? "border-amber-500 bg-amber-50 dark:bg-amber-950 cursor-pointer"
+                                          : "border-border hover:border-amber-300 cursor-pointer"
+                                      }`}
+                                      title={!isAvailable ? "Not available in selected size" : ""}
+                                    >
+                                      <span
+                                        className="w-4 h-4 rounded-full border border-border"
+                                        style={{ backgroundColor: color.hex }}
+                                      />
+                                      {color.name}
+                                      {!isAvailable && <span className="text-xs ml-1">✕</span>}
+                                    </Label>
+                                  </div>
+                                );
+                              })}
+                            </RadioGroup>
+                          </div>
+                        )}
+
+                        {/* Quantity and Add to Cart */}
+                        <div className="flex items-center gap-2 pt-2">
+                          <div className="flex items-center border rounded-md">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleQuantityChange(product.id, -1)}
+                              disabled={quantities[product.id] === 1}
+                            >
+                              <Minus className="h-4 w-4" />
+                            </Button>
+                            <span className="w-12 text-center font-medium">{quantities[product.id] || 1}</span>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleQuantityChange(product.id, 1)}
+                            >
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          <Button
+                            className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
                             onClick={() => handleAddToCart(product)}
                           >
                             <ShoppingCart className="h-4 w-4 mr-2" />
