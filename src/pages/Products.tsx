@@ -666,13 +666,13 @@ const Products = () => {
                               {product.discount_percentage && product.discount_percentage > 0 ? (
                                 <>
                                   <span className="text-2xl font-bold text-green-600">
-                                    ₹{(product.price * (1 - product.discount_percentage / 100)).toFixed(2)}
+                                    ₹{Math.round(product.price * (1 - product.discount_percentage / 100))}
                                   </span>
-                                  <span className="text-sm text-muted-foreground line-through">₹{product.price}</span>
+                                  <span className="text-sm text-muted-foreground line-through">₹{Math.round(product.price)}</span>
                                   <Badge variant="destructive" className="ml-auto">{product.discount_percentage}% OFF</Badge>
                                 </>
                               ) : (
-                                <span className="text-2xl font-bold text-green-600">₹{product.price}</span>
+                                <span className="text-2xl font-bold text-green-600">₹{Math.round(product.price)}</span>
                               )}
                             </div>
                             
@@ -948,13 +948,13 @@ const Products = () => {
                               {product.discount_percentage && product.discount_percentage > 0 ? (
                                 <>
                                   <span className="text-2xl font-bold text-amber-600">
-                                    ₹{(product.price * (1 - product.discount_percentage / 100)).toFixed(2)}
+                                    ₹{Math.round(product.price * (1 - product.discount_percentage / 100))}
                                   </span>
-                                  <span className="text-sm text-muted-foreground line-through">₹{product.price}</span>
+                                  <span className="text-sm text-muted-foreground line-through">₹{Math.round(product.price)}</span>
                                   <Badge variant="destructive" className="ml-auto">{product.discount_percentage}% OFF</Badge>
                                 </>
                               ) : (
-                                <span className="text-2xl font-bold text-amber-600">₹{product.price}</span>
+                                <span className="text-2xl font-bold text-amber-600">₹{Math.round(product.price)}</span>
                               )}
                             </div>
                             
