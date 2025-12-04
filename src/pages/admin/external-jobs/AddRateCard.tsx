@@ -40,7 +40,7 @@ import { useCustomCategories } from "@/hooks/useCustomCategories";
 
 type CategoryItem = {
   name: string;
-  rate: number;
+  rate: number; // Now in rupees, not percentage
   customName?: string;
   jobName?: string;
   customJobName?: string;
@@ -64,11 +64,9 @@ const rateCardSchema = z.object({
   style_name: z.string().min(1, "Style name is required"),
   custom_style_name: z.string().optional(),
   category: z.string().min(1, "Category is required"),
+  rate_per_piece: z.number().min(0, "Rate per piece is required"),
   accessories_cost: z.number().min(0).optional(),
   delivery_charge: z.number().min(0).optional(),
-  company_profit_type: z.enum(["amount", "percent"]).optional(),
-  company_profit_value: z.number().min(0).optional(),
-  adjustment: z.number().optional(),
 });
 
 type RateCardFormData = z.infer<typeof rateCardSchema>;
@@ -90,6 +88,7 @@ const AddRateCard = () => {
   const [customProductName, setCustomProductName] = useState("");
   const [selectedOperations, setSelectedOperations] = useState<string[]>([]);
   const [operationCategories, setOperationCategories] = useState<Record<string, CategoryItem[]>>({});
+  const [operationCommissions, setOperationCommissions] = useState<Record<string, number>>({});
   const [generatedStyleId, setGeneratedStyleId] = useState("");
   
   const { data: tasks } = useExternalJobTasks(selectedProduct || undefined);
@@ -100,11 +99,9 @@ const AddRateCard = () => {
       style_name: "",
       custom_style_name: "",
       category: "",
+      rate_per_piece: 0,
       accessories_cost: 0,
       delivery_charge: 0,
-      company_profit_type: "amount",
-      company_profit_value: 0,
-      adjustment: 0,
     },
   });
 
@@ -112,24 +109,25 @@ const AddRateCard = () => {
     if (existingCard) {
       form.setValue("style_name", existingCard.style_name);
       form.setValue("category", existingCard.category);
+      form.setValue("rate_per_piece", existingCard.rate_per_piece || 0);
       form.setValue("accessories_cost", existingCard.accessories_cost);
       form.setValue("delivery_charge", existingCard.delivery_charge);
-      form.setValue("company_profit_type", existingCard.company_profit_type as "amount" | "percent");
-      form.setValue("company_profit_value", existingCard.company_profit_value || 0);
-      form.setValue("adjustment", (existingCard as any).adjustment || 0);
       setGeneratedStyleId(existingCard.style_id);
 
       const operations = existingCard.operations_data as any[];
       const ops: string[] = [];
       const cats: Record<string, CategoryItem[]> = {};
+      const comms: Record<string, number> = {};
 
       operations.forEach((op: any) => {
         ops.push(op.operation_name);
         cats[op.operation_name] = op.categories;
+        comms[op.operation_name] = op.commission_percent || 0;
       });
 
       setSelectedOperations(ops);
       setOperationCategories(cats);
+      setOperationCommissions(comms);
     }
   }, [existingCard]);
 
@@ -165,11 +163,18 @@ const AddRateCard = () => {
       const newCategories = { ...operationCategories };
       delete newCategories[operation];
       setOperationCategories(newCategories);
+      const newCommissions = { ...operationCommissions };
+      delete newCommissions[operation];
+      setOperationCommissions(newCommissions);
     } else {
       setSelectedOperations([...selectedOperations, operation]);
       setOperationCategories({
         ...operationCategories,
         [operation]: [],
+      });
+      setOperationCommissions({
+        ...operationCommissions,
+        [operation]: 0,
       });
     }
   };
@@ -211,6 +216,13 @@ const AddRateCard = () => {
     setOperationCategories(newCategories);
   };
 
+  const updateCommission = (operation: string, value: number) => {
+    setOperationCommissions({
+      ...operationCommissions,
+      [operation]: value,
+    });
+  };
+
   const removeCategory = (operation: string, index: number) => {
     const newCategories = { ...operationCategories };
     newCategories[operation].splice(index, 1);
@@ -218,59 +230,72 @@ const AddRateCard = () => {
   };
 
   const calculateTotals = () => {
-    const accessories = form.watch("accessories_cost") || 0;
-    const delivery = form.watch("delivery_charge") || 0;
-    const profitType = form.watch("company_profit_type");
-    const profitValue = form.watch("company_profit_value") || 0;
-    const adjustment = form.watch("adjustment") || 0;
+    const clientRatePerPiece = form.watch("rate_per_piece") || 0;
 
     const operationBreakdown: Record<
       string,
-      { categories: Array<{ name: string; rate: number; percentage: number }>; total: number; commission: number }
+      { 
+        categories: Array<{ name: string; rate: number }>; 
+        categoriesTotal: number;
+        commissionPercent: number;
+        commissionAmount: number;
+        total: number 
+      }
     > = {};
     let totalOperationsCost = 0;
+    let totalCommission = 0;
 
     selectedOperations.forEach((op) => {
       const cats = operationCategories[op] || [];
+      const commissionPercent = operationCommissions[op] || 0;
 
-      let opBaseTotal = 0;
-      const regularCats: Array<{ name: string; rate: number; percentage: number }> = [];
-      let commissionPercentage = 0;
+      let categoriesTotal = 0;
+      const categoryList: Array<{ name: string; rate: number }> = [];
 
       cats.forEach((cat) => {
-        if (cat.name === "Contract Commission") {
-          commissionPercentage = cat.rate || 0;
-        } else {
-          opBaseTotal += cat.rate || 0;
-          regularCats.push({ name: cat.name, rate: cat.rate || 0, percentage: cat.rate || 0 });
-        }
+        categoriesTotal += cat.rate || 0;
+        categoryList.push({ name: cat.name, rate: cat.rate || 0 });
       });
 
-      const commissionAmount = (opBaseTotal * commissionPercentage) / 100;
-      const opTotal = opBaseTotal + commissionAmount;
+      const commissionAmount = (categoriesTotal * commissionPercent) / 100;
+      const opTotal = categoriesTotal + commissionAmount;
 
       operationBreakdown[op] = {
-        categories: regularCats,
+        categories: categoryList,
+        categoriesTotal,
+        commissionPercent,
+        commissionAmount,
         total: opTotal,
-        commission: commissionAmount,
       };
 
       totalOperationsCost += opTotal;
+      totalCommission += commissionAmount;
     });
 
-    let profitPerPiece = 0;
-    if (profitType === "percent") {
-      profitPerPiece = (totalOperationsCost * profitValue) / 100;
-    } else {
-      profitPerPiece = profitValue;
-    }
+    // Auto-calculate company profit
+    const companyProfitPerPiece = clientRatePerPiece - totalOperationsCost;
+    const companyProfitPercent = clientRatePerPiece > 0 
+      ? (companyProfitPerPiece / clientRatePerPiece) * 100 
+      : 0;
 
-    const ratePerPiece = totalOperationsCost + profitPerPiece + adjustment;
-
-    return { ratePerPiece, operationBreakdown, totalOperationsCost };
+    return { 
+      clientRatePerPiece,
+      operationBreakdown, 
+      totalOperationsCost,
+      totalCommission,
+      companyProfitPerPiece,
+      companyProfitPercent
+    };
   };
 
-  const { ratePerPiece, operationBreakdown, totalOperationsCost } = calculateTotals();
+  const { 
+    clientRatePerPiece,
+    operationBreakdown, 
+    totalOperationsCost,
+    totalCommission,
+    companyProfitPerPiece,
+    companyProfitPercent
+  } = calculateTotals();
 
   const handleAddProduct = async () => {
     if (!customProductName.trim()) {
@@ -295,6 +320,7 @@ const AddRateCard = () => {
   const onSubmit = async (data: RateCardFormData) => {
     const operations = selectedOperations.map((op) => ({
       operation_name: op,
+      commission_percent: operationCommissions[op] || 0,
       categories: (operationCategories[op] || []).map((cat) => ({
         job_name: cat.jobName === "Other" && cat.customJobName ? cat.customJobName : cat.jobName,
         name: cat.name === "Other" && cat.customName ? cat.customName : cat.name,
@@ -315,10 +341,9 @@ const AddRateCard = () => {
       operations_data: operations as any,
       accessories_cost: data.accessories_cost || 0,
       delivery_charge: data.delivery_charge || 0,
-      company_profit_type: data.company_profit_type,
-      company_profit_value: data.company_profit_value || 0,
-      adjustment: data.adjustment || 0,
-      rate_per_piece: ratePerPiece,
+      company_profit_type: "amount",
+      company_profit_value: companyProfitPerPiece,
+      rate_per_piece: data.rate_per_piece,
     };
 
     if (isEditing && id) {
@@ -421,6 +446,29 @@ const AddRateCard = () => {
                 />
               )}
 
+              <FormField
+                control={form.control}
+                name="rate_per_piece"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Rate per Piece (₹) *</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        {...field}
+                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        placeholder="Enter client rate per piece"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                    <p className="text-xs text-muted-foreground">
+                      The amount company receives per piece from client
+                    </p>
+                  </FormItem>
+                )}
+              />
+
               <div className="md:col-span-2">
                 <FormLabel>Generated Style ID</FormLabel>
                 <div className="mt-2 p-3 bg-muted rounded-md font-mono text-lg font-semibold">
@@ -483,7 +531,7 @@ const AddRateCard = () => {
                   </div>
 
                   {selectedOperations.includes(operation) && (
-                    <div className="ml-6 space-y-2">
+                    <div className="ml-6 space-y-3">
                       {operationCategories[operation]?.map((category, index) => (
                          <div key={index} className="space-y-2">
                            <div className="flex gap-2">
@@ -527,11 +575,8 @@ const AddRateCard = () => {
                              </Select>
                              <Input
                                type="number"
-                               placeholder={
-                                 category.name === "Contract Commission"
-                                   ? "Commission %"
-                                   : "Rate %"
-                               }
+                               step="0.01"
+                               placeholder="Rate ₹"
                                value={category.rate}
                                onChange={(e) =>
                                  updateCategory(
@@ -541,7 +586,7 @@ const AddRateCard = () => {
                                    parseFloat(e.target.value) || 0
                                  )
                                }
-                               className="w-32"
+                               className="w-28"
                              />
                              <Button
                                type="button"
@@ -618,16 +663,33 @@ const AddRateCard = () => {
                            )}
                          </div>
                       ))}
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => addCategory(operation)}
-                        className="gap-2"
-                      >
-                        <Plus className="h-4 w-4" />
-                        Add Category
-                      </Button>
+                      
+                      <div className="flex gap-2 items-center">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => addCategory(operation)}
+                          className="gap-2"
+                        >
+                          <Plus className="h-4 w-4" />
+                          Add Category
+                        </Button>
+                        
+                        {/* Commission Field */}
+                        <div className="flex items-center gap-2 ml-auto">
+                          <span className="text-sm text-muted-foreground">Commission:</span>
+                          <Input
+                            type="number"
+                            step="0.1"
+                            placeholder="0"
+                            value={operationCommissions[operation] || ""}
+                            onChange={(e) => updateCommission(operation, parseFloat(e.target.value) || 0)}
+                            className="w-20"
+                          />
+                          <span className="text-sm text-muted-foreground">%</span>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -636,14 +698,14 @@ const AddRateCard = () => {
           </Card>
 
           <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Additional Costs</h3>
+            <h3 className="text-lg font-semibold mb-4">Additional Costs (Total)</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="accessories_cost"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Accessories Cost</FormLabel>
+                    <FormLabel>Accessories Cost (Total)</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -662,67 +724,7 @@ const AddRateCard = () => {
                 name="delivery_charge"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Delivery Charge</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                        placeholder="0"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="company_profit_type"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Company Profit Type</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select type" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="amount">Amount (₹)</SelectItem>
-                        <SelectItem value="percent">Percent (%)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="company_profit_value"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Company Profit Value</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                        placeholder="0"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="adjustment"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Adjustment (+/-)</FormLabel>
+                    <FormLabel>Delivery Charge (Total)</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -741,6 +743,12 @@ const AddRateCard = () => {
           <Card className="p-6 bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary/20">
             <h3 className="text-xl font-bold mb-6">Cost Summary</h3>
             <div className="space-y-4">
+              {/* Client Rate */}
+              <div className="flex justify-between text-lg font-bold bg-blue-500/10 p-3 rounded-lg">
+                <span>Client Rate per Piece:</span>
+                <span className="text-blue-600">₹{clientRatePerPiece.toFixed(2)}</span>
+              </div>
+
               {Object.keys(operationBreakdown).length > 0 && (
                 <div className="space-y-3">
                   {Object.entries(operationBreakdown).map(([op, data]) => (
@@ -751,16 +759,14 @@ const AddRateCard = () => {
                       <div className="space-y-1 text-sm">
                         {data.categories.map((cat, idx) => (
                           <div key={idx} className="flex justify-between">
-                            <span>
-                              {cat.name} ({cat.percentage}%)
-                            </span>
+                            <span>{cat.name || "Unnamed"}</span>
                             <span>₹{cat.rate.toFixed(2)}</span>
                           </div>
                         ))}
-                        {data.commission > 0 && (
+                        {data.commissionPercent > 0 && (
                           <div className="flex justify-between text-orange-600">
-                            <span>Contract Commission</span>
-                            <span>₹{data.commission.toFixed(2)}</span>
+                            <span>Commission ({data.commissionPercent}%)</span>
+                            <span>₹{data.commissionAmount.toFixed(2)}</span>
                           </div>
                         )}
                         <div className="flex justify-between font-semibold pt-2 border-t">
@@ -775,34 +781,23 @@ const AddRateCard = () => {
 
               <div className="pt-4 border-t-2 border-primary/20 space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span>Operations Total:</span>
-                  <span className="font-medium">₹{totalOperationsCost.toFixed(2)}</span>
+                  <span>Total Operations Cost:</span>
+                  <span className="font-medium text-red-600">₹{totalOperationsCost.toFixed(2)}</span>
                 </div>
                 
-                {form.watch("company_profit_value") > 0 && (
-                  <div className="flex justify-between text-sm">
-                    <span>Company Profit ({form.watch("company_profit_type") === "percent" ? `${form.watch("company_profit_value")}%` : "Fixed"}):</span>
-                    <span className="font-medium">
-                      ₹{(form.watch("company_profit_type") === "percent" 
-                        ? (totalOperationsCost * (form.watch("company_profit_value") || 0)) / 100 
-                        : (form.watch("company_profit_value") || 0)
-                      ).toFixed(2)}
-                    </span>
-                  </div>
-                )}
-
-                {form.watch("adjustment") !== 0 && (
-                  <div className="flex justify-between text-sm">
-                    <span>Adjustment (per piece):</span>
-                    <span className={`font-medium ${form.watch("adjustment") > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {form.watch("adjustment") > 0 ? '+' : ''}₹{form.watch("adjustment").toFixed(2)}
-                    </span>
+                {totalCommission > 0 && (
+                  <div className="flex justify-between text-sm text-orange-600">
+                    <span>Total Commission Included:</span>
+                    <span className="font-medium">₹{totalCommission.toFixed(2)}</span>
                   </div>
                 )}
                 
-                <div className="flex justify-between text-lg font-bold bg-primary/10 p-3 rounded-lg mt-3">
-                  <span>Rate per Piece:</span>
-                  <span className="text-primary">₹{ratePerPiece.toFixed(2)}</span>
+                {/* Company Profit (Auto-calculated) */}
+                <div className={`flex justify-between text-lg font-bold p-3 rounded-lg mt-3 ${companyProfitPerPiece >= 0 ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
+                  <span>Company Profit (per piece):</span>
+                  <span className={companyProfitPerPiece >= 0 ? 'text-green-600' : 'text-red-600'}>
+                    ₹{companyProfitPerPiece.toFixed(2)} ({companyProfitPercent.toFixed(1)}%)
+                  </span>
                 </div>
               </div>
             </div>
