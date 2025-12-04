@@ -1045,6 +1045,7 @@ export type Database = {
       external_job_tasks: {
         Row: {
           created_at: string | null
+          description: string | null
           id: string
           is_active: boolean | null
           is_common: boolean | null
@@ -1053,6 +1054,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          description?: string | null
           id?: string
           is_active?: boolean | null
           is_common?: boolean | null
@@ -1061,6 +1063,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          description?: string | null
           id?: string
           is_active?: boolean | null
           is_common?: boolean | null
