@@ -5,8 +5,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
 import { 
-  Download, 
   Printer, 
   FileText, 
   Bold, 
@@ -15,12 +15,12 @@ import {
   AlignLeft,
   AlignCenter,
   AlignRight,
-  List,
-  ListOrdered,
   Undo,
-  Redo,
   Type,
-  Calendar
+  Calendar,
+  Upload,
+  Stamp,
+  PenTool
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -36,8 +36,33 @@ const CompanyLetterhead = () => {
   const [closing, setClosing] = useState('Yours faithfully,');
   const [referenceNo, setReferenceNo] = useState('');
   
+  // Seal & Signature states
+  const [sealImage, setSealImage] = useState<string | null>(null);
+  const [signatureImage, setSignatureImage] = useState<string | null>(null);
+  const [showSeal, setShowSeal] = useState(true);
+  const [showSignature, setShowSignature] = useState(true);
+  
   const letterRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const sealInputRef = useRef<HTMLInputElement>(null);
+  const signatureInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'seal' | 'signature') => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (type === 'seal') {
+          setSealImage(reader.result as string);
+          toast.success('Company seal uploaded');
+        } else {
+          setSignatureImage(reader.result as string);
+          toast.success('Signature uploaded');
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const applyFormat = (command: string) => {
     if (textareaRef.current) {
@@ -172,7 +197,22 @@ const CompanyLetterhead = () => {
             }
             
             .signature-section {
-              margin-top: 60px;
+              margin-top: 20px;
+              display: flex;
+              align-items: flex-end;
+              gap: 24px;
+            }
+            
+            .signature-section img {
+              height: auto;
+              max-height: 50px;
+              width: auto;
+            }
+            
+            .seal-section img {
+              height: 70px;
+              width: auto;
+              opacity: 0.9;
             }
             
             .signature-name {
@@ -227,6 +267,18 @@ const CompanyLetterhead = () => {
     setClosing('Yours faithfully,');
     setReferenceNo('');
     toast.success('Form cleared');
+  };
+
+  const removeSeal = () => {
+    setSealImage(null);
+    if (sealInputRef.current) sealInputRef.current.value = '';
+    toast.success('Seal removed');
+  };
+
+  const removeSignature = () => {
+    setSignatureImage(null);
+    if (signatureInputRef.current) signatureInputRef.current.value = '';
+    toast.success('Signature removed');
   };
 
   return (
@@ -381,6 +433,102 @@ const CompanyLetterhead = () => {
                 onChange={(e) => setClosing(e.target.value)}
               />
             </div>
+
+            <Separator />
+
+            {/* Seal & Signature Section */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                <Stamp className="h-4 w-4 text-primary" />
+                Seal & Signature
+              </div>
+
+              {/* Company Seal */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="flex items-center gap-2">
+                    <Stamp className="h-4 w-4" />
+                    Company Seal
+                  </Label>
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="show-seal" className="text-xs text-muted-foreground">Show in print</Label>
+                    <Switch id="show-seal" checked={showSeal} onCheckedChange={setShowSeal} />
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="file"
+                    ref={sealInputRef}
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => handleImageUpload(e, 'seal')}
+                  />
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => sealInputRef.current?.click()}
+                    className="flex-1"
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    {sealImage ? 'Change Seal' : 'Upload Seal'}
+                  </Button>
+                  {sealImage && (
+                    <Button type="button" variant="destructive" size="sm" onClick={removeSeal}>
+                      Remove
+                    </Button>
+                  )}
+                </div>
+                {sealImage && (
+                  <div className="p-2 border rounded-md bg-muted/50">
+                    <img src={sealImage} alt="Company Seal" className="h-16 w-auto mx-auto" />
+                  </div>
+                )}
+              </div>
+
+              {/* Signature */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="flex items-center gap-2">
+                    <PenTool className="h-4 w-4" />
+                    Signature
+                  </Label>
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="show-signature" className="text-xs text-muted-foreground">Show in print</Label>
+                    <Switch id="show-signature" checked={showSignature} onCheckedChange={setShowSignature} />
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="file"
+                    ref={signatureInputRef}
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => handleImageUpload(e, 'signature')}
+                  />
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => signatureInputRef.current?.click()}
+                    className="flex-1"
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    {signatureImage ? 'Change Signature' : 'Upload Signature'}
+                  </Button>
+                  {signatureImage && (
+                    <Button type="button" variant="destructive" size="sm" onClick={removeSignature}>
+                      Remove
+                    </Button>
+                  )}
+                </div>
+                {signatureImage && (
+                  <div className="p-2 border rounded-md bg-muted/50">
+                    <img src={signatureImage} alt="Signature" className="h-12 w-auto mx-auto" />
+                  </div>
+                )}
+              </div>
+            </div>
           </CardContent>
         </Card>
 
@@ -462,10 +610,22 @@ const CompanyLetterhead = () => {
                   {closing && (
                     <div className="closing mt-8">
                       <p>{closing}</p>
-                      <div className="signature-section mt-12">
-                        <p className="font-semibold" style={{ color: '#2D4057' }}>Sivasubramanian Vadivel</p>
-                        <p className="text-xs" style={{ color: '#4a5568' }}>Proprietor</p>
-                        <p className="text-xs mt-1" style={{ color: '#718096' }}>Authorized Signatory</p>
+                      
+                      {/* Signature & Seal Section */}
+                      <div className="signature-section mt-6 flex items-end gap-6">
+                        <div className="flex-1">
+                          {showSignature && signatureImage && (
+                            <img src={signatureImage} alt="Signature" className="h-10 w-auto mb-1" />
+                          )}
+                          <p className="font-semibold" style={{ color: '#2D4057' }}>Sivasubramanian Vadivel</p>
+                          <p className="text-xs" style={{ color: '#4a5568' }}>Proprietor</p>
+                          <p className="text-xs mt-1" style={{ color: '#718096' }}>Authorized Signatory</p>
+                        </div>
+                        {showSeal && sealImage && (
+                          <div className="seal-section">
+                            <img src={sealImage} alt="Company Seal" className="h-16 w-auto opacity-90" />
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
