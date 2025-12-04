@@ -329,6 +329,60 @@ export type Database = {
           },
         ]
       }
+      company_letterheads: {
+        Row: {
+          closing: string | null
+          created_at: string
+          id: string
+          letter_body: string | null
+          letter_date: string
+          recipient_address: string | null
+          recipient_name: string | null
+          reference_no: string | null
+          salutation: string | null
+          seal_image: string | null
+          show_seal: boolean | null
+          show_signature: boolean | null
+          signature_image: string | null
+          subject: string | null
+          updated_at: string
+        }
+        Insert: {
+          closing?: string | null
+          created_at?: string
+          id?: string
+          letter_body?: string | null
+          letter_date?: string
+          recipient_address?: string | null
+          recipient_name?: string | null
+          reference_no?: string | null
+          salutation?: string | null
+          seal_image?: string | null
+          show_seal?: boolean | null
+          show_signature?: boolean | null
+          signature_image?: string | null
+          subject?: string | null
+          updated_at?: string
+        }
+        Update: {
+          closing?: string | null
+          created_at?: string
+          id?: string
+          letter_body?: string | null
+          letter_date?: string
+          recipient_address?: string | null
+          recipient_name?: string | null
+          reference_no?: string | null
+          salutation?: string | null
+          seal_image?: string | null
+          show_seal?: boolean | null
+          show_signature?: boolean | null
+          signature_image?: string | null
+          subject?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       contact_inquiries: {
         Row: {
           admin_notes: string | null

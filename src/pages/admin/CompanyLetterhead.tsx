@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -20,13 +20,62 @@ import {
   Calendar,
   Upload,
   Stamp,
-  PenTool
+  PenTool,
+  Save,
+  List,
+  ArrowLeft,
+  Edit,
+  Trash2,
+  Plus
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 import letterheadLogo from '@/assets/feather-letterhead-logo.png';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
+interface Letterhead {
+  id: string;
+  letter_date: string;
+  reference_no: string | null;
+  recipient_name: string | null;
+  recipient_address: string | null;
+  subject: string | null;
+  salutation: string | null;
+  letter_body: string | null;
+  closing: string | null;
+  seal_image: string | null;
+  signature_image: string | null;
+  show_seal: boolean;
+  show_signature: boolean;
+  created_at: string;
+  updated_at: string;
+}
 
 const CompanyLetterhead = () => {
+  const [view, setView] = useState<'editor' | 'list'>('editor');
+  const [letterheads, setLetterheads] = useState<Letterhead[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+
   const [letterDate, setLetterDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [recipientName, setRecipientName] = useState('');
   const [recipientAddress, setRecipientAddress] = useState('');
@@ -36,7 +85,6 @@ const CompanyLetterhead = () => {
   const [closing, setClosing] = useState('Yours faithfully,');
   const [referenceNo, setReferenceNo] = useState('');
   
-  // Seal & Signature states
   const [sealImage, setSealImage] = useState<string | null>(null);
   const [signatureImage, setSignatureImage] = useState<string | null>(null);
   const [showSeal, setShowSeal] = useState(true);
@@ -46,6 +94,29 @@ const CompanyLetterhead = () => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const sealInputRef = useRef<HTMLInputElement>(null);
   const signatureInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (view === 'list') {
+      fetchLetterheads();
+    }
+  }, [view]);
+
+  const fetchLetterheads = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('company_letterheads')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setLetterheads(data || []);
+    } catch (error: any) {
+      toast.error('Failed to fetch letterheads: ' + error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'seal' | 'signature') => {
     const file = e.target.files?.[0];
@@ -85,6 +156,93 @@ const CompanyLetterhead = () => {
       
       const newBody = letterBody.substring(0, start) + formattedText + letterBody.substring(end);
       setLetterBody(newBody);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!subject && !letterBody) {
+      toast.error('Please add at least a subject or letter body');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const letterData = {
+        letter_date: letterDate,
+        reference_no: referenceNo || null,
+        recipient_name: recipientName || null,
+        recipient_address: recipientAddress || null,
+        subject: subject || null,
+        salutation: salutation || null,
+        letter_body: letterBody || null,
+        closing: closing || null,
+        seal_image: sealImage,
+        signature_image: signatureImage,
+        show_seal: showSeal,
+        show_signature: showSignature,
+      };
+
+      if (editingId) {
+        const { error } = await supabase
+          .from('company_letterheads')
+          .update(letterData)
+          .eq('id', editingId);
+
+        if (error) throw error;
+        toast.success('Letterhead updated successfully');
+      } else {
+        const { error } = await supabase
+          .from('company_letterheads')
+          .insert([letterData]);
+
+        if (error) throw error;
+        toast.success('Letterhead saved successfully');
+      }
+
+      clearForm();
+      setEditingId(null);
+    } catch (error: any) {
+      toast.error('Failed to save letterhead: ' + error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleEdit = (letterhead: Letterhead) => {
+    setEditingId(letterhead.id);
+    setLetterDate(letterhead.letter_date);
+    setReferenceNo(letterhead.reference_no || '');
+    setRecipientName(letterhead.recipient_name || '');
+    setRecipientAddress(letterhead.recipient_address || '');
+    setSubject(letterhead.subject || '');
+    setSalutation(letterhead.salutation || 'Dear Sir/Madam,');
+    setLetterBody(letterhead.letter_body || '');
+    setClosing(letterhead.closing || 'Yours faithfully,');
+    setSealImage(letterhead.seal_image);
+    setSignatureImage(letterhead.signature_image);
+    setShowSeal(letterhead.show_seal);
+    setShowSignature(letterhead.show_signature);
+    setView('editor');
+  };
+
+  const handleDelete = async () => {
+    if (!deleteId) return;
+
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from('company_letterheads')
+        .delete()
+        .eq('id', deleteId);
+
+      if (error) throw error;
+      toast.success('Letterhead deleted successfully');
+      setLetterheads(letterheads.filter(l => l.id !== deleteId));
+    } catch (error: any) {
+      toast.error('Failed to delete letterhead: ' + error.message);
+    } finally {
+      setIsLoading(false);
+      setDeleteId(null);
     }
   };
 
@@ -267,6 +425,13 @@ const CompanyLetterhead = () => {
     setLetterBody('');
     setClosing('Yours faithfully,');
     setReferenceNo('');
+    setSealImage(null);
+    setSignatureImage(null);
+    setShowSeal(true);
+    setShowSignature(true);
+    setEditingId(null);
+    if (sealInputRef.current) sealInputRef.current.value = '';
+    if (signatureInputRef.current) signatureInputRef.current.value = '';
     toast.success('Form cleared');
   };
 
@@ -282,18 +447,132 @@ const CompanyLetterhead = () => {
     toast.success('Signature removed');
   };
 
+  if (view === 'list') {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Saved Letterheads</h1>
+            <p className="text-muted-foreground mt-1">View, edit, or delete your saved letters</p>
+          </div>
+          <div className="flex gap-3">
+            <Button variant="outline" onClick={() => setView('editor')}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Editor
+            </Button>
+            <Button onClick={() => { clearForm(); setView('editor'); }}>
+              <Plus className="h-4 w-4 mr-2" />
+              New Letter
+            </Button>
+          </div>
+        </div>
+
+        <Card>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Reference</TableHead>
+                  <TableHead>Recipient</TableHead>
+                  <TableHead>Subject</TableHead>
+                  <TableHead>Created</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                      Loading...
+                    </TableCell>
+                  </TableRow>
+                ) : letterheads.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                      No saved letterheads found
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  letterheads.map((letterhead) => (
+                    <TableRow key={letterhead.id}>
+                      <TableCell>{format(new Date(letterhead.letter_date), 'dd MMM yyyy')}</TableCell>
+                      <TableCell>{letterhead.reference_no || '-'}</TableCell>
+                      <TableCell className="max-w-[200px] truncate">
+                        {letterhead.recipient_name || '-'}
+                      </TableCell>
+                      <TableCell className="max-w-[250px] truncate">
+                        {letterhead.subject || '-'}
+                      </TableCell>
+                      <TableCell>{format(new Date(letterhead.created_at), 'dd MMM yyyy')}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEdit(letterhead)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => setDeleteId(letterhead.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Letterhead</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete this letterhead? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground">
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Company Letterhead</h1>
+          <h1 className="text-3xl font-bold text-foreground">
+            {editingId ? 'Edit Letterhead' : 'Company Letterhead'}
+          </h1>
           <p className="text-muted-foreground mt-1">Create and print professional business letters</p>
         </div>
         <div className="flex gap-3">
+          <Button variant="outline" onClick={() => setView('list')}>
+            <List className="h-4 w-4 mr-2" />
+            View All
+          </Button>
           <Button variant="outline" onClick={clearForm}>
             <Undo className="h-4 w-4 mr-2" />
             Clear
+          </Button>
+          <Button variant="secondary" onClick={handleSave} disabled={isLoading}>
+            <Save className="h-4 w-4 mr-2" />
+            {editingId ? 'Update' : 'Save'}
           </Button>
           <Button onClick={handlePrint} className="bg-primary">
             <Printer className="h-4 w-4 mr-2" />
