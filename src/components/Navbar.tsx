@@ -100,6 +100,31 @@ const Navbar = () => {
             </Link>
             
             {/* Women, Men, More menus hidden for now */}
+            
+            <Link
+              to="/services"
+              className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                isActive("/services") ? "text-secondary" : "text-foreground hover:text-secondary"
+              }`}
+            >
+              Services
+            </Link>
+            <Link
+              to="/about"
+              className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                isActive("/about") ? "text-secondary" : "text-foreground hover:text-secondary"
+              }`}
+            >
+              About Us
+            </Link>
+            <Link
+              to="/contact"
+              className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                isActive("/contact") ? "text-secondary" : "text-foreground hover:text-secondary"
+              }`}
+            >
+              Contact
+            </Link>
           </div>
 
           {/* Auth & CTA Buttons */}
