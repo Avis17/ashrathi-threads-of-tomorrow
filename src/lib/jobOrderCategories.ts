@@ -36,6 +36,7 @@ export const JOB_ORDER_CATEGORIES = {
     "Neck Tape Cover",
     "Shoulder Reinforcement Tape Stitch",
     "Bartack on Stress Points",
+    "Peek (Neck/Shoulder/Sleeve)",
     "Other"
   ],
   "Stitching (Power Table) - Overlock": [
