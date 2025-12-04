@@ -28,6 +28,7 @@ import {
   useCreateExternalJobRateCard,
   useUpdateExternalJobRateCard,
   useExternalJobRateCard,
+  useExternalJobRateCards,
 } from "@/hooks/useExternalJobRateCards";
 import { 
   useExternalJobProducts, 
@@ -77,6 +78,7 @@ const AddRateCard = () => {
   const isEditing = !!id;
 
   const { data: existingCard } = useExternalJobRateCard(id || "");
+  const { data: allRateCards } = useExternalJobRateCards();
   const { data: products } = useExternalJobProducts();
   const createRateCard = useCreateExternalJobRateCard();
   const updateRateCard = useUpdateExternalJobRateCard();
@@ -142,8 +144,24 @@ const AddRateCard = () => {
       .substring(0, 3)
       .toUpperCase();
 
-    const increment = "001";
-    return `FF-RC-${categoryCode}-${styleCode}-${increment}`;
+    // Find the highest existing increment for this prefix
+    const prefix = `FF-RC-${categoryCode}-${styleCode}-`;
+    let maxIncrement = 0;
+    
+    if (allRateCards) {
+      allRateCards.forEach((card) => {
+        if (card.style_id.startsWith(prefix)) {
+          const incrementStr = card.style_id.replace(prefix, "");
+          const incrementNum = parseInt(incrementStr, 10);
+          if (!isNaN(incrementNum) && incrementNum > maxIncrement) {
+            maxIncrement = incrementNum;
+          }
+        }
+      });
+    }
+
+    const nextIncrement = String(maxIncrement + 1).padStart(3, "0");
+    return `${prefix}${nextIncrement}`;
   };
 
   useEffect(() => {
@@ -155,7 +173,7 @@ const AddRateCard = () => {
       const newId = generateStyleId(styleName, category, customName);
       setGeneratedStyleId(newId);
     }
-  }, [form.watch("style_name"), form.watch("category"), form.watch("custom_style_name"), isEditing]);
+  }, [form.watch("style_name"), form.watch("category"), form.watch("custom_style_name"), isEditing, allRateCards]);
 
   const toggleOperation = (operation: string) => {
     if (selectedOperations.includes(operation)) {
