@@ -63,6 +63,7 @@ export const JOB_ORDER_CATEGORIES = {
     "Flatlock on Sleeve Hem",
     "Back Yoke Flatlock",
     "Sports Seam Flatlock",
+    "Bottom Flatlock",
     "Other"
   ],
   "Checking": [
