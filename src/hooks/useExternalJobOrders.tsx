@@ -192,11 +192,6 @@ export const useUpdateExternalJobOrder = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['external-job-orders'] });
       queryClient.invalidateQueries({ queryKey: ['external-job-order'] });
-      // Don't show toast here - let caller handle success/error messages
-    },
-    onError: (error: any) => {
-      // Don't show toast here - let caller handle success/error messages
-      throw error;
     },
   });
 };
