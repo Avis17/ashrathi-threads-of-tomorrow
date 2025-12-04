@@ -1002,6 +1002,7 @@ export type Database = {
           delivery_charge: number
           id: string
           is_active: boolean
+          notes: string | null
           operations_data: Json
           rate_per_piece: number
           style_id: string
@@ -1018,6 +1019,7 @@ export type Database = {
           delivery_charge?: number
           id?: string
           is_active?: boolean
+          notes?: string | null
           operations_data?: Json
           rate_per_piece?: number
           style_id: string
@@ -1034,6 +1036,7 @@ export type Database = {
           delivery_charge?: number
           id?: string
           is_active?: boolean
+          notes?: string | null
           operations_data?: Json
           rate_per_piece?: number
           style_id?: string

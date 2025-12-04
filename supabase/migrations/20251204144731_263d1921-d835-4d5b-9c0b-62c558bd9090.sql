@@ -1,0 +1,1 @@
+ALTER TABLE external_job_rate_cards ADD COLUMN notes text;
