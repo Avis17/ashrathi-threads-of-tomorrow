@@ -79,6 +79,7 @@ export const JOB_ORDER_CATEGORIES = {
     "Fusing Strength Check",
     "Stains/Damages Check",
     "Final Quality Control (FQC)",
+    "Helper (Thread Cut/Change In-Out/Fold)",
     "Other"
   ],
   "Ironing": [
