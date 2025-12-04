@@ -46,6 +46,7 @@ import Boxer from "./pages/categories/Boxer";
 import TrackPants from "./pages/categories/TrackPants";
 import ExportSurplus from "./pages/categories/ExportSurplus";
 import TermsAndConditions from "./pages/TermsAndConditions";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 
 const queryClient = new QueryClient();
 
@@ -113,6 +114,7 @@ const App = () => (
           <Route path="/categories/track-pants" element={<TrackPants />} />
           <Route path="/categories/export-surplus" element={<ExportSurplus />} />
                       <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+                      <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                       
                       <Route path="*" element={<NotFound />} />
                     </Routes>
