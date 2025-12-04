@@ -73,13 +73,14 @@ export const useExternalJobTasks = (productId?: string) => {
 export const useCreateExternalJobTask = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ taskName, productId }: { taskName: string; productId?: string }) => {
+    mutationFn: async ({ taskName, productId, description }: { taskName: string; productId?: string; description?: string }) => {
       const { data, error } = await supabase
         .from('external_job_tasks')
         .insert([{ 
           task_name: taskName, 
           product_id: productId || null,
-          is_common: !productId 
+          is_common: !productId,
+          description: description || null
         }])
         .select()
         .single();

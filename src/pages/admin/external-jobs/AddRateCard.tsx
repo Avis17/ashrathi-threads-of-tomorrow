@@ -45,6 +45,7 @@ type CategoryItem = {
   customName?: string;
   jobName?: string;
   customJobName?: string;
+  customJobDescription?: string;
 };
 
 const CATEGORIES = ["Men", "Women", "Kids", "Unisex"];
@@ -202,7 +203,7 @@ const AddRateCard = () => {
       ...operationCategories,
       [operation]: [
         ...(operationCategories[operation] || []),
-        { name: "", rate: 0, customName: "", jobName: "", customJobName: "" },
+        { name: "", rate: 0, customName: "", jobName: "", customJobName: "", customJobDescription: "" },
       ],
     });
   };
@@ -210,7 +211,7 @@ const AddRateCard = () => {
   const updateCategory = (
     operation: string,
     index: number,
-    field: "name" | "rate" | "customName" | "jobName" | "customJobName",
+    field: "name" | "rate" | "customName" | "jobName" | "customJobName" | "customJobDescription",
     value: string | number
   ) => {
     const newCategories = { ...operationCategories };
@@ -227,9 +228,12 @@ const AddRateCard = () => {
       newCategories[operation][index].jobName = value as string;
       if (value !== "Other") {
         newCategories[operation][index].customJobName = "";
+        newCategories[operation][index].customJobDescription = "";
       }
     } else if (field === "customJobName") {
       newCategories[operation][index].customJobName = value as string;
+    } else if (field === "customJobDescription") {
+      newCategories[operation][index].customJobDescription = value as string;
     }
     setOperationCategories(newCategories);
   };
@@ -324,14 +328,15 @@ const AddRateCard = () => {
     setCustomProductName("");
   };
 
-  const handleAddTask = async (categoryJobName: string) => {
+  const handleAddTask = async (categoryJobName: string, description?: string) => {
     if (!categoryJobName.trim()) {
       toast.error("Please enter a job name");
       return;
     }
     await createTask.mutateAsync({ 
       taskName: categoryJobName, 
-      productId: selectedProduct || undefined 
+      productId: selectedProduct || undefined,
+      description: description || undefined
     });
   };
 
@@ -577,23 +582,25 @@ const AddRateCard = () => {
                                    </SelectValue>
                                  </SelectTrigger>
                                  <SelectContent>
-                                   {tasks?.map((task) => (
-                                     <SelectItem key={task.id} value={task.task_name}>
-                                       <div className="flex flex-col">
-                                         <span className="font-medium">{task.task_name}</span>
-                                         <span className="text-xs text-muted-foreground">Task for {selectedProduct || "selected product"}</span>
-                                       </div>
-                                     </SelectItem>
-                                   ))}
-                                   {/* Also show operation-specific categories */}
-                                   {getCategories(operation).filter(cat => cat !== "Other").map((cat) => (
-                                     <SelectItem key={cat} value={cat}>
-                                       <div className="flex flex-col">
-                                         <span className="font-medium">{cat}</span>
-                                         <span className="text-xs text-muted-foreground">{operation} category</span>
-                                       </div>
-                                     </SelectItem>
-                                   ))}
+                                                   {tasks?.map((task) => (
+                                                     <SelectItem key={task.id} value={task.task_name}>
+                                                       <div className="flex flex-col">
+                                                         <span className="font-medium">{task.task_name}</span>
+                                                         <span className="text-xs text-muted-foreground italic">
+                                                           {task.description || "No description available"}
+                                                         </span>
+                                                       </div>
+                                                     </SelectItem>
+                                                   ))}
+                                                   {/* Also show operation-specific categories */}
+                                                   {getCategories(operation).filter(cat => cat !== "Other").map((cat) => (
+                                                     <SelectItem key={cat} value={cat}>
+                                                       <div className="flex flex-col">
+                                                         <span className="font-medium">{cat}</span>
+                                                         <span className="text-xs text-muted-foreground italic">Standard {operation.toLowerCase()} category</span>
+                                                       </div>
+                                                     </SelectItem>
+                                                   ))}
                                    <SelectItem value="Other">
                                      <div className="flex flex-col">
                                        <span className="font-medium">Other</span>
@@ -631,30 +638,39 @@ const AddRateCard = () => {
                            
                            {/* Custom Job Name Input */}
                            {category.jobName === "Other" && (
-                             <div className="flex gap-2 items-center ml-0">
+                             <div className="space-y-2 ml-0 p-3 bg-muted/30 rounded-lg">
                                <Input
-                                 placeholder="Enter custom job/task name"
+                                 placeholder="Enter job/task name (e.g., Gusset Pouch)"
                                  value={category.customJobName || ""}
                                  onChange={(e) =>
                                    updateCategory(operation, index, "customJobName", e.target.value)
                                  }
-                                 className="flex-1"
+                               />
+                               <Input
+                                 placeholder="Describe purpose (e.g., Joining sleeve and body, Stitching side seam)"
+                                 value={category.customJobDescription || ""}
+                                 onChange={(e) =>
+                                   updateCategory(operation, index, "customJobDescription", e.target.value)
+                                 }
+                                 className="text-sm"
                                />
                                <Button
                                  type="button"
                                  variant="outline"
-                                 size="icon"
+                                 size="sm"
                                  onClick={() => {
                                    const customJob = category.customJobName?.trim();
+                                   const desc = category.customJobDescription?.trim();
                                    if (customJob) {
-                                     handleAddTask(customJob);
+                                     handleAddTask(customJob, desc);
                                    } else {
                                      toast.error("Please enter a job name");
                                    }
                                  }}
-                                 title="Add to task list"
+                                 className="gap-1"
                                >
-                                 <Plus className="h-4 w-4" />
+                                 <Plus className="h-3 w-3" />
+                                 Add to task list
                                </Button>
                              </div>
                            )}
