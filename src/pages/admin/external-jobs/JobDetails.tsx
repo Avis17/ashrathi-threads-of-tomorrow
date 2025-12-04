@@ -425,6 +425,60 @@ const JobDetails = () => {
                 );
               })}
 
+              {/* Operation Type Subtotals */}
+              {(() => {
+                const singerTotal = jobOrder.external_job_operations
+                  ?.filter((op: any) => op.operation_name?.toLowerCase().includes('singer'))
+                  ?.reduce((sum: number, op: any) => sum + (op.total_rate || 0), 0) || 0;
+                
+                const overlockTotal = jobOrder.external_job_operations
+                  ?.filter((op: any) => op.operation_name?.toLowerCase().includes('overlock'))
+                  ?.reduce((sum: number, op: any) => sum + (op.total_rate || 0), 0) || 0;
+                
+                const flatlockTotal = jobOrder.external_job_operations
+                  ?.filter((op: any) => op.operation_name?.toLowerCase().includes('flatlock'))
+                  ?.reduce((sum: number, op: any) => sum + (op.total_rate || 0), 0) || 0;
+                
+                const powerTableTotal = overlockTotal + flatlockTotal;
+                
+                const hasSinger = singerTotal > 0;
+                const hasPowerTable = powerTableTotal > 0;
+                
+                if (!hasSinger && !hasPowerTable) return null;
+                
+                return (
+                  <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg space-y-2 border border-blue-200 dark:border-blue-800">
+                    <h4 className="font-semibold text-blue-700 dark:text-blue-300 mb-3">Operation Subtotals</h4>
+                    {hasSinger && (
+                      <div className="flex justify-between text-sm">
+                        <span className="font-medium">Singer Total:</span>
+                        <span className="font-bold text-blue-600">₹{singerTotal.toFixed(2)}</span>
+                      </div>
+                    )}
+                    {hasPowerTable && (
+                      <>
+                        {overlockTotal > 0 && (
+                          <div className="flex justify-between text-sm pl-4">
+                            <span className="text-muted-foreground">Overlock:</span>
+                            <span className="font-medium">₹{overlockTotal.toFixed(2)}</span>
+                          </div>
+                        )}
+                        {flatlockTotal > 0 && (
+                          <div className="flex justify-between text-sm pl-4">
+                            <span className="text-muted-foreground">Flatlock:</span>
+                            <span className="font-medium">₹{flatlockTotal.toFixed(2)}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between text-sm pt-1 border-t border-blue-200 dark:border-blue-700">
+                          <span className="font-medium">Power Table Total:</span>
+                          <span className="font-bold text-blue-600">₹{powerTableTotal.toFixed(2)}</span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                );
+              })()}
+
               <div className="border-t-2 pt-4 space-y-2">
                 <div className="flex justify-between text-lg font-semibold">
                   <span>Rate per Piece:</span>
