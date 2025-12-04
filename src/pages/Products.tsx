@@ -410,106 +410,6 @@ const Products = () => {
         </div>
       </div>
 
-      {/* Model Showcase Carousel */}
-      <div className="container mx-auto px-4 py-12">
-        <Carousel
-          opts={{ align: "start", loop: true }}
-          plugins={[Autoplay({ delay: 3000 })]}
-          className="w-full"
-        >
-          <CarouselContent className="-ml-2 md:-ml-4">
-            {modelShowcaseImages.map((image, index) => (
-              <CarouselItem key={index} className="pl-2 md:pl-4 basis-full md:basis-1/2 lg:basis-1/3">
-                <Card className="overflow-hidden group cursor-pointer hover:shadow-xl transition-all duration-300">
-                  <CardContent className="p-0 relative aspect-[3/4]">
-                    <img
-                      src={image.src}
-                      alt={image.alt}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-                      <Badge className="mb-2">{image.category}</Badge>
-                      <p className="text-white font-semibold">{image.alt}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-          <CarouselPrevious className="left-2" />
-          <CarouselNext className="right-2" />
-        </Carousel>
-      </div>
-
-      {/* Women's Leggings Collection Showcase */}
-      <div className="bg-gradient-to-r from-purple-50 via-pink-50 to-purple-50 dark:from-purple-950/20 dark:via-pink-950/20 dark:to-purple-950/20 py-12 md:py-16">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-8 md:mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-3 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-              Women's Leggings Collection
-            </h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto mb-6">
-              Discover your perfect fit from our range of premium leggings designed for every lifestyle
-            </p>
-            <Link to="/leggings-features">
-              <Button 
-                size="lg" 
-                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 px-8 group"
-              >
-                ✨ Discover Premium Features
-                <Sparkles className="ml-2 h-5 w-5 group-hover:scale-110 transition-transform" />
-              </Button>
-            </Link>
-          </div>
-          
-          <Carousel
-            opts={{ align: "start", loop: true }}
-            plugins={[Autoplay({ delay: 4000 })]}
-            className="w-full"
-          >
-            <CarouselContent className="-ml-2 md:-ml-4">
-              {leggingsCollection.map((legging, index) => (
-                <CarouselItem key={index} className="pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/4">
-                  <Card className="overflow-hidden group hover:shadow-2xl transition-all duration-500 border-2 border-transparent hover:border-purple-200 dark:hover:border-purple-800">
-                    <CardContent className="p-0 relative">
-                      <div className="aspect-[3/4] relative overflow-hidden bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/20 dark:to-pink-900/20">
-                        <img
-                          src={legging.src}
-                          alt={legging.alt}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                      </div>
-                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-4 md:p-6 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
-                        <Badge className="mb-2 bg-gradient-to-r from-purple-500 to-pink-500 border-0">
-                          Premium Leggings
-                        </Badge>
-                        <h3 className="text-white font-bold text-base md:text-lg mb-1">
-                          {legging.title}
-                        </h3>
-                        <p className="text-white/90 text-xs md:text-sm">
-                          {legging.description}
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-            <CarouselPrevious className="left-2" />
-            <CarouselNext className="right-2" />
-          </Carousel>
-          
-          <div className="text-center mt-8">
-            <Link to="/size-chart/womens-leggings">
-              <Button size="lg" className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transition-all duration-300">
-                📏 Interactive Size Chart & Calculator
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
-
       {/* Two-Tier Tab System */}
       <div className="container mx-auto px-4 py-8">
         <Tabs value={selectedTier} onValueChange={(value) => setSelectedTier(value as 'elite' | 'smart_basics')} className="w-full">
@@ -1123,6 +1023,112 @@ const Products = () => {
                 "No deception. No false promises. Just honest quality at honest prices."
               </p>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Model Showcase Carousel */}
+      <div className="container mx-auto px-4 py-12">
+        <div className="text-center mb-8">
+          <h2 className="text-3xl md:text-4xl font-bold mb-3">Our Fashion Collections</h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            Explore our diverse range of styles for every member of the family
+          </p>
+        </div>
+        <Carousel
+          opts={{ align: "start", loop: true }}
+          plugins={[Autoplay({ delay: 3000 })]}
+          className="w-full"
+        >
+          <CarouselContent className="-ml-2 md:-ml-4">
+            {modelShowcaseImages.map((image, index) => (
+              <CarouselItem key={index} className="pl-2 md:pl-4 basis-full md:basis-1/2 lg:basis-1/3">
+                <Card className="overflow-hidden group cursor-pointer hover:shadow-xl transition-all duration-300">
+                  <CardContent className="p-0 relative aspect-[3/4]">
+                    <img
+                      src={image.src}
+                      alt={image.alt}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+                      <Badge className="mb-2">{image.category}</Badge>
+                      <p className="text-white font-semibold">{image.alt}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          <CarouselPrevious className="left-2" />
+          <CarouselNext className="right-2" />
+        </Carousel>
+      </div>
+
+      {/* Women's Leggings Collection Showcase */}
+      <div className="bg-gradient-to-r from-purple-50 via-pink-50 to-purple-50 dark:from-purple-950/20 dark:via-pink-950/20 dark:to-purple-950/20 py-12 md:py-16">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-8 md:mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold mb-3 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+              Women's Leggings Collection
+            </h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto mb-6">
+              Discover your perfect fit from our range of premium leggings designed for every lifestyle
+            </p>
+            <Link to="/leggings-features">
+              <Button 
+                size="lg" 
+                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 px-8 group"
+              >
+                ✨ Discover Premium Features
+                <Sparkles className="ml-2 h-5 w-5 group-hover:scale-110 transition-transform" />
+              </Button>
+            </Link>
+          </div>
+          
+          <Carousel
+            opts={{ align: "start", loop: true }}
+            plugins={[Autoplay({ delay: 4000 })]}
+            className="w-full"
+          >
+            <CarouselContent className="-ml-2 md:-ml-4">
+              {leggingsCollection.map((legging, index) => (
+                <CarouselItem key={index} className="pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/4">
+                  <Card className="overflow-hidden group hover:shadow-2xl transition-all duration-500 border-2 border-transparent hover:border-purple-200 dark:hover:border-purple-800">
+                    <CardContent className="p-0 relative">
+                      <div className="aspect-[3/4] relative overflow-hidden bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/20 dark:to-pink-900/20">
+                        <img
+                          src={legging.src}
+                          alt={legging.alt}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                      </div>
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-4 md:p-6 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
+                        <Badge className="mb-2 bg-gradient-to-r from-purple-500 to-pink-500 border-0">
+                          Premium Leggings
+                        </Badge>
+                        <h3 className="text-white font-bold text-base md:text-lg mb-1">
+                          {legging.title}
+                        </h3>
+                        <p className="text-white/90 text-xs md:text-sm">
+                          {legging.description}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious className="left-2" />
+            <CarouselNext className="right-2" />
+          </Carousel>
+          
+          <div className="text-center mt-8">
+            <Link to="/size-chart/womens-leggings">
+              <Button size="lg" className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transition-all duration-300">
+                📏 Interactive Size Chart & Calculator
+              </Button>
+            </Link>
           </div>
         </div>
       </div>
