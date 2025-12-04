@@ -94,7 +94,13 @@ const Footer = () => {
         </div>
 
         {/* Bottom Bar */}
-        <div className="border-t border-primary-foreground/20 mt-8 pt-6 text-center">
+        <div className="border-t border-primary-foreground/20 mt-8 pt-6 text-center space-y-2">
+          <Link
+            to="/terms-and-conditions"
+            className="text-sm text-primary-foreground/80 hover:text-secondary transition-colors"
+          >
+            Terms and Conditions
+          </Link>
           <p className="text-sm text-primary-foreground/60">
             © {new Date().getFullYear()} Feather Fashions. All rights reserved.
           </p>
