@@ -552,45 +552,58 @@ const AddRateCard = () => {
                     <div className="ml-6 space-y-3">
                       {operationCategories[operation]?.map((category, index) => (
                          <div key={index} className="space-y-2">
-                           <div className="flex gap-2">
-                             {/* Job Dropdown */}
-                             <Select
-                               value={category.jobName}
-                               onValueChange={(value) =>
-                                 updateCategory(operation, index, "jobName", value)
-                               }
-                             >
-                               <SelectTrigger className="flex-1">
-                                 <SelectValue placeholder="Select job" />
-                               </SelectTrigger>
-                               <SelectContent>
-                                 {tasks?.map((task) => (
-                                   <SelectItem key={task.id} value={task.task_name}>
-                                     {task.task_name}
+                           <div className="flex gap-2 items-start">
+                             {/* Single Job Selection with detailed display */}
+                             <div className="flex-1">
+                               <Select
+                                 value={category.jobName}
+                                 onValueChange={(value) => {
+                                   updateCategory(operation, index, "jobName", value);
+                                   // Also set the name field to match for data consistency
+                                   updateCategory(operation, index, "name", value);
+                                 }}
+                               >
+                                 <SelectTrigger className="w-full">
+                                   <SelectValue placeholder="Select job/task">
+                                     {category.jobName && category.jobName !== "Other" && (
+                                       <div className="flex flex-col items-start">
+                                         <span className="font-medium">{category.jobName}</span>
+                                         <span className="text-xs text-muted-foreground">{operation}</span>
+                                       </div>
+                                     )}
+                                     {category.jobName === "Other" && (
+                                       <span>Other (Custom)</span>
+                                     )}
+                                   </SelectValue>
+                                 </SelectTrigger>
+                                 <SelectContent>
+                                   {tasks?.map((task) => (
+                                     <SelectItem key={task.id} value={task.task_name}>
+                                       <div className="flex flex-col">
+                                         <span className="font-medium">{task.task_name}</span>
+                                         <span className="text-xs text-muted-foreground">Task for {selectedProduct || "selected product"}</span>
+                                       </div>
+                                     </SelectItem>
+                                   ))}
+                                   {/* Also show operation-specific categories */}
+                                   {getCategories(operation).filter(cat => cat !== "Other").map((cat) => (
+                                     <SelectItem key={cat} value={cat}>
+                                       <div className="flex flex-col">
+                                         <span className="font-medium">{cat}</span>
+                                         <span className="text-xs text-muted-foreground">{operation} category</span>
+                                       </div>
+                                     </SelectItem>
+                                   ))}
+                                   <SelectItem value="Other">
+                                     <div className="flex flex-col">
+                                       <span className="font-medium">Other</span>
+                                       <span className="text-xs text-muted-foreground">Add custom job/task</span>
+                                     </div>
                                    </SelectItem>
-                                 ))}
-                                 <SelectItem value="Other">Other</SelectItem>
-                               </SelectContent>
-                             </Select>
+                                 </SelectContent>
+                               </Select>
+                             </div>
                              
-                             {/* Category Dropdown */}
-                             <Select
-                               value={category.name}
-                               onValueChange={(value) =>
-                                 updateCategory(operation, index, "name", value)
-                               }
-                             >
-                               <SelectTrigger className="flex-1">
-                                 <SelectValue placeholder="Select category" />
-                               </SelectTrigger>
-                               <SelectContent>
-                                 {getCategories(operation).map((cat) => (
-                                   <SelectItem key={cat} value={cat}>
-                                     {cat}
-                                   </SelectItem>
-                                 ))}
-                               </SelectContent>
-                             </Select>
                              <Input
                                type="number"
                                step="0.01"
@@ -620,7 +633,7 @@ const AddRateCard = () => {
                            {category.jobName === "Other" && (
                              <div className="flex gap-2 items-center ml-0">
                                <Input
-                                 placeholder="Enter custom job name"
+                                 placeholder="Enter custom job/task name"
                                  value={category.customJobName || ""}
                                  onChange={(e) =>
                                    updateCategory(operation, index, "customJobName", e.target.value)
@@ -639,43 +652,9 @@ const AddRateCard = () => {
                                      toast.error("Please enter a job name");
                                    }
                                  }}
+                                 title="Add to task list"
                                >
                                  <Plus className="h-4 w-4" />
-                               </Button>
-                             </div>
-                           )}
-                           
-                           {/* Custom Category Name Input */}
-                           {category.name === "Other" && (
-                             <div className="flex gap-2 items-center ml-0">
-                               <Input
-                                 placeholder="Enter custom category name"
-                                 value={category.customName || ""}
-                                 onChange={(e) =>
-                                   updateCategory(operation, index, "customName", e.target.value)
-                                 }
-                                 className="flex-1"
-                               />
-                               <Button
-                                 type="button"
-                                 variant="outline"
-                                 size="icon"
-                                 onClick={() => {
-                                   const customName = category.customName?.trim();
-                                   if (customName) {
-                                     const result = addCustomCategory(operation, customName);
-                                     if (result.success) {
-                                       toast.success(result.message);
-                                     } else {
-                                       toast.error(result.message);
-                                     }
-                                   } else {
-                                     toast.error("Please enter a category name");
-                                   }
-                                 }}
-                                 title="Add to category list"
-                               >
-                                 <Check className="h-4 w-4" />
                                </Button>
                              </div>
                            )}
