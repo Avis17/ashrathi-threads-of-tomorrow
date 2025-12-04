@@ -69,6 +69,7 @@ const rateCardSchema = z.object({
   rate_per_piece: z.number().min(0, "Rate per piece is required"),
   accessories_cost: z.number().min(0).optional(),
   delivery_charge: z.number().min(0).optional(),
+  notes: z.string().optional(),
 });
 
 type RateCardFormData = z.infer<typeof rateCardSchema>;
@@ -105,6 +106,7 @@ const AddRateCard = () => {
       rate_per_piece: 0,
       accessories_cost: 0,
       delivery_charge: 0,
+      notes: "",
     },
   });
 
@@ -115,6 +117,7 @@ const AddRateCard = () => {
       form.setValue("rate_per_piece", existingCard.rate_per_piece || 0);
       form.setValue("accessories_cost", existingCard.accessories_cost);
       form.setValue("delivery_charge", existingCard.delivery_charge);
+      form.setValue("notes", (existingCard as any).notes || "");
       setGeneratedStyleId(existingCard.style_id);
 
       const operations = existingCard.operations_data as any[];
@@ -367,6 +370,7 @@ const AddRateCard = () => {
       company_profit_type: "amount",
       company_profit_value: companyProfitPerPiece,
       rate_per_piece: data.rate_per_piece,
+      notes: data.notes || null,
     };
 
     if (isEditing && id) {
@@ -488,6 +492,24 @@ const AddRateCard = () => {
                     <p className="text-xs text-muted-foreground">
                       The amount company receives per piece from client
                     </p>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem className="md:col-span-2">
+                    <FormLabel>Notes</FormLabel>
+                    <FormControl>
+                      <textarea
+                        {...field}
+                        className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        placeholder="Add any notes or special instructions for this rate card..."
+                      />
+                    </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
