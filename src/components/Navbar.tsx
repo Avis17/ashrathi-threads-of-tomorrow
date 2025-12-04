@@ -101,14 +101,14 @@ const Navbar = () => {
             
             {/* Women, Men, More menus hidden for now */}
             
-            <Link
+            {/* <Link
               to="/services"
               className={`px-4 py-2 rounded-md font-medium transition-colors ${
                 isActive("/services") ? "text-secondary" : "text-foreground hover:text-secondary"
               }`}
             >
               Services
-            </Link>
+            </Link> */}
             <Link
               to="/about"
               className={`px-4 py-2 rounded-md font-medium transition-colors ${

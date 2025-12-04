@@ -39,7 +39,7 @@ const ShippingReturnRefund = () => {
               <span>3-4 Working Days</span>
             </div>
             <p className="text-sm text-muted-foreground mt-3">
-              Returns can be initiated within 3-4 working days after receiving your order.
+              Returns can be done within 3-4 working days after receiving your order.
             </p>
           </div>
 
