@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -56,13 +56,26 @@ export const EditPaymentDialog = ({
   const form = useForm<PaymentFormData>({
     resolver: zodResolver(paymentSchema),
     defaultValues: {
-      payment_amount: payment.payment_amount,
-      payment_date: payment.payment_date,
-      payment_mode: payment.payment_mode || "cash",
-      reference_number: payment.reference_number || "",
-      notes: payment.notes || "",
+      payment_amount: 0,
+      payment_date: "",
+      payment_mode: "cash",
+      reference_number: "",
+      notes: "",
     },
   });
+
+  // Reset form when payment changes - this fixes the stale data issue
+  useEffect(() => {
+    if (payment && open) {
+      form.reset({
+        payment_amount: payment.payment_amount,
+        payment_date: payment.payment_date,
+        payment_mode: payment.payment_mode || "cash",
+        reference_number: payment.reference_number || "",
+        notes: payment.notes || "",
+      });
+    }
+  }, [payment, open, form]);
 
   const onSubmit = async (data: PaymentFormData) => {
     await updatePayment.mutateAsync({

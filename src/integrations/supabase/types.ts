@@ -682,6 +682,62 @@ export type Database = {
         }
         Relationships: []
       }
+      external_job_expenses: {
+        Row: {
+          amount: number
+          bill_number: string | null
+          created_at: string | null
+          date: string
+          expense_type: string
+          id: string
+          item_name: string
+          job_order_id: string
+          notes: string | null
+          quantity: number | null
+          rate_per_unit: number | null
+          supplier_name: string | null
+          unit: string | null
+        }
+        Insert: {
+          amount: number
+          bill_number?: string | null
+          created_at?: string | null
+          date?: string
+          expense_type: string
+          id?: string
+          item_name: string
+          job_order_id: string
+          notes?: string | null
+          quantity?: number | null
+          rate_per_unit?: number | null
+          supplier_name?: string | null
+          unit?: string | null
+        }
+        Update: {
+          amount?: number
+          bill_number?: string | null
+          created_at?: string | null
+          date?: string
+          expense_type?: string
+          id?: string
+          item_name?: string
+          job_order_id?: string
+          notes?: string | null
+          quantity?: number | null
+          rate_per_unit?: number | null
+          supplier_name?: string | null
+          unit?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "external_job_expenses_job_order_id_fkey"
+            columns: ["job_order_id"]
+            isOneToOne: false
+            referencedRelation: "external_job_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       external_job_invoices: {
         Row: {
           created_at: string | null
