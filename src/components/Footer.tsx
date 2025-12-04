@@ -95,7 +95,7 @@ const Footer = () => {
 
         {/* Bottom Bar */}
         <div className="border-t border-primary-foreground/20 mt-8 pt-6 text-center space-y-2">
-          <div className="flex items-center justify-center gap-4">
+          <div className="flex flex-wrap items-center justify-center gap-4">
             <Link
               to="/terms-and-conditions"
               className="text-sm text-primary-foreground/80 hover:text-secondary transition-colors"
@@ -108,6 +108,13 @@ const Footer = () => {
               className="text-sm text-primary-foreground/80 hover:text-secondary transition-colors"
             >
               Privacy Policy
+            </Link>
+            <span className="text-primary-foreground/40">|</span>
+            <Link
+              to="/shipping-return-refund"
+              className="text-sm text-primary-foreground/80 hover:text-secondary transition-colors"
+            >
+              Shipping, Return & Refund
             </Link>
           </div>
           <p className="text-sm text-primary-foreground/60">
