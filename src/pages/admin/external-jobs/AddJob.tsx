@@ -38,7 +38,7 @@ import { useCustomCategories } from "@/hooks/useCustomCategories";
 
 type CategoryItem = { 
   name: string; 
-  rate: number;
+  rate: number; // Now in rupees, not percentage
   customName?: string;
   jobName?: string;
   customJobName?: string;
@@ -50,11 +50,9 @@ const jobSchema = z.object({
   style_name: z.string().min(1, "Style name is required"),
   number_of_pieces: z.number().min(1, "Number of pieces must be at least 1"),
   delivery_date: z.string().min(1, "Delivery date is required"),
+  rate_per_piece: z.number().min(0, "Rate per piece is required"),
   accessories_cost: z.number().min(0).optional(),
   delivery_charge: z.number().min(0).optional(),
-  company_profit_type: z.enum(["amount", "percent"]).optional(),
-  company_profit_value: z.number().min(0).optional(),
-  adjustment: z.number().optional(),
 });
 
 type JobFormData = z.infer<typeof jobSchema>;
@@ -73,6 +71,7 @@ const AddJob = () => {
   const [customProductName, setCustomProductName] = useState("");
   const [selectedOperations, setSelectedOperations] = useState<string[]>([]);
   const [operationCategories, setOperationCategories] = useState<Record<string, CategoryItem[]>>({});
+  const [operationCommissions, setOperationCommissions] = useState<Record<string, number>>({});
   
   const { data: tasks } = useExternalJobTasks(selectedProduct || undefined);
 
@@ -84,11 +83,9 @@ const AddJob = () => {
       style_name: "",
       number_of_pieces: 0,
       delivery_date: "",
+      rate_per_piece: 0,
       accessories_cost: 0,
       delivery_charge: 0,
-      company_profit_type: "amount",
-      company_profit_value: 0,
-      adjustment: 0,
     },
   });
 
@@ -102,13 +99,12 @@ const AddJob = () => {
     // Handle "None" selection - clear all fields
     if (rateCardId === "none" || !rateCardId) {
       form.setValue("style_name", "");
+      form.setValue("rate_per_piece", 0);
       form.setValue("accessories_cost", 0);
       form.setValue("delivery_charge", 0);
-      form.setValue("company_profit_type", "amount");
-      form.setValue("company_profit_value", 0);
-      form.setValue("adjustment", 0);
       setSelectedOperations([]);
       setOperationCategories({});
+      setOperationCommissions({});
       return;
     }
 
@@ -116,32 +112,35 @@ const AddJob = () => {
     if (!rateCard) return;
 
     form.setValue("style_name", rateCard.style_name);
+    form.setValue("rate_per_piece", rateCard.rate_per_piece || 0);
     form.setValue("accessories_cost", rateCard.accessories_cost);
     form.setValue("delivery_charge", rateCard.delivery_charge);
-    form.setValue("company_profit_type", rateCard.company_profit_type as "amount" | "percent");
-    form.setValue("company_profit_value", rateCard.company_profit_value || 0);
-    form.setValue("adjustment", (rateCard as any).adjustment || 0);
 
     const operations = rateCard.operations_data as any[];
     const ops: string[] = [];
     const cats: Record<string, CategoryItem[]> = {};
+    const comms: Record<string, number> = {};
 
     operations.forEach((op: any) => {
       ops.push(op.operation_name);
       const allCategories = getCategories(op.operation_name);
       const mappedCategories = op.categories.map((cat: any) => {
-        const isCustom = !allCategories.includes(cat.name) && cat.name !== "Contract Commission";
+        const isCustom = !allCategories.includes(cat.name);
         return {
           name: isCustom ? "Other" : cat.name,
           rate: cat.rate,
           customName: isCustom ? cat.name : (cat.customName || ""),
+          jobName: cat.job_name || cat.jobName || "",
+          customJobName: cat.customJobName || "",
         };
       });
       cats[op.operation_name] = mappedCategories;
+      comms[op.operation_name] = op.commission_percent || 0;
     });
 
     setSelectedOperations(ops);
     setOperationCategories(cats);
+    setOperationCommissions(comms);
   };
 
   const toggleOperation = (operation: string) => {
@@ -150,11 +149,18 @@ const AddJob = () => {
       const newCategories = { ...operationCategories };
       delete newCategories[operation];
       setOperationCategories(newCategories);
+      const newCommissions = { ...operationCommissions };
+      delete newCommissions[operation];
+      setOperationCommissions(newCommissions);
     } else {
       setSelectedOperations([...selectedOperations, operation]);
       setOperationCategories({
         ...operationCategories,
         [operation]: [],
+      });
+      setOperationCommissions({
+        ...operationCommissions,
+        [operation]: 0,
       });
     }
   };
@@ -191,6 +197,13 @@ const AddJob = () => {
     setOperationCategories(newCategories);
   };
 
+  const updateCommission = (operation: string, value: number) => {
+    setOperationCommissions({
+      ...operationCommissions,
+      [operation]: value,
+    });
+  };
+
   const removeCategory = (operation: string, index: number) => {
     const newCategories = { ...operationCategories };
     newCategories[operation].splice(index, 1);
@@ -199,63 +212,79 @@ const AddJob = () => {
 
   const calculateTotals = () => {
     const pieces = form.watch("number_of_pieces") || 0;
+    const clientRatePerPiece = form.watch("rate_per_piece") || 0;
     const accessories = form.watch("accessories_cost") || 0;
     const delivery = form.watch("delivery_charge") || 0;
-    const profitType = form.watch("company_profit_type");
-    const profitValue = form.watch("company_profit_value") || 0;
-    const adjustment = form.watch("adjustment") || 0;
 
-    // Calculate operations with percentage-based categories
-    const operationBreakdown: Record<string, { categories: Array<{name: string, rate: number, percentage: number}>, total: number, commission: number }> = {};
+    // Calculate operations with rupee-based categories
+    const operationBreakdown: Record<string, { 
+      categories: Array<{name: string, rate: number}>, 
+      categoriesTotal: number,
+      commissionPercent: number,
+      commissionAmount: number,
+      total: number 
+    }> = {};
     let totalOperationsCost = 0;
+    let totalCommission = 0;
 
     selectedOperations.forEach((op) => {
       const cats = operationCategories[op] || [];
+      const commissionPercent = operationCommissions[op] || 0;
       
-      // First sum up all non-commission categories
-      let opBaseTotal = 0;
-      const regularCats: Array<{name: string, rate: number, percentage: number}> = [];
-      let commissionPercentage = 0;
+      // Sum up all category rates (in rupees)
+      let categoriesTotal = 0;
+      const categoryList: Array<{name: string, rate: number}> = [];
       
       cats.forEach((cat) => {
-        if (cat.name === "Contract Commission") {
-          commissionPercentage = cat.rate || 0;
-        } else {
-          opBaseTotal += (cat.rate || 0);
-          regularCats.push({ name: cat.name, rate: cat.rate || 0, percentage: cat.rate || 0 });
-        }
+        categoriesTotal += (cat.rate || 0);
+        categoryList.push({ name: cat.name, rate: cat.rate || 0 });
       });
       
-      // Calculate commission as percentage of base total
-      const commissionAmount = (opBaseTotal * commissionPercentage) / 100;
-      const opTotal = opBaseTotal + commissionAmount;
+      // Calculate commission as percentage of categories total
+      const commissionAmount = (categoriesTotal * commissionPercent) / 100;
+      const opTotal = categoriesTotal + commissionAmount;
       
       operationBreakdown[op] = {
-        categories: regularCats,
-        total: opTotal,
-        commission: commissionAmount
+        categories: categoryList,
+        categoriesTotal,
+        commissionPercent,
+        commissionAmount,
+        total: opTotal
       };
       
       totalOperationsCost += opTotal;
+      totalCommission += commissionAmount;
     });
 
-    // Calculate profit per piece
-    let profitPerPiece = 0;
-    if (profitType === "percent") {
-      profitPerPiece = (totalOperationsCost * profitValue) / 100;
-    } else {
-      profitPerPiece = profitValue;
-    }
+    // Auto-calculate company profit
+    const companyProfitPerPiece = clientRatePerPiece - totalOperationsCost;
+    const companyProfitPercent = clientRatePerPiece > 0 
+      ? (companyProfitPerPiece / clientRatePerPiece) * 100 
+      : 0;
 
-    // Include adjustment in rate per piece calculation (adjustment is per-piece value, not total)
-    const ratePerPiece = totalOperationsCost + profitPerPiece + adjustment;
-    const subtotal = ratePerPiece * pieces;
+    const subtotal = clientRatePerPiece * pieces;
     const total = subtotal + accessories + delivery;
 
-    return { ratePerPiece, total, operationBreakdown, totalOperationsCost };
+    return { 
+      clientRatePerPiece,
+      total, 
+      operationBreakdown, 
+      totalOperationsCost,
+      totalCommission,
+      companyProfitPerPiece,
+      companyProfitPercent
+    };
   };
 
-  const { ratePerPiece, total, operationBreakdown, totalOperationsCost } = calculateTotals();
+  const { 
+    clientRatePerPiece,
+    total, 
+    operationBreakdown, 
+    totalOperationsCost,
+    totalCommission,
+    companyProfitPerPiece,
+    companyProfitPercent
+  } = calculateTotals();
 
   const handleAddProduct = async () => {
     if (!customProductName.trim()) {
@@ -280,6 +309,7 @@ const AddJob = () => {
   const onSubmit = async (data: JobFormData) => {
     const operations = selectedOperations.map((op) => ({
       operation_name: op,
+      commission_percent: operationCommissions[op] || 0,
       categories: (operationCategories[op] || []).map((cat) => ({
         job_name: cat.jobName === "Other" && cat.customJobName ? cat.customJobName : cat.jobName,
         category_name: cat.name === "Other" && cat.customName ? cat.customName : cat.name,
@@ -296,9 +326,9 @@ const AddJob = () => {
         delivery_date: data.delivery_date,
         accessories_cost: data.accessories_cost || 0,
         delivery_charge: data.delivery_charge || 0,
-        company_profit_type: data.company_profit_type,
-        company_profit_value: data.company_profit_value || 0,
-        rate_per_piece: ratePerPiece,
+        company_profit_type: "amount",
+        company_profit_value: companyProfitPerPiece,
+        rate_per_piece: data.rate_per_piece,
         total_amount: total,
       },
       operations,
@@ -406,6 +436,29 @@ const AddJob = () => {
 
               <FormField
                 control={form.control}
+                name="rate_per_piece"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Rate per Piece (₹) *</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        {...field}
+                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        placeholder="Enter client rate per piece"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                    <p className="text-xs text-muted-foreground">
+                      The amount company receives per piece from client
+                    </p>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
                 name="number_of_pieces"
                 render={({ field }) => (
                   <FormItem>
@@ -492,7 +545,7 @@ const AddJob = () => {
                   </div>
 
                   {selectedOperations.includes(operation) && (
-                    <div className="ml-6 space-y-2">
+                    <div className="ml-6 space-y-3">
                       {operationCategories[operation]?.map((category, index) => (
                          <div key={index} className="space-y-2">
                            <div className="flex gap-2">
@@ -532,10 +585,11 @@ const AddJob = () => {
                              </Select>
                              <Input
                                type="number"
-                               placeholder={category.name === "Contract Commission" ? "Commission %" : "Rate %"}
+                               step="0.01"
+                               placeholder="Rate ₹"
                                value={category.rate}
                                onChange={(e) => updateCategory(operation, index, "rate", parseFloat(e.target.value) || 0)}
-                               className="w-32"
+                               className="w-28"
                              />
                              <Button
                                type="button"
@@ -608,16 +662,33 @@ const AddJob = () => {
                            )}
                          </div>
                       ))}
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => addCategory(operation)}
-                        className="gap-2"
-                      >
-                        <Plus className="h-4 w-4" />
-                        Add Category
-                      </Button>
+                      
+                      <div className="flex gap-2 items-center">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => addCategory(operation)}
+                          className="gap-2"
+                        >
+                          <Plus className="h-4 w-4" />
+                          Add Category
+                        </Button>
+                        
+                        {/* Commission Field */}
+                        <div className="flex items-center gap-2 ml-auto">
+                          <span className="text-sm text-muted-foreground">Commission:</span>
+                          <Input
+                            type="number"
+                            step="0.1"
+                            placeholder="0"
+                            value={operationCommissions[operation] || ""}
+                            onChange={(e) => updateCommission(operation, parseFloat(e.target.value) || 0)}
+                            className="w-20"
+                          />
+                          <span className="text-sm text-muted-foreground">%</span>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -626,14 +697,14 @@ const AddJob = () => {
           </Card>
 
           <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Additional Costs</h3>
+            <h3 className="text-lg font-semibold mb-4">Additional Costs (Total)</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="accessories_cost"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Accessories Cost</FormLabel>
+                    <FormLabel>Accessories Cost (Total)</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -652,7 +723,7 @@ const AddJob = () => {
                 name="delivery_charge"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Delivery Charge</FormLabel>
+                    <FormLabel>Delivery Charge (Total)</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -662,69 +733,6 @@ const AddJob = () => {
                       />
                     </FormControl>
                     <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="company_profit_type"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Company Profit Type</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select type" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="amount">Amount (₹)</SelectItem>
-                        <SelectItem value="percent">Percent (%)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="company_profit_value"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Company Profit Value</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                        placeholder="0"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="adjustment"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Adjustment (+/-)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                        placeholder="0"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                    <p className="text-xs text-muted-foreground">
-                      Positive value to add, negative to subtract from total
-                    </p>
                   </FormItem>
                 )}
               />
@@ -738,20 +746,26 @@ const AddJob = () => {
             </h3>
             
             <div className="space-y-6">
+              {/* Client Rate */}
+              <div className="flex justify-between text-lg font-bold bg-blue-500/10 p-3 rounded-lg">
+                <span>Client Rate per Piece:</span>
+                <span className="text-blue-600">₹{clientRatePerPiece.toFixed(2)}</span>
+              </div>
+
               {/* Operations Breakdown */}
               {Object.entries(operationBreakdown).map(([op, breakdown]) => (
                 <div key={op} className="bg-white/50 p-4 rounded-lg space-y-2">
                   <h4 className="font-semibold text-primary">{op}</h4>
                   {breakdown.categories.map((cat, idx) => (
                     <div key={idx} className="flex justify-between text-sm ml-4">
-                      <span className="text-muted-foreground">{cat.name}</span>
-                      <span className="font-medium">{cat.percentage}% = ₹{cat.rate.toFixed(2)}</span>
+                      <span className="text-muted-foreground">{cat.name || "Unnamed"}</span>
+                      <span className="font-medium">₹{cat.rate.toFixed(2)}</span>
                     </div>
                   ))}
-                  {breakdown.commission > 0 && (
+                  {breakdown.commissionPercent > 0 && (
                     <div className="flex justify-between text-sm ml-4 text-orange-600">
-                      <span className="font-medium">Contract Commission</span>
-                      <span className="font-semibold">₹{breakdown.commission.toFixed(2)}</span>
+                      <span className="font-medium">Commission ({breakdown.commissionPercent}%)</span>
+                      <span className="font-semibold">₹{breakdown.commissionAmount.toFixed(2)}</span>
                     </div>
                   )}
                   <div className="flex justify-between font-semibold pt-2 border-t">
@@ -763,48 +777,35 @@ const AddJob = () => {
 
               {/* Total Operations */}
               <div className="flex justify-between text-base font-semibold border-t-2 pt-3">
-                <span>Operations Total (per piece):</span>
-                <span className="text-primary">₹{totalOperationsCost.toFixed(2)}</span>
+                <span>Total Operations Cost (per piece):</span>
+                <span className="text-red-600">₹{totalOperationsCost.toFixed(2)}</span>
               </div>
 
-              {/* Company Profit */}
-              {form.watch("company_profit_value") > 0 && (
-                <div className="flex justify-between text-sm">
-                  <span>Company Profit ({form.watch("company_profit_type") === "percent" ? `${form.watch("company_profit_value")}%` : "Fixed"}):</span>
-                  <span className="font-medium">
-                    ₹{(form.watch("company_profit_type") === "percent" 
-                      ? (totalOperationsCost * (form.watch("company_profit_value") || 0)) / 100 
-                      : (form.watch("company_profit_value") || 0)
-                    ).toFixed(2)}
-                  </span>
+              {/* Total Commission */}
+              {totalCommission > 0 && (
+                <div className="flex justify-between text-sm text-orange-600">
+                  <span>Total Commission Included:</span>
+                  <span className="font-medium">₹{totalCommission.toFixed(2)}</span>
                 </div>
               )}
 
-              {/* Adjustment */}
-              {form.watch("adjustment") !== 0 && (
-                <div className="flex justify-between text-sm">
-                  <span>Adjustment (per piece):</span>
-                  <span className={`font-medium ${form.watch("adjustment") > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {form.watch("adjustment") > 0 ? '+' : ''}₹{form.watch("adjustment").toFixed(2)}
-                  </span>
-                </div>
-              )}
-
-              {/* Rate Per Piece */}
-              <div className="flex justify-between text-lg font-bold bg-primary/10 p-3 rounded-lg">
-                <span>Rate per Piece:</span>
-                <span className="text-primary">₹{ratePerPiece.toFixed(2)}</span>
+              {/* Company Profit (Auto-calculated) */}
+              <div className={`flex justify-between text-lg font-bold p-3 rounded-lg ${companyProfitPerPiece >= 0 ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
+                <span>Company Profit (per piece):</span>
+                <span className={companyProfitPerPiece >= 0 ? 'text-green-600' : 'text-red-600'}>
+                  ₹{companyProfitPerPiece.toFixed(2)} ({companyProfitPercent.toFixed(1)}%)
+                </span>
               </div>
 
               {/* Quantity & Subtotal */}
-              <div className="space-y-2 text-sm">
+              <div className="space-y-2 text-sm border-t-2 pt-3">
                 <div className="flex justify-between">
                   <span>Number of Pieces:</span>
                   <span className="font-medium">{form.watch("number_of_pieces") || 0}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Subtotal:</span>
-                  <span className="font-medium">₹{(ratePerPiece * (form.watch("number_of_pieces") || 0)).toFixed(2)}</span>
+                  <span>Subtotal (Rate × Pieces):</span>
+                  <span className="font-medium">₹{(clientRatePerPiece * (form.watch("number_of_pieces") || 0)).toFixed(2)}</span>
                 </div>
               </div>
 
