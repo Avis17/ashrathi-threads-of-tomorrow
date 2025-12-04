@@ -13,6 +13,7 @@ export const JOB_ORDER_CATEGORIES = {
     "Front & Back Panel Cutting",
     "Size Trimming",
     "Fusing Cutting (for collars/plackets)",
+    "Helper (Thread Cut/Change In-Out/Fold)",
     "Other"
   ],
   "Stitching (Singer)": [
@@ -37,6 +38,7 @@ export const JOB_ORDER_CATEGORIES = {
     "Shoulder Reinforcement Tape Stitch",
     "Bartack on Stress Points",
     "Peek (Neck/Shoulder/Sleeve)",
+    "Helper (Thread Cut/Change In-Out/Fold)",
     "Other"
   ],
   "Stitching (Power Table) - Overlock": [
@@ -52,6 +54,7 @@ export const JOB_ORDER_CATEGORIES = {
     "Side Slit Overlock",
     "Panel Attach Overlock",
     "Cub Sizing",
+    "Helper (Thread Cut/Change In-Out/Fold)",
     "Other"
   ],
   "Stitching (Power Table) - Flatlock": [
@@ -65,6 +68,7 @@ export const JOB_ORDER_CATEGORIES = {
     "Back Yoke Flatlock",
     "Sports Seam Flatlock",
     "Bottom Flatlock",
+    "Helper (Thread Cut/Change In-Out/Fold)",
     "Other"
   ],
   "Checking": [
@@ -92,6 +96,7 @@ export const JOB_ORDER_CATEGORIES = {
     "Crease Removing",
     "Steam Ironing",
     "Final Press",
+    "Helper (Thread Cut/Change In-Out/Fold)",
     "Other"
   ],
   "Packing": [
@@ -107,6 +112,7 @@ export const JOB_ORDER_CATEGORIES = {
     "Bundle Making",
     "Carton Sealing",
     "Carton Printing (optional)",
+    "Helper (Thread Cut/Change In-Out/Fold)",
     "Other"
   ]
 } as const;
