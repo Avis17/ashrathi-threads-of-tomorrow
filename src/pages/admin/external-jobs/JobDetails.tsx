@@ -20,6 +20,7 @@ import { useExternalJobOrder, useUpdateExternalJobOrder, useDeleteExternalJobPay
 import { useExternalJobExpenses, useDeleteExternalJobExpense, ExternalJobExpense } from "@/hooks/useExternalJobExpenses";
 import { format } from "date-fns";
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { AddPaymentDialog } from "@/components/admin/external-jobs/AddPaymentDialog";
 import { EditPaymentDialog } from "@/components/admin/external-jobs/EditPaymentDialog";
 import { JobExpenseForm } from "@/components/admin/external-jobs/JobExpenseForm";
@@ -140,46 +141,63 @@ const JobDetails = () => {
   };
 
   const handleStatusChange = async (newStatus: string) => {
+    const previousStatus = localJobStatus;
     setLocalJobStatus(newStatus);
-    await updateStatus.mutateAsync({
-      id: jobOrder.id,
-      data: { job_status: newStatus },
-    });
-    refetch();
+    try {
+      await updateStatus.mutateAsync({
+        id: jobOrder.id,
+        data: { job_status: newStatus },
+      });
+      toast.success('Job status updated successfully');
+      refetch();
+    } catch (error: any) {
+      setLocalJobStatus(previousStatus);
+      toast.error(error.message || 'Failed to update job status');
+    }
   };
 
   const handlePaymentStatusChange = async (newStatus: string) => {
+    const previousStatus = localPaymentStatus;
     setLocalPaymentStatus(newStatus);
-    await updateStatus.mutateAsync({
-      id: jobOrder.id,
-      data: { payment_status: newStatus },
-    });
-    refetch();
+    try {
+      await updateStatus.mutateAsync({
+        id: jobOrder.id,
+        data: { payment_status: newStatus },
+      });
+      toast.success('Payment status updated successfully');
+      refetch();
+    } catch (error: any) {
+      setLocalPaymentStatus(previousStatus);
+      toast.error(error.message || 'Failed to update payment status');
+    }
   };
 
-  // Calculate totals
+  // Calculate totals - include GST in balance
   const baseTotal = jobOrder?.total_amount || 0;
   const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
   const gstAmount = gstEnabled ? (baseTotal * gstPercentage) / 100 : 0;
   const totalWithGst = baseTotal + gstAmount;
+  
+  // Calculate the correct balance including GST
+  const effectiveTotal = jobOrder.gst_percentage > 0 
+    ? (jobOrder.total_with_gst || totalWithGst) 
+    : jobOrder.total_amount;
+  const correctBalanceAmount = effectiveTotal - (jobOrder.paid_amount || 0);
 
   // Calculate company profit details
   const operationsTotal = jobOrder.external_job_operations?.reduce((sum: number, op: any) => sum + (op.total_rate || 0), 0) || 0;
   const accessoriesCost = jobOrder.accessories_cost || 0;
   const deliveryCharge = jobOrder.delivery_charge || 0;
   
-  // Calculate total commission
+  // Calculate total commission from commission_percent field
   let totalCommissionPerPiece = 0;
   jobOrder.external_job_operations?.forEach((op: any) => {
-    const baseTotal = op.external_job_operation_categories
-      ?.filter((cat: any) => cat.category_name !== "Contract Commission")
-      .reduce((sum: number, cat: any) => sum + cat.rate, 0) || 0;
+    const categoriesTotal = op.external_job_operation_categories
+      ?.reduce((sum: number, cat: any) => sum + cat.rate, 0) || 0;
     
-    const commissionCat = op.external_job_operation_categories
-      ?.find((cat: any) => cat.category_name === "Contract Commission");
-    
-    if (commissionCat) {
-      totalCommissionPerPiece += (baseTotal * commissionCat.rate) / 100;
+    const commissionPercent = op.commission_percent || 0;
+    if (commissionPercent > 0) {
+      totalCommissionPerPiece += (categoriesTotal * commissionPercent) / 100;
     }
   });
 
@@ -196,15 +214,20 @@ const JobDetails = () => {
   const netProfitPerPiece = netProfitAfterExpenses / jobOrder.number_of_pieces;
 
   const handleGstUpdate = async () => {
-    await updateStatus.mutateAsync({
-      id: jobOrder.id,
-      data: {
-        gst_percentage: gstEnabled ? gstPercentage : 0,
-        gst_amount: gstAmount,
-        total_with_gst: totalWithGst,
-      },
-    });
-    refetch();
+    try {
+      await updateStatus.mutateAsync({
+        id: jobOrder.id,
+        data: {
+          gst_percentage: gstEnabled ? gstPercentage : 0,
+          gst_amount: gstAmount,
+          total_with_gst: totalWithGst,
+        },
+      });
+      toast.success('GST updated successfully');
+      refetch();
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to update GST');
+    }
   };
 
   return (
@@ -362,14 +385,11 @@ const JobDetails = () => {
             </h3>
             <div className="space-y-6">
               {jobOrder.external_job_operations.map((operation: any) => {
-                const baseTotal = operation.external_job_operation_categories
-                  ?.filter((cat: any) => cat.category_name !== "Contract Commission")
-                  .reduce((sum: number, cat: any) => sum + cat.rate, 0) || 0;
+                const categoriesTotal = operation.external_job_operation_categories
+                  ?.reduce((sum: number, cat: any) => sum + cat.rate, 0) || 0;
                 
-                const commissionCat = operation.external_job_operation_categories
-                  ?.find((cat: any) => cat.category_name === "Contract Commission");
-                
-                const commissionAmount = commissionCat ? (baseTotal * commissionCat.rate) / 100 : 0;
+                const commissionPercent = operation.commission_percent || 0;
+                const commissionAmount = (categoriesTotal * commissionPercent) / 100;
                 
                 return (
                   <div key={operation.id} className="bg-white/50 p-5 rounded-lg space-y-3 border-l-4 border-primary">
@@ -380,23 +400,21 @@ const JobDetails = () => {
                     
                     {operation.external_job_operation_categories?.length > 0 && (
                       <div className="space-y-2 ml-4">
-                        {operation.external_job_operation_categories
-                          .filter((cat: any) => cat.category_name !== "Contract Commission")
-                          .map((category: any) => (
-                            <div key={category.id} className="flex justify-between text-sm">
-                              <span className="text-muted-foreground">{category.category_name}</span>
-                              <span className="font-medium">{category.rate}% = ₹{category.rate.toFixed(2)}</span>
-                            </div>
-                          ))}
+                        {operation.external_job_operation_categories.map((category: any) => (
+                          <div key={category.id} className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">{category.category_name}</span>
+                            <span className="font-medium">₹{category.rate.toFixed(2)}</span>
+                          </div>
+                        ))}
                         
-                        {commissionCat && (
+                        {commissionPercent > 0 && (
                           <>
                             <div className="flex justify-between text-sm pt-2 border-t">
-                              <span className="font-medium">Base Total:</span>
-                              <span className="font-semibold">₹{baseTotal.toFixed(2)}</span>
+                              <span className="font-medium">Categories Total:</span>
+                              <span className="font-semibold">₹{categoriesTotal.toFixed(2)}</span>
                             </div>
                             <div className="flex justify-between text-sm text-orange-600">
-                              <span className="font-medium">Contract Commission ({commissionCat.rate}%):</span>
+                              <span className="font-medium">Commission ({commissionPercent}%):</span>
                               <span className="font-semibold">₹{commissionAmount.toFixed(2)}</span>
                             </div>
                           </>
@@ -708,7 +726,7 @@ const JobDetails = () => {
         open={showPaymentDialog}
         onOpenChange={setShowPaymentDialog}
         jobOrderId={jobOrder.id}
-        balanceAmount={jobOrder.balance_amount}
+        balanceAmount={correctBalanceAmount}
       />
 
       {selectedPayment && (
@@ -719,7 +737,7 @@ const JobDetails = () => {
             if (!open) setSelectedPayment(null);
           }}
           payment={selectedPayment}
-          balanceAmount={jobOrder.balance_amount}
+          balanceAmount={correctBalanceAmount}
         />
       )}
 

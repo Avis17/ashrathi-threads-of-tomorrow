@@ -807,6 +807,7 @@ export type Database = {
       }
       external_job_operations: {
         Row: {
+          commission_percent: number | null
           created_at: string | null
           id: string
           job_order_id: string
@@ -814,6 +815,7 @@ export type Database = {
           total_rate: number | null
         }
         Insert: {
+          commission_percent?: number | null
           created_at?: string | null
           id?: string
           job_order_id: string
@@ -821,6 +823,7 @@ export type Database = {
           total_rate?: number | null
         }
         Update: {
+          commission_percent?: number | null
           created_at?: string | null
           id?: string
           job_order_id?: string
@@ -852,6 +855,7 @@ export type Database = {
           id: string
           job_id: string
           job_status: string | null
+          notes: string | null
           number_of_pieces: number
           paid_amount: number | null
           payment_status: string | null
@@ -875,6 +879,7 @@ export type Database = {
           id?: string
           job_id: string
           job_status?: string | null
+          notes?: string | null
           number_of_pieces: number
           paid_amount?: number | null
           payment_status?: string | null
@@ -898,6 +903,7 @@ export type Database = {
           id?: string
           job_id?: string
           job_status?: string | null
+          notes?: string | null
           number_of_pieces?: number
           paid_amount?: number | null
           payment_status?: string | null

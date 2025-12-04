@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
@@ -53,6 +54,7 @@ const jobSchema = z.object({
   rate_per_piece: z.number().min(0, "Rate per piece is required"),
   accessories_cost: z.number().min(0).optional(),
   delivery_charge: z.number().min(0).optional(),
+  notes: z.string().optional(),
 });
 
 type JobFormData = z.infer<typeof jobSchema>;
@@ -86,6 +88,7 @@ const AddJob = () => {
       rate_per_piece: 0,
       accessories_cost: 0,
       delivery_charge: 0,
+      notes: "",
     },
   });
 
@@ -330,6 +333,7 @@ const AddJob = () => {
         company_profit_value: companyProfitPerPiece,
         rate_per_piece: data.rate_per_piece,
         total_amount: total,
+        notes: data.notes || null,
       },
       operations,
     });
@@ -484,6 +488,24 @@ const AddJob = () => {
                     <FormLabel>Delivery Date *</FormLabel>
                     <FormControl>
                       <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem className="md:col-span-2">
+                    <FormLabel>Notes</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        {...field} 
+                        placeholder="Enter any additional notes for this job order..."
+                        rows={3}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

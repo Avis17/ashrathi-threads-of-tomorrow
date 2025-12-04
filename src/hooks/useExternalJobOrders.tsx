@@ -98,7 +98,8 @@ export const useCreateExternalJobOrder = () => {
       jobOrder: Database['public']['Tables']['external_job_orders']['Insert'];
       operations: Array<{
         operation_name: string;
-        categories: Array<{ category_name: string; rate: number }>;
+        commission_percent?: number;
+        categories: Array<{ category_name: string; rate: number; job_name?: string }>;
       }>;
     }) => {
       // Insert job order
@@ -112,13 +113,15 @@ export const useCreateExternalJobOrder = () => {
       // Insert operations and categories
       for (const op of data.operations) {
         const totalRate = op.categories.reduce((sum, cat) => sum + cat.rate, 0);
+        const commissionAmount = (totalRate * (op.commission_percent || 0)) / 100;
         
         const { data: operation, error: opError } = await supabase
           .from('external_job_operations')
           .insert([{
             job_order_id: jobOrder.id,
             operation_name: op.operation_name,
-            total_rate: totalRate,
+            total_rate: totalRate + commissionAmount,
+            commission_percent: op.commission_percent || 0,
           }])
           .select()
           .single();
@@ -189,10 +192,11 @@ export const useUpdateExternalJobOrder = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['external-job-orders'] });
       queryClient.invalidateQueries({ queryKey: ['external-job-order'] });
-      toast.success('Job order updated successfully');
+      // Don't show toast here - let caller handle success/error messages
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Failed to update job order');
+      // Don't show toast here - let caller handle success/error messages
+      throw error;
     },
   });
 };
@@ -292,19 +296,16 @@ export const useExternalJobOrderStats = () => {
         return acc;
       }, {} as Record<string, number>);
 
-      // Calculate total commission
+      // Calculate total commission using commission_percent field
       let totalCommission = 0;
       orders.forEach(order => {
         order.external_job_operations?.forEach((op: any) => {
-          const baseTotal = op.external_job_operation_categories
-            .filter((cat: any) => cat.category_name !== "Contract Commission")
-            .reduce((sum: number, cat: any) => sum + cat.rate, 0);
+          const categoriesTotal = op.external_job_operation_categories
+            ?.reduce((sum: number, cat: any) => sum + cat.rate, 0) || 0;
           
-          const commissionCat = op.external_job_operation_categories
-            .find((cat: any) => cat.category_name === "Contract Commission");
-          
-          if (commissionCat) {
-            const commissionAmount = (baseTotal * commissionCat.rate) / 100;
+          const commissionPercent = op.commission_percent || 0;
+          if (commissionPercent > 0) {
+            const commissionAmount = (categoriesTotal * commissionPercent) / 100;
             totalCommission += commissionAmount * order.number_of_pieces;
           }
         });
