@@ -38,6 +38,7 @@ import CompanyEdit from './admin/external-jobs/CompanyEdit';
 import GenerateInvoice from './admin/external-jobs/GenerateInvoice';
 import RateCards from './admin/external-jobs/RateCards';
 import AddRateCard from './admin/external-jobs/AddRateCard';
+import CompanyLetterhead from './admin/CompanyLetterhead';
 
 const Admin = () => {
   const { isAdmin, loading } = useAuth();
@@ -93,6 +94,7 @@ const Admin = () => {
               <Route path="/bulk-orders" element={<BulkOrdersManager />} />
               <Route path="/newsletter" element={<NewsletterManager />} />
               <Route path="/invoice-reset" element={<InvoiceReset />} />
+              <Route path="/letterhead" element={<CompanyLetterhead />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/external-jobs" element={<ExternalJobOrders />} />
               <Route path="/external-jobs/register-company" element={<RegisterCompany />} />
