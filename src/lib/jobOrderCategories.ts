@@ -51,6 +51,7 @@ export const JOB_ORDER_CATEGORIES = {
     "Tape Overlock (inside neck)",
     "Side Slit Overlock",
     "Panel Attach Overlock",
+    "Cub Sizing",
     "Other"
   ],
   "Stitching (Power Table) - Flatlock": [
