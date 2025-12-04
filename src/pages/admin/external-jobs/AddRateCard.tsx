@@ -93,6 +93,7 @@ const AddRateCard = () => {
   const [selectedOperations, setSelectedOperations] = useState<string[]>([]);
   const [operationCategories, setOperationCategories] = useState<Record<string, CategoryItem[]>>({});
   const [operationCommissions, setOperationCommissions] = useState<Record<string, number>>({});
+  const [operationRoundOffs, setOperationRoundOffs] = useState<Record<string, number | null>>({});
   const [generatedStyleId, setGeneratedStyleId] = useState("");
   
   const { data: tasks } = useExternalJobTasks(selectedProduct || undefined);
@@ -124,16 +125,19 @@ const AddRateCard = () => {
       const ops: string[] = [];
       const cats: Record<string, CategoryItem[]> = {};
       const comms: Record<string, number> = {};
+      const roundOffs: Record<string, number | null> = {};
 
       operations.forEach((op: any) => {
         ops.push(op.operation_name);
         cats[op.operation_name] = op.categories;
         comms[op.operation_name] = op.commission_percent || 0;
+        roundOffs[op.operation_name] = op.round_off ?? null;
       });
 
       setSelectedOperations(ops);
       setOperationCategories(cats);
       setOperationCommissions(comms);
+      setOperationRoundOffs(roundOffs);
     }
   }, [existingCard]);
 
@@ -188,6 +192,9 @@ const AddRateCard = () => {
       const newCommissions = { ...operationCommissions };
       delete newCommissions[operation];
       setOperationCommissions(newCommissions);
+      const newRoundOffs = { ...operationRoundOffs };
+      delete newRoundOffs[operation];
+      setOperationRoundOffs(newRoundOffs);
     } else {
       setSelectedOperations([...selectedOperations, operation]);
       setOperationCategories({
@@ -197,6 +204,10 @@ const AddRateCard = () => {
       setOperationCommissions({
         ...operationCommissions,
         [operation]: 0,
+      });
+      setOperationRoundOffs({
+        ...operationRoundOffs,
+        [operation]: null,
       });
     }
   };
@@ -248,6 +259,36 @@ const AddRateCard = () => {
     });
   };
 
+  const updateRoundOff = (operation: string, value: number | null) => {
+    setOperationRoundOffs({
+      ...operationRoundOffs,
+      [operation]: value,
+    });
+  };
+
+  const getOperationCalculatedTotal = (operation: string) => {
+    const cats = operationCategories[operation] || [];
+    const commissionPercent = operationCommissions[operation] || 0;
+    let categoriesTotal = cats.reduce((sum, cat) => sum + (cat.rate || 0), 0);
+    const commissionAmount = (categoriesTotal * commissionPercent) / 100;
+    return categoriesTotal + commissionAmount;
+  };
+
+  const getOperationAdjustment = (operation: string) => {
+    const calculated = getOperationCalculatedTotal(operation);
+    const roundOff = operationRoundOffs[operation];
+    if (roundOff === null || roundOff === undefined) return 0;
+    return roundOff - calculated;
+  };
+
+  const getOperationFinalTotal = (operation: string) => {
+    const roundOff = operationRoundOffs[operation];
+    if (roundOff !== null && roundOff !== undefined) {
+      return roundOff;
+    }
+    return getOperationCalculatedTotal(operation);
+  };
+
   const removeCategory = (operation: string, index: number) => {
     const newCategories = { ...operationCategories };
     newCategories[operation].splice(index, 1);
@@ -264,7 +305,10 @@ const AddRateCard = () => {
         categoriesTotal: number;
         commissionPercent: number;
         commissionAmount: number;
-        total: number 
+        calculatedTotal: number;
+        roundOff: number | null;
+        adjustment: number;
+        total: number;
       }
     > = {};
     let totalOperationsCost = 0;
@@ -273,6 +317,7 @@ const AddRateCard = () => {
     selectedOperations.forEach((op) => {
       const cats = operationCategories[op] || [];
       const commissionPercent = operationCommissions[op] || 0;
+      const roundOff = operationRoundOffs[op];
 
       let categoriesTotal = 0;
       const categoryList: Array<{ name: string; rate: number }> = [];
@@ -283,13 +328,18 @@ const AddRateCard = () => {
       });
 
       const commissionAmount = (categoriesTotal * commissionPercent) / 100;
-      const opTotal = categoriesTotal + commissionAmount;
+      const calculatedTotal = categoriesTotal + commissionAmount;
+      const adjustment = (roundOff !== null && roundOff !== undefined) ? roundOff - calculatedTotal : 0;
+      const opTotal = (roundOff !== null && roundOff !== undefined) ? roundOff : calculatedTotal;
 
       operationBreakdown[op] = {
         categories: categoryList,
         categoriesTotal,
         commissionPercent,
         commissionAmount,
+        calculatedTotal,
+        roundOff: roundOff ?? null,
+        adjustment,
         total: opTotal,
       };
 
@@ -344,16 +394,21 @@ const AddRateCard = () => {
   };
 
   const onSubmit = async (data: RateCardFormData) => {
-    const operations = selectedOperations.map((op) => ({
-      operation_name: op,
-      commission_percent: operationCommissions[op] || 0,
-      categories: (operationCategories[op] || []).map((cat) => ({
-        job_name: cat.jobName === "Other" && cat.customJobName ? cat.customJobName : cat.jobName,
-        name: cat.name === "Other" && cat.customName ? cat.customName : cat.name,
-        rate: cat.rate,
-        customName: cat.customName,
-      })),
-    }));
+    const operations = selectedOperations.map((op) => {
+      const breakdown = operationBreakdown[op];
+      return {
+        operation_name: op,
+        commission_percent: operationCommissions[op] || 0,
+        round_off: operationRoundOffs[op] ?? null,
+        adjustment: breakdown?.adjustment || 0,
+        categories: (operationCategories[op] || []).map((cat) => ({
+          job_name: cat.jobName === "Other" && cat.customJobName ? cat.customJobName : cat.jobName,
+          name: cat.name === "Other" && cat.customName ? cat.customName : cat.name,
+          rate: cat.rate,
+          customName: cat.customName,
+        })),
+      };
+    });
 
     const finalStyleName =
       data.style_name === "Other" && data.custom_style_name
@@ -699,7 +754,7 @@ const AddRateCard = () => {
                          </div>
                       ))}
                       
-                      <div className="flex gap-2 items-center">
+                      <div className="flex flex-wrap gap-2 items-center">
                         <Button
                           type="button"
                           variant="outline"
@@ -725,6 +780,44 @@ const AddRateCard = () => {
                           <span className="text-sm text-muted-foreground">%</span>
                         </div>
                       </div>
+
+                      {/* Round-off Section */}
+                      {(operationCategories[operation]?.length > 0) && (
+                        <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                          <div className="flex flex-wrap items-center gap-3">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium text-blue-700 dark:text-blue-300">Calculated:</span>
+                              <span className="text-sm font-bold">₹{getOperationCalculatedTotal(operation).toFixed(2)}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm text-muted-foreground">Round off to:</span>
+                              <Input
+                                type="number"
+                                step="0.5"
+                                placeholder={getOperationCalculatedTotal(operation).toFixed(2)}
+                                value={operationRoundOffs[operation] ?? ""}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  updateRoundOff(operation, val === "" ? null : parseFloat(val));
+                                }}
+                                className="w-24"
+                              />
+                            </div>
+                            {operationRoundOffs[operation] !== null && operationRoundOffs[operation] !== undefined && (
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm text-muted-foreground">Adjustment:</span>
+                                <span className={`text-sm font-bold ${getOperationAdjustment(operation) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                  {getOperationAdjustment(operation) >= 0 ? '+' : ''}₹{getOperationAdjustment(operation).toFixed(2)}
+                                </span>
+                              </div>
+                            )}
+                            <div className="flex items-center gap-2 ml-auto">
+                              <span className="text-sm font-semibold text-blue-700 dark:text-blue-300">Final:</span>
+                              <span className="text-base font-bold text-blue-600">₹{getOperationFinalTotal(operation).toFixed(2)}</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
