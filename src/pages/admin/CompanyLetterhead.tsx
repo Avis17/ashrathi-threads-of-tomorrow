@@ -296,7 +296,7 @@ const CompanyLetterhead = () => {
             }
             
             .logo-section img {
-              height: 200px;
+              height: 150px;
               width: auto;
             }
             
