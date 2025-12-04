@@ -15,7 +15,8 @@ import {
   Shirt,
   Settings,
   Sparkles,
-  Briefcase
+  Briefcase,
+  ScrollText
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import {
@@ -37,6 +38,7 @@ const menuItems = [
   { title: 'Branches', url: '/admin/branches', icon: Building2 },
   { title: 'Expenses', url: '/admin/expenses', icon: Receipt },
   { title: 'Generate Invoice', url: '/admin/invoice', icon: FileText },
+  { title: 'Company Letterhead', url: '/admin/letterhead', icon: ScrollText },
   { title: 'Customers', url: '/admin/customers', icon: Users },
   { title: 'Products', url: '/admin/products', icon: Package },
   { title: 'Generate Products', url: '/admin/seed-products', icon: Sparkles },
