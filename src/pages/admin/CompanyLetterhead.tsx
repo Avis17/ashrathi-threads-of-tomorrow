@@ -138,7 +138,7 @@ const CompanyLetterhead = () => {
             }
             
             .logo-section img {
-              height: 60px;
+              height: 200px;
               width: auto;
             }
             
@@ -556,13 +556,13 @@ const CompanyLetterhead = () => {
                 {/* Header */}
                 <div className="header flex justify-between items-start pb-4 border-b-2" style={{ borderColor: '#2D4057' }}>
                   <div className="logo-section">
-                    <img src={letterheadLogo} alt="Feather Fashions" className="h-14" />
+                    <img src={letterheadLogo} alt="Feather Fashions" className="h-20" />
                   </div>
                   <div className="company-info text-right text-xs" style={{ color: '#4a5568' }}>
                     <p className="font-semibold text-base mb-1" style={{ color: '#2D4057', fontFamily: "'Playfair Display', serif" }}>
                       Feather Fashions
                     </p>
-                    <p>Vadivel Nagar, 538-C, Boyampalayam, PO</p>
+                    <p>538-C, Vadivel Nagar, Boyampalayam, PO</p>
                     <p>Pooluvapatti, Tiruppur, Tamil Nadu 641602</p>
                     <p className="mt-1" style={{ color: '#B8860B' }}>+91 9789225510 | hello@featherfashions.in</p>
                   </div>
@@ -633,8 +633,8 @@ const CompanyLetterhead = () => {
 
                 {/* Footer */}
                 <div className="footer text-center text-xs border-t pt-3" style={{ color: '#718096', borderColor: '#e2e8f0' }}>
-                  <p>Vadivel Nagar, 538-C, Boyampalayam, PO, Pooluvapatti, Tiruppur, Tamil Nadu 641602</p>
-                  <p style={{ color: '#B8860B' }}>www.featherfashions.in | hello@featherfashions.in | +91 9789225510</p>
+                  <p>538-C, Vadivel Nagar, Boyampalayam, PO, Pooluvapatti, Tiruppur, Tamil Nadu 641602</p>
+                  <p style={{ color: '#B8860B' }}>featherfashions.in | hello@featherfashions.in | +91 9789225510</p>
                 </div>
               </div>
             </div>
