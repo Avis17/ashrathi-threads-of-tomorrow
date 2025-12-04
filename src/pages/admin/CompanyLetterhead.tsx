@@ -171,6 +171,7 @@ const CompanyLetterhead = () => {
             
             .recipient p {
               margin-bottom: 2px;
+              white-space: pre-line;
             }
             
             .subject {
