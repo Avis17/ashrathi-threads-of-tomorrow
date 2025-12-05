@@ -39,6 +39,7 @@ import GenerateInvoice from './admin/external-jobs/GenerateInvoice';
 import RateCards from './admin/external-jobs/RateCards';
 import AddRateCard from './admin/external-jobs/AddRateCard';
 import CompanyLetterhead from './admin/CompanyLetterhead';
+import CompaniesList from './admin/external-jobs/CompaniesList';
 
 const Admin = () => {
   const { isAdmin, loading } = useAuth();
@@ -107,6 +108,7 @@ const Admin = () => {
               <Route path="/external-jobs/rate-cards" element={<RateCards />} />
               <Route path="/external-jobs/add-rate-card" element={<AddRateCard />} />
               <Route path="/external-jobs/edit-rate-card/:id" element={<AddRateCard />} />
+              <Route path="/external-jobs/companies" element={<CompaniesList />} />
             </Routes>
           </main>
         </div>
