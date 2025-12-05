@@ -51,6 +51,9 @@ const LabelGenerator = () => {
   });
   const [canvasData, setCanvasData] = useState<any>(null);
   const [showTemplates, setShowTemplates] = useState(false);
+  const [currentTemplateId, setCurrentTemplateId] = useState<string | null>(null);
+  const [availableSizes, setAvailableSizes] = useState<string[]>([]);
+  const [availableColors, setAvailableColors] = useState<string[]>([]);
 
   // Autosave every 30 seconds
   useEffect(() => {
@@ -76,8 +79,15 @@ const LabelGenerator = () => {
       logoUrl: template.logo_url,
     });
     setCanvasData(template.canvas_data);
+    setCurrentTemplateId(template.id);
     setShowTemplates(false);
     setCurrentStep(3);
+  };
+
+  const handleProductDataChange = (data: ProductData, sizes?: string[], colors?: string[]) => {
+    setProductData(data);
+    if (sizes) setAvailableSizes(sizes);
+    if (colors) setAvailableColors(colors);
   };
 
   return (
@@ -118,6 +128,9 @@ const LabelGenerator = () => {
                 barcodeValue: '',
               });
               setCanvasData(null);
+              setCurrentTemplateId(null);
+              setAvailableSizes([]);
+              setAvailableColors([]);
             }}
             className="gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700"
           >
@@ -184,7 +197,7 @@ const LabelGenerator = () => {
         {currentStep === 2 && (
           <ProductDataStep
             data={productData}
-            onDataChange={setProductData}
+            onDataChange={handleProductDataChange}
             onNext={() => setCurrentStep(3)}
             onBack={() => setCurrentStep(1)}
           />
@@ -197,6 +210,8 @@ const LabelGenerator = () => {
             onCanvasChange={setCanvasData}
             onNext={() => setCurrentStep(4)}
             onBack={() => setCurrentStep(2)}
+            currentTemplateId={currentTemplateId}
+            onTemplateSaved={setCurrentTemplateId}
           />
         )}
         {currentStep === 4 && (
@@ -205,6 +220,10 @@ const LabelGenerator = () => {
             productData={productData}
             canvasData={canvasData}
             onBack={() => setCurrentStep(3)}
+            currentTemplateId={currentTemplateId}
+            onTemplateSaved={setCurrentTemplateId}
+            availableSizes={availableSizes.length > 0 ? availableSizes : undefined}
+            availableColors={availableColors.length > 0 ? availableColors : undefined}
           />
         )}
       </div>
