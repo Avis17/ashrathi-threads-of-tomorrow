@@ -99,6 +99,8 @@ export const useCreateExternalJobOrder = () => {
       operations: Array<{
         operation_name: string;
         commission_percent?: number;
+        round_off?: number | null;
+        adjustment?: number;
         categories: Array<{ category_name: string; rate: number; job_name?: string }>;
       }>;
     }) => {
@@ -114,14 +116,21 @@ export const useCreateExternalJobOrder = () => {
       for (const op of data.operations) {
         const totalRate = op.categories.reduce((sum, cat) => sum + cat.rate, 0);
         const commissionAmount = (totalRate * (op.commission_percent || 0)) / 100;
+        const calculatedTotal = totalRate + commissionAmount;
+        // Use round_off value if provided, otherwise use calculated total
+        const finalTotal = (op.round_off !== null && op.round_off !== undefined) 
+          ? op.round_off 
+          : calculatedTotal;
         
         const { data: operation, error: opError } = await supabase
           .from('external_job_operations')
           .insert([{
             job_order_id: jobOrder.id,
             operation_name: op.operation_name,
-            total_rate: totalRate + commissionAmount,
+            total_rate: finalTotal,
             commission_percent: op.commission_percent || 0,
+            round_off: op.round_off ?? null,
+            adjustment: op.adjustment ?? 0,
           }])
           .select()
           .single();

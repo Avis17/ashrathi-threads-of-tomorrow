@@ -390,12 +390,20 @@ const JobDetails = () => {
                 
                 const commissionPercent = operation.commission_percent || 0;
                 const commissionAmount = (categoriesTotal * commissionPercent) / 100;
+                const calculatedTotal = categoriesTotal + commissionAmount;
+                
+                // Get round_off and adjustment from operations_data if available
+                const roundOff = operation.round_off ?? null;
+                const adjustment = (roundOff !== null && roundOff !== undefined) 
+                  ? roundOff - calculatedTotal 
+                  : 0;
+                const finalTotal = roundOff ?? calculatedTotal;
                 
                 return (
                   <div key={operation.id} className="bg-white/50 p-5 rounded-lg space-y-3 border-l-4 border-primary">
                     <div className="flex justify-between items-center">
                       <h4 className="font-bold text-lg text-primary">{operation.operation_name}</h4>
-                      <span className="text-lg font-bold">₹{operation.total_rate?.toFixed(2) || '0.00'}</span>
+                      <span className="text-lg font-bold">₹{operation.total_rate?.toFixed(2) || finalTotal.toFixed(2)}</span>
                     </div>
                     
                     {operation.external_job_operation_categories?.length > 0 && (
@@ -418,6 +426,18 @@ const JobDetails = () => {
                               <span className="font-semibold">₹{commissionAmount.toFixed(2)}</span>
                             </div>
                           </>
+                        )}
+
+                        {/* Display Round-off Adjustment if present */}
+                        {roundOff !== null && adjustment !== 0 && (
+                          <div className="flex justify-between text-sm pt-2 border-t">
+                            <span className={`font-medium ${adjustment >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              Adjustment:
+                            </span>
+                            <span className={`font-semibold ${adjustment >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              {adjustment >= 0 ? '+' : ''}₹{adjustment.toFixed(2)}
+                            </span>
+                          </div>
                         )}
                       </div>
                     )}
@@ -522,6 +542,56 @@ const JobDetails = () => {
               <TrendingUp className="h-5 w-5 text-green-600" />
               Profit Analysis
             </h3>
+            
+            {/* Expected vs Actual Comparison */}
+            {(() => {
+              const expectedTotal = jobOrder.gst_percentage > 0 
+                ? (jobOrder.total_with_gst || totalWithGst) 
+                : jobOrder.total_amount;
+              const paidAmount = jobOrder.paid_amount || 0;
+              const paymentDifference = paidAmount - expectedTotal;
+              const actualNetProfit = totalCompanyProfit - totalExpenses + paymentDifference;
+              const expectedNetProfit = netProfitAfterExpenses;
+              const profitDifference = actualNetProfit - expectedNetProfit;
+              
+              return (
+                <div className="mb-6 p-4 rounded-lg border-2 border-dashed border-blue-300 bg-blue-50/50 dark:bg-blue-900/20">
+                  <h4 className="font-semibold text-lg mb-4 text-blue-700 dark:text-blue-300">
+                    Expected vs Actual (Based on Payment)
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="p-3 bg-white dark:bg-gray-800 rounded-lg">
+                      <p className="text-xs text-muted-foreground mb-1">Expected Amount</p>
+                      <p className="text-lg font-bold">₹{expectedTotal.toFixed(2)}</p>
+                      {jobOrder.gst_percentage > 0 && (
+                        <p className="text-xs text-muted-foreground">Incl. {jobOrder.gst_percentage}% GST</p>
+                      )}
+                    </div>
+                    <div className="p-3 bg-white dark:bg-gray-800 rounded-lg">
+                      <p className="text-xs text-muted-foreground mb-1">Actually Paid</p>
+                      <p className="text-lg font-bold">₹{paidAmount.toFixed(2)}</p>
+                      {paymentDifference !== 0 && (
+                        <p className={`text-xs font-medium ${paymentDifference >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {paymentDifference >= 0 ? '+' : ''}₹{paymentDifference.toFixed(2)} from expected
+                        </p>
+                      )}
+                    </div>
+                    <div className="p-3 bg-white dark:bg-gray-800 rounded-lg">
+                      <p className="text-xs text-muted-foreground mb-1">Actual Net Profit</p>
+                      <p className={`text-lg font-bold ${actualNetProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        ₹{actualNetProfit.toFixed(2)}
+                      </p>
+                      {profitDifference !== 0 && (
+                        <p className={`text-xs font-medium ${profitDifference >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {profitDifference >= 0 ? '+' : ''}₹{profitDifference.toFixed(2)} from expected
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Per Piece Breakdown */}
               <div className="space-y-4">
@@ -548,14 +618,20 @@ const JobDetails = () => {
                 </div>
               </div>
 
-              {/* Total Summary */}
+              {/* Total Summary - Expected */}
               <div className="space-y-4">
-                <h4 className="font-semibold text-lg border-b pb-2">Total Summary ({jobOrder.number_of_pieces} pcs)</h4>
+                <h4 className="font-semibold text-lg border-b pb-2">Expected Summary ({jobOrder.number_of_pieces} pcs)</h4>
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Total Revenue:</span>
                     <span className="font-medium">₹{jobOrder.total_amount.toFixed(2)}</span>
                   </div>
+                  {jobOrder.gst_percentage > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">GST ({jobOrder.gst_percentage}%):</span>
+                      <span className="font-medium">₹{(jobOrder.gst_amount || 0).toFixed(2)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Total Commission Paid:</span>
                     <span className="font-medium text-orange-600">₹{totalCommission.toFixed(2)}</span>
@@ -569,7 +645,7 @@ const JobDetails = () => {
                     <span className="font-medium">-₹{totalExpenses.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between pt-3 border-t-2 text-xl font-bold">
-                    <span>Net Profit:</span>
+                    <span>Expected Net Profit:</span>
                     <span className={netProfitAfterExpenses >= 0 ? "text-green-600" : "text-destructive"}>
                       ₹{netProfitAfterExpenses.toFixed(2)}
                     </span>
