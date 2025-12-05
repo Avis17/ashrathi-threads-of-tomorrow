@@ -288,7 +288,8 @@ export const useExternalJobOrderStats = () => {
 
       const totalAmount = orders.reduce((sum, order) => sum + (order.total_with_gst || order.total_amount || 0), 0);
       const paidAmount = orders.reduce((sum, order) => sum + (order.paid_amount || 0), 0);
-      const pendingAmount = orders.reduce((sum, order) => sum + (order.balance_amount || 0), 0);
+      // Calculate pending amount as total - paid (more accurate than using balance_amount field)
+      const pendingAmount = totalAmount - paidAmount;
       const totalPieces = orders.reduce((sum, order) => sum + (order.number_of_pieces || 0), 0);
       
       const statusCounts = orders.reduce((acc, order) => {
