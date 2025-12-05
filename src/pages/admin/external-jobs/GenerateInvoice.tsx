@@ -94,7 +94,7 @@ const GenerateInvoice = () => {
     doc.text("Ph: +91 97892 25510", 14, 32);
 
     // Add logo (right side)
-    doc.addImage(logo, "PNG", pageWidth - 44, 10, 30, 15);
+    doc.addImage(logo, "PNG", pageWidth - 50, 4, 45, 35);
 
     // Invoice title
     doc.setFontSize(18);
@@ -182,7 +182,7 @@ const GenerateInvoice = () => {
         cellPadding: 4,
       },
       columnStyles: {
-        0: { halign: "center", cellWidth: 15 },
+        0: { halign: "center", cellWidth: 20 },
         1: { halign: "left", cellWidth: 80 },
         2: { halign: "center", cellWidth: 25 },
         3: { halign: "right", cellWidth: 30 },
