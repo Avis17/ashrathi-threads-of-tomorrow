@@ -129,7 +129,15 @@ const AddRateCard = () => {
 
       operations.forEach((op: any) => {
         ops.push(op.operation_name);
-        cats[op.operation_name] = op.categories;
+        // Map job_name back to jobName and name for the form
+        cats[op.operation_name] = (op.categories || []).map((cat: any) => ({
+          name: cat.name || cat.job_name || "",
+          rate: cat.rate || 0,
+          customName: cat.customName || "",
+          jobName: cat.job_name || cat.name || "", // Map job_name to jobName
+          customJobName: cat.customName || "",
+          customJobDescription: cat.customJobDescription || "",
+        }));
         comms[op.operation_name] = op.commission_percent || 0;
         roundOffs[op.operation_name] = op.round_off ?? null;
       });

@@ -807,27 +807,33 @@ export type Database = {
       }
       external_job_operations: {
         Row: {
+          adjustment: number | null
           commission_percent: number | null
           created_at: string | null
           id: string
           job_order_id: string
           operation_name: string
+          round_off: number | null
           total_rate: number | null
         }
         Insert: {
+          adjustment?: number | null
           commission_percent?: number | null
           created_at?: string | null
           id?: string
           job_order_id: string
           operation_name: string
+          round_off?: number | null
           total_rate?: number | null
         }
         Update: {
+          adjustment?: number | null
           commission_percent?: number | null
           created_at?: string | null
           id?: string
           job_order_id?: string
           operation_name?: string
+          round_off?: number | null
           total_rate?: number | null
         }
         Relationships: [
