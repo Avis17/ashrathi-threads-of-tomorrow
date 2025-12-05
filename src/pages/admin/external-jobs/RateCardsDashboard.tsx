@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, BarChart3, TrendingUp, TrendingDown, Filter } from "lucide-react";
+import { ArrowLeft, BarChart3, TrendingUp, TrendingDown, Filter, Calendar, PieChart as PieChartIcon, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -23,8 +23,16 @@ import {
   LineChart,
   Line,
   Legend,
+  AreaChart,
+  Area,
+  PieChart,
+  Pie,
+  ScatterChart,
+  Scatter,
+  ZAxis,
 } from "recharts";
 import { useExternalJobRateCards } from "@/hooks/useExternalJobRateCards";
+import { format, parseISO } from "date-fns";
 
 interface OperationCategory {
   category_name: string;
@@ -40,14 +48,23 @@ interface Operation {
   total_rate?: number;
 }
 
+interface RateWithDate {
+  rate: number;
+  styleName: string;
+  createdAt: string;
+  styleId: string;
+}
+
 const OPERATION_COLORS: Record<string, string> = {
-  "Cutting": "hsl(var(--chart-1))",
-  "Stitching(Singer)": "hsl(var(--chart-2))",
-  "Stitching(Powertable)": "hsl(var(--chart-3))",
-  "Checking": "hsl(var(--chart-4))",
-  "Ironing": "hsl(var(--chart-5))",
-  "Packing": "hsl(142, 76%, 36%)",
+  "Cutting": "#f97316",
+  "Stitching(Singer)": "#8b5cf6",
+  "Stitching(Powertable)": "#06b6d4",
+  "Checking": "#eab308",
+  "Ironing": "#ec4899",
+  "Packing": "#22c55e",
 };
+
+const PIE_COLORS = ["#8b5cf6", "#06b6d4", "#22c55e", "#f97316", "#ec4899", "#eab308", "#3b82f6", "#ef4444"];
 
 const RateCardsDashboard = () => {
   const navigate = useNavigate();
@@ -55,11 +72,13 @@ const RateCardsDashboard = () => {
   const [selectedOperation, setSelectedOperation] = useState<string>("all");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
-  // Extract all unique operations and categories from rate cards
-  const { operations, categoriesByOperation, categoryRatesData } = useMemo(() => {
+  // Extract all unique operations and categories from rate cards with dates
+  const { operations, categoriesByOperation, categoryRatesData, rateTrendData, operationDistribution, categoryFrequency } = useMemo(() => {
     const opsSet = new Set<string>();
     const catsByOp: Record<string, Set<string>> = {};
-    const ratesData: Record<string, Record<string, { rates: number[]; styleNames: string[] }>> = {};
+    const ratesData: Record<string, Record<string, RateWithDate[]>> = {};
+    const opDistribution: Record<string, number> = {};
+    const catFreq: Record<string, number> = {};
 
     rateCards?.forEach((card) => {
       const operationsData = card.operations_data as unknown as Operation[] | null;
@@ -67,6 +86,8 @@ const RateCardsDashboard = () => {
 
       operationsData.forEach((op) => {
         opsSet.add(op.operation_name);
+        opDistribution[op.operation_name] = (opDistribution[op.operation_name] || 0) + 1;
+        
         if (!catsByOp[op.operation_name]) {
           catsByOp[op.operation_name] = new Set();
         }
@@ -76,15 +97,40 @@ const RateCardsDashboard = () => {
 
         op.categories?.forEach((cat) => {
           catsByOp[op.operation_name].add(cat.category_name);
+          catFreq[cat.category_name] = (catFreq[cat.category_name] || 0) + 1;
           
           if (!ratesData[op.operation_name][cat.category_name]) {
-            ratesData[op.operation_name][cat.category_name] = { rates: [], styleNames: [] };
+            ratesData[op.operation_name][cat.category_name] = [];
           }
-          ratesData[op.operation_name][cat.category_name].rates.push(cat.rate);
-          ratesData[op.operation_name][cat.category_name].styleNames.push(card.style_name);
+          ratesData[op.operation_name][cat.category_name].push({
+            rate: cat.rate,
+            styleName: card.style_name,
+            createdAt: card.created_at,
+            styleId: card.style_id,
+          });
         });
       });
     });
+
+    // Sort rates by date for trend analysis
+    Object.values(ratesData).forEach((cats) => {
+      Object.values(cats).forEach((rates) => {
+        rates.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+      });
+    });
+
+    // Operation distribution for pie chart
+    const opDistArray = Object.entries(opDistribution).map(([name, value]) => ({
+      name,
+      value,
+      color: OPERATION_COLORS[name] || "#94a3b8",
+    }));
+
+    // Category frequency for pie chart
+    const catFreqArray = Object.entries(catFreq)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 8);
 
     return {
       operations: Array.from(opsSet).sort(),
@@ -92,6 +138,9 @@ const RateCardsDashboard = () => {
         Object.entries(catsByOp).map(([k, v]) => [k, Array.from(v).sort()])
       ),
       categoryRatesData: ratesData,
+      rateTrendData: ratesData,
+      operationDistribution: opDistArray,
+      categoryFrequency: catFreqArray,
     };
   }, [rateCards]);
 
@@ -128,8 +177,8 @@ const RateCardsDashboard = () => {
 
       targetCats.forEach((cat) => {
         const rateInfo = categoryRatesData[op]?.[cat];
-        if (rateInfo && rateInfo.rates.length > 0) {
-          const rates = rateInfo.rates;
+        if (rateInfo && rateInfo.length > 0) {
+          const rates = rateInfo.map(r => r.rate);
           data.push({
             category: cat,
             operation: op,
@@ -137,7 +186,7 @@ const RateCardsDashboard = () => {
             max: Math.max(...rates),
             avg: rates.reduce((a, b) => a + b, 0) / rates.length,
             count: rates.length,
-            styles: rateInfo.styleNames,
+            styles: rateInfo.map(r => r.styleName),
           });
         }
       });
@@ -146,6 +195,22 @@ const RateCardsDashboard = () => {
     return data.sort((a, b) => b.max - a.max);
   }, [selectedOperation, selectedCategory, operations, categoriesByOperation, categoryRatesData]);
 
+  // Rate trend over time - only when specific operation and category selected
+  const trendChartData = useMemo(() => {
+    if (selectedOperation === "all" || selectedCategory === "all") return [];
+
+    const rateInfo = rateTrendData[selectedOperation]?.[selectedCategory];
+    if (!rateInfo) return [];
+
+    return rateInfo.map((item) => ({
+      date: format(parseISO(item.createdAt), "dd MMM yy"),
+      fullDate: item.createdAt,
+      rate: item.rate,
+      styleName: item.styleName,
+      styleId: item.styleId,
+    }));
+  }, [selectedOperation, selectedCategory, rateTrendData]);
+
   // Detailed breakdown data
   const detailedData = useMemo(() => {
     if (selectedOperation === "all" || selectedCategory === "all") return [];
@@ -153,11 +218,36 @@ const RateCardsDashboard = () => {
     const rateInfo = categoryRatesData[selectedOperation]?.[selectedCategory];
     if (!rateInfo) return [];
 
-    return rateInfo.rates.map((rate, idx) => ({
-      styleName: rateInfo.styleNames[idx],
-      rate,
+    return rateInfo.map((item) => ({
+      styleName: item.styleName,
+      rate: item.rate,
+      createdAt: item.createdAt,
     })).sort((a, b) => b.rate - a.rate);
   }, [selectedOperation, selectedCategory, categoryRatesData]);
+
+  // Rate distribution histogram
+  const rateDistribution = useMemo(() => {
+    if (detailedData.length === 0) return [];
+
+    const rates = detailedData.map(d => d.rate);
+    const min = Math.min(...rates);
+    const max = Math.max(...rates);
+    const bucketSize = (max - min) / 5 || 1;
+    
+    const buckets: Record<string, number> = {};
+    rates.forEach((rate) => {
+      const bucketIndex = Math.floor((rate - min) / bucketSize);
+      const bucketStart = min + bucketIndex * bucketSize;
+      const bucketEnd = bucketStart + bucketSize;
+      const key = `₹${bucketStart.toFixed(1)}-${bucketEnd.toFixed(1)}`;
+      buckets[key] = (buckets[key] || 0) + 1;
+    });
+
+    return Object.entries(buckets).map(([range, count]) => ({
+      range,
+      count,
+    }));
+  }, [detailedData]);
 
   // Stats for selected filters
   const stats = useMemo(() => {
@@ -167,12 +257,15 @@ const RateCardsDashboard = () => {
     const lowestRate = Math.min(...allRates);
     const highestRate = Math.max(...allRates);
     const avgRate = chartData.reduce((sum, d) => sum + d.avg, 0) / chartData.length;
+    const variance = highestRate - lowestRate;
 
     return {
       lowestRate,
       highestRate,
       avgRate,
       totalCategories: chartData.length,
+      variance,
+      variancePercent: lowestRate > 0 ? ((variance / lowestRate) * 100) : 0,
     };
   }, [chartData]);
 
@@ -213,6 +306,9 @@ const RateCardsDashboard = () => {
             <Filter className="h-5 w-5" />
             Filter Analysis
           </CardTitle>
+          <CardDescription>
+            Select an operation and category to see detailed rate trends and analysis
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-4">
@@ -248,20 +344,27 @@ const RateCardsDashboard = () => {
               </Select>
             </div>
           </div>
+          {selectedOperation !== "all" && selectedCategory !== "all" && (
+            <div className="mt-4 p-3 bg-primary/10 rounded-lg">
+              <p className="text-sm font-medium">
+                Showing detailed analysis for: <Badge variant="secondary">{selectedOperation}</Badge> → <Badge variant="outline">{selectedCategory}</Badge>
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
       {/* Stats Cards */}
       {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           <Card className="bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Lowest Rate</p>
-                  <p className="text-3xl font-bold text-green-600">₹{stats.lowestRate.toFixed(2)}</p>
+                  <p className="text-2xl font-bold text-green-600">₹{stats.lowestRate.toFixed(2)}</p>
                 </div>
-                <TrendingDown className="h-10 w-10 text-green-500/50" />
+                <TrendingDown className="h-8 w-8 text-green-500/50" />
               </div>
             </CardContent>
           </Card>
@@ -270,9 +373,9 @@ const RateCardsDashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Highest Rate</p>
-                  <p className="text-3xl font-bold text-red-600">₹{stats.highestRate.toFixed(2)}</p>
+                  <p className="text-2xl font-bold text-red-600">₹{stats.highestRate.toFixed(2)}</p>
                 </div>
-                <TrendingUp className="h-10 w-10 text-red-500/50" />
+                <TrendingUp className="h-8 w-8 text-red-500/50" />
               </div>
             </CardContent>
           </Card>
@@ -281,9 +384,21 @@ const RateCardsDashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Average Rate</p>
-                  <p className="text-3xl font-bold text-blue-600">₹{stats.avgRate.toFixed(2)}</p>
+                  <p className="text-2xl font-bold text-blue-600">₹{stats.avgRate.toFixed(2)}</p>
                 </div>
-                <BarChart3 className="h-10 w-10 text-blue-500/50" />
+                <BarChart3 className="h-8 w-8 text-blue-500/50" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="bg-gradient-to-br from-amber-500/10 to-amber-600/5 border-amber-500/20">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Variance</p>
+                  <p className="text-2xl font-bold text-amber-600">₹{stats.variance.toFixed(2)}</p>
+                  <p className="text-xs text-muted-foreground">{stats.variancePercent.toFixed(0)}% spread</p>
+                </div>
+                <Activity className="h-8 w-8 text-amber-500/50" />
               </div>
             </CardContent>
           </Card>
@@ -292,13 +407,252 @@ const RateCardsDashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Categories</p>
-                  <p className="text-3xl font-bold text-purple-600">{stats.totalCategories}</p>
+                  <p className="text-2xl font-bold text-purple-600">{stats.totalCategories}</p>
                 </div>
-                <Filter className="h-10 w-10 text-purple-500/50" />
+                <Filter className="h-8 w-8 text-purple-500/50" />
               </div>
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {/* Rate Trend Over Time - Only when specific operation and category selected */}
+      {trendChartData.length > 0 && (
+        <Card className="border-primary/30">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-primary" />
+              Rate Trend Over Time
+              <Badge variant="secondary">{selectedOperation}</Badge>
+              <Badge variant="outline">{selectedCategory}</Badge>
+            </CardTitle>
+            <CardDescription>
+              Price variation for {selectedCategory} in {selectedOperation} across {trendChartData.length} rate cards
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[350px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={trendChartData} margin={{ left: 20, right: 20, top: 10, bottom: 10 }}>
+                  <defs>
+                    <linearGradient id="rateGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis 
+                    dataKey="date" 
+                    tick={{ fontSize: 11 }}
+                    angle={-45}
+                    textAnchor="end"
+                    height={60}
+                  />
+                  <YAxis 
+                    tickFormatter={(v) => `₹${v}`}
+                    domain={['dataMin - 0.5', 'dataMax + 0.5']}
+                  />
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        const data = payload[0].payload;
+                        const avgRate = trendChartData.reduce((sum, d) => sum + d.rate, 0) / trendChartData.length;
+                        const diff = data.rate - avgRate;
+                        const diffPercent = (diff / avgRate) * 100;
+                        return (
+                          <div className="bg-popover border rounded-lg shadow-lg p-3">
+                            <p className="font-semibold">{data.styleName}</p>
+                            <p className="text-xs text-muted-foreground">{data.styleId}</p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {format(parseISO(data.fullDate), "dd MMM yyyy, HH:mm")}
+                            </p>
+                            <p className="text-xl font-bold mt-2">₹{data.rate.toFixed(2)}</p>
+                            <div className={`text-sm mt-1 ${diff > 0 ? 'text-red-500' : 'text-green-500'}`}>
+                              {diff > 0 ? '+' : ''}{diff.toFixed(2)} ({diffPercent.toFixed(1)}%) vs avg
+                            </div>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="rate" 
+                    stroke="hsl(var(--primary))" 
+                    strokeWidth={2}
+                    fill="url(#rateGradient)"
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="rate" 
+                    stroke="hsl(var(--primary))" 
+                    strokeWidth={2}
+                    dot={{ fill: "hsl(var(--primary))", strokeWidth: 2, r: 4 }}
+                    activeDot={{ r: 6, fill: "hsl(var(--primary))" }}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="mt-4 grid grid-cols-3 gap-4 text-center">
+              <div className="p-3 bg-green-500/10 rounded-lg">
+                <p className="text-sm text-muted-foreground">Min Rate</p>
+                <p className="text-lg font-bold text-green-600">
+                  ₹{Math.min(...trendChartData.map(d => d.rate)).toFixed(2)}
+                </p>
+              </div>
+              <div className="p-3 bg-blue-500/10 rounded-lg">
+                <p className="text-sm text-muted-foreground">Avg Rate</p>
+                <p className="text-lg font-bold text-blue-600">
+                  ₹{(trendChartData.reduce((sum, d) => sum + d.rate, 0) / trendChartData.length).toFixed(2)}
+                </p>
+              </div>
+              <div className="p-3 bg-red-500/10 rounded-lg">
+                <p className="text-sm text-muted-foreground">Max Rate</p>
+                <p className="text-lg font-bold text-red-600">
+                  ₹{Math.max(...trendChartData.map(d => d.rate)).toFixed(2)}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Distribution Charts Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Rate Distribution Histogram - Only when specific selection */}
+        {rateDistribution.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="h-5 w-5" />
+                Rate Distribution
+              </CardTitle>
+              <CardDescription>
+                How rates are distributed across rate cards
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[250px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={rateDistribution}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="range" tick={{ fontSize: 10 }} />
+                    <YAxis allowDecimals={false} />
+                    <Tooltip
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          const data = payload[0].payload;
+                          return (
+                            <div className="bg-popover border rounded-lg shadow-lg p-3">
+                              <p className="font-semibold">{data.range}</p>
+                              <p className="text-lg font-bold mt-1">{data.count} rate cards</p>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    <Bar dataKey="count" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Operation Usage Distribution */}
+        {operationDistribution.length > 0 && (selectedOperation === "all" || selectedCategory === "all") && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <PieChartIcon className="h-5 w-5" />
+                Operation Usage
+              </CardTitle>
+              <CardDescription>
+                Distribution of operations across all rate cards
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[250px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={operationDistribution}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={50}
+                      outerRadius={80}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {operationDistribution.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          const data = payload[0].payload;
+                          return (
+                            <div className="bg-popover border rounded-lg shadow-lg p-3">
+                              <p className="font-semibold">{data.name}</p>
+                              <p className="text-lg font-bold mt-1">{data.value} uses</p>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* Top Categories Chart */}
+      {categoryFrequency.length > 0 && (selectedOperation === "all" || selectedCategory === "all") && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Top Categories by Usage</CardTitle>
+            <CardDescription>
+              Most frequently used categories across all rate cards
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={categoryFrequency} layout="vertical" margin={{ left: 100 }}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis type="number" allowDecimals={false} />
+                  <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} width={90} />
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        const data = payload[0].payload;
+                        return (
+                          <div className="bg-popover border rounded-lg shadow-lg p-3">
+                            <p className="font-semibold">{data.name}</p>
+                            <p className="text-lg font-bold mt-1">Used {data.value} times</p>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                  <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                    {categoryFrequency.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Rate Comparison Chart */}
@@ -343,9 +697,9 @@ const RateCardsDashboard = () => {
                     }}
                   />
                   <Legend />
-                  <Bar dataKey="min" fill="hsl(142, 76%, 36%)" name="Min Rate" radius={[0, 4, 4, 0]} />
-                  <Bar dataKey="avg" fill="hsl(217, 91%, 60%)" name="Avg Rate" radius={[0, 4, 4, 0]} />
-                  <Bar dataKey="max" fill="hsl(0, 84%, 60%)" name="Max Rate" radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="min" fill="#22c55e" name="Min Rate" radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="avg" fill="#3b82f6" name="Avg Rate" radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="max" fill="#ef4444" name="Max Rate" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -367,7 +721,7 @@ const RateCardsDashboard = () => {
               <Badge variant="outline">{selectedCategory}</Badge>
             </CardTitle>
             <CardDescription>
-              Individual rates by style/rate card for {selectedCategory} in {selectedOperation}
+              Individual rates by style/rate card - Red bars indicate rates above average
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -389,15 +743,19 @@ const RateCardsDashboard = () => {
                         const data = payload[0].payload;
                         const avgRate = detailedData.reduce((sum, d) => sum + d.rate, 0) / detailedData.length;
                         const isAboveAvg = data.rate > avgRate;
+                        const diff = data.rate - avgRate;
                         return (
                           <div className="bg-popover border rounded-lg shadow-lg p-3">
                             <p className="font-semibold">{data.styleName}</p>
-                            <p className="text-lg font-bold mt-1">₹{data.rate.toFixed(2)}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {format(parseISO(data.createdAt), "dd MMM yyyy")}
+                            </p>
+                            <p className="text-xl font-bold mt-2">₹{data.rate.toFixed(2)}</p>
                             <Badge 
                               variant={isAboveAvg ? "destructive" : "default"}
                               className="mt-2"
                             >
-                              {isAboveAvg ? "Above Average" : "Below Average"}
+                              {isAboveAvg ? `+₹${diff.toFixed(2)} Above Avg` : `₹${Math.abs(diff).toFixed(2)} Below Avg`}
                             </Badge>
                           </div>
                         );
@@ -411,7 +769,7 @@ const RateCardsDashboard = () => {
                       return (
                         <Cell 
                           key={`cell-${index}`}
-                          fill={entry.rate > avgRate ? "hsl(0, 84%, 60%)" : "hsl(142, 76%, 36%)"}
+                          fill={entry.rate > avgRate ? "#ef4444" : "#22c55e"}
                         />
                       );
                     })}
@@ -419,12 +777,12 @@ const RateCardsDashboard = () => {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            <div className="mt-4 p-4 bg-muted/50 rounded-lg">
+            <div className="mt-4 p-4 bg-muted/50 rounded-lg flex gap-6">
               <p className="text-sm text-muted-foreground">
                 <span className="inline-block w-3 h-3 rounded bg-red-500 mr-2"></span>
                 Rates above average - may need review
               </p>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-sm text-muted-foreground">
                 <span className="inline-block w-3 h-3 rounded bg-green-500 mr-2"></span>
                 Rates at or below average - competitive
               </p>
@@ -433,7 +791,7 @@ const RateCardsDashboard = () => {
         </Card>
       )}
 
-      {/* Rate Cards Table for Selected Filters */}
+      {/* Rate Cards Table */}
       {chartData.length > 0 && (
         <Card>
           <CardHeader>
@@ -466,7 +824,7 @@ const RateCardsDashboard = () => {
                         <td className="py-3 px-4">
                           <Badge 
                             variant="outline" 
-                            style={{ borderColor: OPERATION_COLORS[row.operation] }}
+                            style={{ borderColor: OPERATION_COLORS[row.operation], color: OPERATION_COLORS[row.operation] }}
                           >
                             {row.operation}
                           </Badge>
@@ -481,7 +839,7 @@ const RateCardsDashboard = () => {
                           ₹{row.avg.toFixed(2)}
                         </td>
                         <td className="py-3 px-4 text-right">
-                          <span className={variancePercent > 20 ? "text-amber-600" : "text-muted-foreground"}>
+                          <span className={variancePercent > 20 ? "text-amber-600 font-medium" : "text-muted-foreground"}>
                             ₹{variance.toFixed(2)} ({variancePercent.toFixed(0)}%)
                           </span>
                         </td>
