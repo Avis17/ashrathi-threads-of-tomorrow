@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, FileText } from "lucide-react";
+import { ArrowLeft, FileText, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useExternalJobOrder } from "@/hooks/useExternalJobOrders";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,6 +28,8 @@ const GenerateInvoice = () => {
   const [gstRate, setGstRate] = useState("18");
   const [invoiceNumber, setInvoiceNumber] = useState("");
   const [accountType, setAccountType] = useState<"company" | "personal">("company");
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   
   // Company account details
   const [bankName, setBankName] = useState("Kotak Mahindra Bank");
@@ -73,8 +75,8 @@ const GenerateInvoice = () => {
     },
   });
 
-  const generatePDF = () => {
-    if (!jobOrder) return;
+  const createPDF = (returnBlob: boolean = false): jsPDF | string => {
+    if (!jobOrder) return new jsPDF();
 
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.width;
@@ -237,7 +239,32 @@ const GenerateInvoice = () => {
     doc.text("Thank you for your business!", pageWidth / 2, footerY, { align: "center" });
     doc.text("Feather Fashions - Crafted with precision, designed for comfort", pageWidth / 2, footerY + 5, { align: "center" });
 
-    // Save and update invoice number
+    if (returnBlob) {
+      const blob = doc.output('blob');
+      return URL.createObjectURL(blob);
+    }
+    
+    return doc;
+  };
+
+  const handlePreview = () => {
+    const blobUrl = createPDF(true) as string;
+    setPreviewUrl(blobUrl);
+    setShowPreview(true);
+  };
+
+  const handleClosePreview = () => {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    setPreviewUrl(null);
+    setShowPreview(false);
+  };
+
+  const handleConfirmAndDownload = () => {
+    if (!jobOrder) return;
+    
+    const doc = createPDF(false) as jsPDF;
     doc.save(`Job-Invoice-${jobOrder.job_id}.pdf`);
     
     // Update invoice number for next invoice
@@ -245,6 +272,8 @@ const GenerateInvoice = () => {
       updateInvoiceNumberMutation.mutate(invoiceSettings.current_invoice_number);
       toast.success('Invoice generated successfully');
     }
+    
+    handleClosePreview();
   };
 
   if (isLoading) {
@@ -440,13 +469,40 @@ const GenerateInvoice = () => {
             >
               Cancel
             </Button>
-            <Button onClick={generatePDF} className="gap-2">
-              <FileText className="h-4 w-4" />
-              Generate PDF
+            <Button variant="secondary" onClick={handlePreview} className="gap-2">
+              <Eye className="h-4 w-4" />
+              Preview Invoice
             </Button>
           </div>
         </div>
       </Card>
+
+      {/* Preview Dialog */}
+      <Dialog open={showPreview} onOpenChange={handleClosePreview}>
+        <DialogContent className="max-w-4xl h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Invoice Preview</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 min-h-0">
+            {previewUrl && (
+              <iframe
+                src={previewUrl}
+                className="w-full h-full border rounded-lg"
+                title="Invoice Preview"
+              />
+            )}
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={handleClosePreview}>
+              Edit Invoice
+            </Button>
+            <Button onClick={handleConfirmAndDownload} className="gap-2">
+              <FileText className="h-4 w-4" />
+              Confirm & Download
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
