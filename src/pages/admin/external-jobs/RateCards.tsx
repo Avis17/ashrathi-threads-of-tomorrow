@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Edit, Trash2, Search, ArrowLeft } from "lucide-react";
+import { Plus, Edit, Trash2, Search, ArrowLeft, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -72,10 +72,20 @@ const RateCards = () => {
             </p>
           </div>
         </div>
-        <Button onClick={() => navigate("/admin/external-jobs/add-rate-card")} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Add New Rate Card
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => navigate("/admin/external-jobs/rate-cards-dashboard")} 
+            className="gap-2"
+          >
+            <BarChart3 className="h-4 w-4" />
+            Analytics Dashboard
+          </Button>
+          <Button onClick={() => navigate("/admin/external-jobs/add-rate-card")} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Add New Rate Card
+          </Button>
+        </div>
       </div>
 
       <Card>

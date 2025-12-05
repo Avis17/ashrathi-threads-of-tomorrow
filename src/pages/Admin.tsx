@@ -38,6 +38,7 @@ import CompanyEdit from './admin/external-jobs/CompanyEdit';
 import GenerateInvoice from './admin/external-jobs/GenerateInvoice';
 import RateCards from './admin/external-jobs/RateCards';
 import AddRateCard from './admin/external-jobs/AddRateCard';
+import RateCardsDashboard from './admin/external-jobs/RateCardsDashboard';
 import CompanyLetterhead from './admin/CompanyLetterhead';
 import CompaniesList from './admin/external-jobs/CompaniesList';
 import LabelGenerator from './admin/LabelGenerator';
@@ -108,6 +109,7 @@ const Admin = () => {
               <Route path="/external-jobs/company/edit/:id" element={<CompanyEdit />} />
               <Route path="/external-jobs/invoice/:id" element={<GenerateInvoice />} />
               <Route path="/external-jobs/rate-cards" element={<RateCards />} />
+              <Route path="/external-jobs/rate-cards-dashboard" element={<RateCardsDashboard />} />
               <Route path="/external-jobs/add-rate-card" element={<AddRateCard />} />
               <Route path="/external-jobs/edit-rate-card/:id" element={<AddRateCard />} />
               <Route path="/external-jobs/companies" element={<CompaniesList />} />
