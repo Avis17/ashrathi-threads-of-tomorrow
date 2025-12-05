@@ -50,39 +50,91 @@ export const DownloadStep = ({
   const [quickSize, setQuickSize] = useState(productData.size);
   const [quickColor, setQuickColor] = useState(productData.color);
   const [currentProductData, setCurrentProductData] = useState(productData);
+  const [canvasReady, setCanvasReady] = useState(false);
 
   // Calculate canvas dimensions
   const scale = 3.78;
   const canvasWidth = labelConfig.orientation === 'landscape' ? labelConfig.height * scale : labelConfig.width * scale;
   const canvasHeight = labelConfig.orientation === 'landscape' ? labelConfig.width * scale : labelConfig.height * scale;
 
-  // Update canvas when size/color changes
+  // Wait for canvas to be ready after mount
   useEffect(() => {
-    if (canvasRef.current && (quickSize !== currentProductData.size || quickColor !== currentProductData.color)) {
-      updateCanvasValues();
-    }
-  }, [quickSize, quickColor]);
+    const timer = setTimeout(() => {
+      setCanvasReady(true);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, []);
 
-  const updateCanvasValues = () => {
-    if (!canvasRef.current?.getCanvas) return;
+  // Update canvas when size/color changes
+  const updateCanvasValues = (newSize: string, newColor: string) => {
+    if (!canvasRef.current?.getCanvas) {
+      console.log('Canvas ref not ready');
+      return false;
+    }
     
     const canvas = canvasRef.current.getCanvas();
-    if (!canvas) return;
+    if (!canvas) {
+      console.log('Canvas not available');
+      return false;
+    }
 
     const objects = canvas.getObjects();
+    let updated = false;
     
     objects.forEach((obj: any) => {
-      const name = obj.get('name');
-      if (name === 'size' && obj.set) {
-        obj.set('text', `Size: ${quickSize}`);
-      } else if (name === 'color' && obj.set) {
-        obj.set('text', `Color: ${quickColor}`);
+      // Check both 'name' property and custom data
+      const name = obj.name || obj.get?.('name');
+      
+      if (name === 'size') {
+        if (obj.set) {
+          obj.set('text', `Size: ${newSize}`);
+          updated = true;
+        }
+      } else if (name === 'color') {
+        if (obj.set) {
+          obj.set('text', `Color: ${newColor}`);
+          updated = true;
+        }
+      }
+      
+      // Also check if it's an IText with the text containing "Size:" or "Color:"
+      const currentText = obj.text || obj.get?.('text') || '';
+      if (typeof currentText === 'string') {
+        if (currentText.startsWith('Size:')) {
+          obj.set('text', `Size: ${newSize}`);
+          updated = true;
+        } else if (currentText.startsWith('Color:')) {
+          obj.set('text', `Color: ${newColor}`);
+          updated = true;
+        }
       }
     });
     
-    canvas.renderAll();
-    setCurrentProductData({ ...currentProductData, size: quickSize, color: quickColor });
-    toast.success('Label updated!');
+    if (updated) {
+      canvas.renderAll();
+      setCurrentProductData({ ...currentProductData, size: newSize, color: newColor });
+      toast.success('Label updated!');
+    } else {
+      toast.info('No size/color fields found on label to update');
+    }
+    
+    return updated;
+  };
+
+  const handleSizeChange = (newSize: string) => {
+    setQuickSize(newSize);
+    // Small delay to ensure state is updated
+    setTimeout(() => {
+      updateCanvasValues(newSize, quickColor);
+    }, 100);
+  };
+
+  const handleColorChange = (newColor: string) => {
+    setQuickColor(newColor);
+    // Small delay to ensure state is updated
+    setTimeout(() => {
+      updateCanvasValues(quickSize, newColor);
+    }, 100);
   };
 
   const handleExport = async () => {
@@ -350,7 +402,7 @@ export const DownloadStep = ({
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label className="text-xs text-muted-foreground">Size</Label>
-                <Select value={quickSize} onValueChange={setQuickSize}>
+                <Select value={quickSize} onValueChange={handleSizeChange}>
                   <SelectTrigger className="bg-background">
                     <SelectValue placeholder="Select size" />
                   </SelectTrigger>
@@ -363,7 +415,7 @@ export const DownloadStep = ({
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs text-muted-foreground">Color</Label>
-                <Select value={quickColor} onValueChange={setQuickColor}>
+                <Select value={quickColor} onValueChange={handleColorChange}>
                   <SelectTrigger className="bg-background">
                     <SelectValue placeholder="Select color" />
                   </SelectTrigger>

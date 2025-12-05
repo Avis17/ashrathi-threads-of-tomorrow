@@ -103,7 +103,9 @@ export const LabelCanvas = forwardRef<any, LabelCanvasProps>(({
 
   const saveCanvasState = () => {
     if (fabricRef.current) {
-      const json = fabricRef.current.toJSON();
+      // Include 'name' property in JSON serialization
+      // Use type assertion for Fabric.js custom properties
+      const json = (fabricRef.current as any).toJSON(['name']);
       onCanvasChange(json);
     }
   };
