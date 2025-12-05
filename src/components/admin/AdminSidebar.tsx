@@ -16,7 +16,8 @@ import {
   Settings,
   Sparkles,
   Briefcase,
-  ScrollText
+  ScrollText,
+  Tags
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import {
@@ -39,6 +40,7 @@ const menuItems = [
   { title: 'Expenses', url: '/admin/expenses', icon: Receipt },
   { title: 'Generate Invoice', url: '/admin/invoice', icon: FileText },
   { title: 'Company Letterhead', url: '/admin/letterhead', icon: ScrollText },
+  { title: 'Label Generator', url: '/admin/label-generator', icon: Tags },
   { title: 'Customers', url: '/admin/customers', icon: Users },
   { title: 'Products', url: '/admin/products', icon: Package },
   { title: 'Generate Products', url: '/admin/seed-products', icon: Sparkles },
