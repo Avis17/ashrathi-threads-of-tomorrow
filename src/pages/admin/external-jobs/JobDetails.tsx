@@ -189,6 +189,20 @@ const JobDetails = () => {
   const accessoriesCost = jobOrder.accessories_cost || 0;
   const deliveryCharge = jobOrder.delivery_charge || 0;
   
+  // Calculate total adjustments from round-offs
+  const totalAdjustmentsPerPiece = jobOrder.external_job_operations?.reduce((sum: number, op: any) => {
+    const categoriesTotal = op.external_job_operation_categories
+      ?.reduce((s: number, cat: any) => s + cat.rate, 0) || 0;
+    const commissionPercent = op.commission_percent || 0;
+    const commissionAmount = (categoriesTotal * commissionPercent) / 100;
+    const calculatedTotal = categoriesTotal + commissionAmount;
+    const roundOff = op.round_off ?? null;
+    const adjustment = (roundOff !== null && roundOff !== undefined) 
+      ? roundOff - calculatedTotal 
+      : 0;
+    return sum + adjustment;
+  }, 0) || 0;
+  
   // Calculate total commission from commission_percent field
   let totalCommissionPerPiece = 0;
   jobOrder.external_job_operations?.forEach((op: any) => {
@@ -201,13 +215,12 @@ const JobDetails = () => {
     }
   });
 
-  // Company profit calculation
-  const companyProfitPerPiece = jobOrder.company_profit_type === 'percentage' 
-    ? (operationsTotal * (jobOrder.company_profit_value || 0)) / 100
-    : (jobOrder.company_profit_value || 0);
+  // Company profit calculation - rate per piece minus operations total (which includes round-off adjustments)
+  const actualCompanyProfitPerPiece = jobOrder.rate_per_piece - operationsTotal;
   
-  const totalCompanyProfit = companyProfitPerPiece * jobOrder.number_of_pieces;
+  const totalCompanyProfit = actualCompanyProfitPerPiece * jobOrder.number_of_pieces;
   const totalCommission = totalCommissionPerPiece * jobOrder.number_of_pieces;
+  const totalAdjustments = totalAdjustmentsPerPiece * jobOrder.number_of_pieces;
   
   // Net profit after expenses
   const netProfitAfterExpenses = totalCompanyProfit - totalExpenses;
@@ -464,37 +477,98 @@ const JobDetails = () => {
                 const hasSinger = singerTotal > 0;
                 const hasPowerTable = powerTableTotal > 0;
                 
-                if (!hasSinger && !hasPowerTable) return null;
+                // Calculate total adjustments from all operations
+                const totalAdjustments = jobOrder.external_job_operations?.reduce((sum: number, op: any) => {
+                  const categoriesTotal = op.external_job_operation_categories
+                    ?.reduce((s: number, cat: any) => s + cat.rate, 0) || 0;
+                  const commissionPercent = op.commission_percent || 0;
+                  const commissionAmount = (categoriesTotal * commissionPercent) / 100;
+                  const calculatedTotal = categoriesTotal + commissionAmount;
+                  const roundOff = op.round_off ?? null;
+                  const adjustment = (roundOff !== null && roundOff !== undefined) 
+                    ? roundOff - calculatedTotal 
+                    : 0;
+                  return sum + adjustment;
+                }, 0) || 0;
+                
+                // Calculate company profit percent
+                const companyProfitPercent = operationsTotal > 0 
+                  ? ((jobOrder.rate_per_piece - operationsTotal) / operationsTotal * 100)
+                  : 0;
                 
                 return (
-                  <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg space-y-2 border border-blue-200 dark:border-blue-800">
-                    <h4 className="font-semibold text-blue-700 dark:text-blue-300 mb-3">Operation Subtotals</h4>
-                    {hasSinger && (
-                      <div className="flex justify-between text-sm">
-                        <span className="font-medium">Singer Total:</span>
-                        <span className="font-bold text-blue-600">₹{singerTotal.toFixed(2)}</span>
+                  <div className="space-y-4">
+                    {(hasSinger || hasPowerTable) && (
+                      <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg space-y-2 border border-blue-200 dark:border-blue-800">
+                        <h4 className="font-semibold text-blue-700 dark:text-blue-300 mb-3">Operation Subtotals</h4>
+                        {hasSinger && (
+                          <div className="flex justify-between text-sm">
+                            <span className="font-medium">Singer Total:</span>
+                            <span className="font-bold text-blue-600">₹{singerTotal.toFixed(2)}</span>
+                          </div>
+                        )}
+                        {hasPowerTable && (
+                          <>
+                            {overlockTotal > 0 && (
+                              <div className="flex justify-between text-sm pl-4">
+                                <span className="text-muted-foreground">Overlock:</span>
+                                <span className="font-medium">₹{overlockTotal.toFixed(2)}</span>
+                              </div>
+                            )}
+                            {flatlockTotal > 0 && (
+                              <div className="flex justify-between text-sm pl-4">
+                                <span className="text-muted-foreground">Flatlock:</span>
+                                <span className="font-medium">₹{flatlockTotal.toFixed(2)}</span>
+                              </div>
+                            )}
+                            <div className="flex justify-between text-sm pt-1 border-t border-blue-200 dark:border-blue-700">
+                              <span className="font-medium">Power Table Total:</span>
+                              <span className="font-bold text-blue-600">₹{powerTableTotal.toFixed(2)}</span>
+                            </div>
+                          </>
+                        )}
                       </div>
                     )}
-                    {hasPowerTable && (
-                      <>
-                        {overlockTotal > 0 && (
-                          <div className="flex justify-between text-sm pl-4">
-                            <span className="text-muted-foreground">Overlock:</span>
-                            <span className="font-medium">₹{overlockTotal.toFixed(2)}</span>
-                          </div>
-                        )}
-                        {flatlockTotal > 0 && (
-                          <div className="flex justify-between text-sm pl-4">
-                            <span className="text-muted-foreground">Flatlock:</span>
-                            <span className="font-medium">₹{flatlockTotal.toFixed(2)}</span>
-                          </div>
-                        )}
-                        <div className="flex justify-between text-sm pt-1 border-t border-blue-200 dark:border-blue-700">
-                          <span className="font-medium">Power Table Total:</span>
-                          <span className="font-bold text-blue-600">₹{powerTableTotal.toFixed(2)}</span>
+
+                    {/* Company Profit Section */}
+                    <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg space-y-2 border border-green-200 dark:border-green-800">
+                      <h4 className="font-semibold text-green-700 dark:text-green-300 mb-3">Company Profit</h4>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Total Operations Cost (per piece):</span>
+                        <span className="font-medium">₹{operationsTotal.toFixed(2)}</span>
+                      </div>
+                      {totalAdjustments !== 0 && (
+                        <div className="flex justify-between text-sm">
+                          <span className={`${totalAdjustments >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            Total Round-off Adjustments:
+                          </span>
+                          <span className={`font-medium ${totalAdjustments >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            {totalAdjustments >= 0 ? '+' : ''}₹{totalAdjustments.toFixed(2)}
+                          </span>
                         </div>
-                      </>
-                    )}
+                      )}
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Rate per Piece:</span>
+                        <span className="font-medium">₹{jobOrder.rate_per_piece.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm pt-2 border-t border-green-200 dark:border-green-700">
+                        <span className="font-semibold text-green-700 dark:text-green-300">
+                          Company Profit (per piece):
+                        </span>
+                        <span className="font-bold text-green-600">
+                          ₹{(jobOrder.rate_per_piece - operationsTotal).toFixed(2)} 
+                          <span className="text-xs ml-1">({companyProfitPercent.toFixed(1)}%)</span>
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-base font-semibold pt-2 border-t border-green-200 dark:border-green-700">
+                        <span className="text-green-700 dark:text-green-300">
+                          Total Company Profit ({jobOrder.number_of_pieces} pcs):
+                        </span>
+                        <span className="text-green-600">
+                          ₹{((jobOrder.rate_per_piece - operationsTotal) * jobOrder.number_of_pieces).toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 );
               })()}
@@ -601,15 +675,25 @@ const JobDetails = () => {
                     <span className="text-muted-foreground">Operations Cost:</span>
                     <span className="font-medium">₹{operationsTotal.toFixed(2)}</span>
                   </div>
+                  {totalAdjustmentsPerPiece !== 0 && (
+                    <div className="flex justify-between">
+                      <span className={`text-muted-foreground ${totalAdjustmentsPerPiece >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        Round-off Adjustments:
+                      </span>
+                      <span className={`font-medium ${totalAdjustmentsPerPiece >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {totalAdjustmentsPerPiece >= 0 ? '+' : ''}₹{totalAdjustmentsPerPiece.toFixed(2)}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Commission (Contractor):</span>
                     <span className="font-medium text-orange-600">₹{totalCommissionPerPiece.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">
-                      Company Profit ({jobOrder.company_profit_type === 'percentage' ? `${jobOrder.company_profit_value}%` : 'Fixed'}):
+                      Company Profit:
                     </span>
-                    <span className="font-medium text-green-600">₹{companyProfitPerPiece.toFixed(2)}</span>
+                    <span className="font-medium text-green-600">₹{actualCompanyProfitPerPiece.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between pt-2 border-t font-semibold">
                     <span>Rate per Piece:</span>
@@ -636,6 +720,16 @@ const JobDetails = () => {
                     <span className="text-muted-foreground">Total Commission Paid:</span>
                     <span className="font-medium text-orange-600">₹{totalCommission.toFixed(2)}</span>
                   </div>
+                  {totalAdjustments !== 0 && (
+                    <div className="flex justify-between">
+                      <span className={`text-muted-foreground ${totalAdjustments >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        Total Round-off Adjustments:
+                      </span>
+                      <span className={`font-medium ${totalAdjustments >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {totalAdjustments >= 0 ? '+' : ''}₹{totalAdjustments.toFixed(2)}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Gross Company Profit:</span>
                     <span className="font-medium text-green-600">₹{totalCompanyProfit.toFixed(2)}</span>
