@@ -69,12 +69,24 @@ const JobDetails = () => {
   const [localPaymentStatus, setLocalPaymentStatus] = useState<string>("");
   const [localJobStatus, setLocalJobStatus] = useState<string>("");
 
+  // Edit mode for job information
+  const [isEditingJob, setIsEditingJob] = useState(false);
+  const [editNumberOfPieces, setEditNumberOfPieces] = useState<number>(0);
+  const [editOrderDate, setEditOrderDate] = useState<string>("");
+  const [editDeliveryDate, setEditDeliveryDate] = useState<string>("");
+  const [editRatePerPiece, setEditRatePerPiece] = useState<number>(0);
+
   useEffect(() => {
     if (jobOrder) {
       setGstEnabled((jobOrder.gst_percentage || 0) > 0);
       setGstPercentage(jobOrder.gst_percentage || 0);
       setLocalPaymentStatus(jobOrder.payment_status || "unpaid");
       setLocalJobStatus(jobOrder.job_status || "pending");
+      // Initialize edit fields
+      setEditNumberOfPieces(jobOrder.number_of_pieces);
+      setEditOrderDate(jobOrder.order_date || (jobOrder.created_at ? format(new Date(jobOrder.created_at), 'yyyy-MM-dd') : ''));
+      setEditDeliveryDate(jobOrder.delivery_date || '');
+      setEditRatePerPiece(jobOrder.rate_per_piece);
     }
   }, [jobOrder]);
 
@@ -325,7 +337,56 @@ const JobDetails = () => {
       </div>
 
       <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4">Job Information</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold">Job Information</h3>
+          {!isEditingJob ? (
+            <Button variant="outline" size="sm" onClick={() => setIsEditingJob(true)}>
+              <Pencil className="h-4 w-4 mr-2" />
+              Edit
+            </Button>
+          ) : (
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => {
+                setIsEditingJob(false);
+                // Reset to original values
+                setEditNumberOfPieces(jobOrder.number_of_pieces);
+                setEditOrderDate(jobOrder.order_date || (jobOrder.created_at ? format(new Date(jobOrder.created_at), 'yyyy-MM-dd') : ''));
+                setEditDeliveryDate(jobOrder.delivery_date || '');
+                setEditRatePerPiece(jobOrder.rate_per_piece);
+              }}>
+                Cancel
+              </Button>
+              <Button size="sm" onClick={async () => {
+                try {
+                  const newTotalAmount = editNumberOfPieces * editRatePerPiece;
+                  const newGstAmount = gstEnabled ? (newTotalAmount * gstPercentage) / 100 : 0;
+                  const newTotalWithGst = newTotalAmount + newGstAmount;
+                  
+                  await updateStatus.mutateAsync({
+                    id: jobOrder.id,
+                    data: {
+                      number_of_pieces: editNumberOfPieces,
+                      order_date: editOrderDate,
+                      delivery_date: editDeliveryDate,
+                      rate_per_piece: editRatePerPiece,
+                      total_amount: newTotalAmount,
+                      gst_amount: newGstAmount,
+                      total_with_gst: newTotalWithGst,
+                      balance_amount: newTotalWithGst - jobOrder.paid_amount,
+                    },
+                  });
+                  toast.success('Job information updated successfully');
+                  setIsEditingJob(false);
+                  refetch();
+                } catch (error: any) {
+                  toast.error(error.message || 'Failed to update job information');
+                }
+              }}>
+                Save Changes
+              </Button>
+            </div>
+          )}
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <p className="text-sm text-muted-foreground">Company</p>
@@ -337,18 +398,66 @@ const JobDetails = () => {
           </div>
           <div>
             <p className="text-sm text-muted-foreground">Number of Pieces</p>
-            <p className="font-medium">{jobOrder.number_of_pieces}</p>
+            {isEditingJob ? (
+              <Input 
+                type="number" 
+                value={editNumberOfPieces} 
+                onChange={(e) => setEditNumberOfPieces(parseInt(e.target.value) || 0)}
+                className="mt-1"
+              />
+            ) : (
+              <p className="font-medium">{jobOrder.number_of_pieces}</p>
+            )}
           </div>
           <div>
             <p className="text-sm text-muted-foreground">Rate per Piece</p>
-            <p className="font-medium">₹{jobOrder.rate_per_piece.toFixed(2)}</p>
+            {isEditingJob ? (
+              <Input 
+                type="number" 
+                step="0.01"
+                value={editRatePerPiece} 
+                onChange={(e) => setEditRatePerPiece(parseFloat(e.target.value) || 0)}
+                className="mt-1"
+              />
+            ) : (
+              <p className="font-medium">₹{jobOrder.rate_per_piece.toFixed(2)}</p>
+            )}
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground">Order Date</p>
+            {isEditingJob ? (
+              <Input 
+                type="date" 
+                value={editOrderDate} 
+                onChange={(e) => setEditOrderDate(e.target.value)}
+                className="mt-1"
+              />
+            ) : (
+              <div className="flex items-center gap-2 font-medium">
+                <Calendar className="h-4 w-4" />
+                {jobOrder.order_date 
+                  ? format(new Date(jobOrder.order_date), 'dd MMM yyyy')
+                  : jobOrder.created_at 
+                    ? format(new Date(jobOrder.created_at), 'dd MMM yyyy')
+                    : 'Not set'}
+              </div>
+            )}
           </div>
           <div>
             <p className="text-sm text-muted-foreground">Delivery Date</p>
-            <div className="flex items-center gap-2 font-medium">
-              <Calendar className="h-4 w-4" />
-              {format(new Date(jobOrder.delivery_date), 'dd MMM yyyy')}
-            </div>
+            {isEditingJob ? (
+              <Input 
+                type="date" 
+                value={editDeliveryDate} 
+                onChange={(e) => setEditDeliveryDate(e.target.value)}
+                className="mt-1"
+              />
+            ) : (
+              <div className="flex items-center gap-2 font-medium">
+                <Calendar className="h-4 w-4" />
+                {format(new Date(jobOrder.delivery_date), 'dd MMM yyyy')}
+              </div>
+            )}
           </div>
           <div>
             <p className="text-sm text-muted-foreground mb-2">Job Status</p>
