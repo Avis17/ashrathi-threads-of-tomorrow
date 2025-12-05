@@ -40,6 +40,7 @@ import RateCards from './admin/external-jobs/RateCards';
 import AddRateCard from './admin/external-jobs/AddRateCard';
 import CompanyLetterhead from './admin/CompanyLetterhead';
 import CompaniesList from './admin/external-jobs/CompaniesList';
+import LabelGenerator from './admin/LabelGenerator';
 
 const Admin = () => {
   const { isAdmin, loading } = useAuth();
@@ -96,6 +97,7 @@ const Admin = () => {
               <Route path="/newsletter" element={<NewsletterManager />} />
               <Route path="/invoice-reset" element={<InvoiceReset />} />
               <Route path="/letterhead" element={<CompanyLetterhead />} />
+              <Route path="/label-generator" element={<LabelGenerator />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/external-jobs" element={<ExternalJobOrders />} />
               <Route path="/external-jobs/register-company" element={<RegisterCompany />} />
