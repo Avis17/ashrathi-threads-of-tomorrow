@@ -1,12 +1,17 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, DollarSign, FileText, TrendingUp, Clock } from "lucide-react";
+import { ArrowLeft, DollarSign, FileText, TrendingUp, Clock, Package, Percent, Calculator, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useExternalJobOrderStats } from "@/hooks/useExternalJobOrders";
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
+import { 
+  PieChart, Pie, Cell, ResponsiveContainer, Legend, 
+  BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
+  LineChart, Line, AreaChart, Area
+} from "recharts";
 
-const COLORS = ['#10b981', '#f59e0b', '#ef4444', '#6366f1'];
+const COLORS = ['#10b981', '#f59e0b', '#ef4444', '#6366f1', '#8b5cf6', '#ec4899'];
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -17,9 +22,13 @@ const Dashboard = () => {
       <div className="space-y-6">
         <Skeleton className="h-8 w-64" />
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map((i) => (
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
             <Skeleton key={i} className="h-32" />
           ))}
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Skeleton className="h-80" />
+          <Skeleton className="h-80" />
         </div>
       </div>
     );
@@ -31,18 +40,28 @@ const Dashboard = () => {
     { name: 'Paid', value: stats.statusCounts.paid || 0, color: '#10b981' },
     { name: 'Partial', value: stats.statusCounts.partial || 0, color: '#f59e0b' },
     { name: 'Unpaid', value: stats.statusCounts.unpaid || 0, color: '#ef4444' },
-  ];
+    { name: 'Delayed', value: stats.statusCounts.delayed || 0, color: '#8b5cf6' },
+    { name: 'Hold', value: stats.statusCounts.hold || 0, color: '#6366f1' },
+  ].filter(item => item.value > 0);
 
   const jobStatusData = [
-    { name: 'Completed', value: stats.jobStatusCounts.completed || 0 },
-    { name: 'In Progress', value: stats.jobStatusCounts.in_progress || 0 },
-    { name: 'Pending', value: stats.jobStatusCounts.pending || 0 },
-    { name: 'Cancelled', value: stats.jobStatusCounts.cancelled || 0 },
-  ];
+    { name: 'Completed', value: stats.jobStatusCounts.completed || 0, color: '#10b981' },
+    { name: 'In Progress', value: stats.jobStatusCounts.in_progress || 0, color: '#3b82f6' },
+    { name: 'Pending', value: stats.jobStatusCounts.pending || 0, color: '#f59e0b' },
+    { name: 'Cancelled', value: stats.jobStatusCounts.cancelled || 0, color: '#ef4444' },
+  ].filter(item => item.value > 0);
 
   const collectionRate = stats.totalAmount > 0 
     ? ((stats.paidAmount / stats.totalAmount) * 100).toFixed(1)
     : "0.0";
+
+  const profitMargin = stats.totalAmount > 0 
+    ? ((stats.grossProfit / stats.totalAmount) * 100).toFixed(1)
+    : "0.0";
+
+  const avgOrderValue = stats.totalOrders > 0 
+    ? (stats.totalAmount / stats.totalOrders).toFixed(2)
+    : "0.00";
 
   return (
     <div className="space-y-6">
@@ -62,136 +81,381 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <Card className="p-6">
+      {/* Stats Cards - Row 1 */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 border-blue-200 dark:border-blue-800">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-primary/10 rounded-lg">
-              <DollarSign className="h-6 w-6 text-primary" />
+            <div className="p-3 bg-blue-500/20 rounded-lg">
+              <FileText className="h-6 w-6 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Total Amount</p>
-              <p className="text-2xl font-bold">₹{stats.totalAmount.toFixed(2)}</p>
+              <p className="text-sm text-blue-700 dark:text-blue-300">Total Orders</p>
+              <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">{stats.totalOrders}</p>
             </div>
           </div>
         </Card>
 
-        <Card className="p-6">
+        <Card className="p-6 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900 border-purple-200 dark:border-purple-800">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-green-500/10 rounded-lg">
-              <TrendingUp className="h-6 w-6 text-green-600" />
+            <div className="p-3 bg-purple-500/20 rounded-lg">
+              <Package className="h-6 w-6 text-purple-600 dark:text-purple-400" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Amount Received</p>
-              <p className="text-2xl font-bold">₹{stats.paidAmount.toFixed(2)}</p>
+              <p className="text-sm text-purple-700 dark:text-purple-300">Total Pieces</p>
+              <p className="text-2xl font-bold text-purple-900 dark:text-purple-100">{stats.totalPieces.toLocaleString()}</p>
             </div>
           </div>
         </Card>
 
-        <Card className="p-6">
+        <Card className="p-6 bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950 dark:to-emerald-900 border-emerald-200 dark:border-emerald-800">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-orange-500/10 rounded-lg">
-              <Clock className="h-6 w-6 text-orange-600" />
+            <div className="p-3 bg-emerald-500/20 rounded-lg">
+              <DollarSign className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Pending Amount</p>
-              <p className="text-2xl font-bold">₹{stats.pendingAmount.toFixed(2)}</p>
+              <p className="text-sm text-emerald-700 dark:text-emerald-300">Total Amount</p>
+              <p className="text-2xl font-bold text-emerald-900 dark:text-emerald-100">₹{stats.totalAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
             </div>
           </div>
         </Card>
 
-        <Card className="p-6">
+        <Card className="p-6 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 border-green-200 dark:border-green-800">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-purple-500/10 rounded-lg">
-              <DollarSign className="h-6 w-6 text-purple-600" />
+            <div className="p-3 bg-green-500/20 rounded-lg">
+              <TrendingUp className="h-6 w-6 text-green-600 dark:text-green-400" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Total Commission</p>
-              <p className="text-2xl font-bold text-purple-600">₹{stats.totalCommission.toFixed(2)}</p>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-6">
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-blue-500/10 rounded-lg">
-              <FileText className="h-6 w-6 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Total Orders</p>
-              <p className="text-2xl font-bold">{stats.totalOrders}</p>
+              <p className="text-sm text-green-700 dark:text-green-300">Amount Received</p>
+              <p className="text-2xl font-bold text-green-900 dark:text-green-100">₹{stats.paidAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
             </div>
           </div>
         </Card>
       </div>
 
+      {/* Stats Cards - Row 2 */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="p-6 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950 dark:to-orange-900 border-orange-200 dark:border-orange-800">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-orange-500/20 rounded-lg">
+              <Clock className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+            </div>
+            <div>
+              <p className="text-sm text-orange-700 dark:text-orange-300">Pending Amount</p>
+              <p className="text-2xl font-bold text-orange-900 dark:text-orange-100">₹{stats.pendingAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="p-6 bg-gradient-to-br from-pink-50 to-pink-100 dark:from-pink-950 dark:to-pink-900 border-pink-200 dark:border-pink-800">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-pink-500/20 rounded-lg">
+              <Users className="h-6 w-6 text-pink-600 dark:text-pink-400" />
+            </div>
+            <div>
+              <p className="text-sm text-pink-700 dark:text-pink-300">Total Commission</p>
+              <p className="text-2xl font-bold text-pink-900 dark:text-pink-100">₹{stats.totalCommission.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="p-6 bg-gradient-to-br from-teal-50 to-teal-100 dark:from-teal-950 dark:to-teal-900 border-teal-200 dark:border-teal-800">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-teal-500/20 rounded-lg">
+              <Calculator className="h-6 w-6 text-teal-600 dark:text-teal-400" />
+            </div>
+            <div>
+              <p className="text-sm text-teal-700 dark:text-teal-300">Gross Profit</p>
+              <p className="text-2xl font-bold text-teal-900 dark:text-teal-100">₹{stats.grossProfit.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="p-6 bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-950 dark:to-indigo-900 border-indigo-200 dark:border-indigo-800">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-indigo-500/20 rounded-lg">
+              <Percent className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
+            </div>
+            <div>
+              <p className="text-sm text-indigo-700 dark:text-indigo-300">Avg Order Value</p>
+              <p className="text-2xl font-bold text-indigo-900 dark:text-indigo-100">₹{parseFloat(avgOrderValue).toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* Collection Rate & Profit Margin */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold mb-4">Collection Rate</h3>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Overall Collection Rate</span>
+              <span className="text-2xl font-bold text-primary">{collectionRate}%</span>
+            </div>
+            <div className="w-full bg-secondary rounded-full h-4">
+              <div
+                className="bg-emerald-500 h-4 rounded-full transition-all"
+                style={{ width: `${Math.min(parseFloat(collectionRate), 100)}%` }}
+              />
+            </div>
+            <div className="grid grid-cols-3 gap-4 pt-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Billed</p>
+                <p className="text-lg font-semibold">₹{stats.totalAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Collected</p>
+                <p className="text-lg font-semibold text-emerald-600">₹{stats.paidAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Outstanding</p>
+                <p className="text-lg font-semibold text-orange-600">₹{stats.pendingAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold mb-4">Profit Margin</h3>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Gross Profit Margin</span>
+              <span className="text-2xl font-bold text-teal-600">{profitMargin}%</span>
+            </div>
+            <div className="w-full bg-secondary rounded-full h-4">
+              <div
+                className="bg-teal-500 h-4 rounded-full transition-all"
+                style={{ width: `${Math.min(Math.max(parseFloat(profitMargin), 0), 100)}%` }}
+              />
+            </div>
+            <div className="grid grid-cols-3 gap-4 pt-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Revenue</p>
+                <p className="text-lg font-semibold">₹{stats.totalAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Ops Cost</p>
+                <p className="text-lg font-semibold text-red-600">₹{stats.totalOperationsCost.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Gross Profit</p>
+                <p className="text-lg font-semibold text-teal-600">₹{stats.grossProfit.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
+              </div>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* Time-based Charts */}
+      <Card className="p-6">
+        <Tabs defaultValue="weekly" className="w-full">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">Order Trends</h3>
+            <TabsList>
+              <TabsTrigger value="weekly">Weekly</TabsTrigger>
+              <TabsTrigger value="monthly">Monthly</TabsTrigger>
+              <TabsTrigger value="yearly">Yearly</TabsTrigger>
+            </TabsList>
+          </div>
+
+          <TabsContent value="weekly">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div>
+                <h4 className="text-sm font-medium text-muted-foreground mb-4">Orders & Pieces (Last 7 Days)</h4>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={stats.weeklyData}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="name" className="text-xs" />
+                    <YAxis className="text-xs" />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'hsl(var(--card))', 
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px'
+                      }} 
+                    />
+                    <Legend />
+                    <Bar dataKey="orders" name="Orders" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="pieces" name="Pieces" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-muted-foreground mb-4">Revenue (Last 7 Days)</h4>
+                <ResponsiveContainer width="100%" height={300}>
+                  <AreaChart data={stats.weeklyData}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="name" className="text-xs" />
+                    <YAxis className="text-xs" tickFormatter={(value) => `₹${(value/1000).toFixed(0)}k`} />
+                    <Tooltip 
+                      formatter={(value: number) => [`₹${value.toLocaleString('en-IN')}`, 'Amount']}
+                      contentStyle={{ 
+                        backgroundColor: 'hsl(var(--card))', 
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px'
+                      }} 
+                    />
+                    <Area type="monotone" dataKey="amount" stroke="#10b981" fill="#10b98133" strokeWidth={2} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="monthly">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div>
+                <h4 className="text-sm font-medium text-muted-foreground mb-4">Orders & Pieces (Last 12 Months)</h4>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={stats.monthlyData}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="name" className="text-xs" />
+                    <YAxis className="text-xs" />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'hsl(var(--card))', 
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px'
+                      }} 
+                    />
+                    <Legend />
+                    <Bar dataKey="orders" name="Orders" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="pieces" name="Pieces" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-muted-foreground mb-4">Revenue & Profit (Last 12 Months)</h4>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={stats.monthlyData}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="name" className="text-xs" />
+                    <YAxis className="text-xs" tickFormatter={(value) => `₹${(value/1000).toFixed(0)}k`} />
+                    <Tooltip 
+                      formatter={(value: number) => [`₹${value.toLocaleString('en-IN')}`, '']}
+                      contentStyle={{ 
+                        backgroundColor: 'hsl(var(--card))', 
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px'
+                      }} 
+                    />
+                    <Legend />
+                    <Line type="monotone" dataKey="amount" name="Revenue" stroke="#10b981" strokeWidth={2} dot={{ r: 4 }} />
+                    <Line type="monotone" dataKey="profit" name="Profit" stroke="#f59e0b" strokeWidth={2} dot={{ r: 4 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="yearly">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div>
+                <h4 className="text-sm font-medium text-muted-foreground mb-4">Orders & Pieces (Last 5 Years)</h4>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={stats.yearlyData}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="name" className="text-xs" />
+                    <YAxis className="text-xs" />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'hsl(var(--card))', 
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px'
+                      }} 
+                    />
+                    <Legend />
+                    <Bar dataKey="orders" name="Orders" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="pieces" name="Pieces" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-muted-foreground mb-4">Revenue (Last 5 Years)</h4>
+                <ResponsiveContainer width="100%" height={300}>
+                  <AreaChart data={stats.yearlyData}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="name" className="text-xs" />
+                    <YAxis className="text-xs" tickFormatter={(value) => `₹${(value/1000).toFixed(0)}k`} />
+                    <Tooltip 
+                      formatter={(value: number) => [`₹${value.toLocaleString('en-IN')}`, 'Amount']}
+                      contentStyle={{ 
+                        backgroundColor: 'hsl(var(--card))', 
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px'
+                      }} 
+                    />
+                    <Area type="monotone" dataKey="amount" stroke="#10b981" fill="#10b98133" strokeWidth={2} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </Card>
+
+      {/* Status Charts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-4">Payment Status Distribution</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={paymentStatusData}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                outerRadius={80}
-                fill="#8884d8"
-                dataKey="value"
-              >
-                {paymentStatusData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Legend />
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
+          {paymentStatusData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={paymentStatusData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {paymentStatusData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Legend />
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+              No payment data available
+            </div>
+          )}
         </Card>
 
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-4">Job Status Overview</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={jobStatusData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="value" fill="#8b5cf6" />
-            </BarChart>
-          </ResponsiveContainer>
+          {jobStatusData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={jobStatusData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {jobStatusData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Legend />
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+              No job status data available
+            </div>
+          )}
         </Card>
       </div>
-
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4">Collection Rate</h3>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">Overall Collection Rate</span>
-            <span className="text-2xl font-bold text-primary">{collectionRate}%</span>
-          </div>
-          <div className="w-full bg-secondary rounded-full h-4">
-            <div
-              className="bg-primary h-4 rounded-full transition-all"
-              style={{ width: `${collectionRate}%` }}
-            />
-          </div>
-          <div className="grid grid-cols-3 gap-4 pt-4">
-            <div>
-              <p className="text-sm text-muted-foreground">Billed</p>
-              <p className="text-xl font-semibold">₹{stats.totalAmount.toFixed(2)}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Collected</p>
-              <p className="text-xl font-semibold text-green-600">₹{stats.paidAmount.toFixed(2)}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Outstanding</p>
-              <p className="text-xl font-semibold text-orange-600">₹{stats.pendingAmount.toFixed(2)}</p>
-            </div>
-          </div>
-        </div>
-      </Card>
     </div>
   );
 };

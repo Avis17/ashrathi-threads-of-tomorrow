@@ -286,43 +286,138 @@ export const useExternalJobOrderStats = () => {
         `);
       if (error) throw error;
 
-      const totalAmount = orders.reduce((sum, order) => sum + (order.total_amount || 0), 0);
+      const totalAmount = orders.reduce((sum, order) => sum + (order.total_with_gst || order.total_amount || 0), 0);
       const paidAmount = orders.reduce((sum, order) => sum + (order.paid_amount || 0), 0);
       const pendingAmount = orders.reduce((sum, order) => sum + (order.balance_amount || 0), 0);
+      const totalPieces = orders.reduce((sum, order) => sum + (order.number_of_pieces || 0), 0);
       
       const statusCounts = orders.reduce((acc, order) => {
-        acc[order.payment_status] = (acc[order.payment_status] || 0) + 1;
+        const status = order.payment_status || 'unpaid';
+        acc[status] = (acc[status] || 0) + 1;
         return acc;
       }, {} as Record<string, number>);
 
       const jobStatusCounts = orders.reduce((acc, order) => {
-        acc[order.job_status] = (acc[order.job_status] || 0) + 1;
+        const status = order.job_status || 'pending';
+        acc[status] = (acc[status] || 0) + 1;
         return acc;
       }, {} as Record<string, number>);
 
-      // Calculate total commission using commission_percent field
+      // Calculate total commission and profit using commission_percent field
       let totalCommission = 0;
+      let totalOperationsCost = 0;
       orders.forEach(order => {
         order.external_job_operations?.forEach((op: any) => {
           const categoriesTotal = op.external_job_operation_categories
             ?.reduce((sum: number, cat: any) => sum + cat.rate, 0) || 0;
           
           const commissionPercent = op.commission_percent || 0;
+          const roundOff = op.round_off || 0;
+          const adjustment = op.adjustment || 0;
+          
+          // Calculate commission
           if (commissionPercent > 0) {
             const commissionAmount = (categoriesTotal * commissionPercent) / 100;
             totalCommission += commissionAmount * order.number_of_pieces;
           }
+          
+          // Calculate operations cost (using round_off if set, otherwise calculate)
+          const operationTotal = roundOff > 0 ? roundOff : (categoriesTotal + (categoriesTotal * commissionPercent / 100) + adjustment);
+          totalOperationsCost += operationTotal * order.number_of_pieces;
         });
       });
+
+      // Calculate gross profit (total amount - operations cost)
+      const grossProfit = totalAmount - totalOperationsCost;
+
+      // Time-based analytics
+      const now = new Date();
+      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      const yearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+
+      // Weekly data (last 7 days)
+      const weeklyData = Array.from({ length: 7 }, (_, i) => {
+        const date = new Date(now.getTime() - (6 - i) * 24 * 60 * 60 * 1000);
+        const dateStr = date.toISOString().split('T')[0];
+        const dayOrders = orders.filter(o => {
+          const orderDate = o.order_date || o.created_at?.split('T')[0];
+          return orderDate === dateStr;
+        });
+        return {
+          name: date.toLocaleDateString('en-US', { weekday: 'short' }),
+          orders: dayOrders.length,
+          amount: dayOrders.reduce((sum, o) => sum + (o.total_with_gst || o.total_amount || 0), 0),
+          pieces: dayOrders.reduce((sum, o) => sum + (o.number_of_pieces || 0), 0),
+        };
+      });
+
+      // Monthly data (last 12 months)
+      const monthlyData = Array.from({ length: 12 }, (_, i) => {
+        const date = new Date(now.getFullYear(), now.getMonth() - (11 - i), 1);
+        const monthOrders = orders.filter(o => {
+          const orderDate = new Date(o.order_date || o.created_at || '');
+          return orderDate.getMonth() === date.getMonth() && orderDate.getFullYear() === date.getFullYear();
+        });
+        return {
+          name: date.toLocaleDateString('en-US', { month: 'short' }),
+          orders: monthOrders.length,
+          amount: monthOrders.reduce((sum, o) => sum + (o.total_with_gst || o.total_amount || 0), 0),
+          pieces: monthOrders.reduce((sum, o) => sum + (o.number_of_pieces || 0), 0),
+          profit: monthOrders.reduce((sum, o) => {
+            const orderOps = o.external_job_operations || [];
+            let opsCost = 0;
+            orderOps.forEach((op: any) => {
+              const catTotal = op.external_job_operation_categories?.reduce((s: number, c: any) => s + c.rate, 0) || 0;
+              opsCost += (op.round_off || catTotal + (catTotal * (op.commission_percent || 0) / 100)) * o.number_of_pieces;
+            });
+            return sum + ((o.total_with_gst || o.total_amount || 0) - opsCost);
+          }, 0),
+        };
+      });
+
+      // Yearly data (last 5 years)
+      const yearlyData = Array.from({ length: 5 }, (_, i) => {
+        const year = now.getFullYear() - (4 - i);
+        const yearOrders = orders.filter(o => {
+          const orderDate = new Date(o.order_date || o.created_at || '');
+          return orderDate.getFullYear() === year;
+        });
+        return {
+          name: year.toString(),
+          orders: yearOrders.length,
+          amount: yearOrders.reduce((sum, o) => sum + (o.total_with_gst || o.total_amount || 0), 0),
+          pieces: yearOrders.reduce((sum, o) => sum + (o.number_of_pieces || 0), 0),
+        };
+      });
+
+      // Company-wise breakdown
+      const companyStats = orders.reduce((acc, order) => {
+        const companyId = order.company_id;
+        if (!acc[companyId]) {
+          acc[companyId] = { orders: 0, amount: 0, pieces: 0 };
+        }
+        acc[companyId].orders += 1;
+        acc[companyId].amount += order.total_with_gst || order.total_amount || 0;
+        acc[companyId].pieces += order.number_of_pieces || 0;
+        return acc;
+      }, {} as Record<string, { orders: number; amount: number; pieces: number }>);
 
       return {
         totalAmount,
         paidAmount,
         pendingAmount,
         totalOrders: orders.length,
+        totalPieces,
         statusCounts,
         jobStatusCounts,
         totalCommission,
+        totalOperationsCost,
+        grossProfit,
+        weeklyData,
+        monthlyData,
+        yearlyData,
+        companyStats,
       };
     },
   });
