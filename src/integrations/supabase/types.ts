@@ -863,6 +863,7 @@ export type Database = {
           job_status: string | null
           notes: string | null
           number_of_pieces: number
+          order_date: string | null
           paid_amount: number | null
           payment_status: string | null
           rate_per_piece: number
@@ -887,6 +888,7 @@ export type Database = {
           job_status?: string | null
           notes?: string | null
           number_of_pieces: number
+          order_date?: string | null
           paid_amount?: number | null
           payment_status?: string | null
           rate_per_piece?: number
@@ -911,6 +913,7 @@ export type Database = {
           job_status?: string | null
           notes?: string | null
           number_of_pieces?: number
+          order_date?: string | null
           paid_amount?: number | null
           payment_status?: string | null
           rate_per_piece?: number

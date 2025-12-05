@@ -159,6 +159,7 @@ export const ExternalJobOrdersList = () => {
                 <TableHead>Total</TableHead>
                 <TableHead>Payment</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Order Date</TableHead>
                 <TableHead>Delivery</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -175,6 +176,16 @@ export const ExternalJobOrdersList = () => {
                     <TableCell className="font-semibold">₹{order.total_amount.toFixed(2)}</TableCell>
                     <TableCell>{getPaymentStatusBadge(order.payment_status)}</TableCell>
                     <TableCell>{getJobStatusBadge(order.job_status)}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1 text-sm">
+                        <Calendar className="h-3 w-3" />
+                        {order.order_date 
+                          ? format(new Date(order.order_date), 'dd MMM yyyy')
+                          : order.created_at 
+                            ? format(new Date(order.created_at), 'dd MMM yyyy')
+                            : '-'}
+                      </div>
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1 text-sm">
                         <Calendar className="h-3 w-3" />

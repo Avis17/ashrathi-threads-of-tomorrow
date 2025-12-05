@@ -51,6 +51,7 @@ const jobSchema = z.object({
   company_id: z.string().min(1, "Company is required"),
   style_name: z.string().min(1, "Style name is required"),
   number_of_pieces: z.number().min(1, "Number of pieces must be at least 1"),
+  order_date: z.string().min(1, "Order date is required"),
   delivery_date: z.string().min(1, "Delivery date is required"),
   rate_per_piece: z.number().min(0, "Rate per piece is required"),
   accessories_cost: z.number().min(0).optional(),
@@ -86,6 +87,7 @@ const AddJob = () => {
       company_id: "",
       style_name: "",
       number_of_pieces: 0,
+      order_date: format(new Date(), 'yyyy-MM-dd'),
       delivery_date: "",
       rate_per_piece: 0,
       accessories_cost: 0,
@@ -387,6 +389,7 @@ const AddJob = () => {
         company_id: data.company_id,
         style_name: data.style_name,
         number_of_pieces: data.number_of_pieces,
+        order_date: data.order_date,
         delivery_date: data.delivery_date,
         accessories_cost: data.accessories_cost || 0,
         delivery_charge: data.delivery_charge || 0,
@@ -535,6 +538,20 @@ const AddJob = () => {
                         onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                         placeholder="Enter number of pieces"
                       />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="order_date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Order Date *</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
