@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Download, Image, FileImage, FileText, Package, Eye, Save, Check } from 'lucide-react';
+import { ArrowLeft, Download, Image, FileImage, FileText, Eye, Save, Check, Printer, RefreshCw } from 'lucide-react';
 import { LabelConfig, ProductData } from '@/pages/admin/LabelGenerator';
 import { LabelCanvas } from './LabelCanvas';
 import { saveAs } from 'file-saver';
@@ -10,26 +10,80 @@ import { toast } from 'sonner';
 import { useLabelTemplates } from '@/hooks/useLabelTemplates';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 
 interface DownloadStepProps {
   labelConfig: LabelConfig;
   productData: ProductData;
   canvasData: any;
   onBack: () => void;
+  currentTemplateId?: string | null;
+  onTemplateSaved?: (id: string) => void;
+  availableSizes?: string[];
+  availableColors?: string[];
 }
 
-export const DownloadStep = ({ labelConfig, productData, canvasData, onBack }: DownloadStepProps) => {
+// Common garment sizes
+const defaultSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL', '28', '30', '32', '34', '36', '38', '40'];
+const defaultColors = ['Black', 'White', 'Navy', 'Grey', 'Red', 'Blue', 'Green', 'Maroon', 'Beige', 'Pink', 'Yellow', 'Orange', 'Purple', 'Brown', 'Teal'];
+
+export const DownloadStep = ({ 
+  labelConfig, 
+  productData, 
+  canvasData, 
+  onBack,
+  currentTemplateId,
+  onTemplateSaved,
+  availableSizes = defaultSizes,
+  availableColors = defaultColors,
+}: DownloadStepProps) => {
   const canvasRef = useRef<any>(null);
-  const [selectedFormat, setSelectedFormat] = useState<'png' | 'jpg' | 'pdf'>('png');
+  const [selectedFormat, setSelectedFormat] = useState<'png' | 'jpg' | 'pdf' | 'zpl'>('png');
   const [isExporting, setIsExporting] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [templateName, setTemplateName] = useState('');
-  const { createTemplate } = useLabelTemplates();
+  const [saveAsNew, setSaveAsNew] = useState(false);
+  const { createTemplate, updateTemplate } = useLabelTemplates();
+
+  // Quick change state for size/color
+  const [quickSize, setQuickSize] = useState(productData.size);
+  const [quickColor, setQuickColor] = useState(productData.color);
+  const [currentProductData, setCurrentProductData] = useState(productData);
 
   // Calculate canvas dimensions
   const scale = 3.78;
   const canvasWidth = labelConfig.orientation === 'landscape' ? labelConfig.height * scale : labelConfig.width * scale;
   const canvasHeight = labelConfig.orientation === 'landscape' ? labelConfig.width * scale : labelConfig.height * scale;
+
+  // Update canvas when size/color changes
+  useEffect(() => {
+    if (canvasRef.current && (quickSize !== currentProductData.size || quickColor !== currentProductData.color)) {
+      updateCanvasValues();
+    }
+  }, [quickSize, quickColor]);
+
+  const updateCanvasValues = () => {
+    if (!canvasRef.current?.getCanvas) return;
+    
+    const canvas = canvasRef.current.getCanvas();
+    if (!canvas) return;
+
+    const objects = canvas.getObjects();
+    
+    objects.forEach((obj: any) => {
+      const name = obj.get('name');
+      if (name === 'size' && obj.set) {
+        obj.set('text', `Size: ${quickSize}`);
+      } else if (name === 'color' && obj.set) {
+        obj.set('text', `Color: ${quickColor}`);
+      }
+    });
+    
+    canvas.renderAll();
+    setCurrentProductData({ ...currentProductData, size: quickSize, color: quickColor });
+    toast.success('Label updated!');
+  };
 
   const handleExport = async () => {
     if (!canvasRef.current) {
@@ -40,7 +94,7 @@ export const DownloadStep = ({ labelConfig, productData, canvasData, onBack }: D
     setIsExporting(true);
 
     try {
-      const fileName = `label_${productData.productName.replace(/\s+/g, '_')}_${Date.now()}`;
+      const fileName = `label_${productData.productName.replace(/\s+/g, '_')}_${quickSize}_${quickColor}_${Date.now()}`;
 
       if (selectedFormat === 'png') {
         const dataUrl = canvasRef.current.exportToPNG();
@@ -55,7 +109,6 @@ export const DownloadStep = ({ labelConfig, productData, canvasData, onBack }: D
       } else if (selectedFormat === 'pdf') {
         const dataUrl = canvasRef.current.exportToPNG();
         
-        // Create PDF at 300 DPI for print quality
         const mmWidth = labelConfig.orientation === 'landscape' ? labelConfig.height : labelConfig.width;
         const mmHeight = labelConfig.orientation === 'landscape' ? labelConfig.width : labelConfig.height;
         
@@ -68,6 +121,12 @@ export const DownloadStep = ({ labelConfig, productData, canvasData, onBack }: D
         pdf.addImage(dataUrl, 'PNG', 0, 0, mmWidth, mmHeight);
         pdf.save(`${fileName}.pdf`);
         toast.success('PDF exported successfully (300 DPI)!');
+      } else if (selectedFormat === 'zpl') {
+        // Generate ZPL code for Zebra printers
+        const zplCode = generateZPL();
+        const blob = new Blob([zplCode], { type: 'text/plain;charset=utf-8' });
+        saveAs(blob, `${fileName}.zpl`);
+        toast.success('ZPL file exported for Zebra printer!');
       }
     } catch (error) {
       console.error('Export error:', error);
@@ -77,27 +136,169 @@ export const DownloadStep = ({ labelConfig, productData, canvasData, onBack }: D
     }
   };
 
+  // Generate ZPL code for Zebra printers
+  const generateZPL = (): string => {
+    const mmWidth = labelConfig.orientation === 'landscape' ? labelConfig.height : labelConfig.width;
+    const mmHeight = labelConfig.orientation === 'landscape' ? labelConfig.width : labelConfig.height;
+    
+    // Convert mm to dots (assuming 203 DPI - 8 dots per mm)
+    const dotsPerMm = 8;
+    const labelWidthDots = Math.round(mmWidth * dotsPerMm);
+    const labelHeightDots = Math.round(mmHeight * dotsPerMm);
+    
+    let zpl = `^XA\n`; // Start format
+    zpl += `^PW${labelWidthDots}\n`; // Print width
+    zpl += `^LL${labelHeightDots}\n`; // Label length
+    zpl += `^LH0,0\n`; // Label home position
+    
+    // Product Name
+    if (productData.productName) {
+      zpl += `^FO50,30^A0N,40,40^FD${productData.productName}^FS\n`;
+    }
+    
+    // Size
+    if (quickSize) {
+      zpl += `^FO50,80^A0N,30,30^FDSize: ${quickSize}^FS\n`;
+    }
+    
+    // Color
+    if (quickColor) {
+      zpl += `^FO50,120^A0N,30,30^FDColor: ${quickColor}^FS\n`;
+    }
+    
+    // Material
+    if (productData.material) {
+      zpl += `^FO50,160^A0N,25,25^FD${productData.material}^FS\n`;
+    }
+    
+    // MRP
+    if (productData.mrp) {
+      zpl += `^FO50,200^A0N,35,35^FDMRP: Rs.${productData.mrp}^FS\n`;
+    }
+    
+    // Barcode (EAN-13)
+    if (productData.barcodeValue && productData.barcodeValue.length === 13) {
+      zpl += `^FO50,250^BY2\n`;
+      zpl += `^BEN,80,Y,N^FD${productData.barcodeValue}^FS\n`;
+    }
+    
+    zpl += `^XZ\n`; // End format
+    
+    return zpl;
+  };
+
+  const handlePrint = () => {
+    if (!canvasRef.current) {
+      toast.error('Canvas not ready');
+      return;
+    }
+
+    try {
+      const dataUrl = canvasRef.current.exportToPNG();
+      
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        const mmWidth = labelConfig.orientation === 'landscape' ? labelConfig.height : labelConfig.width;
+        const mmHeight = labelConfig.orientation === 'landscape' ? labelConfig.width : labelConfig.height;
+        
+        printWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <title>Print Label - ${productData.productName}</title>
+              <style>
+                @page {
+                  size: ${mmWidth}mm ${mmHeight}mm;
+                  margin: 0;
+                }
+                body {
+                  margin: 0;
+                  padding: 0;
+                  display: flex;
+                  justify-content: center;
+                  align-items: center;
+                }
+                img {
+                  width: ${mmWidth}mm;
+                  height: ${mmHeight}mm;
+                  object-fit: contain;
+                }
+              </style>
+            </head>
+            <body>
+              <img src="${dataUrl}" />
+              <script>
+                window.onload = function() {
+                  window.print();
+                  window.onafterprint = function() {
+                    window.close();
+                  };
+                };
+              </script>
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+      }
+    } catch (error) {
+      console.error('Print error:', error);
+      toast.error('Failed to print');
+    }
+  };
+
   const handleSaveTemplate = async () => {
+    const currentCanvasData = canvasRef.current?.getCanvasData?.() || canvasData;
+    
+    // If we have a template ID and not saving as new, update existing
+    if (currentTemplateId && !saveAsNew) {
+      try {
+        await updateTemplate.mutateAsync({
+          id: currentTemplateId,
+          canvas_data: currentCanvasData,
+        });
+        toast.success('Template saved!');
+        setShowSaveDialog(false);
+      } catch (error) {
+        toast.error('Failed to save template');
+      }
+      return;
+    }
+
+    // Otherwise, create new template
     if (!templateName.trim()) {
       toast.error('Please enter a template name');
       return;
     }
 
     try {
-      await createTemplate.mutateAsync({
+      const result = await createTemplate.mutateAsync({
         name: templateName,
         label_width: labelConfig.width,
         label_height: labelConfig.height,
         orientation: labelConfig.orientation,
         include_logo: labelConfig.includeLogo,
         logo_url: labelConfig.logoUrl,
-        canvas_data: canvasData,
+        canvas_data: currentCanvasData,
       });
       toast.success('Template saved successfully!');
       setShowSaveDialog(false);
       setTemplateName('');
+      setSaveAsNew(false);
+      if (onTemplateSaved && result?.id) {
+        onTemplateSaved(result.id);
+      }
     } catch (error) {
       toast.error('Failed to save template');
+    }
+  };
+
+  const handleSaveClick = () => {
+    if (currentTemplateId) {
+      // Directly save to existing template
+      handleSaveTemplate();
+    } else {
+      // Open dialog for new template
+      setShowSaveDialog(true);
     }
   };
 
@@ -120,6 +321,12 @@ export const DownloadStep = ({ labelConfig, productData, canvasData, onBack }: D
       description: '300 DPI for professional printing',
       icon: FileText,
     },
+    {
+      id: 'zpl' as const,
+      label: 'ZPL',
+      description: 'Zebra printer format (.zpl)',
+      icon: Printer,
+    },
   ];
 
   return (
@@ -134,6 +341,42 @@ export const DownloadStep = ({ labelConfig, productData, canvasData, onBack }: D
           <CardDescription>Review your label before downloading</CardDescription>
         </CardHeader>
         <CardContent>
+          {/* Quick Size/Color Selector */}
+          <div className="mb-4 p-4 bg-gradient-to-r from-violet-50 to-indigo-50 rounded-lg border border-violet-100">
+            <div className="flex items-center gap-2 mb-3">
+              <RefreshCw className="h-4 w-4 text-violet-600" />
+              <span className="text-sm font-medium text-violet-700">Quick Update</span>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Size</Label>
+                <Select value={quickSize} onValueChange={setQuickSize}>
+                  <SelectTrigger className="bg-background">
+                    <SelectValue placeholder="Select size" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableSizes.map((size) => (
+                      <SelectItem key={size} value={size}>{size}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Color</Label>
+                <Select value={quickColor} onValueChange={setQuickColor}>
+                  <SelectTrigger className="bg-background">
+                    <SelectValue placeholder="Select color" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableColors.map((color) => (
+                      <SelectItem key={color} value={color}>{color}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
           <div className="flex justify-center items-center bg-slate-100 rounded-lg p-8 min-h-[400px]">
             <div className="shadow-2xl">
               <LabelCanvas
@@ -141,7 +384,7 @@ export const DownloadStep = ({ labelConfig, productData, canvasData, onBack }: D
                 width={canvasWidth}
                 height={canvasHeight}
                 labelConfig={labelConfig}
-                productData={productData}
+                productData={currentProductData}
                 initialData={canvasData}
                 onSelectionChange={() => {}}
                 onCanvasChange={() => {}}
@@ -214,13 +457,38 @@ export const DownloadStep = ({ labelConfig, productData, canvasData, onBack }: D
             </Button>
 
             <Button
+              onClick={handlePrint}
               variant="outline"
-              onClick={() => setShowSaveDialog(true)}
-              className="w-full gap-2"
+              className="w-full gap-2 border-violet-200 text-violet-700 hover:bg-violet-50"
+              size="lg"
             >
-              <Save className="h-4 w-4" />
-              Save as Template
+              <Printer className="h-4 w-4" />
+              Print Directly
             </Button>
+
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={handleSaveClick}
+                className="flex-1 gap-2"
+                disabled={updateTemplate.isPending || createTemplate.isPending}
+              >
+                <Save className="h-4 w-4" />
+                {currentTemplateId ? 'Save' : 'Save Template'}
+              </Button>
+              {currentTemplateId && (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSaveAsNew(true);
+                    setShowSaveDialog(true);
+                  }}
+                  className="gap-2"
+                >
+                  Save As New
+                </Button>
+              )}
+            </div>
 
             <Button
               variant="ghost"
@@ -242,11 +510,11 @@ export const DownloadStep = ({ labelConfig, productData, canvasData, onBack }: D
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Size</span>
-                <span>{productData.size}</span>
+                <span className="font-medium text-violet-600">{quickSize}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Color</span>
-                <span>{productData.color}</span>
+                <span className="font-medium text-violet-600">{quickColor}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Barcode</span>
@@ -261,7 +529,7 @@ export const DownloadStep = ({ labelConfig, productData, canvasData, onBack }: D
       <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Save as Template</DialogTitle>
+            <DialogTitle>{saveAsNew ? 'Save as New Template' : 'Save Template'}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -274,7 +542,10 @@ export const DownloadStep = ({ labelConfig, productData, canvasData, onBack }: D
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowSaveDialog(false)}>
+            <Button variant="outline" onClick={() => {
+              setShowSaveDialog(false);
+              setSaveAsNew(false);
+            }}>
               Cancel
             </Button>
             <Button onClick={handleSaveTemplate} disabled={createTemplate.isPending}>

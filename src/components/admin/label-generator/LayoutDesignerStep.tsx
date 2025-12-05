@@ -17,6 +17,8 @@ interface LayoutDesignerStepProps {
   onCanvasChange: (data: any) => void;
   onNext: () => void;
   onBack: () => void;
+  currentTemplateId?: string | null;
+  onTemplateSaved?: (id: string) => void;
 }
 
 const elementTypes = [
@@ -40,6 +42,8 @@ export const LayoutDesignerStep = ({
   onCanvasChange,
   onNext,
   onBack,
+  currentTemplateId,
+  onTemplateSaved,
 }: LayoutDesignerStepProps) => {
   const canvasRef = useRef<any>(null);
   const [selectedElement, setSelectedElement] = useState<any>(null);
@@ -47,7 +51,8 @@ export const LayoutDesignerStep = ({
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [templateName, setTemplateName] = useState('');
-  const { createTemplate } = useLabelTemplates();
+  const [saveAsNew, setSaveAsNew] = useState(false);
+  const { createTemplate, updateTemplate } = useLabelTemplates();
 
   const handleAddElement = useCallback((type: string) => {
     if (canvasRef.current?.addElement) {
@@ -82,15 +87,31 @@ export const LayoutDesignerStep = ({
   };
 
   const handleSaveTemplate = async () => {
+    const currentCanvasData = canvasRef.current?.getCanvasData?.() || canvasData;
+    
+    // If we have a template ID and not saving as new, update existing
+    if (currentTemplateId && !saveAsNew) {
+      try {
+        await updateTemplate.mutateAsync({
+          id: currentTemplateId,
+          canvas_data: currentCanvasData,
+        });
+        toast.success('Template saved!');
+        setShowSaveDialog(false);
+      } catch (error) {
+        toast.error('Failed to save template');
+      }
+      return;
+    }
+
+    // Otherwise, create new template
     if (!templateName.trim()) {
       toast.error('Please enter a template name');
       return;
     }
-
-    const currentCanvasData = canvasRef.current?.getCanvasData?.() || canvasData;
     
     try {
-      await createTemplate.mutateAsync({
+      const result = await createTemplate.mutateAsync({
         name: templateName,
         label_width: labelConfig.width,
         label_height: labelConfig.height,
@@ -102,8 +123,22 @@ export const LayoutDesignerStep = ({
       toast.success('Template saved successfully!');
       setShowSaveDialog(false);
       setTemplateName('');
+      setSaveAsNew(false);
+      if (onTemplateSaved && result?.id) {
+        onTemplateSaved(result.id);
+      }
     } catch (error) {
       toast.error('Failed to save template');
+    }
+  };
+
+  const handleSaveClick = () => {
+    if (currentTemplateId) {
+      // Directly save to existing template
+      handleSaveTemplate();
+    } else {
+      // Open dialog for new template
+      setShowSaveDialog(true);
     }
   };
 
@@ -155,11 +190,24 @@ export const LayoutDesignerStep = ({
             <Button
               variant="outline"
               className="w-full gap-2"
-              onClick={() => setShowSaveDialog(true)}
+              onClick={handleSaveClick}
+              disabled={updateTemplate.isPending || createTemplate.isPending}
             >
               <Save className="h-4 w-4" />
-              Save Template
+              {currentTemplateId ? 'Save' : 'Save Template'}
             </Button>
+            {currentTemplateId && (
+              <Button
+                variant="outline"
+                className="w-full gap-2 text-xs"
+                onClick={() => {
+                  setSaveAsNew(true);
+                  setShowSaveDialog(true);
+                }}
+              >
+                Save As New
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -230,10 +278,13 @@ export const LayoutDesignerStep = ({
       </div>
 
       {/* Save Template Dialog */}
-      <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
+      <Dialog open={showSaveDialog} onOpenChange={(open) => {
+        setShowSaveDialog(open);
+        if (!open) setSaveAsNew(false);
+      }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Save as Template</DialogTitle>
+            <DialogTitle>{saveAsNew ? 'Save as New Template' : 'Save Template'}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -246,7 +297,10 @@ export const LayoutDesignerStep = ({
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowSaveDialog(false)}>
+            <Button variant="outline" onClick={() => {
+              setShowSaveDialog(false);
+              setSaveAsNew(false);
+            }}>
               Cancel
             </Button>
             <Button onClick={handleSaveTemplate} disabled={createTemplate.isPending}>

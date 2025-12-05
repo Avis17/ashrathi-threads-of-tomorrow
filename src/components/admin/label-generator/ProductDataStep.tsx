@@ -10,7 +10,7 @@ import { useProducts } from '@/hooks/useProducts';
 
 interface ProductDataStepProps {
   data: ProductData;
-  onDataChange: (data: ProductData) => void;
+  onDataChange: (data: ProductData, sizes?: string[], colors?: string[]) => void;
   onNext: () => void;
   onBack: () => void;
 }
@@ -30,14 +30,17 @@ export const ProductDataStep = ({ data, onDataChange, onNext, onBack }: ProductD
     setSelectedProductId(productId);
     const product = products?.find(p => p.id === productId);
     if (product) {
+      const sizes = product.available_sizes || [];
+      const colors = product.available_colors?.map(c => c.name) || [];
+      
       onDataChange({
         productName: product.name,
-        size: product.available_sizes?.[0] || '',
-        color: product.available_colors?.[0]?.name || '',
+        size: sizes[0] || '',
+        color: colors[0] || '',
         material: product.fabric || '',
         mrp: product.price?.toString() || '',
         barcodeValue: generateGTIN(), // Generate a sample GTIN
-      });
+      }, sizes, colors);
     }
   };
 
