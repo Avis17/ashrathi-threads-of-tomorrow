@@ -36,31 +36,48 @@ const Dashboard = () => {
 
   if (!stats) return null;
 
+  // Ensure all values have defaults to prevent undefined errors
+  const safeStats = {
+    totalAmount: stats.totalAmount || 0,
+    paidAmount: stats.paidAmount || 0,
+    pendingAmount: stats.pendingAmount || 0,
+    totalOrders: stats.totalOrders || 0,
+    totalPieces: stats.totalPieces || 0,
+    totalCommission: stats.totalCommission || 0,
+    totalOperationsCost: stats.totalOperationsCost || 0,
+    grossProfit: stats.grossProfit || 0,
+    statusCounts: stats.statusCounts || {},
+    jobStatusCounts: stats.jobStatusCounts || {},
+    weeklyData: stats.weeklyData || [],
+    monthlyData: stats.monthlyData || [],
+    yearlyData: stats.yearlyData || [],
+  };
+
   const paymentStatusData = [
-    { name: 'Paid', value: stats.statusCounts.paid || 0, color: '#10b981' },
-    { name: 'Partial', value: stats.statusCounts.partial || 0, color: '#f59e0b' },
-    { name: 'Unpaid', value: stats.statusCounts.unpaid || 0, color: '#ef4444' },
-    { name: 'Delayed', value: stats.statusCounts.delayed || 0, color: '#8b5cf6' },
-    { name: 'Hold', value: stats.statusCounts.hold || 0, color: '#6366f1' },
+    { name: 'Paid', value: safeStats.statusCounts.paid || 0, color: '#10b981' },
+    { name: 'Partial', value: safeStats.statusCounts.partial || 0, color: '#f59e0b' },
+    { name: 'Unpaid', value: safeStats.statusCounts.unpaid || 0, color: '#ef4444' },
+    { name: 'Delayed', value: safeStats.statusCounts.delayed || 0, color: '#8b5cf6' },
+    { name: 'Hold', value: safeStats.statusCounts.hold || 0, color: '#6366f1' },
   ].filter(item => item.value > 0);
 
   const jobStatusData = [
-    { name: 'Completed', value: stats.jobStatusCounts.completed || 0, color: '#10b981' },
-    { name: 'In Progress', value: stats.jobStatusCounts.in_progress || 0, color: '#3b82f6' },
-    { name: 'Pending', value: stats.jobStatusCounts.pending || 0, color: '#f59e0b' },
-    { name: 'Cancelled', value: stats.jobStatusCounts.cancelled || 0, color: '#ef4444' },
+    { name: 'Completed', value: safeStats.jobStatusCounts.completed || 0, color: '#10b981' },
+    { name: 'In Progress', value: safeStats.jobStatusCounts.in_progress || 0, color: '#3b82f6' },
+    { name: 'Pending', value: safeStats.jobStatusCounts.pending || 0, color: '#f59e0b' },
+    { name: 'Cancelled', value: safeStats.jobStatusCounts.cancelled || 0, color: '#ef4444' },
   ].filter(item => item.value > 0);
 
-  const collectionRate = stats.totalAmount > 0 
-    ? ((stats.paidAmount / stats.totalAmount) * 100).toFixed(1)
+  const collectionRate = safeStats.totalAmount > 0 
+    ? ((safeStats.paidAmount / safeStats.totalAmount) * 100).toFixed(1)
     : "0.0";
 
-  const profitMargin = stats.totalAmount > 0 
-    ? ((stats.grossProfit / stats.totalAmount) * 100).toFixed(1)
+  const profitMargin = safeStats.totalAmount > 0 
+    ? ((safeStats.grossProfit / safeStats.totalAmount) * 100).toFixed(1)
     : "0.0";
 
-  const avgOrderValue = stats.totalOrders > 0 
-    ? (stats.totalAmount / stats.totalOrders).toFixed(2)
+  const avgOrderValue = safeStats.totalOrders > 0 
+    ? (safeStats.totalAmount / safeStats.totalOrders).toFixed(2)
     : "0.00";
 
   return (
@@ -90,7 +107,7 @@ const Dashboard = () => {
             </div>
             <div>
               <p className="text-sm text-blue-700 dark:text-blue-300">Total Orders</p>
-              <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">{stats.totalOrders}</p>
+              <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">{safeStats.totalOrders}</p>
             </div>
           </div>
         </Card>
@@ -102,7 +119,7 @@ const Dashboard = () => {
             </div>
             <div>
               <p className="text-sm text-purple-700 dark:text-purple-300">Total Pieces</p>
-              <p className="text-2xl font-bold text-purple-900 dark:text-purple-100">{stats.totalPieces.toLocaleString()}</p>
+              <p className="text-2xl font-bold text-purple-900 dark:text-purple-100">{safeStats.totalPieces.toLocaleString()}</p>
             </div>
           </div>
         </Card>
@@ -114,7 +131,7 @@ const Dashboard = () => {
             </div>
             <div>
               <p className="text-sm text-emerald-700 dark:text-emerald-300">Total Amount</p>
-              <p className="text-2xl font-bold text-emerald-900 dark:text-emerald-100">₹{stats.totalAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
+              <p className="text-2xl font-bold text-emerald-900 dark:text-emerald-100">₹{safeStats.totalAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
             </div>
           </div>
         </Card>
@@ -126,7 +143,7 @@ const Dashboard = () => {
             </div>
             <div>
               <p className="text-sm text-green-700 dark:text-green-300">Amount Received</p>
-              <p className="text-2xl font-bold text-green-900 dark:text-green-100">₹{stats.paidAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
+              <p className="text-2xl font-bold text-green-900 dark:text-green-100">₹{safeStats.paidAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
             </div>
           </div>
         </Card>
@@ -141,7 +158,7 @@ const Dashboard = () => {
             </div>
             <div>
               <p className="text-sm text-orange-700 dark:text-orange-300">Pending Amount</p>
-              <p className="text-2xl font-bold text-orange-900 dark:text-orange-100">₹{stats.pendingAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
+              <p className="text-2xl font-bold text-orange-900 dark:text-orange-100">₹{safeStats.pendingAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
             </div>
           </div>
         </Card>
@@ -153,7 +170,7 @@ const Dashboard = () => {
             </div>
             <div>
               <p className="text-sm text-pink-700 dark:text-pink-300">Total Commission</p>
-              <p className="text-2xl font-bold text-pink-900 dark:text-pink-100">₹{stats.totalCommission.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
+              <p className="text-2xl font-bold text-pink-900 dark:text-pink-100">₹{safeStats.totalCommission.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
             </div>
           </div>
         </Card>
@@ -165,7 +182,7 @@ const Dashboard = () => {
             </div>
             <div>
               <p className="text-sm text-teal-700 dark:text-teal-300">Gross Profit</p>
-              <p className="text-2xl font-bold text-teal-900 dark:text-teal-100">₹{stats.grossProfit.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
+              <p className="text-2xl font-bold text-teal-900 dark:text-teal-100">₹{safeStats.grossProfit.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
             </div>
           </div>
         </Card>
@@ -201,15 +218,15 @@ const Dashboard = () => {
             <div className="grid grid-cols-3 gap-4 pt-4">
               <div>
                 <p className="text-sm text-muted-foreground">Billed</p>
-                <p className="text-lg font-semibold">₹{stats.totalAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
+                <p className="text-lg font-semibold">₹{safeStats.totalAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Collected</p>
-                <p className="text-lg font-semibold text-emerald-600">₹{stats.paidAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
+                <p className="text-lg font-semibold text-emerald-600">₹{safeStats.paidAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Outstanding</p>
-                <p className="text-lg font-semibold text-orange-600">₹{stats.pendingAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
+                <p className="text-lg font-semibold text-orange-600">₹{safeStats.pendingAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
               </div>
             </div>
           </div>
@@ -231,15 +248,15 @@ const Dashboard = () => {
             <div className="grid grid-cols-3 gap-4 pt-4">
               <div>
                 <p className="text-sm text-muted-foreground">Revenue</p>
-                <p className="text-lg font-semibold">₹{stats.totalAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
+                <p className="text-lg font-semibold">₹{safeStats.totalAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Ops Cost</p>
-                <p className="text-lg font-semibold text-red-600">₹{stats.totalOperationsCost.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
+                <p className="text-lg font-semibold text-red-600">₹{safeStats.totalOperationsCost.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Gross Profit</p>
-                <p className="text-lg font-semibold text-teal-600">₹{stats.grossProfit.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
+                <p className="text-lg font-semibold text-teal-600">₹{safeStats.grossProfit.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
               </div>
             </div>
           </div>
@@ -263,7 +280,7 @@ const Dashboard = () => {
               <div>
                 <h4 className="text-sm font-medium text-muted-foreground mb-4">Orders & Pieces (Last 7 Days)</h4>
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={stats.weeklyData}>
+                  <BarChart data={safeStats.weeklyData}>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                     <XAxis dataKey="name" className="text-xs" />
                     <YAxis className="text-xs" />
@@ -283,7 +300,7 @@ const Dashboard = () => {
               <div>
                 <h4 className="text-sm font-medium text-muted-foreground mb-4">Revenue (Last 7 Days)</h4>
                 <ResponsiveContainer width="100%" height={300}>
-                  <AreaChart data={stats.weeklyData}>
+                  <AreaChart data={safeStats.weeklyData}>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                     <XAxis dataKey="name" className="text-xs" />
                     <YAxis className="text-xs" tickFormatter={(value) => `₹${(value/1000).toFixed(0)}k`} />
@@ -307,7 +324,7 @@ const Dashboard = () => {
               <div>
                 <h4 className="text-sm font-medium text-muted-foreground mb-4">Orders & Pieces (Last 12 Months)</h4>
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={stats.monthlyData}>
+                  <BarChart data={safeStats.monthlyData}>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                     <XAxis dataKey="name" className="text-xs" />
                     <YAxis className="text-xs" />
@@ -327,7 +344,7 @@ const Dashboard = () => {
               <div>
                 <h4 className="text-sm font-medium text-muted-foreground mb-4">Revenue & Profit (Last 12 Months)</h4>
                 <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={stats.monthlyData}>
+                  <LineChart data={safeStats.monthlyData}>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                     <XAxis dataKey="name" className="text-xs" />
                     <YAxis className="text-xs" tickFormatter={(value) => `₹${(value/1000).toFixed(0)}k`} />
@@ -353,7 +370,7 @@ const Dashboard = () => {
               <div>
                 <h4 className="text-sm font-medium text-muted-foreground mb-4">Orders & Pieces (Last 5 Years)</h4>
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={stats.yearlyData}>
+                  <BarChart data={safeStats.yearlyData}>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                     <XAxis dataKey="name" className="text-xs" />
                     <YAxis className="text-xs" />
@@ -373,7 +390,7 @@ const Dashboard = () => {
               <div>
                 <h4 className="text-sm font-medium text-muted-foreground mb-4">Revenue (Last 5 Years)</h4>
                 <ResponsiveContainer width="100%" height={300}>
-                  <AreaChart data={stats.yearlyData}>
+                  <AreaChart data={safeStats.yearlyData}>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                     <XAxis dataKey="name" className="text-xs" />
                     <YAxis className="text-xs" tickFormatter={(value) => `₹${(value/1000).toFixed(0)}k`} />
