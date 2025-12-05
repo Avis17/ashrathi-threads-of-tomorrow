@@ -2130,6 +2130,45 @@ export type Database = {
           },
         ]
       }
+      label_templates: {
+        Row: {
+          canvas_data: Json
+          created_at: string
+          id: string
+          include_logo: boolean | null
+          label_height: number
+          label_width: number
+          logo_url: string | null
+          name: string
+          orientation: string
+          updated_at: string
+        }
+        Insert: {
+          canvas_data: Json
+          created_at?: string
+          id?: string
+          include_logo?: boolean | null
+          label_height: number
+          label_width: number
+          logo_url?: string | null
+          name: string
+          orientation?: string
+          updated_at?: string
+        }
+        Update: {
+          canvas_data?: Json
+          created_at?: string
+          id?: string
+          include_logo?: boolean | null
+          label_height?: number
+          label_width?: number
+          logo_url?: string | null
+          name?: string
+          orientation?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       materials: {
         Row: {
           available_stock: number
