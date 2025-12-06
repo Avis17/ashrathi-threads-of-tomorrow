@@ -35,13 +35,15 @@ import { useExternalJobRateCards } from "@/hooks/useExternalJobRateCards";
 import { format, parseISO } from "date-fns";
 
 interface OperationCategory {
-  category_name: string;
+  category_name?: string;
+  name?: string;
+  job_name?: string;
   rate: number;
 }
 
 interface Operation {
   operation_name: string;
-  categories: OperationCategory[];
+  categories?: OperationCategory[];
   commission_percent?: number;
   round_off?: number;
   adjustment?: number;
@@ -82,9 +84,11 @@ const RateCardsDashboard = () => {
 
     rateCards?.forEach((card) => {
       const operationsData = card.operations_data as unknown as Operation[] | null;
-      if (!operationsData) return;
+      if (!operationsData || !Array.isArray(operationsData)) return;
 
       operationsData.forEach((op) => {
+        if (!op.operation_name) return;
+        
         opsSet.add(op.operation_name);
         opDistribution[op.operation_name] = (opDistribution[op.operation_name] || 0) + 1;
         
@@ -95,14 +99,19 @@ const RateCardsDashboard = () => {
           ratesData[op.operation_name] = {};
         }
 
-        op.categories?.forEach((cat) => {
-          catsByOp[op.operation_name].add(cat.category_name);
-          catFreq[cat.category_name] = (catFreq[cat.category_name] || 0) + 1;
+        // Handle categories - can be category_name, name, or job_name
+        const categories = op.categories || [];
+        categories.forEach((cat) => {
+          const categoryName = cat.category_name || cat.name || cat.job_name || '';
+          if (!categoryName) return;
           
-          if (!ratesData[op.operation_name][cat.category_name]) {
-            ratesData[op.operation_name][cat.category_name] = [];
+          catsByOp[op.operation_name].add(categoryName);
+          catFreq[categoryName] = (catFreq[categoryName] || 0) + 1;
+          
+          if (!ratesData[op.operation_name][categoryName]) {
+            ratesData[op.operation_name][categoryName] = [];
           }
-          ratesData[op.operation_name][cat.category_name].push({
+          ratesData[op.operation_name][categoryName].push({
             rate: cat.rate,
             styleName: card.style_name,
             createdAt: card.created_at,
