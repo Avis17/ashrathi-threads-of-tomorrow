@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, FileText, Eye } from "lucide-react";
+import { ArrowLeft, FileText, Eye, Edit3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -18,6 +18,7 @@ import { formatCurrencyAscii, numberToWords, sanitizePdfText, formatInvoiceNumbe
 import logo from "@/assets/logo.png";
 import signature from "@/assets/signature.png";
 import { toast } from "sonner";
+import { InvoiceLayoutEditor } from "@/components/admin/invoice-editor/InvoiceLayoutEditor";
 
 const GenerateInvoice = () => {
   const { id } = useParams();
@@ -30,6 +31,7 @@ const GenerateInvoice = () => {
   const [accountType, setAccountType] = useState<"company" | "personal">("company");
   const [showPreview, setShowPreview] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [showLayoutEditor, setShowLayoutEditor] = useState(false);
   
   // Company account details
   const [bankName, setBankName] = useState("Kotak Mahindra Bank");
@@ -471,7 +473,11 @@ const GenerateInvoice = () => {
             </Button>
             <Button variant="secondary" onClick={handlePreview} className="gap-2">
               <Eye className="h-4 w-4" />
-              Preview Invoice
+              Quick Preview
+            </Button>
+            <Button onClick={() => setShowLayoutEditor(true)} className="gap-2">
+              <Edit3 className="h-4 w-4" />
+              Edit & Download
             </Button>
           </div>
         </div>
@@ -503,6 +509,37 @@ const GenerateInvoice = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Layout Editor */}
+      <InvoiceLayoutEditor
+        open={showLayoutEditor}
+        onClose={() => setShowLayoutEditor(false)}
+        onConfirmDownload={(pdf) => {
+          pdf.save(`Job-Invoice-${jobOrder.job_id}.pdf`);
+          if (invoiceSettings) {
+            updateInvoiceNumberMutation.mutate(invoiceSettings.current_invoice_number);
+          }
+        }}
+        jobOrderId={id!}
+        invoiceData={{
+          styleName: jobOrder.style_name,
+          pieces: jobOrder.number_of_pieces,
+          ratePerPiece: jobOrder.rate_per_piece,
+          total: jobOrder.total_amount,
+          companyName: jobOrder.external_job_companies.company_name,
+          companyAddress: jobOrder.external_job_companies.address,
+          companyContact: jobOrder.external_job_companies.contact_number,
+          companyGst: jobOrder.external_job_companies.gst_number || undefined,
+          invoiceNumber: invoiceNumber ? formatInvoiceNumber(parseInt(invoiceNumber), new Date()) : 'PENDING',
+          invoiceType,
+          gstRate,
+          accountType,
+          bankDetails: { bankName, accountNumber, ifscCode, branch },
+          personalDetails: { phoneNumber, upiId },
+          accessoriesCost: jobOrder.accessories_cost || 0,
+          deliveryCharge: jobOrder.delivery_charge || 0,
+        }}
+      />
     </div>
   );
 };
