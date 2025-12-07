@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Edit, Trash2, Search, ArrowLeft, BarChart3 } from "lucide-react";
+import { Plus, Edit, Trash2, Search, ArrowLeft, BarChart3, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -23,7 +23,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useExternalJobRateCards, useDeleteExternalJobRateCard } from "@/hooks/useExternalJobRateCards";
+import { useExternalJobRateCards, useDeleteExternalJobRateCard, ExternalJobRateCard } from "@/hooks/useExternalJobRateCards";
+import RateCardDetailsDialog from "@/components/admin/external-jobs/RateCardDetailsDialog";
 
 const RateCards = () => {
   const navigate = useNavigate();
@@ -31,6 +32,7 @@ const RateCards = () => {
   const deleteRateCard = useDeleteExternalJobRateCard();
   const [searchTerm, setSearchTerm] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [viewCard, setViewCard] = useState<ExternalJobRateCard | null>(null);
 
   const filteredRateCards = rateCards?.filter(
     (card) =>
@@ -119,7 +121,14 @@ const RateCards = () => {
                 {filteredRateCards.map((card) => (
                   <TableRow key={card.id}>
                     <TableCell className="font-mono text-sm">{card.style_id}</TableCell>
-                    <TableCell className="font-medium">{card.style_name}</TableCell>
+                    <TableCell>
+                      <div>
+                        <p className="font-medium">{card.style_name}</p>
+                        {card.notes && (
+                          <p className="text-xs text-muted-foreground line-clamp-1">{card.notes}</p>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell>
                       <Badge variant="outline">{card.category}</Badge>
                     </TableCell>
@@ -132,11 +141,20 @@ const RateCards = () => {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setViewCard(card)}
+                          title="View Details"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
                         <Button
                           variant="ghost"
                           size="icon"
                           onClick={() => navigate(`/admin/external-jobs/edit-rate-card/${card.id}`)}
+                          title="Edit"
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -144,6 +162,7 @@ const RateCards = () => {
                           variant="ghost"
                           size="icon"
                           onClick={() => setDeleteId(card.id)}
+                          title="Delete"
                         >
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
@@ -177,6 +196,12 @@ const RateCards = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <RateCardDetailsDialog
+        rateCard={viewCard}
+        open={!!viewCard}
+        onClose={() => setViewCard(null)}
+      />
     </div>
   );
 };
