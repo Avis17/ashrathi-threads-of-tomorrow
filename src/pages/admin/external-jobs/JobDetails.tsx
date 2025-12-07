@@ -862,6 +862,132 @@ const JobDetails = () => {
                 </div>
               </div>
             </div>
+
+            {/* Operations Earnings Detail Card */}
+            <Card className="mt-6 p-6 bg-gradient-to-br from-purple-500/10 to-indigo-500/5 border-purple-200 dark:border-purple-800">
+              <h4 className="text-lg font-bold mb-4 flex items-center gap-2 text-purple-700 dark:text-purple-300">
+                <Receipt className="h-5 w-5" />
+                Operations Earnings Breakdown
+              </h4>
+              
+              {(() => {
+                // Calculate earnings by operation type
+                const singerOps = jobOrder.external_job_operations?.filter((op: any) => 
+                  op.operation_name?.toLowerCase().includes('singer')
+                ) || [];
+                const overlockOps = jobOrder.external_job_operations?.filter((op: any) => 
+                  op.operation_name?.toLowerCase().includes('overlock')
+                ) || [];
+                const flatlockOps = jobOrder.external_job_operations?.filter((op: any) => 
+                  op.operation_name?.toLowerCase().includes('flatlock')
+                ) || [];
+                const otherOps = jobOrder.external_job_operations?.filter((op: any) => 
+                  !op.operation_name?.toLowerCase().includes('singer') &&
+                  !op.operation_name?.toLowerCase().includes('overlock') &&
+                  !op.operation_name?.toLowerCase().includes('flatlock')
+                ) || [];
+
+                const singerRatePerPiece = singerOps.reduce((sum: number, op: any) => sum + (op.total_rate || 0), 0);
+                const overlockRatePerPiece = overlockOps.reduce((sum: number, op: any) => sum + (op.total_rate || 0), 0);
+                const flatlockRatePerPiece = flatlockOps.reduce((sum: number, op: any) => sum + (op.total_rate || 0), 0);
+                const powerTableRatePerPiece = overlockRatePerPiece + flatlockRatePerPiece;
+                const otherRatePerPiece = otherOps.reduce((sum: number, op: any) => sum + (op.total_rate || 0), 0);
+
+                const pieces = jobOrder.number_of_pieces;
+
+                const singerTotal = singerRatePerPiece * pieces;
+                const overlockTotal = overlockRatePerPiece * pieces;
+                const flatlockTotal = flatlockRatePerPiece * pieces;
+                const powerTableTotal = powerTableRatePerPiece * pieces;
+                const otherTotal = otherRatePerPiece * pieces;
+                const grandTotal = operationsTotal * pieces;
+
+                return (
+                  <div className="space-y-4">
+                    {/* Header row */}
+                    <div className="grid grid-cols-4 gap-4 text-sm font-semibold text-muted-foreground border-b pb-2">
+                      <span>Operation</span>
+                      <span className="text-right">Rate/Piece</span>
+                      <span className="text-center">× Pieces</span>
+                      <span className="text-right">Total Earnings</span>
+                    </div>
+
+                    {/* Singer */}
+                    {singerRatePerPiece > 0 && (
+                      <div className="grid grid-cols-4 gap-4 items-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                          <span className="font-medium">Stitching (Singer)</span>
+                        </div>
+                        <span className="text-right font-mono">₹{singerRatePerPiece.toFixed(2)}</span>
+                        <span className="text-center text-muted-foreground">× {pieces}</span>
+                        <span className="text-right font-bold text-blue-600">₹{singerTotal.toFixed(2)}</span>
+                      </div>
+                    )}
+
+                    {/* Overlock */}
+                    {overlockRatePerPiece > 0 && (
+                      <div className="grid grid-cols-4 gap-4 items-center p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+                          <span className="font-medium">Overlock</span>
+                        </div>
+                        <span className="text-right font-mono">₹{overlockRatePerPiece.toFixed(2)}</span>
+                        <span className="text-center text-muted-foreground">× {pieces}</span>
+                        <span className="text-right font-bold text-orange-600">₹{overlockTotal.toFixed(2)}</span>
+                      </div>
+                    )}
+
+                    {/* Flatlock */}
+                    {flatlockRatePerPiece > 0 && (
+                      <div className="grid grid-cols-4 gap-4 items-center p-3 bg-pink-50 dark:bg-pink-900/20 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full bg-pink-500"></div>
+                          <span className="font-medium">Flatlock</span>
+                        </div>
+                        <span className="text-right font-mono">₹{flatlockRatePerPiece.toFixed(2)}</span>
+                        <span className="text-center text-muted-foreground">× {pieces}</span>
+                        <span className="text-right font-bold text-pink-600">₹{flatlockTotal.toFixed(2)}</span>
+                      </div>
+                    )}
+
+                    {/* Power Table Combined */}
+                    {powerTableRatePerPiece > 0 && (
+                      <div className="grid grid-cols-4 gap-4 items-center p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border-2 border-purple-200 dark:border-purple-700">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full bg-purple-500"></div>
+                          <span className="font-semibold">Power Table (O+F)</span>
+                        </div>
+                        <span className="text-right font-mono">₹{powerTableRatePerPiece.toFixed(2)}</span>
+                        <span className="text-center text-muted-foreground">× {pieces}</span>
+                        <span className="text-right font-bold text-purple-600">₹{powerTableTotal.toFixed(2)}</span>
+                      </div>
+                    )}
+
+                    {/* Other Operations */}
+                    {otherOps.map((op: any, index: number) => (
+                      <div key={op.id || index} className="grid grid-cols-4 gap-4 items-center p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full bg-gray-500"></div>
+                          <span className="font-medium">{op.operation_name}</span>
+                        </div>
+                        <span className="text-right font-mono">₹{(op.total_rate || 0).toFixed(2)}</span>
+                        <span className="text-center text-muted-foreground">× {pieces}</span>
+                        <span className="text-right font-bold text-gray-600">₹{((op.total_rate || 0) * pieces).toFixed(2)}</span>
+                      </div>
+                    ))}
+
+                    {/* Grand Total */}
+                    <div className="grid grid-cols-4 gap-4 items-center p-4 bg-gradient-to-r from-purple-100 to-indigo-100 dark:from-purple-900/40 dark:to-indigo-900/40 rounded-lg border-2 border-purple-300 dark:border-purple-600 mt-4">
+                      <span className="font-bold text-lg">Grand Total</span>
+                      <span className="text-right font-mono font-bold">₹{operationsTotal.toFixed(2)}</span>
+                      <span className="text-center text-muted-foreground font-medium">× {pieces}</span>
+                      <span className="text-right font-bold text-xl text-purple-700 dark:text-purple-300">₹{grandTotal.toFixed(2)}</span>
+                    </div>
+                  </div>
+                );
+              })()}
+            </Card>
           </Card>
         </TabsContent>
 
