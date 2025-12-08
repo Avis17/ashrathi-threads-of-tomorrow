@@ -15,8 +15,10 @@ interface RateCardDetailsDialogProps {
 }
 
 interface OperationCategory {
-  category_name: string;
+  name: string;
   rate: number;
+  customName?: string;
+  job_name?: string;
 }
 
 interface Operation {
@@ -130,12 +132,16 @@ const RateCardDetailsDialog = ({ rateCard, open, onClose }: RateCardDetailsDialo
                     {/* Categories breakdown */}
                     {op.categories && op.categories.length > 0 && (
                       <div className="pl-4 space-y-1 mb-2">
-                        {op.categories.map((cat, catIdx) => (
-                          <div key={catIdx} className="flex justify-between text-sm text-muted-foreground">
-                            <span>{cat.category_name}</span>
-                            <span>₹{cat.rate.toFixed(2)}</span>
-                          </div>
-                        ))}
+                        {op.categories.map((cat, catIdx) => {
+                          // Use customName if available, otherwise use name or job_name
+                          const displayName = cat.customName || cat.name || cat.job_name || 'Unknown Category';
+                          return (
+                            <div key={catIdx} className="flex justify-between text-sm text-muted-foreground">
+                              <span>{displayName}</span>
+                              <span>₹{cat.rate.toFixed(2)}</span>
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
                     
