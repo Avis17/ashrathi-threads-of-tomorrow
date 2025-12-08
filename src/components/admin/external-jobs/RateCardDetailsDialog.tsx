@@ -15,17 +15,17 @@ interface RateCardDetailsDialogProps {
 }
 
 interface OperationCategory {
-  category: string;
+  category_name: string;
   rate: number;
 }
 
 interface Operation {
-  operation: string;
+  operation_name: string;
   categories: OperationCategory[];
-  commission?: number;
-  roundOff?: number;
+  commission_percent?: number;
+  round_off?: number | null;
   adjustment?: number;
-  total?: number;
+  total_rate?: number;
 }
 
 const RateCardDetailsDialog = ({ rateCard, open, onClose }: RateCardDetailsDialogProps) => {
@@ -34,8 +34,13 @@ const RateCardDetailsDialog = ({ rateCard, open, onClose }: RateCardDetailsDialo
   const operations = (rateCard.operations_data as unknown as Operation[]) || [];
   
   const totalOperationsCost = operations.reduce((sum, op) => {
-    const opTotal = op.categories?.reduce((catSum, cat) => catSum + (cat.rate || 0), 0) || 0;
-    return sum + opTotal + (op.adjustment || 0);
+    const categoriesTotal = op.categories?.reduce((catSum, cat) => catSum + (cat.rate || 0), 0) || 0;
+    const commissionPercent = op.commission_percent || 0;
+    const commissionAmount = (categoriesTotal * commissionPercent) / 100;
+    const calculatedTotal = categoriesTotal + commissionAmount;
+    const roundOff = op.round_off;
+    const finalTotal = (roundOff !== null && roundOff !== undefined) ? roundOff : calculatedTotal;
+    return sum + finalTotal;
   }, 0);
 
   const companyProfit = rateCard.rate_per_piece - totalOperationsCost;
@@ -98,38 +103,65 @@ const RateCardDetailsDialog = ({ rateCard, open, onClose }: RateCardDetailsDialo
             <h3 className="font-semibold mb-3">Operations Breakdown</h3>
             <div className="space-y-3">
               {operations.map((op, idx) => {
-                const opTotal = op.categories?.reduce((sum, cat) => sum + (cat.rate || 0), 0) || 0;
+                const categoriesTotal = op.categories?.reduce((sum, cat) => sum + (cat.rate || 0), 0) || 0;
+                const commissionPercent = op.commission_percent || 0;
+                const commissionAmount = (categoriesTotal * commissionPercent) / 100;
+                const calculatedTotal = categoriesTotal + commissionAmount;
+                const roundOff = op.round_off;
+                const adjustment = (roundOff !== null && roundOff !== undefined) 
+                  ? roundOff - calculatedTotal 
+                  : 0;
+                const finalTotal = roundOff ?? calculatedTotal;
+                
                 return (
                   <div key={idx} className="border rounded-lg p-3">
                     <div className="flex justify-between items-center mb-2">
-                      <span className="font-medium">{op.operation}</span>
+                      <span className="font-medium">{op.operation_name}</span>
                       <div className="flex items-center gap-2">
-                        {op.commission && op.commission > 0 && (
+                        {commissionPercent > 0 && (
                           <Badge variant="secondary" className="text-xs">
-                            {op.commission}% commission
+                            {commissionPercent}% commission
                           </Badge>
                         )}
-                        <span className="font-semibold">₹{opTotal.toFixed(2)}</span>
+                        <span className="font-semibold">₹{finalTotal.toFixed(2)}</span>
                       </div>
                     </div>
+                    
+                    {/* Categories breakdown */}
                     {op.categories && op.categories.length > 0 && (
-                      <div className="pl-4 space-y-1">
+                      <div className="pl-4 space-y-1 mb-2">
                         {op.categories.map((cat, catIdx) => (
                           <div key={catIdx} className="flex justify-between text-sm text-muted-foreground">
-                            <span>{cat.category}</span>
+                            <span>{cat.category_name}</span>
                             <span>₹{cat.rate.toFixed(2)}</span>
                           </div>
                         ))}
                       </div>
                     )}
-                    {op.roundOff && op.roundOff !== opTotal && (
-                      <div className="flex justify-between text-sm mt-1 pt-1 border-t">
-                        <span className="text-muted-foreground">Round Off</span>
-                        <span className="text-muted-foreground">
-                          ₹{op.roundOff.toFixed(2)} ({op.adjustment && op.adjustment > 0 ? '+' : ''}{op.adjustment?.toFixed(2) || 0})
-                        </span>
+                    
+                    {/* Subtotals */}
+                    <div className="pl-4 pt-2 border-t space-y-1 text-sm">
+                      <div className="flex justify-between text-muted-foreground">
+                        <span>Categories Subtotal</span>
+                        <span>₹{categoriesTotal.toFixed(2)}</span>
                       </div>
-                    )}
+                      {commissionPercent > 0 && (
+                        <div className="flex justify-between text-muted-foreground">
+                          <span>Commission ({commissionPercent}%)</span>
+                          <span>+ ₹{commissionAmount.toFixed(2)}</span>
+                        </div>
+                      )}
+                      {roundOff !== null && roundOff !== undefined && (
+                        <div className="flex justify-between text-muted-foreground">
+                          <span>Round Off Adjustment</span>
+                          <span>{adjustment >= 0 ? '+' : ''}₹{adjustment.toFixed(2)}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between font-medium pt-1 border-t">
+                        <span>Operation Total</span>
+                        <span>₹{finalTotal.toFixed(2)}</span>
+                      </div>
+                    </div>
                   </div>
                 );
               })}
