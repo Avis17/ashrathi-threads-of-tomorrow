@@ -2307,6 +2307,9 @@ export type Database = {
           id: string
           order_number: string
           payment_method: string
+          payment_status: string | null
+          phonepe_order_id: string | null
+          phonepe_transaction_id: string | null
           shipped_at: string | null
           shipping_charges: number | null
           status: string
@@ -2331,6 +2334,9 @@ export type Database = {
           id?: string
           order_number?: string
           payment_method?: string
+          payment_status?: string | null
+          phonepe_order_id?: string | null
+          phonepe_transaction_id?: string | null
           shipped_at?: string | null
           shipping_charges?: number | null
           status?: string
@@ -2355,6 +2361,9 @@ export type Database = {
           id?: string
           order_number?: string
           payment_method?: string
+          payment_status?: string | null
+          phonepe_order_id?: string | null
+          phonepe_transaction_id?: string | null
           shipped_at?: string | null
           shipping_charges?: number | null
           status?: string

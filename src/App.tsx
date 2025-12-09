@@ -48,6 +48,7 @@ import ExportSurplus from "./pages/categories/ExportSurplus";
 import TermsAndConditions from "./pages/TermsAndConditions";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import ShippingReturnRefund from "./pages/ShippingReturnRefund";
+import PaymentCallback from "./pages/PaymentCallback";
 
 const queryClient = new QueryClient();
 
@@ -83,6 +84,7 @@ const App = () => (
                       <Route path="/reset-password" element={<ResetPassword />} />
                       <Route path="/bulk-order" element={<BulkOrder />} />
                       <Route path="/checkout" element={<Checkout />} />
+                      <Route path="/payment-callback" element={<PaymentCallback />} />
                       <Route path="/my-orders" element={<MyOrders />} />
                       <Route path="/my-orders/:orderId" element={<OrderDetails />} />
                       <Route path="/profile" element={<CustomerProfile />} />
