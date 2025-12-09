@@ -10,8 +10,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import { AddressSelector } from '@/components/checkout/AddressSelector';
-import { Loader2, ArrowLeft } from 'lucide-react';
+import { Loader2, ArrowLeft, CreditCard, Banknote } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { calculateComboPrice } from '@/lib/calculateComboPrice';
 import { calculateDeliveryCharge } from '@/lib/calculateDeliveryCharge';
 import { useShippingSettings } from '@/hooks/useShippingSettings';
@@ -37,6 +38,7 @@ export default function Checkout() {
   const [selectedAddress, setSelectedAddress] = useState<DeliveryAddress | null>(null);
   const [customerNotes, setCustomerNotes] = useState('');
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'cod' | 'phonepe'>('phonepe');
 
   // Calculate delivery charge
   const deliveryCharge = useMemo(() => {
@@ -115,6 +117,8 @@ export default function Checkout() {
           shipping_charges: deliveryCharge.charge,
           total_amount: selectedCartTotal + deliveryCharge.charge,
           customer_notes: customerNotes || null,
+          payment_method: paymentMethod,
+          payment_status: paymentMethod === 'cod' ? 'cod_pending' : 'pending',
         })
         .select()
         .single();
@@ -191,7 +195,55 @@ export default function Checkout() {
         }
       }
 
-      // Clear cart
+      // STEP 4: Handle payment based on method
+      if (paymentMethod === 'phonepe') {
+        // Initiate PhonePe payment
+        const redirectUrl = `${window.location.origin}/payment-callback?orderId=${order.id}`;
+        
+        const { data: paymentData, error: paymentError } = await supabase.functions.invoke(
+          'phonepe-payment',
+          {
+            body: {
+              orderId: order.order_number,
+              amount: selectedCartTotal + deliveryCharge.charge,
+              redirectUrl,
+              userId: user!.id,
+            },
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+        
+        if (paymentError || !paymentData?.success) {
+          console.error('PhonePe payment error:', paymentError || paymentData?.error);
+          toast({
+            title: 'Payment Initialization Failed',
+            description: 'Falling back to Cash on Delivery',
+            variant: 'destructive',
+          });
+          
+          // Update order to COD if payment fails
+          await supabase.from('orders').update({
+            payment_method: 'cod',
+            payment_status: 'cod_pending',
+          }).eq('id', order.id);
+          
+          // Clear cart and navigate
+          await clearSelectedItems();
+          navigate(`/my-orders/${order.id}`);
+          return;
+        }
+        
+        // Clear cart before redirecting to PhonePe
+        await clearSelectedItems();
+        
+        // Redirect to PhonePe payment page
+        window.location.href = paymentData.redirectUrl;
+        return;
+      }
+
+      // COD flow - Clear cart and navigate
       await clearSelectedItems();
 
       const remainingItems = cartItems.length - selectedCartItems.length;
@@ -466,19 +518,59 @@ export default function Checkout() {
                 </div>
               </div>
 
-              {/* Payment Method */}
-              <div className="bg-muted/50 p-3 rounded-lg border border-border/50">
-                <div className="flex items-center gap-2">
-                  <div className="bg-primary/10 rounded-full p-2">
-                    <svg className="w-4 h-4 text-primary" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
-                      <path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                    </svg>
+              {/* Payment Method Selection */}
+              <div className="space-y-3">
+                <Label className="text-sm font-semibold">Select Payment Method</Label>
+                <RadioGroup
+                  value={paymentMethod}
+                  onValueChange={(value: 'cod' | 'phonepe') => setPaymentMethod(value)}
+                  className="space-y-2"
+                >
+                  <div 
+                    className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                      paymentMethod === 'phonepe' 
+                        ? 'border-primary bg-primary/5' 
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                    onClick={() => setPaymentMethod('phonepe')}
+                  >
+                    <RadioGroupItem value="phonepe" id="phonepe" />
+                    <div className="flex items-center gap-3 flex-1">
+                      <div className="bg-purple-100 dark:bg-purple-900/30 rounded-full p-2">
+                        <CreditCard className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                      </div>
+                      <div className="flex-1">
+                        <Label htmlFor="phonepe" className="text-sm font-semibold cursor-pointer">
+                          PhonePe / UPI / Cards
+                        </Label>
+                        <p className="text-xs text-muted-foreground">Pay securely via UPI, Debit/Credit Card, Net Banking</p>
+                      </div>
+                      <Badge className="bg-green-600 text-white text-xs">Recommended</Badge>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-semibold">Payment Method</p>
-                    <p className="text-xs text-muted-foreground">Cash on Delivery (COD)</p>
+                  
+                  <div 
+                    className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                      paymentMethod === 'cod' 
+                        ? 'border-primary bg-primary/5' 
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                    onClick={() => setPaymentMethod('cod')}
+                  >
+                    <RadioGroupItem value="cod" id="cod" />
+                    <div className="flex items-center gap-3 flex-1">
+                      <div className="bg-amber-100 dark:bg-amber-900/30 rounded-full p-2">
+                        <Banknote className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                      </div>
+                      <div>
+                        <Label htmlFor="cod" className="text-sm font-semibold cursor-pointer">
+                          Cash on Delivery
+                        </Label>
+                        <p className="text-xs text-muted-foreground">Pay when you receive your order</p>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                </RadioGroup>
               </div>
 
               {/* Place Order Button */}
@@ -489,7 +581,12 @@ export default function Checkout() {
                 size="lg"
               >
                 {isPlacingOrder && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isPlacingOrder ? 'Placing Order...' : 'Place Order Securely'}
+                {isPlacingOrder 
+                  ? 'Processing...' 
+                  : paymentMethod === 'phonepe' 
+                    ? 'Pay Now with PhonePe' 
+                    : 'Place Order (Cash on Delivery)'
+                }
               </Button>
 
               <p className="text-xs text-center text-muted-foreground">

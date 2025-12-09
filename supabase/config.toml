@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.product-color-image]
 verify_jwt = false
+
+[functions.phonepe-payment]
+verify_jwt = false
