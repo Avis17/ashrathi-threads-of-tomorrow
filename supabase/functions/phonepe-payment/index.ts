@@ -30,24 +30,33 @@ async function getAccessToken(): Promise<string> {
   console.log('Getting PhonePe access token...');
   
   const tokenUrl = `${PHONEPE_BASE_URL}/v1/oauth/token`;
-  const credentials = btoa(`${PHONEPE_CLIENT_ID}:${PHONEPE_CLIENT_SECRET}`);
+  
+  // PhonePe requires client_id, client_secret, client_version in form body
+  const formData = new URLSearchParams();
+  formData.append('client_id', PHONEPE_CLIENT_ID!);
+  formData.append('client_secret', PHONEPE_CLIENT_SECRET!);
+  formData.append('client_version', '1');
+  formData.append('grant_type', 'client_credentials');
+  
+  console.log('Token request URL:', tokenUrl);
   
   const response = await fetch(tokenUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
-      'Authorization': `Basic ${credentials}`,
     },
-    body: 'grant_type=client_credentials',
+    body: formData.toString(),
   });
   
+  const responseText = await response.text();
+  console.log('Token response:', responseText);
+  
   if (!response.ok) {
-    const errorText = await response.text();
-    console.error('Token error:', errorText);
-    throw new Error(`Failed to get access token: ${response.status}`);
+    console.error('Token error:', responseText);
+    throw new Error(`Failed to get access token: ${response.status} - ${responseText}`);
   }
   
-  const data = await response.json();
+  const data = JSON.parse(responseText);
   console.log('Access token obtained successfully');
   return data.access_token;
 }
