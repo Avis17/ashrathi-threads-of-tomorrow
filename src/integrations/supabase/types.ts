@@ -1663,16 +1663,19 @@ export type Database = {
         Row: {
           current_invoice_number: number
           id: string
+          invoice_number_format: string
           updated_at: string | null
         }
         Insert: {
           current_invoice_number?: number
           id?: string
+          invoice_number_format?: string
           updated_at?: string | null
         }
         Update: {
           current_invoice_number?: number
           id?: string
+          invoice_number_format?: string
           updated_at?: string | null
         }
         Relationships: []

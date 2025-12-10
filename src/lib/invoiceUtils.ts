@@ -97,6 +97,53 @@ export const formatInvoiceNumber = (invoiceNum: number, invoiceDate: Date): stri
 };
 
 /**
+ * Format invoice number using a configurable template
+ * Supported placeholders:
+ * - {fiscal_year}: FY format (e.g., 2025-26)
+ * - {year}: Full year (e.g., 2025)
+ * - {month}: Month (e.g., 01-12)
+ * - {number}: Invoice number padded to 4 digits
+ * - {number:X}: Invoice number padded to X digits (e.g., {number:6} for 6 digits)
+ */
+export const formatInvoiceNumberWithTemplate = (
+  invoiceNum: number, 
+  invoiceDate: Date, 
+  template: string
+): string => {
+  const year = invoiceDate.getFullYear();
+  const month = invoiceDate.getMonth() + 1;
+  
+  // Calculate fiscal year
+  let fiscalYear: string;
+  if (month >= 4) {
+    const nextYearShort = (year + 1) % 100;
+    fiscalYear = `${year}-${nextYearShort.toString().padStart(2, '0')}`;
+  } else {
+    const currentYearShort = year % 100;
+    fiscalYear = `${year - 1}-${currentYearShort.toString().padStart(2, '0')}`;
+  }
+  
+  // Replace placeholders
+  let result = template
+    .replace('{fiscal_year}', fiscalYear)
+    .replace('{year}', year.toString())
+    .replace('{month}', month.toString().padStart(2, '0'));
+  
+  // Handle {number:X} pattern for custom padding
+  const numberPattern = /\{number:(\d+)\}/;
+  const match = result.match(numberPattern);
+  if (match) {
+    const padding = parseInt(match[1]);
+    result = result.replace(numberPattern, invoiceNum.toString().padStart(padding, '0'));
+  } else {
+    // Default to 4-digit padding
+    result = result.replace('{number}', invoiceNum.toString().padStart(4, '0'));
+  }
+  
+  return result;
+};
+
+/**
  * Mask bank account number (show only last 4 digits)
  * Example: XXXXXX8901
  */
