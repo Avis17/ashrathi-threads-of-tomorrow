@@ -17,7 +17,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { formatCurrencyAscii, numberToWords, sanitizePdfText, formatInvoiceNumber } from "@/lib/invoiceUtils";
+import { formatCurrencyAscii, numberToWords, sanitizePdfText, formatInvoiceNumberWithTemplate } from "@/lib/invoiceUtils";
 import logo from "@/assets/logo.png";
 import signature from "@/assets/signature.png";
 import { toast } from "sonner";
@@ -118,7 +118,8 @@ const GenerateInvoice = () => {
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
     const selectedDate = invoiceDate || new Date();
-    const formattedInvoiceNumber = invoiceNumber ? formatInvoiceNumber(parseInt(invoiceNumber), selectedDate) : 'PENDING';
+    const invoiceFormat = invoiceSettings?.invoice_number_format || 'FF/{fiscal_year}/{number}';
+    const formattedInvoiceNumber = invoiceNumber ? formatInvoiceNumberWithTemplate(parseInt(invoiceNumber), selectedDate, invoiceFormat) : 'PENDING';
     doc.text(`Invoice No: ${formattedInvoiceNumber}`, 14, 55);
     doc.text(`Date: ${format(selectedDate, 'dd-MM-yyyy')}`, pageWidth - 14, 55, { align: "right" });
 
@@ -572,7 +573,7 @@ const GenerateInvoice = () => {
           companyAddress: jobOrder.external_job_companies.address,
           companyContact: jobOrder.external_job_companies.contact_number,
           companyGst: jobOrder.external_job_companies.gst_number || undefined,
-          invoiceNumber: invoiceNumber ? formatInvoiceNumber(parseInt(invoiceNumber), new Date()) : 'PENDING',
+          invoiceNumber: invoiceNumber ? formatInvoiceNumberWithTemplate(parseInt(invoiceNumber), invoiceDate || new Date(), invoiceSettings?.invoice_number_format || 'FF/{fiscal_year}/{number}') : 'PENDING',
           invoiceType,
           gstRate,
           accountType,
