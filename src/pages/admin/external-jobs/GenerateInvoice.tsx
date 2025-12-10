@@ -471,40 +471,78 @@ const GenerateInvoice = () => {
 
           <div className="pt-4 border-t">
             <h3 className="font-semibold mb-3">Invoice Summary</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span>Style:</span>
-                <span className="font-medium">{jobOrder.style_name}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Quantity:</span>
-                <span className="font-medium">{jobOrder.number_of_pieces} pcs</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Rate per Piece:</span>
-                <span className="font-medium">₹{jobOrder.rate_per_piece.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Subtotal:</span>
-                <span className="font-medium">₹{(jobOrder.rate_per_piece * jobOrder.number_of_pieces).toFixed(2)}</span>
-              </div>
-              {jobOrder.accessories_cost > 0 && (
-                <div className="flex justify-between">
-                  <span>Accessories:</span>
-                  <span className="font-medium">₹{jobOrder.accessories_cost.toFixed(2)}</span>
+            {(() => {
+              const subtotal = jobOrder.rate_per_piece * jobOrder.number_of_pieces;
+              const accessoriesCost = jobOrder.accessories_cost || 0;
+              const deliveryCharge = jobOrder.delivery_charge || 0;
+              const baseAmount = subtotal + accessoriesCost + deliveryCharge;
+              const gstRateValue = parseFloat(gstRate);
+              const cgstRate = gstRateValue / 2;
+              const sgstRate = gstRateValue / 2;
+              const cgstAmount = invoiceType === "with_gst" ? (baseAmount * cgstRate) / 100 : 0;
+              const sgstAmount = invoiceType === "with_gst" ? (baseAmount * sgstRate) / 100 : 0;
+              const totalGst = cgstAmount + sgstAmount;
+              const grandTotal = baseAmount + totalGst;
+
+              return (
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span>Style:</span>
+                    <span className="font-medium">{jobOrder.style_name}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Quantity:</span>
+                    <span className="font-medium">{jobOrder.number_of_pieces} pcs</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Rate per Piece:</span>
+                    <span className="font-medium">₹{jobOrder.rate_per_piece.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Subtotal ({jobOrder.number_of_pieces} × ₹{jobOrder.rate_per_piece.toFixed(2)}):</span>
+                    <span className="font-medium">₹{subtotal.toFixed(2)}</span>
+                  </div>
+                  {accessoriesCost > 0 && (
+                    <div className="flex justify-between">
+                      <span>Accessories:</span>
+                      <span className="font-medium">₹{accessoriesCost.toFixed(2)}</span>
+                    </div>
+                  )}
+                  {deliveryCharge > 0 && (
+                    <div className="flex justify-between">
+                      <span>Delivery:</span>
+                      <span className="font-medium">₹{deliveryCharge.toFixed(2)}</span>
+                    </div>
+                  )}
+                  
+                  {invoiceType === "with_gst" && (
+                    <>
+                      <div className="flex justify-between pt-2 border-t border-dashed">
+                        <span>Taxable Amount:</span>
+                        <span className="font-medium">₹{baseAmount.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-muted-foreground">
+                        <span>CGST @ {cgstRate}%:</span>
+                        <span>₹{cgstAmount.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-muted-foreground">
+                        <span>SGST @ {sgstRate}%:</span>
+                        <span>₹{sgstAmount.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-primary">
+                        <span>Total GST ({gstRateValue}%):</span>
+                        <span>₹{totalGst.toFixed(2)}</span>
+                      </div>
+                    </>
+                  )}
+                  
+                  <div className="flex justify-between font-bold text-base pt-2 border-t">
+                    <span>Grand Total:</span>
+                    <span>₹{grandTotal.toFixed(2)}</span>
+                  </div>
                 </div>
-              )}
-              {jobOrder.delivery_charge > 0 && (
-                <div className="flex justify-between">
-                  <span>Delivery:</span>
-                  <span className="font-medium">₹{jobOrder.delivery_charge.toFixed(2)}</span>
-                </div>
-              )}
-              <div className="flex justify-between font-bold text-base pt-2 border-t">
-                <span>Total:</span>
-                <span>₹{jobOrder.total_amount.toFixed(2)}</span>
-              </div>
-            </div>
+              );
+            })()}
           </div>
 
           <div className="flex gap-3 pt-4">
