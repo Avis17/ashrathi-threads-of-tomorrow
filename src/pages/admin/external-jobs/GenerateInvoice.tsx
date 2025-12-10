@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, FileText, Eye, Edit3 } from "lucide-react";
+import { ArrowLeft, FileText, Eye, Edit3, CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -8,12 +8,15 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { useExternalJobOrder } from "@/hooks/useExternalJobOrders";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 import { formatCurrencyAscii, numberToWords, sanitizePdfText, formatInvoiceNumber } from "@/lib/invoiceUtils";
 import logo from "@/assets/logo.png";
 import signature from "@/assets/signature.png";
@@ -32,6 +35,7 @@ const GenerateInvoice = () => {
   const [showPreview, setShowPreview] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [showLayoutEditor, setShowLayoutEditor] = useState(false);
+  const [invoiceDate, setInvoiceDate] = useState<Date | undefined>(undefined);
   
   // Company account details
   const [bankName, setBankName] = useState("Kotak Mahindra Bank");
@@ -42,6 +46,13 @@ const GenerateInvoice = () => {
   // Personal account details
   const [phoneNumber, setPhoneNumber] = useState("9629336553");
   const [upiId, setUpiId] = useState("pvadivelsiva1@ybl");
+  
+  // Set default invoice date to delivery date when jobOrder loads
+  useEffect(() => {
+    if (jobOrder?.delivery_date && !invoiceDate) {
+      setInvoiceDate(new Date(jobOrder.delivery_date));
+    }
+  }, [jobOrder?.delivery_date]);
 
   const { data: invoiceSettings } = useQuery({
     queryKey: ['job-order-invoice-settings'],
@@ -106,9 +117,10 @@ const GenerateInvoice = () => {
     // Invoice number and date
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
-    const formattedInvoiceNumber = invoiceNumber ? formatInvoiceNumber(parseInt(invoiceNumber), new Date()) : 'PENDING';
+    const selectedDate = invoiceDate || new Date();
+    const formattedInvoiceNumber = invoiceNumber ? formatInvoiceNumber(parseInt(invoiceNumber), selectedDate) : 'PENDING';
     doc.text(`Invoice No: ${formattedInvoiceNumber}`, 14, 55);
-    doc.text(`Date: ${format(new Date(), 'dd-MM-yyyy')}`, pageWidth - 14, 55, { align: "right" });
+    doc.text(`Date: ${format(selectedDate, 'dd-MM-yyyy')}`, pageWidth - 14, 55, { align: "right" });
 
     // Bill to
     doc.setFont("helvetica", "bold");
@@ -321,6 +333,36 @@ const GenerateInvoice = () => {
             />
             <p className="text-xs text-muted-foreground mt-1">
               This number will auto-increment after generating the invoice
+            </p>
+          </div>
+
+          <div>
+            <Label>Invoice Date</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal mt-2",
+                    !invoiceDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {invoiceDate ? format(invoiceDate, "PPP") : <span>Pick a date</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={invoiceDate}
+                  onSelect={setInvoiceDate}
+                  initialFocus
+                  className="pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+            <p className="text-xs text-muted-foreground mt-1">
+              Default: Delivery date. Change if needed.
             </p>
           </div>
 
