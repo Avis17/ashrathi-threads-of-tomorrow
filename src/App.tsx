@@ -22,6 +22,9 @@ import MyOrders from "./pages/MyOrders";
 import OrderDetails from "./pages/OrderDetails";
 import ProductDetail from "./pages/ProductDetail";
 import CustomerProfile from "./pages/CustomerProfile";
+import Women from "./pages/Women";
+import Men from "./pages/Men";
+import Collections from "./pages/Collections";
 import NotFound from "./pages/NotFound";
 import WomenHalfSleeveTShirt from "./pages/women/WomenHalfSleeveTShirt";
 import WomenLongSleeveTShirt from "./pages/women/WomenLongSleeveTShirt";
@@ -73,10 +76,11 @@ const App = () => (
                   <main className="flex-1">
                     <Routes>
                       <Route path="/" element={<Home />} />
+                      <Route path="/shop" element={<Products />} />
                       <Route path="/products" element={<Products />} />
-                      <Route path="/collections" element={<Products />} />
-                      <Route path="/women" element={<Products />} />
-                      <Route path="/men" element={<Products />} />
+                      <Route path="/women" element={<Women />} />
+                      <Route path="/men" element={<Men />} />
+                      <Route path="/collections" element={<Collections />} />
           <Route path="/product/:id" element={<ProductDetail />} />
                       <Route path="/services" element={<Services />} />
                       <Route path="/about" element={<About />} />

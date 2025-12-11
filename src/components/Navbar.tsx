@@ -28,10 +28,10 @@ const Navbar = () => {
   }, []);
 
   const navLinks = [
+    { name: "Shop", path: "/shop" },
     { name: "Women", path: "/women" },
     { name: "Men", path: "/men" },
     { name: "Collections", path: "/collections" },
-    { name: "About", path: "/about" },
   ];
 
   const isActive = (path: string) => location.pathname === path;
