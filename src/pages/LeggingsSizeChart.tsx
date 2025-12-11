@@ -135,7 +135,7 @@ export default function LeggingsSizeChart() {
             <img 
               src="/logo.png" 
               alt="Feather Fashions" 
-              className="h-16 w-auto mx-auto mb-8 opacity-90"
+              className="h-48 w-60 w-auto mx-auto opacity-90"
             />
             
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-accent/20 rounded-full mb-6">

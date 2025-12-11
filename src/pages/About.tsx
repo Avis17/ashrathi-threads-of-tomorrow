@@ -28,8 +28,8 @@ const About = () => {
           }}
         />
         {/* Premium gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-black/30" />
+        {/* <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent" /> */}
+        {/* <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-black/30" /> */}
         
         {/* Gold accent particles effect */}
         <div className="absolute inset-0 opacity-30">
@@ -60,7 +60,7 @@ const About = () => {
         </div>
         
         {/* Bottom fade */}
-        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent" />
       </section>
 
       {/* Story Section */}

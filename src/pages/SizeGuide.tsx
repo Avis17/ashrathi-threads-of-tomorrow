@@ -87,7 +87,7 @@ const SizeGuide = () => {
               <span className="block text-accent">Perfect Fit</span>
             </h1>
             
-            <p className="text-lg md:text-xl text-white/70 max-w-2xl mx-auto">
+            <p className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto">
               Select your product category below to view detailed size charts, 
               measurement guides, and our interactive size calculator.
             </p>
