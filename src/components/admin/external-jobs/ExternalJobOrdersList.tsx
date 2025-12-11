@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Eye, Calendar, Trash2, IndianRupee, Package, TrendingUp, CreditCard } from "lucide-react";
+import { Search, Eye, EyeOff, Calendar, Trash2, IndianRupee, Package, TrendingUp, CreditCard } from "lucide-react";
 import { useExternalJobOrders, useDeleteExternalJobOrder } from "@/hooks/useExternalJobOrders";
 import {
   AlertDialog,
@@ -34,6 +34,10 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 
+const formatAmount = (amount: number, visible: boolean) => {
+  return visible ? `₹${amount.toLocaleString()}` : '₹****';
+};
+
 export const ExternalJobOrdersList = () => {
   const navigate = useNavigate();
   const { data: orders, isLoading } = useExternalJobOrders();
@@ -44,6 +48,7 @@ export const ExternalJobOrdersList = () => {
   const [gstFilter, setGstFilter] = useState<string>("all");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [orderToDelete, setOrderToDelete] = useState<string | null>(null);
+  const [amountsVisible, setAmountsVisible] = useState(false);
 
   const handleDeleteClick = (orderId: string) => {
     setOrderToDelete(orderId);
@@ -160,7 +165,19 @@ export const ExternalJobOrdersList = () => {
 
   return (
     <>
-      {/* Stats Cards */}
+      {/* Privacy Toggle and Stats Cards */}
+      <div className="flex justify-end mb-4">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setAmountsVisible(!amountsVisible)}
+          className="gap-2"
+        >
+          {amountsVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          {amountsVisible ? 'Hide Amounts' : 'Show Amounts'}
+        </Button>
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <Card className="p-4 bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0 shadow-lg">
           <div className="flex items-center justify-between">
@@ -179,7 +196,7 @@ export const ExternalJobOrdersList = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-emerald-100 text-sm font-medium">Total Amount</p>
-              <p className="text-3xl font-bold mt-1">₹{stats.totalAmount.toLocaleString()}</p>
+              <p className="text-3xl font-bold mt-1">{formatAmount(stats.totalAmount, amountsVisible)}</p>
               <p className="text-emerald-100 text-xs mt-1">Including GST where applicable</p>
             </div>
             <div className="h-12 w-12 bg-white/20 rounded-xl flex items-center justify-center">
@@ -192,7 +209,7 @@ export const ExternalJobOrdersList = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-violet-100 text-sm font-medium">Paid Amount</p>
-              <p className="text-3xl font-bold mt-1">₹{stats.paidAmount.toLocaleString()}</p>
+              <p className="text-3xl font-bold mt-1">{formatAmount(stats.paidAmount, amountsVisible)}</p>
               <p className="text-violet-100 text-xs mt-1">
                 {stats.totalAmount > 0 ? Math.round((stats.paidAmount / stats.totalAmount) * 100) : 0}% collected
               </p>
@@ -207,7 +224,7 @@ export const ExternalJobOrdersList = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-amber-100 text-sm font-medium">Pending Amount</p>
-              <p className="text-3xl font-bold mt-1">₹{stats.pendingAmount.toLocaleString()}</p>
+              <p className="text-3xl font-bold mt-1">{formatAmount(stats.pendingAmount, amountsVisible)}</p>
               <p className="text-amber-100 text-xs mt-1">
                 {stats.totalAmount > 0 ? Math.round((stats.pendingAmount / stats.totalAmount) * 100) : 0}% remaining
               </p>
@@ -296,8 +313,8 @@ export const ExternalJobOrdersList = () => {
                         <TableCell>{order.external_job_companies?.company_name}</TableCell>
                         <TableCell>{order.style_name}</TableCell>
                         <TableCell>{order.number_of_pieces}</TableCell>
-                        <TableCell>₹{order.rate_per_piece.toFixed(2)}</TableCell>
-                        <TableCell className="font-semibold">₹{displayTotal.toFixed(2)}</TableCell>
+                        <TableCell>{amountsVisible ? `₹${order.rate_per_piece.toFixed(2)}` : '₹****'}</TableCell>
+                        <TableCell className="font-semibold">{amountsVisible ? `₹${displayTotal.toFixed(2)}` : '₹****'}</TableCell>
                         <TableCell>
                           {hasGst ? (
                             <Badge variant="secondary" className="bg-green-100 text-green-700 hover:bg-green-100">
