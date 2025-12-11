@@ -2,93 +2,105 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* Premium Athleisure Design System - Lululemon Inspired */
 
 @layer base {
   :root {
-    --background: 0 0% 99%;
-    --foreground: 180 20% 25%;
+    /* Core Palette - Matte Black & White Foundation */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 4%;
 
     --card: 0 0% 100%;
-    --card-foreground: 180 20% 25%;
+    --card-foreground: 0 0% 4%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 180 20% 25%;
+    --popover-foreground: 0 0% 4%;
 
-    --primary: 180 30% 35%;
-    --primary-foreground: 0 0% 99%;
+    /* Primary - Matte Black */
+    --primary: 0 0% 4%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 280 35% 55%;
-    --secondary-foreground: 0 0% 99%;
+    /* Secondary - Charcoal Grey */
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 30 20% 96%;
-    --muted-foreground: 30 10% 50%;
+    /* Muted - Soft Neutral Sand */
+    --muted: 40 20% 93%;
+    --muted-foreground: 0 0% 40%;
 
-    --accent: 340 75% 70%;
-    --accent-foreground: 0 0% 99%;
+    /* Accent - Metallic Gold */
+    --accent: 43 74% 52%;
+    --accent-foreground: 0 0% 4%;
 
-    --gold: 35 90% 65%;
-    --gold-foreground: 180 30% 35%;
+    /* Gold (same as accent for consistency) */
+    --gold: 43 74% 52%;
+    --gold-foreground: 0 0% 4%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 99%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 30 15% 88%;
-    --input: 30 15% 88%;
-    --ring: 280 35% 55%;
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 43 74% 52%;
 
-    --radius: 0.75rem;
+    --radius: 0px;
     
-    --gradient-hero: linear-gradient(135deg, hsl(280 35% 55%) 0%, hsl(340 75% 70%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(340 75% 70%) 0%, hsl(35 90% 65%) 100%);
-    --gradient-soft: linear-gradient(180deg, hsl(30 20% 98%) 0%, hsl(340 30% 98%) 100%);
-    --shadow-soft: 0 4px 20px -4px hsl(180 30% 35% / 0.08);
-    --shadow-hover: 0 8px 30px -6px hsl(280 35% 55% / 0.15);
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Premium Gradients */
+    --gradient-hero: linear-gradient(180deg, hsl(0 0% 4%) 0%, hsl(0 0% 10%) 100%);
+    --gradient-gold: linear-gradient(135deg, hsl(43 74% 52%) 0%, hsl(43 74% 42%) 100%);
+    --gradient-subtle: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(40 20% 97%) 100%);
+    
+    /* Premium Shadows */
+    --shadow-soft: 0 4px 30px -4px hsl(0 0% 0% / 0.08);
+    --shadow-hover: 0 20px 40px -12px hsl(0 0% 0% / 0.15);
+    --shadow-gold: 0 4px 20px -4px hsl(43 74% 52% / 0.3);
+    
+    /* Smooth Transitions */
+    --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-fast: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
+    /* Sidebar */
     --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-foreground: 0 0% 10%;
+    --sidebar-primary: 0 0% 4%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 95%;
+    --sidebar-accent-foreground: 0 0% 10%;
+    --sidebar-border: 0 0% 90%;
+    --sidebar-ring: 43 74% 52%;
   }
 
   .dark {
-    --background: 180 25% 15%;
-    --foreground: 0 0% 99%;
+    --background: 0 0% 4%;
+    --foreground: 0 0% 98%;
 
-    --card: 180 25% 18%;
-    --card-foreground: 0 0% 99%;
+    --card: 0 0% 7%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 180 25% 18%;
-    --popover-foreground: 0 0% 99%;
+    --popover: 0 0% 7%;
+    --popover-foreground: 0 0% 98%;
 
-    --primary: 0 0% 99%;
-    --primary-foreground: 180 30% 35%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 4%;
 
-    --secondary: 280 35% 55%;
-    --secondary-foreground: 0 0% 99%;
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 98%;
 
-    --muted: 180 20% 25%;
-    --muted-foreground: 180 10% 70%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 60%;
 
-    --accent: 340 75% 70%;
-    --accent-foreground: 0 0% 99%;
+    --accent: 43 74% 52%;
+    --accent-foreground: 0 0% 4%;
 
-    --gold: 35 90% 65%;
-    --gold-foreground: 180 30% 20%;
+    --gold: 43 74% 52%;
+    --gold-foreground: 0 0% 4%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 99%;
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 180 20% 28%;
-    --input: 180 20% 28%;
-    --ring: 280 35% 55%;
+    --border: 0 0% 15%;
+    --input: 0 0% 15%;
+    --ring: 43 74% 52%;
   }
 }
 
@@ -98,35 +110,94 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground font-['Lato',sans-serif];
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
   
   h1, h2, h3, h4, h5, h6 {
-    @apply font-['Poppins',sans-serif] font-bold;
+    font-family: 'Inter', sans-serif;
+    @apply font-semibold tracking-tight;
+  }
+  
+  /* Serif accent for luxury feel */
+  .font-serif {
+    font-family: 'Playfair Display', Georgia, serif;
   }
 }
 
 @layer utilities {
-  .font-accent {
-    font-family: 'Montserrat', sans-serif;
-  }
-  
+  /* Premium text gradient */
   .text-gradient {
-    @apply bg-gradient-to-r from-secondary to-accent bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-accent to-accent/80 bg-clip-text text-transparent;
   }
   
-  .divider-accent {
-    @apply h-px w-24 mx-auto bg-gradient-to-r from-transparent via-[hsl(var(--secondary))] to-transparent;
+  .text-gradient-gold {
+    background: linear-gradient(135deg, hsl(43 74% 52%) 0%, hsl(43 74% 65%) 50%, hsl(43 74% 52%) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
   
+  /* Gold divider */
+  .divider-gold {
+    @apply h-px w-16 bg-gradient-to-r from-transparent via-accent to-transparent;
+  }
+  
+  /* Premium card hover */
   .card-hover {
-    @apply transition-all duration-300 hover:shadow-[var(--shadow-hover)] hover:-translate-y-1;
+    @apply transition-all duration-500 hover:shadow-[var(--shadow-hover)] hover:-translate-y-1;
   }
   
+  /* Smooth fade in animation */
   .animate-fade-in {
-    animation: fadeIn 0.6s ease-out;
+    animation: fadeIn 0.8s ease-out forwards;
+  }
+  
+  .animate-fade-in-up {
+    animation: fadeInUp 0.8s ease-out forwards;
+  }
+  
+  .animate-fade-in-delay {
+    animation: fadeIn 0.8s ease-out 0.2s forwards;
+    opacity: 0;
+  }
+  
+  .animate-fade-in-delay-2 {
+    animation: fadeIn 0.8s ease-out 0.4s forwards;
+    opacity: 0;
   }
 
+  /* Parallax scroll */
+  .parallax {
+    transform: translateZ(0);
+    will-change: transform;
+  }
+
+  /* Gold glow on hover */
+  .glow-gold {
+    @apply transition-all duration-300;
+  }
+  
+  .glow-gold:hover {
+    box-shadow: 0 0 30px hsl(43 74% 52% / 0.3);
+  }
+  
+  /* Premium button styles */
+  .btn-premium {
+    @apply relative overflow-hidden transition-all duration-300;
+  }
+  
+  .btn-premium::before {
+    content: '';
+    @apply absolute inset-0 bg-accent/10 transform -translate-x-full transition-transform duration-500;
+  }
+  
+  .btn-premium:hover::before {
+    @apply translate-x-0;
+  }
+
+  /* Scroll vertical animation */
   .animate-scroll-vertical {
     animation: scrollVertical 8s linear infinite;
   }
@@ -134,7 +205,16 @@ All colors MUST be HSL.
   @keyframes fadeIn {
     from {
       opacity: 0;
-      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
     }
     to {
       opacity: 1;
@@ -151,13 +231,40 @@ All colors MUST be HSL.
     }
   }
 
-  /* Hide scrollbar for mobile category filters */
+  /* Hide scrollbar */
   .scrollbar-hide {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
   
   .scrollbar-hide::-webkit-scrollbar {
-    display: none;  /* Chrome, Safari and Opera */
+    display: none;
   }
+  
+  /* Letter spacing utilities */
+  .tracking-premium {
+    letter-spacing: 0.2em;
+  }
+  
+  .tracking-wide-premium {
+    letter-spacing: 0.15em;
+  }
+}
+
+/* Custom scrollbar for premium feel */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
 }
