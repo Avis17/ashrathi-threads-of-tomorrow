@@ -62,8 +62,17 @@ const Navbar = () => {
     >
       <div className="container mx-auto px-6">
         <div className="flex items-center justify-between h-20">
-          {/* Left - Navigation */}
-          <div className="hidden lg:flex items-center space-x-8">
+          {/* Left - Logo */}
+          <Link to="/" className="flex-shrink-0">
+            <h1 className={`text-2xl font-serif font-bold tracking-[0.2em] transition-colors duration-300 ${
+              getTextColorClass()
+            }`}>
+              FEATHER
+            </h1>
+          </Link>
+
+          {/* Center - Navigation */}
+          <div className="hidden lg:flex items-center justify-center flex-1 space-x-8">
             {navLinks.map((link) => (
               <Link
                 key={link.path}
@@ -77,17 +86,8 @@ const Navbar = () => {
             ))}
           </div>
 
-          {/* Center - Logo */}
-          <Link to="/" className="absolute left-1/2 -translate-x-1/2 lg:static lg:translate-x-0 lg:mx-auto">
-            <h1 className={`text-xl font-semibold tracking-[0.3em] transition-colors duration-300 ${
-              getTextColorClass()
-            }`}>
-              FEATHER
-            </h1>
-          </Link>
-
           {/* Right - Actions */}
-          <div className="hidden lg:flex items-center space-x-6">
+          <div className="hidden lg:flex items-center space-x-6 flex-shrink-0">
             <button className={`transition-colors duration-300 hover:text-accent ${
               getTextColorClass()
             }`}>
@@ -141,19 +141,17 @@ const Navbar = () => {
             )}
           </div>
 
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className={`lg:hidden p-2 transition-colors ${
-              getTextColorClass()
-            }`}
-          >
-            {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </button>
-
-          {/* Mobile - Cart (visible on mobile) */}
+          {/* Mobile - Right side */}
           <div className="lg:hidden flex items-center gap-4">
             {user && <CartButton />}
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              className={`p-2 transition-colors ${
+                getTextColorClass()
+              }`}
+            >
+              {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
           </div>
         </div>
 
