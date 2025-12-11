@@ -40,17 +40,21 @@ const NewsletterSignup = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-2 max-w-md">
+    <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
       <Input
         type="email"
         placeholder="Enter your email"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         required
-        className="flex-1"
+        className="flex-1 h-12 bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground placeholder:text-primary-foreground/40 focus:border-accent"
       />
-      <Button type="submit" disabled={loading}>
-        {loading ? 'Subscribing...' : 'Subscribe'}
+      <Button 
+        type="submit" 
+        disabled={loading}
+        className="h-12 px-8 bg-accent text-accent-foreground hover:bg-accent/90 text-sm tracking-[0.1em]"
+      >
+        {loading ? 'SUBSCRIBING...' : 'SUBSCRIBE'}
       </Button>
     </form>
   );

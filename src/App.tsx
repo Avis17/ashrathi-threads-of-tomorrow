@@ -72,9 +72,11 @@ const App = () => (
                   <Navbar />
                   <main className="flex-1">
                     <Routes>
-                      <Route path="/" element={<Products />} />
-          <Route path="/home" element={<Home />} />
-          <Route path="/products" element={<Products />} />
+                      <Route path="/" element={<Home />} />
+                      <Route path="/products" element={<Products />} />
+                      <Route path="/collections" element={<Products />} />
+                      <Route path="/women" element={<Products />} />
+                      <Route path="/men" element={<Products />} />
           <Route path="/product/:id" element={<ProductDetail />} />
                       <Route path="/services" element={<Services />} />
                       <Route path="/about" element={<About />} />

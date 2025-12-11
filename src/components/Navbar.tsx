@@ -1,7 +1,6 @@
-import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
-import { Menu, X, User, LogOut, Shield, ChevronDown } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Menu, X, User, LogOut, Shield, Search, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -10,136 +9,90 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-} from "@/components/ui/navigation-menu";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { useAuth } from "@/hooks/useAuth";
 import { CartButton } from "@/components/cart/CartButton";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isAdmin, signOut } = useAuth();
 
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   const navLinks = [
-    { name: "Home", path: "/home" },
-    { name: "Services", path: "/services" },
-    { name: "About Us", path: "/about" },
-    { name: "Contact", path: "/contact" },
-  ];
-
-  const moreMenuLinks = [
-    { name: "College", path: "/categories/college" },
-    { name: "Uniform", path: "/categories/uniform" },
-    { name: "Event", path: "/categories/event" },
-    { name: "Sports", path: "/categories/sports" },
-    { name: "Kids", path: "/categories/kids" },
-    { name: "Corporate", path: "/categories/corporate" },
-    { name: "Innerwear", path: "/categories/innerwear" },
-    { name: "Boxer", path: "/categories/boxer" },
-    { name: "Track Pants", path: "/categories/track-pants" },
-    { name: "Export Surplus", path: "/categories/export-surplus" },
-  ];
-
-  const womenCategories = [
-    { name: "Half Sleeve T-Shirt", path: "/women/half-sleeve-tshirt" },
-    { name: "Long Sleeve T-Shirt", path: "/women/long-sleeve-tshirt" },
-    { name: "V-Neck T-Shirt", path: "/women/vneck-tshirt" },
-    { name: "Polo T-Shirt", path: "/women/polo-tshirt" },
-    { name: "Leggings", path: "/women/leggings" },
-  ];
-
-  const menCategories = [
-    { name: "Full Sleeve T-Shirt", path: "/men/full-sleeve-tshirt" },
-    { name: "Polo T-Shirt", path: "/men/polo-tshirt" },
-    { name: "Printed T-Shirt", path: "/men/printed-tshirt" },
-    { name: "Striped T-Shirt", path: "/men/striped-tshirt" },
-    { name: "V-Neck T-Shirt", path: "/men/vneck-tshirt" },
+    { name: "Women", path: "/women" },
+    { name: "Men", path: "/men" },
+    { name: "Collections", path: "/collections" },
+    { name: "About", path: "/about" },
   ];
 
   const isActive = (path: string) => location.pathname === path;
+  const isHomePage = location.pathname === "/" || location.pathname === "/home";
 
   return (
-    <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border shadow-sm">
-      <div className="container mx-auto px-4">
+    <nav 
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+        isScrolled || !isHomePage
+          ? "bg-background/98 backdrop-blur-md border-b border-border shadow-sm"
+          : "bg-transparent"
+      }`}
+    >
+      <div className="container mx-auto px-6">
         <div className="flex items-center justify-between h-20">
-          {/* Logo */}
-          <Link to="/" className="flex items-center group">
-            <img src="/logo.png" alt="Feather Fashions" className="h-44 w-auto transition-transform duration-300 group-hover:scale-110" />
-          </Link>
-
-          {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center space-x-1">
-            <Link
-              to="/home"
-              className={`px-4 py-2 rounded-md font-medium transition-colors ${
-                isActive("/home") ? "text-secondary" : "text-foreground hover:text-secondary"
-              }`}
-            >
-              Home
-            </Link>
-            <Link
-              to="/"
-              className={`px-4 py-2 rounded-md font-medium transition-colors ${
-                isActive("/") ? "text-secondary" : "text-foreground hover:text-secondary"
-              }`}
-            >
-              Products
-            </Link>
-            
-            {/* Women, Men, More menus hidden for now */}
-            
-            {/* <Link
-              to="/services"
-              className={`px-4 py-2 rounded-md font-medium transition-colors ${
-                isActive("/services") ? "text-secondary" : "text-foreground hover:text-secondary"
-              }`}
-            >
-              Services
-            </Link> */}
-            <Link
-              to="/about"
-              className={`px-4 py-2 rounded-md font-medium transition-colors ${
-                isActive("/about") ? "text-secondary" : "text-foreground hover:text-secondary"
-              }`}
-            >
-              About Us
-            </Link>
-            <Link
-              to="/contact"
-              className={`px-4 py-2 rounded-md font-medium transition-colors ${
-                isActive("/contact") ? "text-secondary" : "text-foreground hover:text-secondary"
-              }`}
-            >
-              Contact
-            </Link>
+          {/* Left - Navigation */}
+          <div className="hidden lg:flex items-center space-x-8">
+            {navLinks.map((link) => (
+              <Link
+                key={link.path}
+                to={link.path}
+                className={`text-sm font-medium tracking-wide transition-all duration-300 hover:text-accent ${
+                  isActive(link.path) 
+                    ? "text-accent" 
+                    : isScrolled || !isHomePage ? "text-foreground" : "text-foreground"
+                }`}
+              >
+                {link.name.toUpperCase()}
+              </Link>
+            ))}
           </div>
 
-          {/* Auth & CTA Buttons */}
-          <div className="hidden lg:flex items-center gap-2">
+          {/* Center - Logo */}
+          <Link to="/" className="absolute left-1/2 -translate-x-1/2 lg:static lg:translate-x-0 lg:mx-auto">
+            <h1 className={`text-xl font-semibold tracking-[0.3em] transition-colors duration-300 ${
+              isScrolled || !isHomePage ? "text-foreground" : "text-foreground"
+            }`}>
+              FEATHER
+            </h1>
+          </Link>
+
+          {/* Right - Actions */}
+          <div className="hidden lg:flex items-center space-x-6">
+            <button className={`transition-colors duration-300 hover:text-accent ${
+              isScrolled || !isHomePage ? "text-foreground" : "text-foreground"
+            }`}>
+              <Search className="h-5 w-5" />
+            </button>
+            
             {user ? (
               <>
                 <CartButton />
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm">
-                      <User className="h-4 w-4 mr-2" />
-                      Profile
-                    </Button>
+                    <button className={`transition-colors duration-300 hover:text-accent ${
+                      isScrolled || !isHomePage ? "text-foreground" : "text-foreground"
+                    }`}>
+                      <User className="h-5 w-5" />
+                    </button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
+                  <DropdownMenuContent align="end" className="w-48">
                     <DropdownMenuItem onClick={() => navigate('/my-orders')}>
                       My Orders
                     </DropdownMenuItem>
@@ -151,7 +104,7 @@ const Navbar = () => {
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => navigate('/admin')}>
                           <Shield className="h-4 w-4 mr-2" />
-                          Admin Dashboard
+                          Admin
                         </DropdownMenuItem>
                       </>
                     )}
@@ -164,111 +117,93 @@ const Navbar = () => {
                 </DropdownMenu>
               </>
             ) : (
-              <Button asChild variant="outline" size="sm">
-                <Link to="/auth">
-                  <User className="h-4 w-4 mr-2" />
-                  Sign In
-                </Link>
-              </Button>
+              <Link 
+                to="/auth"
+                className={`text-sm font-medium tracking-wide transition-colors duration-300 hover:text-accent ${
+                  isScrolled || !isHomePage ? "text-foreground" : "text-foreground"
+                }`}
+              >
+                SIGN IN
+              </Link>
             )}
-            <Button asChild variant="default" className="bg-secondary hover:bg-secondary/90">
-              <Link to="/contact">Get in Touch</Link>
-            </Button>
           </div>
 
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="lg:hidden p-2 rounded-md hover:bg-muted transition-colors"
+            className={`lg:hidden p-2 transition-colors ${
+              isScrolled || !isHomePage ? "text-foreground" : "text-foreground"
+            }`}
           >
             {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
+
+          {/* Mobile - Cart (visible on mobile) */}
+          <div className="lg:hidden flex items-center gap-4">
+            {user && <CartButton />}
+          </div>
         </div>
 
         {/* Mobile Navigation */}
         {isOpen && (
-          <div className="lg:hidden border-t border-border animate-fade-in max-h-[calc(100vh-5rem)] overflow-y-auto">
-            <div className="flex flex-col space-y-2 py-4">
-              {user && (
-                <div className="mx-4 mb-2 flex items-center gap-2">
-                  <CartButton />
-                  <Button asChild variant="ghost" size="sm" className="flex-1">
-                    <Link to="/my-orders" onClick={() => setIsOpen(false)}>
-                      My Orders
-                    </Link>
-                  </Button>
-                  <Button asChild variant="ghost" size="sm" className="flex-1">
-                    <Link to="/profile" onClick={() => setIsOpen(false)}>
-                      My Profile
-                    </Link>
-                  </Button>
-                </div>
-              )}
-              <Link
-                to="/home"
-                onClick={() => setIsOpen(false)}
-                className={`px-4 py-3 rounded-md font-medium transition-colors ${
-                  isActive("/home")
-                    ? "bg-secondary/10 text-secondary"
-                    : "text-foreground hover:bg-muted"
-                }`}
-              >
-                Home
-              </Link>
-              <Link
-                to="/"
-                onClick={() => setIsOpen(false)}
-                className={`px-4 py-3 rounded-md font-medium transition-colors ${
-                  isActive("/")
-                    ? "bg-secondary/10 text-secondary"
-                    : "text-foreground hover:bg-muted"
-                }`}
-              >
-                Products
-              </Link>
-              
-              {/* Women, Men, More accordions hidden for now */}
-
-              {navLinks.slice(1).map((link) => (
+          <div className="lg:hidden fixed inset-0 top-20 bg-background z-50 animate-fade-in">
+            <div className="flex flex-col p-8 space-y-6">
+              {navLinks.map((link) => (
                 <Link
                   key={link.path}
                   to={link.path}
                   onClick={() => setIsOpen(false)}
-                  className={`px-4 py-3 rounded-md font-medium transition-colors ${
-                    isActive(link.path)
-                      ? "bg-secondary/10 text-secondary"
-                      : "text-foreground hover:bg-muted"
+                  className={`text-2xl font-light tracking-wide transition-colors ${
+                    isActive(link.path) ? "text-accent" : "text-foreground hover:text-accent"
                   }`}
                 >
                   {link.name}
                 </Link>
               ))}
-              {user ? (
-                <>
-                  {isAdmin && (
-                    <Button asChild variant="outline" className="mx-4">
-                      <Link to="/admin" onClick={() => setIsOpen(false)}>
-                        <Shield className="h-4 w-4 mr-2" />
+              
+              <div className="pt-6 border-t border-border space-y-4">
+                {user ? (
+                  <>
+                    <Link
+                      to="/my-orders"
+                      onClick={() => setIsOpen(false)}
+                      className="block text-lg text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      My Orders
+                    </Link>
+                    <Link
+                      to="/profile"
+                      onClick={() => setIsOpen(false)}
+                      className="block text-lg text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      My Profile
+                    </Link>
+                    {isAdmin && (
+                      <Link
+                        to="/admin"
+                        onClick={() => setIsOpen(false)}
+                        className="block text-lg text-muted-foreground hover:text-foreground transition-colors"
+                      >
                         Admin Dashboard
                       </Link>
-                    </Button>
-                  )}
-                  <Button onClick={() => { signOut(); setIsOpen(false); }} variant="outline" className="mx-4">
-                    <LogOut className="h-4 w-4 mr-2" />
-                    Logout
-                  </Button>
-                </>
-              ) : (
-                <Button asChild variant="outline" className="mx-4">
-                  <Link to="/auth" onClick={() => setIsOpen(false)}>
-                    <User className="h-4 w-4 mr-2" />
+                    )}
+                    <button
+                      onClick={() => { signOut(); setIsOpen(false); }}
+                      className="block text-lg text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      Sign Out
+                    </button>
+                  </>
+                ) : (
+                  <Link
+                    to="/auth"
+                    onClick={() => setIsOpen(false)}
+                    className="block text-lg font-medium text-foreground"
+                  >
                     Sign In
                   </Link>
-                </Button>
-              )}
-              <Button asChild variant="default" className="bg-secondary hover:bg-secondary/90 mx-4 mt-2">
-                <Link to="/contact" onClick={() => setIsOpen(false)}>Get in Touch</Link>
-              </Button>
+                )}
+              </div>
             </div>
           </div>
         )}
