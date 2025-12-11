@@ -1,6 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Target, Eye, Heart, Award, Leaf, Sparkles } from "lucide-react";
 import aboutImage from "@/assets/about-team.jpg";
+import aboutHeroBanner from "@/assets/about-hero-banner.jpg";
 
 const About = () => {
   const values = [
@@ -18,24 +19,48 @@ const About = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero Section */}
-      <section className="relative h-[70vh] flex items-center justify-center overflow-hidden">
+      {/* Hero Section - Premium Banner */}
+      <section className="relative h-[80vh] min-h-[600px] flex items-center justify-center overflow-hidden">
         <div 
-          className="absolute inset-0 bg-cover bg-center"
+          className="absolute inset-0 bg-cover bg-center scale-105"
           style={{
-            backgroundImage: `url(${aboutImage})`,
+            backgroundImage: `url(${aboutHeroBanner})`,
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-background" />
-        <div className="relative z-10 text-center px-4">
-          <p className="text-accent font-medium tracking-[0.3em] mb-4 text-sm">OUR STORY</p>
-          <h1 className="text-5xl md:text-7xl font-serif font-bold text-white mb-6 tracking-tight">
-            FEATHER FASHIONS
-          </h1>
-          <p className="text-xl md:text-2xl text-white/80 max-w-2xl mx-auto font-light">
-            Where sustainable comfort meets modern elegance
-          </p>
+        {/* Premium gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-black/30" />
+        
+        {/* Gold accent particles effect */}
+        <div className="absolute inset-0 opacity-30">
+          <div className="absolute top-1/4 left-1/4 w-1 h-1 bg-accent rounded-full animate-pulse" />
+          <div className="absolute top-1/3 right-1/3 w-1.5 h-1.5 bg-accent rounded-full animate-pulse delay-300" />
+          <div className="absolute bottom-1/3 left-1/3 w-1 h-1 bg-accent rounded-full animate-pulse delay-500" />
         </div>
+        
+        {/* Content */}
+        <div className="relative z-10 text-left px-4 md:px-16 max-w-7xl mx-auto w-full">
+          <div className="max-w-2xl">
+            <p className="text-accent font-medium tracking-[0.4em] mb-6 text-xs md:text-sm uppercase">
+              Crafted With Purpose
+            </p>
+            <h1 className="text-5xl md:text-7xl lg:text-8xl font-serif font-bold text-white mb-8 tracking-tight leading-[0.9]">
+              FEATHER
+              <br />
+              <span className="text-accent">FASHIONS</span>
+            </h1>
+            <div className="w-24 h-0.5 bg-accent mb-8" />
+            <p className="text-lg md:text-xl text-white/90 max-w-xl font-light leading-relaxed">
+              Where Comfort Meets Conscious Craftsmanship.
+            </p>
+            <p className="text-base md:text-lg text-white/70 mt-4 font-light italic">
+              Designed for Movement. Inspired by You.
+            </p>
+          </div>
+        </div>
+        
+        {/* Bottom fade */}
+        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent" />
       </section>
 
       {/* Story Section */}
