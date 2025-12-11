@@ -34,8 +34,8 @@ const sizeCategories: SizeCategory[] = [
     title: "Men's Track Pants",
     subtitle: "Joggers, Tracks & Lounge",
     image: menJoggers,
-    link: "/size-guide/mens-track",
-    available: false,
+    link: "/size-chart/mens-track-pants",
+    available: true,
     icon: Ruler,
   },
   {
@@ -43,8 +43,8 @@ const sizeCategories: SizeCategory[] = [
     title: "Men's T-Shirts",
     subtitle: "Polo, V-Neck & Round Neck",
     image: menGymTees,
-    link: "/size-guide/mens-tshirts",
-    available: false,
+    link: "/size-chart/mens-tshirts",
+    available: true,
     icon: Ruler,
   },
   {
@@ -52,8 +52,8 @@ const sizeCategories: SizeCategory[] = [
     title: "Women's Sports Bras",
     subtitle: "Low, Medium & High Impact",
     image: womenSportsBra,
-    link: "/size-guide/womens-sports-bra",
-    available: false,
+    link: "/size-chart/womens-sports-bra",
+    available: true,
     icon: Heart,
   },
   {
@@ -61,8 +61,8 @@ const sizeCategories: SizeCategory[] = [
     title: "Kids Collection",
     subtitle: "Boys & Girls All Ages",
     image: kidsCollection,
-    link: "/size-guide/kids",
-    available: false,
+    link: "/size-chart/kids",
+    available: true,
     icon: Sparkles,
   },
 ];

@@ -34,6 +34,10 @@ import WomenLeggings from "./pages/women/WomenLeggings";
 import LeggingsSizeChart from "./pages/LeggingsSizeChart";
 import LeggingsFeatures from "./pages/LeggingsFeatures";
 import SizeGuide from "./pages/SizeGuide";
+import MensTrackPantsSizeChart from "./pages/size-charts/MensTrackPantsSizeChart";
+import MensTShirtsSizeChart from "./pages/size-charts/MensTShirtsSizeChart";
+import WomensSportsBraSizeChart from "./pages/size-charts/WomensSportsBraSizeChart";
+import KidsSizeChart from "./pages/size-charts/KidsSizeChart";
 import MenFullSleeveTShirt from "./pages/men/MenFullSleeveTShirt";
 import MenPoloTShirt from "./pages/men/MenPoloTShirt";
 import MenPrintedTShirt from "./pages/men/MenPrintedTShirt";
@@ -103,6 +107,10 @@ const App = () => (
                       <Route path="/women/polo-tshirt" element={<WomenPoloTShirt />} />
                       <Route path="/women/leggings" element={<WomenLeggings />} />
                       <Route path="/size-chart/womens-leggings" element={<LeggingsSizeChart />} />
+                      <Route path="/size-chart/mens-track-pants" element={<MensTrackPantsSizeChart />} />
+                      <Route path="/size-chart/mens-tshirts" element={<MensTShirtsSizeChart />} />
+                      <Route path="/size-chart/womens-sports-bra" element={<WomensSportsBraSizeChart />} />
+                      <Route path="/size-chart/kids" element={<KidsSizeChart />} />
                       <Route path="/leggings-features" element={<LeggingsFeatures />} />
                       <Route path="/size-guide" element={<SizeGuide />} />
                       
