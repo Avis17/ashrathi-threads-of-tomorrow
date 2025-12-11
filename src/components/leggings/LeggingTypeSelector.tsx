@@ -1,6 +1,6 @@
 import { LeggingType } from "@/pages/LeggingsSizeChart";
-import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { Check, ArrowRight } from "lucide-react";
 
 interface LeggingTypeSelectorProps {
   types: LeggingType[];
@@ -20,55 +20,91 @@ export default function LeggingTypeSelector({
         const isSelected = selectedType?.id === type.id;
 
         return (
-          <Card
+          <div
             key={type.id}
             className={cn(
-              "cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-2xl group overflow-hidden",
-              isSelected && "ring-2 ring-primary shadow-xl scale-105"
+              "group relative cursor-pointer rounded-xl overflow-hidden transition-all duration-500",
+              "bg-card border hover:shadow-xl",
+              isSelected 
+                ? "border-accent shadow-lg shadow-accent/10 scale-[1.02]" 
+                : "border-border hover:border-accent/50"
             )}
             onClick={() => onSelectType(type)}
           >
-            <div className={cn("h-2 bg-gradient-to-r", type.color)} />
-            <CardContent className="p-6">
-              <div className="flex items-start gap-4 mb-4">
+            {/* Gradient accent bar */}
+            <div className={cn(
+              "h-1 w-full bg-gradient-to-r transition-all duration-300",
+              type.color,
+              isSelected ? "opacity-100" : "opacity-50 group-hover:opacity-100"
+            )} />
+
+            <div className="p-6">
+              {/* Header */}
+              <div className="flex items-start justify-between gap-4 mb-4">
                 <div className={cn(
                   "p-3 rounded-xl bg-gradient-to-br transition-all duration-300",
                   type.color,
-                  "group-hover:scale-110"
+                  "shadow-lg",
+                  isSelected ? "scale-110" : "group-hover:scale-105"
                 )}>
-                  <Icon className="w-6 h-6 text-white" />
+                  <Icon className="w-5 h-5 text-white" />
                 </div>
-                <div className="flex-1">
-                  <h3 className="font-bold text-lg mb-1 leading-tight">
-                    {type.name}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    {type.description}
-                  </p>
-                </div>
+                
+                {isSelected && (
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-accent text-black text-xs font-semibold rounded-full animate-fade-in">
+                    <Check className="w-3 h-3" />
+                    Selected
+                  </div>
+                )}
               </div>
+
+              {/* Content */}
+              <h3 className={cn(
+                "font-serif text-xl mb-2 transition-colors duration-300 leading-tight",
+                isSelected ? "text-accent" : "text-foreground group-hover:text-accent"
+              )}>
+                {type.name}
+              </h3>
               
-              <div className="bg-muted/50 rounded-lg p-3">
-                <p className="text-xs font-medium text-muted-foreground mb-1">
-                  Best For:
+              <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                {type.description}
+              </p>
+
+              {/* Best For Tag */}
+              <div className="bg-secondary/50 rounded-lg p-3 mb-4">
+                <p className="text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">
+                  Best For
                 </p>
-                <p className="text-sm font-semibold">
+                <p className="text-sm font-medium text-foreground">
                   {type.bestFor}
                 </p>
               </div>
 
-              <div className="mt-4 pt-4 border-t flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">
+              {/* Footer */}
+              <div className="flex items-center justify-between pt-4 border-t border-border">
+                <span className="text-sm text-muted-foreground">
                   {type.sizes.length} sizes available
                 </span>
-                {isSelected && (
-                  <span className="text-primary font-semibold animate-fade-in">
-                    ✓ Selected
-                  </span>
-                )}
+                <span className={cn(
+                  "inline-flex items-center text-sm font-medium transition-all duration-300",
+                  isSelected ? "text-accent" : "text-muted-foreground group-hover:text-accent"
+                )}>
+                  View Chart
+                  <ArrowRight className={cn(
+                    "ml-1 w-4 h-4 transition-transform duration-300",
+                    isSelected ? "translate-x-1" : "group-hover:translate-x-1"
+                  )} />
+                </span>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+
+            {/* Hover gradient overlay */}
+            <div className={cn(
+              "absolute inset-0 bg-gradient-to-t from-accent/5 to-transparent opacity-0 transition-opacity duration-300 pointer-events-none",
+              "group-hover:opacity-100",
+              isSelected && "opacity-100"
+            )} />
+          </div>
         );
       })}
     </div>

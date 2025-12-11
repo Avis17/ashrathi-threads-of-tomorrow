@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,8 +11,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { LeggingType } from "@/pages/LeggingsSizeChart";
-import { Shield, Sparkles, ArrowRight, ArrowLeft, CheckCircle2 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Shield, Sparkles, ArrowRight, ArrowLeft, CheckCircle2, Calculator, RotateCcw } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface SizeCalculatorProps {
   leggingTypes: LeggingType[];
@@ -53,7 +52,7 @@ export default function SizeCalculator({ leggingTypes, onTypeSelect }: SizeCalcu
     // Find matching size based on measurements
     let matchedSize = null;
     for (const size of selectedType.sizes) {
-      const waistRange = size.waist.split("-").map(v => parseFloat(v));
+      const waistRange = size.waist?.split("-").map(v => parseFloat(v)) || [0, 0];
       const hipsRange = size.hips.split("-").map(v => parseFloat(v));
 
       if (
@@ -102,294 +101,315 @@ export default function SizeCalculator({ leggingTypes, onTypeSelect }: SizeCalcu
     setRecommendation(null);
   };
 
+  const progressPercentage = step === 0 ? 0 : (step / 4) * 100;
+
+  // Step 0: Introduction
   if (step === 0) {
     return (
-      <Card className="max-w-2xl mx-auto shadow-xl">
-        <CardHeader className="bg-gradient-to-r from-primary/10 via-secondary/10 to-primary/10">
-          <CardTitle className="text-2xl flex items-center gap-2">
-            <Sparkles className="w-6 h-6 text-primary" />
-            Find Your Perfect Size
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-8 space-y-6">
-          <p className="text-lg">
-            Answer 4 quick questions to get your personalized size recommendation
-          </p>
-          
-          <div className="bg-muted/50 rounded-lg p-6 space-y-3">
-            <div className="flex items-start gap-3">
-              <Shield className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+      <div className="max-w-2xl mx-auto">
+        <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-xl">
+          <div className="p-8 bg-gradient-to-r from-accent/10 via-accent/5 to-accent/10 border-b border-border">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-xl bg-accent/20 flex items-center justify-center">
+                <Calculator className="w-6 h-6 text-accent" />
+              </div>
               <div>
-                <h4 className="font-semibold mb-2">Privacy Notice</h4>
-                <p className="text-sm text-muted-foreground">
-                  Your information is <strong>NOT stored</strong> and will <strong>NEVER be used</strong> for any purpose beyond this recommendation. All calculations happen in your browser.
-                </p>
+                <h2 className="text-2xl font-serif text-foreground">Size Calculator</h2>
+                <p className="text-muted-foreground text-sm">Find your perfect fit in 4 steps</p>
               </div>
             </div>
           </div>
-
-          <div className="flex gap-4">
-            <Button onClick={() => setStep(1)} size="lg" className="flex-1 gap-2">
-              Start Calculator
-              <ArrowRight className="w-4 h-4" />
-            </Button>
-            <Button variant="outline" size="lg" onClick={() => {}}>
-              Skip
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (step === 1) {
-    return (
-      <Card className="max-w-2xl mx-auto shadow-xl">
-        <CardHeader>
-          <div className="flex items-center justify-between mb-2">
-            <Badge variant="secondary">Step 1 of 4</Badge>
-          </div>
-          <CardTitle>What's your waist measurement?</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-3">
-            <Label htmlFor="waist">Waist (in inches)</Label>
-            <Input
-              id="waist"
-              type="number"
-              placeholder="e.g., 28"
-              value={data.waist}
-              onChange={(e) => setData({ ...data, waist: e.target.value })}
-              className="text-lg"
-            />
-            <p className="text-sm text-muted-foreground">
-              💡 Measure around the narrowest part of your natural waistline
+          
+          <div className="p-8 space-y-6">
+            <p className="text-lg text-muted-foreground">
+              Answer 4 quick questions to get your personalized size recommendation
             </p>
-          </div>
-
-          <div className="flex gap-3">
-            <Button variant="outline" onClick={() => setStep(0)}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
-            </Button>
-            <Button
-              onClick={() => setStep(2)}
-              disabled={!data.waist}
-              className="flex-1 gap-2"
-            >
-              Next
-              <ArrowRight className="w-4 h-4" />
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (step === 2) {
-    return (
-      <Card className="max-w-2xl mx-auto shadow-xl">
-        <CardHeader>
-          <div className="flex items-center justify-between mb-2">
-            <Badge variant="secondary">Step 2 of 4</Badge>
-          </div>
-          <CardTitle>What's your hip measurement?</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-3">
-            <Label htmlFor="hips">Hips (in inches)</Label>
-            <Input
-              id="hips"
-              type="number"
-              placeholder="e.g., 38"
-              value={data.hips}
-              onChange={(e) => setData({ ...data, hips: e.target.value })}
-              className="text-lg"
-            />
-            <p className="text-sm text-muted-foreground">
-              💡 Measure around the fullest part of your hips
-            </p>
-          </div>
-
-          <div className="flex gap-3">
-            <Button variant="outline" onClick={() => setStep(1)}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
-            </Button>
-            <Button
-              onClick={() => setStep(3)}
-              disabled={!data.hips}
-              className="flex-1 gap-2"
-            >
-              Next
-              <ArrowRight className="w-4 h-4" />
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (step === 3) {
-    return (
-      <Card className="max-w-2xl mx-auto shadow-xl">
-        <CardHeader>
-          <div className="flex items-center justify-between mb-2">
-            <Badge variant="secondary">Step 3 of 4</Badge>
-          </div>
-          <CardTitle>How do you prefer your leggings to fit?</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <RadioGroup
-            value={data.fitPreference}
-            onValueChange={(value) => setData({ ...data, fitPreference: value as FitPreference })}
-          >
-            <div className="space-y-3">
-              <div className="flex items-start space-x-3 p-4 rounded-lg border hover:bg-muted/50 cursor-pointer">
-                <RadioGroupItem value="snug" id="snug" />
-                <Label htmlFor="snug" className="cursor-pointer flex-1">
-                  <div className="font-semibold">Snug</div>
-                  <div className="text-sm text-muted-foreground">
-                    Tight, compression fit for active wear
-                  </div>
-                </Label>
-              </div>
-
-              <div className="flex items-start space-x-3 p-4 rounded-lg border hover:bg-muted/50 cursor-pointer">
-                <RadioGroupItem value="comfortable" id="comfortable" />
-                <Label htmlFor="comfortable" className="cursor-pointer flex-1">
-                  <div className="font-semibold">Comfortable (Recommended)</div>
-                  <div className="text-sm text-muted-foreground">
-                    True to size, comfortable everyday fit
-                  </div>
-                </Label>
-              </div>
-
-              <div className="flex items-start space-x-3 p-4 rounded-lg border hover:bg-muted/50 cursor-pointer">
-                <RadioGroupItem value="loose" id="loose" />
-                <Label htmlFor="loose" className="cursor-pointer flex-1">
-                  <div className="font-semibold">Loose</div>
-                  <div className="text-sm text-muted-foreground">
-                    Relaxed fit with extra room
-                  </div>
-                </Label>
+            
+            <div className="bg-secondary/50 rounded-xl p-6 border border-border">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0">
+                  <Shield className="w-5 h-5 text-accent" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-foreground mb-1">Privacy First</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Your measurements are <strong>never stored</strong> and won't be used for any purpose beyond this recommendation. All calculations happen locally in your browser.
+                  </p>
+                </div>
               </div>
             </div>
-          </RadioGroup>
 
-          <div className="flex gap-3">
-            <Button variant="outline" onClick={() => setStep(2)}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
-            </Button>
-            <Button onClick={() => setStep(4)} className="flex-1 gap-2">
-              Next
-              <ArrowRight className="w-4 h-4" />
-            </Button>
+            <div className="flex gap-4">
+              <Button onClick={() => setStep(1)} size="xl" variant="gold" className="flex-1 gap-2">
+                Start Calculator
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   }
 
-  if (step === 4) {
+  // Steps 1-4: Questions
+  if (step >= 1 && step <= 4) {
     return (
-      <Card className="max-w-2xl mx-auto shadow-xl">
-        <CardHeader>
-          <div className="flex items-center justify-between mb-2">
-            <Badge variant="secondary">Step 4 of 4</Badge>
+      <div className="max-w-2xl mx-auto">
+        <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-xl">
+          {/* Progress Bar */}
+          <div className="h-1 bg-secondary">
+            <div 
+              className="h-full bg-accent transition-all duration-500"
+              style={{ width: `${progressPercentage}%` }}
+            />
           </div>
-          <CardTitle>Which style are you buying?</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-3">
-            <Label htmlFor="type">Legging Type</Label>
-            <Select
-              value={data.selectedTypeId}
-              onValueChange={(value) => setData({ ...data, selectedTypeId: value })}
-            >
-              <SelectTrigger className="text-lg">
-                <SelectValue placeholder="Select a legging type" />
-              </SelectTrigger>
-              <SelectContent>
-                {leggingTypes.map((type) => (
-                  <SelectItem key={type.id} value={type.id}>
-                    {type.name}
-                  </SelectItem>
+
+          <div className="p-8">
+            {/* Step Indicator */}
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-2 px-4 py-2 bg-accent/20 rounded-full">
+                <span className="text-accent text-sm font-semibold">Step {step} of 4</span>
+              </div>
+              <div className="flex gap-2">
+                {[1, 2, 3, 4].map((s) => (
+                  <div
+                    key={s}
+                    className={cn(
+                      "w-2 h-2 rounded-full transition-colors",
+                      s <= step ? "bg-accent" : "bg-border"
+                    )}
+                  />
                 ))}
-              </SelectContent>
-            </Select>
-          </div>
+              </div>
+            </div>
 
-          <div className="flex gap-3">
-            <Button variant="outline" onClick={() => setStep(3)}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
-            </Button>
-            <Button
-              onClick={handleComplete}
-              disabled={!data.selectedTypeId}
-              className="flex-1 gap-2"
-            >
-              Get Recommendation
-              <CheckCircle2 className="w-4 h-4" />
-            </Button>
+            {/* Step 1: Waist */}
+            {step === 1 && (
+              <div className="space-y-6">
+                <h3 className="text-2xl font-serif text-foreground">What's your waist measurement?</h3>
+                <div className="space-y-3">
+                  <Label htmlFor="waist" className="text-muted-foreground">Waist (in inches)</Label>
+                  <Input
+                    id="waist"
+                    type="number"
+                    placeholder="e.g., 28"
+                    value={data.waist}
+                    onChange={(e) => setData({ ...data, waist: e.target.value })}
+                    className="text-lg h-14 bg-secondary/50 border-border"
+                  />
+                  <p className="text-sm text-muted-foreground flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-accent" />
+                    Measure around the narrowest part of your natural waistline
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Step 2: Hips */}
+            {step === 2 && (
+              <div className="space-y-6">
+                <h3 className="text-2xl font-serif text-foreground">What's your hip measurement?</h3>
+                <div className="space-y-3">
+                  <Label htmlFor="hips" className="text-muted-foreground">Hips (in inches)</Label>
+                  <Input
+                    id="hips"
+                    type="number"
+                    placeholder="e.g., 38"
+                    value={data.hips}
+                    onChange={(e) => setData({ ...data, hips: e.target.value })}
+                    className="text-lg h-14 bg-secondary/50 border-border"
+                  />
+                  <p className="text-sm text-muted-foreground flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-accent" />
+                    Measure around the fullest part of your hips
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Step 3: Fit Preference */}
+            {step === 3 && (
+              <div className="space-y-6">
+                <h3 className="text-2xl font-serif text-foreground">How do you prefer your leggings to fit?</h3>
+                <RadioGroup
+                  value={data.fitPreference}
+                  onValueChange={(value) => setData({ ...data, fitPreference: value as FitPreference })}
+                  className="space-y-3"
+                >
+                  {[
+                    { value: "snug", label: "Snug", desc: "Tight, compression fit for active wear" },
+                    { value: "comfortable", label: "Comfortable", desc: "True to size, comfortable everyday fit", recommended: true },
+                    { value: "loose", label: "Loose", desc: "Relaxed fit with extra room" },
+                  ].map((option) => (
+                    <div
+                      key={option.value}
+                      className={cn(
+                        "flex items-start space-x-3 p-4 rounded-xl border transition-all cursor-pointer",
+                        data.fitPreference === option.value
+                          ? "border-accent bg-accent/5"
+                          : "border-border hover:border-accent/50 hover:bg-secondary/30"
+                      )}
+                      onClick={() => setData({ ...data, fitPreference: option.value as FitPreference })}
+                    >
+                      <RadioGroupItem value={option.value} id={option.value} className="mt-1" />
+                      <Label htmlFor={option.value} className="cursor-pointer flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-foreground">{option.label}</span>
+                          {option.recommended && (
+                            <span className="px-2 py-0.5 bg-accent/20 text-accent text-xs font-medium rounded-full">
+                              Recommended
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-sm text-muted-foreground mt-1">
+                          {option.desc}
+                        </div>
+                      </Label>
+                    </div>
+                  ))}
+                </RadioGroup>
+              </div>
+            )}
+
+            {/* Step 4: Legging Type */}
+            {step === 4 && (
+              <div className="space-y-6">
+                <h3 className="text-2xl font-serif text-foreground">Which style are you buying?</h3>
+                <div className="space-y-3">
+                  <Label htmlFor="type" className="text-muted-foreground">Legging Type</Label>
+                  <Select
+                    value={data.selectedTypeId}
+                    onValueChange={(value) => setData({ ...data, selectedTypeId: value })}
+                  >
+                    <SelectTrigger className="text-lg h-14 bg-secondary/50 border-border">
+                      <SelectValue placeholder="Select a legging type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {leggingTypes.map((type) => (
+                        <SelectItem key={type.id} value={type.id}>
+                          {type.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+
+            {/* Navigation */}
+            <div className="flex gap-3 mt-8">
+              <Button 
+                variant="outline" 
+                onClick={() => setStep(step - 1)}
+                className="gap-2"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back
+              </Button>
+              {step < 4 ? (
+                <Button
+                  onClick={() => setStep(step + 1)}
+                  disabled={(step === 1 && !data.waist) || (step === 2 && !data.hips)}
+                  className="flex-1 gap-2"
+                  variant="gold"
+                >
+                  Next
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleComplete}
+                  disabled={!data.selectedTypeId}
+                  className="flex-1 gap-2"
+                  variant="gold"
+                >
+                  Get Recommendation
+                  <CheckCircle2 className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   }
 
   // Step 5: Results
   return (
-    <Card className="max-w-2xl mx-auto shadow-xl">
-      <CardHeader className="bg-gradient-to-r from-green-500/10 to-emerald-500/10">
-        <CardTitle className="text-2xl flex items-center gap-2">
-          <CheckCircle2 className="w-6 h-6 text-green-500" />
-          Your Recommended Size
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-8 space-y-6">
-        <div className="text-center">
-          <div className="inline-flex items-center justify-center w-32 h-32 rounded-full bg-gradient-to-br from-primary to-secondary text-white text-5xl font-bold mb-4 shadow-xl">
-            {recommendation || "?"}
+    <div className="max-w-2xl mx-auto">
+      <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-xl">
+        <div className="p-8 bg-gradient-to-r from-green-500/10 via-emerald-500/10 to-green-500/10 border-b border-border">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center">
+              <CheckCircle2 className="w-6 h-6 text-green-500" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-serif text-foreground">Your Recommended Size</h2>
+              <p className="text-muted-foreground text-sm">Based on your measurements</p>
+            </div>
           </div>
-          <h3 className="text-3xl font-bold mb-2">
-            {recommendation ? `Size ${recommendation}` : "No Match Found"}
-          </h3>
         </div>
+        
+        <div className="p-8 space-y-6">
+          <div className="text-center py-6">
+            <div className="inline-flex items-center justify-center w-28 h-28 rounded-full bg-gradient-to-br from-accent to-accent/70 text-black text-5xl font-bold mb-4 shadow-xl shadow-accent/30">
+              {recommendation || "?"}
+            </div>
+            <h3 className="text-3xl font-serif text-foreground">
+              {recommendation ? `Size ${recommendation}` : "No Match Found"}
+            </h3>
+          </div>
 
-        {recommendation ? (
-          <div className="bg-muted/50 rounded-lg p-6 space-y-3">
-            <h4 className="font-semibold">Based on your measurements:</h4>
-            <ul className="text-sm space-y-2">
-              <li>• Waist: {data.waist}"</li>
-              <li>• Hips: {data.hips}"</li>
-              <li>• Fit preference: {data.fitPreference}</li>
-            </ul>
-            {data.selectedTypeId === "maternity" && (
-              <p className="text-sm text-muted-foreground mt-4 p-3 bg-primary/5 rounded-lg">
-                💡 <strong>Tip:</strong> For maternity leggings, consider sizing up for extra comfort during pregnancy.
+          {recommendation ? (
+            <div className="bg-secondary/50 rounded-xl p-6 border border-border">
+              <h4 className="font-semibold text-foreground mb-4">Your Measurements</h4>
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div>
+                  <p className="text-2xl font-bold text-accent">{data.waist}"</p>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide">Waist</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-accent">{data.hips}"</p>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide">Hips</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-accent capitalize">{data.fitPreference}</p>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide">Fit</p>
+                </div>
+              </div>
+              {data.selectedTypeId === "maternity" && (
+                <p className="text-sm text-muted-foreground mt-4 p-3 bg-accent/10 rounded-lg border border-accent/20">
+                  <Sparkles className="w-4 h-4 text-accent inline mr-2" />
+                  <strong>Tip:</strong> For maternity leggings, consider sizing up for extra comfort during pregnancy.
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="bg-amber-500/10 rounded-xl p-6 border border-amber-500/20">
+              <p className="text-foreground">
+                We couldn't find a perfect match for your measurements. Please consult our size chart below or contact us for personalized assistance.
               </p>
-            )}
-          </div>
-        ) : (
-          <div className="bg-yellow-500/10 rounded-lg p-6">
-            <p className="text-sm">
-              We couldn't find a perfect match. Please consult our size chart or contact us for personalized assistance.
-            </p>
-          </div>
-        )}
+            </div>
+          )}
 
-        <div className="flex gap-3">
-          <Button variant="outline" onClick={resetCalculator} className="flex-1">
-            Try Again
-          </Button>
-          <Button onClick={() => {}} className="flex-1">
-            View Size Chart
-          </Button>
+          <div className="flex gap-3">
+            <Button variant="outline" onClick={resetCalculator} className="gap-2">
+              <RotateCcw className="w-4 h-4" />
+              Try Again
+            </Button>
+            <Button 
+              variant="gold" 
+              className="flex-1"
+              onClick={() => {
+                const element = document.querySelector('[data-size-table]');
+                element?.scrollIntoView({ behavior: 'smooth' });
+              }}
+            >
+              View Full Size Chart
+            </Button>
+          </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
