@@ -47,6 +47,26 @@ export const useCreateExternalJobCompany = () => {
   });
 };
 
+export const useDeleteExternalJobCompany = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (companyId: string) => {
+      const { error } = await supabase
+        .from('external_job_companies')
+        .delete()
+        .eq('id', companyId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['external-job-companies'] });
+      toast.success('Company deleted successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to delete company');
+    },
+  });
+};
+
 // Job Orders hooks
 export const useExternalJobOrders = () => {
   return useQuery({
