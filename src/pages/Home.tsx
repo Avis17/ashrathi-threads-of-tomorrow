@@ -1,9 +1,15 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Droplets, Shield, Zap, Wind, Play, Star } from "lucide-react";
+import { ArrowRight, Droplets, Shield, Zap, Wind, ChevronLeft, ChevronRight } from "lucide-react";
+import { useState, useEffect } from "react";
+
+// Hero slides
+import heroSlide1 from "@/assets/hero-slide-1.jpg";
+import heroSlide2 from "@/assets/hero-slide-2.jpg";
+import heroSlide3 from "@/assets/hero-slide-3.jpg";
+import heroSlide4 from "@/assets/hero-slide-4.jpg";
 
 // Hero and main images
-import homeHeroMain from "@/assets/home-hero-main.jpg";
 import heroLuxury2 from "@/assets/hero-luxury-2.jpg";
 import heroModel1 from "@/assets/hero-model-woman-1.jpg";
 
@@ -35,6 +41,58 @@ import highlightCampaign from "@/assets/highlight-campaign.jpg";
 import highlightDetail from "@/assets/highlight-detail.jpg";
 
 const Home = () => {
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  const heroSlides = [
+    {
+      image: heroSlide1,
+      subtitle: "WOMEN'S COLLECTION",
+      title: "Effortless Elegance",
+      highlight: "in Motion",
+      description: "Premium yoga & activewear crafted for comfort and style.",
+      cta: "/women"
+    },
+    {
+      image: heroSlide2,
+      subtitle: "MEN'S COLLECTION",
+      title: "Performance",
+      highlight: "Redefined",
+      description: "Sportswear engineered for champions who push limits.",
+      cta: "/men"
+    },
+    {
+      image: heroSlide3,
+      subtitle: "NEW ARRIVALS",
+      title: "Move With",
+      highlight: "Confidence",
+      description: "Discover activewear that moves as beautifully as you do.",
+      cta: "/shop"
+    },
+    {
+      image: heroSlide4,
+      subtitle: "MATCHING SETS",
+      title: "Together We",
+      highlight: "Train",
+      description: "Premium coordinated sets for couples who inspire each other.",
+      cta: "/collections"
+    }
+  ];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [heroSlides.length]);
+
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
+  };
+
+  const prevSlide = () => {
+    setCurrentSlide((prev) => (prev - 1 + heroSlides.length) % heroSlides.length);
+  };
+
   const features = [
     { icon: Zap, title: "4-Way Stretch", desc: "Move freely" },
     { icon: Droplets, title: "Moisture-Wicking", desc: "Stay dry" },
@@ -78,45 +136,87 @@ const Home = () => {
 
   return (
     <div className="min-h-screen">
-      {/* Hero Section */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden">
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: `url(${homeHeroMain})` }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/20 to-background" />
+      {/* Hero Section with Carousel */}
+      <section className="relative h-screen overflow-hidden">
+        {/* Slides */}
+        {heroSlides.map((slide, index) => (
+          <div
+            key={index}
+            className={`absolute inset-0 transition-opacity duration-1000 ${
+              index === currentSlide ? "opacity-100 z-10" : "opacity-0 z-0"
+            }`}
+          >
+            <div 
+              className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-[5000ms]"
+              style={{ 
+                backgroundImage: `url(${slide.image})`,
+                transform: index === currentSlide ? "scale(1.05)" : "scale(1)"
+              }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/70" />
+          </div>
+        ))}
         
-        <div className="relative z-10 text-center px-6 max-w-4xl mx-auto">
-          <p className="text-xs tracking-[0.4em] text-accent mb-6 animate-fade-in font-medium">
-            PREMIUM ACTIVEWEAR
-          </p>
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-light tracking-tight mb-6 animate-fade-in-up">
-            Effortless Comfort.
-            <br />
-            <span className="font-serif italic">Perfect Form.</span>
-          </h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 animate-fade-in-delay">
-            Crafted for those who demand both performance and elegance.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-delay">
-            <Button asChild size="lg" className="px-10 py-6 text-sm tracking-[0.15em] bg-primary hover:bg-primary/90 glow-gold">
-              <Link to="/women">SHOP WOMEN</Link>
-            </Button>
-            <Button asChild size="lg" variant="outline" className="px-10 py-6 text-sm tracking-[0.15em] border-foreground/20 hover:bg-foreground/5">
-              <Link to="/men">SHOP MEN</Link>
-            </Button>
+        {/* Content */}
+        <div className="relative z-20 h-full flex items-center justify-center text-center px-6">
+          <div className="max-w-4xl mx-auto">
+            <p className="text-xs tracking-[0.4em] text-accent mb-6 animate-fade-in font-medium">
+              {heroSlides[currentSlide].subtitle}
+            </p>
+            <h1 className="text-5xl md:text-7xl lg:text-8xl font-light tracking-tight mb-6 text-white animate-fade-in-up">
+              {heroSlides[currentSlide].title}
+              <br />
+              <span className="font-serif italic text-accent">{heroSlides[currentSlide].highlight}</span>
+            </h1>
+            <p className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto mb-10 animate-fade-in-delay">
+              {heroSlides[currentSlide].description}
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-delay">
+              <Button asChild size="lg" className="px-10 py-6 text-sm tracking-[0.15em] bg-accent hover:bg-accent/90 text-primary glow-gold">
+                <Link to={heroSlides[currentSlide].cta}>SHOP NOW</Link>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="px-10 py-6 text-sm tracking-[0.15em] border-white/30 text-white hover:bg-white/10">
+                <Link to="/collections">VIEW COLLECTIONS</Link>
+              </Button>
+            </div>
           </div>
         </div>
 
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
-          <div className="w-5 h-8 border border-foreground/30 rounded-full flex justify-center pt-2">
-            <div className="w-1 h-2 bg-foreground/30 rounded-full" />
-          </div>
+        {/* Navigation Arrows */}
+        <button
+          onClick={prevSlide}
+          className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-all"
+          aria-label="Previous slide"
+        >
+          <ChevronLeft className="w-6 h-6" />
+        </button>
+        <button
+          onClick={nextSlide}
+          className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-all"
+          aria-label="Next slide"
+        >
+          <ChevronRight className="w-6 h-6" />
+        </button>
+
+        {/* Slide Indicators */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 flex gap-3">
+          {heroSlides.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => setCurrentSlide(index)}
+              className={`h-2 rounded-full transition-all duration-300 ${
+                index === currentSlide 
+                  ? "w-8 bg-accent" 
+                  : "w-2 bg-white/40 hover:bg-white/60"
+              }`}
+              aria-label={`Go to slide ${index + 1}`}
+            />
+          ))}
         </div>
       </section>
 
       {/* Feature Strip */}
-      <section className="py-6 bg-primary text-primary-foreground">
+      <section className="py-6 bg-primary text-white">
         <div className="container mx-auto px-6">
           <div className="flex flex-wrap items-center justify-center gap-8 md:gap-16">
             {features.map((feature, index) => (
@@ -124,7 +224,7 @@ const Home = () => {
                 <feature.icon className="h-5 w-5 text-accent" />
                 <div>
                   <p className="text-sm font-medium">{feature.title}</p>
-                  <p className="text-xs text-primary-foreground/60 hidden md:block">{feature.desc}</p>
+                  <p className="text-xs text-white/60 hidden md:block">{feature.desc}</p>
                 </div>
               </div>
             ))}
@@ -153,7 +253,7 @@ const Home = () => {
                     alt={activity.name}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-transparent to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
                   <div className="absolute bottom-6 left-6 right-6">
                     <h3 className="text-2xl font-light text-white mb-2">{activity.name}</h3>
                     <span className="inline-flex items-center text-sm text-white/80 group-hover:text-accent transition-colors">
@@ -187,7 +287,7 @@ const Home = () => {
                   alt={category.name}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-primary/90 via-primary/20 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
                 <div className="absolute bottom-6 left-6 right-6">
                   <p className="text-xs text-accent mb-1">{category.count}</p>
                   <h3 className="text-xl md:text-2xl font-light text-white">{category.name}</h3>
@@ -218,11 +318,11 @@ const Home = () => {
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                   />
                   <div className="absolute top-6 left-6">
-                    <span className="bg-accent text-primary-foreground px-4 py-2 text-xs tracking-wider font-medium rounded-full">
+                    <span className="bg-accent text-primary px-4 py-2 text-xs tracking-wider font-medium rounded-full">
                       {item.tag}
                     </span>
                   </div>
-                  <div className="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-primary/90 to-transparent">
+                  <div className="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-black/90 to-transparent">
                     <h3 className="text-2xl font-light text-white mb-2">{item.name}</h3>
                     <p className="text-accent text-lg">{item.price}</p>
                   </div>
@@ -253,7 +353,7 @@ const Home = () => {
                   alt={color.name}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                 />
-                <div className="absolute inset-0 bg-primary/20 group-hover:bg-primary/40 transition-colors" />
+                <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-colors" />
                 <div className="absolute bottom-6 left-6 right-6 flex items-center gap-3">
                   <div 
                     className="w-6 h-6 rounded-full border-2 border-white shadow-lg"
@@ -268,21 +368,21 @@ const Home = () => {
       </section>
 
       {/* Catch the Highlights */}
-      <section className="py-20 bg-primary text-primary-foreground">
+      <section className="py-20 bg-[#1A1A1A]">
         <div className="container mx-auto px-6">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
               <p className="text-xs tracking-[0.3em] text-accent mb-4">BEHIND THE SEAMS</p>
-              <h2 className="text-4xl md:text-5xl font-light tracking-tight mb-6">
+              <h2 className="text-4xl md:text-5xl font-light tracking-tight mb-6 text-white">
                 Catch the
                 <br />
-                <span className="font-serif italic">highlights</span>
+                <span className="font-serif italic text-accent">highlights</span>
               </h2>
-              <p className="text-primary-foreground/70 text-lg mb-8 max-w-md">
+              <p className="text-white/70 text-lg mb-8 max-w-md">
                 See what makes Feather Fashions different. Premium fabrics, precision craftsmanship, and designs that move with you.
               </p>
               <div className="flex flex-wrap gap-4">
-                <Button asChild variant="outline" className="border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10">
+                <Button asChild variant="outline" className="border-white/30 text-white hover:bg-white/10">
                   <Link to="/about">
                     Our Story <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
@@ -302,9 +402,9 @@ const Home = () => {
                   alt="Campaign"
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-primary/60 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
                 <div className="absolute bottom-4 left-4">
-                  <p className="text-white text-sm">Community</p>
+                  <p className="text-white text-sm font-medium">Community</p>
                 </div>
               </div>
               <div className="relative h-[300px] rounded-xl overflow-hidden mt-8">
@@ -313,9 +413,9 @@ const Home = () => {
                   alt="Detail"
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-primary/60 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
                 <div className="absolute bottom-4 left-4">
-                  <p className="text-white text-sm">Quality Details</p>
+                  <p className="text-white text-sm font-medium">Quality Details</p>
                 </div>
               </div>
             </div>
@@ -363,7 +463,7 @@ const Home = () => {
           className="absolute inset-0 bg-cover bg-center bg-fixed"
           style={{ backgroundImage: `url(${heroLuxury2})` }}
         />
-        <div className="absolute inset-0 bg-primary/70" />
+        <div className="absolute inset-0 bg-black/70" />
         <div className="relative z-10 h-full flex items-center justify-center text-center px-6">
           <div className="max-w-3xl">
             <p className="text-xs tracking-[0.3em] text-accent mb-6">THE FEATHER DIFFERENCE</p>
@@ -393,11 +493,14 @@ const Home = () => {
           <p className="text-muted-foreground max-w-xl mx-auto mb-10">
             Whether you're looking for wholesale partnerships or custom designs, we'd love to hear from you.
           </p>
-          <Button asChild size="lg" className="px-10 py-6 text-sm tracking-[0.15em] bg-primary hover:bg-primary/90">
-            <Link to="/contact">
-              CONTACT US <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Button asChild size="lg" className="px-10 py-6 text-sm tracking-[0.15em] bg-accent hover:bg-accent/90 text-primary">
+              <Link to="/contact">CONTACT US</Link>
+            </Button>
+            <Button asChild size="lg" variant="outline" className="px-10 py-6 text-sm tracking-[0.15em]">
+              <Link to="/shop">BROWSE CATALOG</Link>
+            </Button>
+          </div>
         </div>
       </section>
     </div>

@@ -79,7 +79,7 @@ const Collections = () => {
             alt="Collections"
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-primary/60 via-primary/40 to-primary/80" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/80" />
         </div>
         
         <div className="relative z-10 h-full flex items-center justify-center text-center">
@@ -87,10 +87,10 @@ const Collections = () => {
             <p className="text-accent font-medium tracking-wide-premium uppercase text-sm mb-4 animate-fade-in">
               Feather Fashions
             </p>
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-serif text-primary-foreground mb-6 leading-[1.1] animate-fade-in-up">
+            <h1 className="text-5xl md:text-7xl lg:text-8xl font-serif text-white mb-6 leading-[1.1] animate-fade-in-up">
               Our Collections
             </h1>
-            <p className="text-lg md:text-xl text-primary-foreground/80 max-w-2xl mx-auto mb-8 animate-fade-in-up">
+            <p className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto mb-8 animate-fade-in-up">
               Discover curated collections designed for every moment of your active lifestyle. 
               From studio to street, we've got you covered.
             </p>
@@ -142,14 +142,14 @@ const Collections = () => {
                   index % 2 === 1 ? 'lg:flex-row-reverse' : ''
                 }`}
               >
-                <div className={`relative overflow-hidden ${index % 2 === 1 ? 'lg:order-2' : ''}`}>
+                <div className={`relative overflow-hidden rounded-xl ${index % 2 === 1 ? 'lg:order-2' : ''}`}>
                   <img
                     src={collection.image}
                     alt={collection.title}
                     className="w-full h-[400px] md:h-[500px] object-cover transition-transform duration-700 group-hover:scale-105"
                   />
                   <div className="absolute top-6 left-6">
-                    <span className="bg-accent text-accent-foreground px-4 py-2 text-sm font-medium">
+                    <span className="bg-accent text-primary px-4 py-2 text-sm font-medium rounded-full">
                       {collection.badge}
                     </span>
                   </div>
@@ -194,16 +194,16 @@ const Collections = () => {
             alt="Premium Quality"
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-primary/70" />
+          <div className="absolute inset-0 bg-black/70" />
         </div>
         <div className="relative z-10 container mx-auto px-6 lg:px-12 text-center">
           <p className="text-accent font-medium tracking-wide-premium uppercase text-sm mb-4">
             Our Promise
           </p>
-          <h2 className="text-4xl md:text-6xl font-serif text-primary-foreground max-w-4xl mx-auto leading-tight mb-8">
+          <h2 className="text-4xl md:text-6xl font-serif text-white max-w-4xl mx-auto leading-tight mb-8">
             "Quality is not an act, it's a habit. Every stitch tells our story."
           </h2>
-          <p className="text-primary-foreground/80 text-lg max-w-2xl mx-auto">
+          <p className="text-white/80 text-lg max-w-2xl mx-auto">
             At Feather Fashions, we're committed to delivering premium activewear 
             that combines style, comfort, and performance.
           </p>
@@ -236,7 +236,7 @@ const Collections = () => {
               <Link
                 key={index}
                 to={item.link}
-                className="group p-6 bg-background border border-border hover:border-accent transition-colors text-center"
+                className="group p-6 bg-background border border-border hover:border-accent rounded-lg transition-colors text-center"
               >
                 <h3 className="font-semibold text-foreground group-hover:text-accent transition-colors">
                   {item.title}
@@ -248,12 +248,12 @@ const Collections = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 lg:py-32 bg-primary text-primary-foreground">
+      <section className="py-20 lg:py-32 bg-primary text-white">
         <div className="container mx-auto px-6 lg:px-12 text-center">
           <h2 className="text-4xl md:text-5xl font-serif mb-6">
             Find Your Perfect Fit
           </h2>
-          <p className="text-primary-foreground/80 text-lg max-w-2xl mx-auto mb-8">
+          <p className="text-white/80 text-lg max-w-2xl mx-auto mb-8">
             Browse our complete catalog and discover activewear designed for your lifestyle.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
@@ -263,7 +263,7 @@ const Collections = () => {
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
             </Button>
-            <Button asChild size="xl" variant="outline" className="bg-primary-foreground/10 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/20">
+            <Button asChild size="xl" variant="outline" className="bg-white/10 border-white/30 text-white hover:bg-white/20">
               <Link to="/contact">
                 Contact Us
               </Link>
