@@ -119,6 +119,78 @@ const Women = () => {
         </div>
       </section>
 
+      {/* Leggings Features Showcase */}
+      <section className="py-16 lg:py-24 bg-gradient-to-b from-background to-secondary/30">
+        <div className="container mx-auto px-6 lg:px-12">
+          <div className="relative overflow-hidden rounded-2xl bg-[#1A1A1A] border border-accent/20">
+            <div className="absolute inset-0 bg-gradient-to-r from-accent/10 via-transparent to-accent/5" />
+            <div className="absolute top-0 right-0 w-96 h-96 bg-accent/10 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2" />
+            
+            <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-8 p-8 lg:p-12 items-center">
+              {/* Content */}
+              <div className="space-y-6">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-accent/20 rounded-full">
+                  <Sparkles className="h-4 w-4 text-accent" />
+                  <span className="text-accent text-sm font-medium tracking-wide uppercase">Premium Technology</span>
+                </div>
+                
+                <h2 className="text-3xl md:text-4xl lg:text-5xl font-serif text-white leading-tight">
+                  Discover What Makes Our
+                  <span className="block text-accent mt-2">Leggings Special</span>
+                </h2>
+                
+                <p className="text-white/70 text-lg leading-relaxed max-w-lg">
+                  From heat-fused care labels to 4-way stretch technology — explore the innovative features that set our leggings apart.
+                </p>
+                
+                <div className="flex flex-wrap gap-3 text-sm">
+                  {["UPF 50+ Protection", "High-Waisted Fit", "Side Pockets", "Triangle Gusset"].map((feature, idx) => (
+                    <span key={idx} className="px-3 py-1.5 bg-white/10 rounded-full text-white/80 border border-white/10">
+                      {feature}
+                    </span>
+                  ))}
+                </div>
+                
+                <Button asChild size="xl" variant="gold" className="group">
+                  <Link to="/leggings-features">
+                    <span>Explore All Features</span>
+                    <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+                  </Link>
+                </Button>
+              </div>
+              
+              {/* Image Grid */}
+              <div className="relative grid grid-cols-2 gap-4">
+                <div className="space-y-4">
+                  <img
+                    src={leggingsYogaPose}
+                    alt="Yoga flexibility"
+                    className="w-full h-48 object-cover rounded-xl"
+                  />
+                  <img
+                    src={leggingsAthletic}
+                    alt="Athletic performance"
+                    className="w-full h-32 object-cover rounded-xl"
+                  />
+                </div>
+                <div className="space-y-4 pt-8">
+                  <img
+                    src={leggingsProfessional}
+                    alt="Professional style"
+                    className="w-full h-32 object-cover rounded-xl"
+                  />
+                  <img
+                    src={womenLeggingsFeatured}
+                    alt="Featured leggings"
+                    className="w-full h-48 object-cover rounded-xl"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Category Grid */}
       <section className="py-20 lg:py-32">
         <div className="container mx-auto px-6 lg:px-12">
