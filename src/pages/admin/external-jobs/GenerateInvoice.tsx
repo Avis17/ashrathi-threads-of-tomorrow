@@ -7,6 +7,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -23,6 +24,14 @@ import signature from "@/assets/signature.png";
 import { toast } from "sonner";
 import { InvoiceLayoutEditor } from "@/components/admin/invoice-editor/InvoiceLayoutEditor";
 
+interface Payment {
+  id: string;
+  payment_amount: number;
+  payment_date: string;
+  payment_mode: string | null;
+  notes: string | null;
+}
+
 const GenerateInvoice = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -36,6 +45,7 @@ const GenerateInvoice = () => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [showLayoutEditor, setShowLayoutEditor] = useState(false);
   const [invoiceDate, setInvoiceDate] = useState<Date | undefined>(undefined);
+  const [includeAdvancePayments, setIncludeAdvancePayments] = useState(false);
   
   // Company account details
   const [bankName, setBankName] = useState("Kotak Mahindra Bank");
@@ -46,6 +56,21 @@ const GenerateInvoice = () => {
   // Personal account details
   const [phoneNumber, setPhoneNumber] = useState("9629336553");
   const [upiId, setUpiId] = useState("pvadivelsiva1@ybl");
+
+  // Fetch advance payments
+  const { data: payments = [] } = useQuery({
+    queryKey: ['external-job-payments', id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('external_job_payments')
+        .select('*')
+        .eq('job_order_id', id)
+        .order('payment_date', { ascending: true });
+      if (error) throw error;
+      return data as Payment[];
+    },
+    enabled: !!id,
+  });
   
   // Set default invoice date to delivery date when jobOrder loads
   useEffect(() => {
@@ -53,6 +78,14 @@ const GenerateInvoice = () => {
       setInvoiceDate(new Date(jobOrder.delivery_date));
     }
   }, [jobOrder?.delivery_date]);
+
+  // Auto-detect GST from job order when loaded
+  useEffect(() => {
+    if (jobOrder && jobOrder.gst_percentage && jobOrder.gst_percentage > 0) {
+      setInvoiceType("with_gst");
+      setGstRate(jobOrder.gst_percentage.toString());
+    }
+  }, [jobOrder]);
 
   const { data: invoiceSettings } = useQuery({
     queryKey: ['job-order-invoice-settings'],
@@ -87,6 +120,8 @@ const GenerateInvoice = () => {
       queryClient.invalidateQueries({ queryKey: ['job-order-invoice-settings'] });
     },
   });
+
+  const totalAdvancePayments = payments.reduce((sum, p) => sum + p.payment_amount, 0);
 
   const createPDF = (returnBlob: boolean = false): jsPDF | string => {
     if (!jobOrder) return new jsPDF();
@@ -205,7 +240,7 @@ const GenerateInvoice = () => {
       },
     });
 
-    const finalY = (doc as any).lastAutoTable.finalY + 5;
+    let finalY = (doc as any).lastAutoTable.finalY + 5;
 
     // Summary section
     if (invoiceType === "with_gst") {
@@ -214,38 +249,71 @@ const GenerateInvoice = () => {
       doc.text(`SGST @ ${parseFloat(gstRate) / 2}%: ${formatCurrencyAscii(sgstAmount)}`, pageWidth - 14, finalY + 10, { align: "right" });
       doc.setFont("helvetica", "bold");
       doc.text(`Total: ${formatCurrencyAscii(total)}`, pageWidth - 14, finalY + 18, { align: "right" });
+      finalY += 18;
     } else {
       doc.setFont("helvetica", "bold");
       doc.text(`Total: ${formatCurrencyAscii(total)}`, pageWidth - 14, finalY, { align: "right" });
     }
 
+    // Advance payments section (if enabled and payments exist)
+    let balanceDue = total;
+    if (includeAdvancePayments && payments.length > 0) {
+      finalY += 10;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      doc.text("Advance Payments Received:", 14, finalY);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      
+      let paymentY = finalY + 5;
+      payments.forEach((payment, index) => {
+        const paymentDate = format(new Date(payment.payment_date), 'dd-MM-yyyy');
+        const paymentMode = payment.payment_mode ? ` (${payment.payment_mode.replace('_', ' ')})` : '';
+        doc.text(`${index + 1}. ${paymentDate}${paymentMode}: ${formatCurrencyAscii(payment.payment_amount)}`, 18, paymentY);
+        paymentY += 5;
+      });
+      
+      doc.setFont("helvetica", "bold");
+      doc.text(`Total Advance Paid: ${formatCurrencyAscii(totalAdvancePayments)}`, 14, paymentY + 2);
+      
+      balanceDue = total - totalAdvancePayments;
+      doc.setFontSize(11);
+      doc.setTextColor(balanceDue > 0 ? 180 : 0, balanceDue > 0 ? 0 : 128, 0);
+      doc.text(`Balance Due: ${formatCurrencyAscii(balanceDue)}`, pageWidth - 14, paymentY + 2, { align: "right" });
+      doc.setTextColor(0, 0, 0);
+      
+      finalY = paymentY + 5;
+    }
+
     // Amount in words
     doc.setFont("helvetica", "italic");
     doc.setFontSize(9);
-    const amountInWords = numberToWords(Math.round(total));
-    doc.text(`Amount in words: ${amountInWords} Rupees Only`, 14, finalY + 25);
+    const amountForWords = includeAdvancePayments && payments.length > 0 ? balanceDue : total;
+    const amountLabel = includeAdvancePayments && payments.length > 0 ? "Balance amount in words" : "Amount in words";
+    const amountInWords = numberToWords(Math.round(Math.abs(amountForWords)));
+    doc.text(`${amountLabel}: ${amountInWords} Rupees Only`, 14, finalY + 10);
 
     // Payment details
     doc.setFont("helvetica", "bold");
     doc.setFontSize(10);
-    doc.text("Payment Details:", 14, finalY + 35);
+    doc.text("Payment Details:", 14, finalY + 20);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     
     if (accountType === "company") {
-      doc.text(`Bank: ${bankName}`, 14, finalY + 40);
-      doc.text(`A/c: ${accountNumber}`, 14, finalY + 45);
-      doc.text(`IFSC: ${ifscCode}`, 14, finalY + 50);
-      doc.text(`Branch: ${branch}`, 14, finalY + 55);
+      doc.text(`Bank: ${bankName}`, 14, finalY + 25);
+      doc.text(`A/c: ${accountNumber}`, 14, finalY + 30);
+      doc.text(`IFSC: ${ifscCode}`, 14, finalY + 35);
+      doc.text(`Branch: ${branch}`, 14, finalY + 40);
     } else {
-      doc.text(`Phone/GPay/PhonePe: ${phoneNumber}`, 14, finalY + 40);
-      doc.text(`UPI ID: ${upiId}`, 14, finalY + 45);
+      doc.text(`Phone/GPay/PhonePe: ${phoneNumber}`, 14, finalY + 25);
+      doc.text(`UPI ID: ${upiId}`, 14, finalY + 30);
     }
 
     // Signature
-    doc.addImage(signature, "PNG", pageWidth - 50, finalY + 35, 35, 20);
+    doc.addImage(signature, "PNG", pageWidth - 50, finalY + 20, 35, 20);
     doc.setFont("helvetica", "bold");
-    doc.text("Authorized Signatory", pageWidth - 32, finalY + 60, { align: "center" });
+    doc.text("Authorized Signatory", pageWidth - 32, finalY + 45, { align: "center" });
 
     // Footer
     doc.setFontSize(8);
@@ -369,6 +437,12 @@ const GenerateInvoice = () => {
 
           <div>
             <Label className="mb-3 block">Invoice Type</Label>
+            {jobOrder && jobOrder.gst_percentage && jobOrder.gst_percentage > 0 && (
+              <p className="text-xs text-blue-600 mb-2 flex items-center gap-1">
+                <span className="inline-block w-2 h-2 bg-blue-600 rounded-full"></span>
+                GST ({jobOrder.gst_percentage}%) applied in job order - pre-filled below
+              </p>
+            )}
             <RadioGroup value={invoiceType} onValueChange={(value: any) => setInvoiceType(value)}>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="without_gst" id="without_gst" />
@@ -390,6 +464,9 @@ const GenerateInvoice = () => {
                 onChange={(e) => setGstRate(e.target.value)}
                 className="mt-2"
               />
+              <p className="text-xs text-muted-foreground mt-1">
+                CGST: {parseFloat(gstRate) / 2}% + SGST: {parseFloat(gstRate) / 2}%
+              </p>
             </div>
           )}
 
@@ -469,6 +546,49 @@ const GenerateInvoice = () => {
             </div>
           )}
 
+          {/* Advance Payments Toggle */}
+          {payments.length > 0 && (
+            <div className="space-y-4 p-4 border rounded-lg bg-blue-50 dark:bg-blue-950/20">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-sm font-semibold">Include Advance Payments</Label>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Deduct advance payments from total and show balance due
+                  </p>
+                </div>
+                <Switch 
+                  checked={includeAdvancePayments} 
+                  onCheckedChange={setIncludeAdvancePayments}
+                />
+              </div>
+              
+              {includeAdvancePayments && (
+                <div className="mt-4 space-y-2">
+                  <h4 className="text-sm font-medium">Payment History</h4>
+                  <div className="bg-white dark:bg-gray-900 rounded-lg border p-3 space-y-2">
+                    {payments.map((payment, index) => (
+                      <div key={payment.id} className="flex justify-between text-sm py-1 border-b last:border-0">
+                        <span className="text-muted-foreground">
+                          {index + 1}. {format(new Date(payment.payment_date), 'dd MMM yyyy')}
+                          {payment.payment_mode && (
+                            <span className="ml-1 text-xs bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded">
+                              {payment.payment_mode.replace('_', ' ')}
+                            </span>
+                          )}
+                        </span>
+                        <span className="font-medium text-green-600">₹{payment.payment_amount.toLocaleString()}</span>
+                      </div>
+                    ))}
+                    <div className="flex justify-between text-sm pt-2 border-t font-semibold">
+                      <span>Total Advance Paid:</span>
+                      <span className="text-green-600">₹{totalAdvancePayments.toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="pt-4 border-t">
             <h3 className="font-semibold mb-3">Invoice Summary</h3>
             {(() => {
@@ -483,6 +603,7 @@ const GenerateInvoice = () => {
               const sgstAmount = invoiceType === "with_gst" ? (baseAmount * sgstRate) / 100 : 0;
               const totalGst = cgstAmount + sgstAmount;
               const grandTotal = baseAmount + totalGst;
+              const balanceDue = grandTotal - (includeAdvancePayments ? totalAdvancePayments : 0);
 
               return (
                 <div className="space-y-2 text-sm">
@@ -529,7 +650,7 @@ const GenerateInvoice = () => {
                         <span>SGST @ {sgstRate}%:</span>
                         <span>₹{sgstAmount.toFixed(2)}</span>
                       </div>
-                      <div className="flex justify-between text-primary">
+                      <div className="flex justify-between text-blue-600">
                         <span>Total GST ({gstRateValue}%):</span>
                         <span>₹{totalGst.toFixed(2)}</span>
                       </div>
@@ -540,6 +661,22 @@ const GenerateInvoice = () => {
                     <span>Grand Total:</span>
                     <span>₹{grandTotal.toFixed(2)}</span>
                   </div>
+
+                  {includeAdvancePayments && payments.length > 0 && (
+                    <>
+                      <div className="flex justify-between text-green-600 pt-1">
+                        <span>Less: Advance Paid:</span>
+                        <span>- ₹{totalAdvancePayments.toFixed(2)}</span>
+                      </div>
+                      <div className={cn(
+                        "flex justify-between font-bold text-base pt-2 border-t-2",
+                        balanceDue > 0 ? "text-red-600" : "text-green-600"
+                      )}>
+                        <span>Balance Due:</span>
+                        <span>₹{balanceDue.toFixed(2)}</span>
+                      </div>
+                    </>
+                  )}
                 </div>
               );
             })()}
