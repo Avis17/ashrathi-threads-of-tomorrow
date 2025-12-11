@@ -92,7 +92,7 @@ const Women = () => {
                   </Link>
                 </Button>
                 <Button asChild size="xl" variant="outline" className="bg-white/10 border-white/30 text-white hover:bg-white/20">
-                  <Link to="/size-chart/womens-leggings">
+                  <Link to="/size-guide">
                     Size Guide
                   </Link>
                 </Button>
