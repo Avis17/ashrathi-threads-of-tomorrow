@@ -447,7 +447,7 @@ export default function LeggingsFeatures() {
                 </Button>
               </Link>
               
-              <Link to="/size-chart/womens-leggings">
+              <Link to="/size-guide">
                 <Button size="lg" variant="outline" className="border-2 px-12 py-7 text-lg rounded-full bg-background/50 backdrop-blur-sm hover:bg-background/80">
                   Find Your Size
                 </Button>

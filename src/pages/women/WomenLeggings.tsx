@@ -95,7 +95,7 @@ export default function WomenLeggings() {
               Get in Touch
             </a>
             <a
-              href="/size-chart/womens-leggings"
+              href="/size-guide"
               className="inline-block bg-primary text-primary-foreground px-8 py-4 rounded-lg font-semibold text-lg hover:bg-primary/90 transition-colors shadow-lg"
             >
               📏 Interactive Size Chart

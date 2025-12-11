@@ -81,7 +81,7 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/size-chart/womens-leggings" className="text-sm text-primary-foreground/80 hover:text-accent transition-colors">
+                <Link to="/size-guide" className="text-sm text-primary-foreground/80 hover:text-accent transition-colors">
                   Size Guide
                 </Link>
               </li>
