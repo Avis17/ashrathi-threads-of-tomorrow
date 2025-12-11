@@ -53,15 +53,21 @@ export const JobOrderDetails = ({ jobOrderId, onBack }: JobOrderDetailsProps) =>
   };
 
   const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      planned: { label: "Planned", variant: "secondary" as const },
-      in_progress: { label: "In Progress", variant: "default" as const },
-      completed: { label: "Completed", variant: "outline" as const },
-      delivered: { label: "Delivered", variant: "outline" as const },
-      cancelled: { label: "Cancelled", variant: "destructive" as const },
+    const colorClasses: Record<string, string> = {
+      planned: "bg-gray-500 text-white hover:bg-gray-600",
+      in_progress: "bg-blue-500 text-white hover:bg-blue-600",
+      completed: "bg-green-500 text-white hover:bg-green-600",
+      delivered: "bg-emerald-500 text-white hover:bg-emerald-600",
+      cancelled: "bg-red-500 text-white hover:bg-red-600",
     };
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.planned;
-    return <Badge variant={config.variant}>{config.label}</Badge>;
+    const labels: Record<string, string> = {
+      planned: "Planned",
+      in_progress: "In Progress",
+      completed: "Completed",
+      delivered: "Delivered",
+      cancelled: "Cancelled",
+    };
+    return <Badge className={colorClasses[status] || "bg-gray-500 text-white"}>{labels[status] || status}</Badge>;
   };
 
   const markAsCompleted = () => {

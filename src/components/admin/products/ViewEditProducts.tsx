@@ -247,7 +247,7 @@ export function ViewEditProducts() {
                   <TableCell className="font-medium">{product.name}</TableCell>
                   <TableCell>{product.category}</TableCell>
                   <TableCell>
-                    <Badge variant={product.quality_tier === 'elite' ? 'default' : 'secondary'}>
+                    <Badge className={product.quality_tier === 'elite' ? "bg-violet-500 text-white" : "bg-teal-500 text-white"}>
                       {product.quality_tier === 'elite' ? '💎 Elite' : '🌿 Smart Basics'}
                     </Badge>
                   </TableCell>
@@ -265,10 +265,10 @@ export function ViewEditProducts() {
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-1">
-                      <Badge variant={product.is_active ? 'default' : 'secondary'}>
+                      <Badge className={product.is_active ? "bg-green-500 text-white" : "bg-gray-400 text-white"}>
                         {product.is_active ? 'Active' : 'Inactive'}
                       </Badge>
-                      {product.is_featured && <Badge>Featured</Badge>}
+                      {product.is_featured && <Badge className="bg-amber-500 text-white">Featured</Badge>}
                     </div>
                   </TableCell>
                   <TableCell className="text-right">

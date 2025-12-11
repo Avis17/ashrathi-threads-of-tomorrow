@@ -57,7 +57,7 @@ export const SettlementDetailsDialog = ({ settlement, open, onClose }: Settlemen
               </div>
               <div>
                 <span className="text-muted-foreground">Status:</span>
-                <Badge variant={settlement.payment_status === 'paid' ? 'default' : 'secondary'}>
+                <Badge className={settlement.payment_status === 'paid' ? 'bg-green-500 text-white' : 'bg-amber-500 text-white'}>
                   {settlement.payment_status}
                 </Badge>
               </div>

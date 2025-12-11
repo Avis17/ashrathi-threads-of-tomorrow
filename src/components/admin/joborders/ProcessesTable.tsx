@@ -53,12 +53,17 @@ export const ProcessesTable = ({ jobOrderId, processes }: ProcessesTableProps) =
   };
 
   const getStatusBadge = (status: string) => {
-    const config = {
-      pending: { label: "Pending", variant: "secondary" as const },
-      in_progress: { label: "In Progress", variant: "default" as const },
-      completed: { label: "Completed", variant: "outline" as const },
+    const colorClasses: Record<string, string> = {
+      pending: "bg-amber-500 text-white hover:bg-amber-600",
+      in_progress: "bg-blue-500 text-white hover:bg-blue-600",
+      completed: "bg-green-500 text-white hover:bg-green-600",
     };
-    return <Badge variant={config[status as keyof typeof config]?.variant || "secondary"}>{config[status as keyof typeof config]?.label || status}</Badge>;
+    const labels: Record<string, string> = {
+      pending: "Pending",
+      in_progress: "In Progress",
+      completed: "Completed",
+    };
+    return <Badge className={colorClasses[status] || "bg-gray-500 text-white"}>{labels[status] || status}</Badge>;
   };
 
   return (

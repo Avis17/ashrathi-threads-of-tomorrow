@@ -179,7 +179,7 @@ const ContactInquiries = () => {
                     </p>
                   </div>
                   <div className="flex flex-col gap-2">
-                    <Badge variant={inquiry.status === 'new' ? 'default' : 'secondary'}>
+                    <Badge className={inquiry.status === 'new' ? 'bg-blue-500 text-white' : inquiry.status === 'completed' ? 'bg-green-500 text-white' : 'bg-amber-500 text-white'}>
                       {inquiry.status}
                     </Badge>
                     <Select

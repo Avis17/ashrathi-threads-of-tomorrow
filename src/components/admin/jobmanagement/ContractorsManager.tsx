@@ -79,7 +79,7 @@ const ContractorsManager = () => {
                   <h3 className="font-semibold text-lg">{contractor.contractor_name}</h3>
                   <p className="text-sm text-muted-foreground">{contractor.contractor_code}</p>
                 </div>
-                <Badge variant={contractor.is_active ? "default" : "secondary"}>
+                <Badge className={contractor.is_active ? "bg-green-500 text-white" : "bg-gray-400 text-white"}>
                   {contractor.is_active ? 'Active' : 'Inactive'}
                 </Badge>
               </div>

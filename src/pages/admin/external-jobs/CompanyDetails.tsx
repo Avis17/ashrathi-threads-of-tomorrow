@@ -710,7 +710,7 @@ const CompanyDetails = () => {
 
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">Status</p>
-                  <Badge variant={company.is_active ? "default" : "destructive"}>
+                  <Badge className={company.is_active ? "bg-green-500 text-white" : "bg-red-500 text-white"}>
                     {company.is_active ? "Active" : "Inactive"}
                   </Badge>
                 </div>
