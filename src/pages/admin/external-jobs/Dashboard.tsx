@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, DollarSign, FileText, TrendingUp, Clock, Package, Percent, Calculator, Users } from "lucide-react";
+import { ArrowLeft, DollarSign, FileText, TrendingUp, Clock, Package, Percent, Calculator, Users, Eye, EyeOff, Wallet, BadgeIndianRupee } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,7 +14,12 @@ import {
 
 const COLORS = ['#10b981', '#f59e0b', '#ef4444', '#6366f1', '#8b5cf6', '#ec4899'];
 
+const formatAmount = (amount: number, visible: boolean) => {
+  return visible ? `₹${amount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}` : '₹****';
+};
+
 const Dashboard = () => {
+  const [amountsVisible, setAmountsVisible] = useState(false);
   const navigate = useNavigate();
   const { data: stats, isLoading } = useExternalJobOrderStats();
 
@@ -98,8 +104,21 @@ const Dashboard = () => {
         </div>
       </div>
 
+      {/* Privacy Toggle */}
+      <div className="flex justify-end">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setAmountsVisible(!amountsVisible)}
+          className="gap-2"
+        >
+          {amountsVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          {amountsVisible ? 'Hide Amounts' : 'Show Amounts'}
+        </Button>
+      </div>
+
       {/* Stats Cards - Row 1 */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <Card className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 border-blue-200 dark:border-blue-800">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-blue-500/20 rounded-lg">
@@ -131,7 +150,7 @@ const Dashboard = () => {
             </div>
             <div>
               <p className="text-sm text-emerald-700 dark:text-emerald-300">Total Amount</p>
-              <p className="text-2xl font-bold text-emerald-900 dark:text-emerald-100">₹{safeStats.totalAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
+              <p className="text-2xl font-bold text-emerald-900 dark:text-emerald-100">{formatAmount(safeStats.totalAmount, amountsVisible)}</p>
             </div>
           </div>
         </Card>
@@ -143,14 +162,11 @@ const Dashboard = () => {
             </div>
             <div>
               <p className="text-sm text-green-700 dark:text-green-300">Amount Received</p>
-              <p className="text-2xl font-bold text-green-900 dark:text-green-100">₹{safeStats.paidAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
+              <p className="text-2xl font-bold text-green-900 dark:text-green-100">{formatAmount(safeStats.paidAmount, amountsVisible)}</p>
             </div>
           </div>
         </Card>
-      </div>
 
-      {/* Stats Cards - Row 2 */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="p-6 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950 dark:to-orange-900 border-orange-200 dark:border-orange-800">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-orange-500/20 rounded-lg">
@@ -158,23 +174,14 @@ const Dashboard = () => {
             </div>
             <div>
               <p className="text-sm text-orange-700 dark:text-orange-300">Pending Amount</p>
-              <p className="text-2xl font-bold text-orange-900 dark:text-orange-100">₹{safeStats.pendingAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
+              <p className="text-2xl font-bold text-orange-900 dark:text-orange-100">{formatAmount(safeStats.pendingAmount, amountsVisible)}</p>
             </div>
           </div>
         </Card>
+      </div>
 
-        <Card className="p-6 bg-gradient-to-br from-pink-50 to-pink-100 dark:from-pink-950 dark:to-pink-900 border-pink-200 dark:border-pink-800">
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-pink-500/20 rounded-lg">
-              <Users className="h-6 w-6 text-pink-600 dark:text-pink-400" />
-            </div>
-            <div>
-              <p className="text-sm text-pink-700 dark:text-pink-300">Total Commission</p>
-              <p className="text-2xl font-bold text-pink-900 dark:text-pink-100">₹{safeStats.totalCommission.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
-            </div>
-          </div>
-        </Card>
-
+      {/* Stats Cards - Row 2 */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <Card className="p-6 bg-gradient-to-br from-teal-50 to-teal-100 dark:from-teal-950 dark:to-teal-900 border-teal-200 dark:border-teal-800">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-teal-500/20 rounded-lg">
@@ -182,7 +189,43 @@ const Dashboard = () => {
             </div>
             <div>
               <p className="text-sm text-teal-700 dark:text-teal-300">Gross Profit</p>
-              <p className="text-2xl font-bold text-teal-900 dark:text-teal-100">₹{safeStats.grossProfit.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
+              <p className="text-2xl font-bold text-teal-900 dark:text-teal-100">{formatAmount(safeStats.grossProfit, amountsVisible)}</p>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="p-6 bg-gradient-to-br from-cyan-50 to-cyan-100 dark:from-cyan-950 dark:to-cyan-900 border-cyan-200 dark:border-cyan-800">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-cyan-500/20 rounded-lg">
+              <Wallet className="h-6 w-6 text-cyan-600 dark:text-cyan-400" />
+            </div>
+            <div>
+              <p className="text-sm text-cyan-700 dark:text-cyan-300">Company Profit</p>
+              <p className="text-2xl font-bold text-cyan-900 dark:text-cyan-100">{formatAmount(safeStats.grossProfit, amountsVisible)}</p>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="p-6 bg-gradient-to-br from-pink-50 to-pink-100 dark:from-pink-950 dark:to-pink-900 border-pink-200 dark:border-pink-800">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-pink-500/20 rounded-lg">
+              <BadgeIndianRupee className="h-6 w-6 text-pink-600 dark:text-pink-400" />
+            </div>
+            <div>
+              <p className="text-sm text-pink-700 dark:text-pink-300">Commission Paid</p>
+              <p className="text-2xl font-bold text-pink-900 dark:text-pink-100">{formatAmount(safeStats.totalCommission, amountsVisible)}</p>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="p-6 bg-gradient-to-br from-rose-50 to-rose-100 dark:from-rose-950 dark:to-rose-900 border-rose-200 dark:border-rose-800">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-rose-500/20 rounded-lg">
+              <Users className="h-6 w-6 text-rose-600 dark:text-rose-400" />
+            </div>
+            <div>
+              <p className="text-sm text-rose-700 dark:text-rose-300">Operations Cost</p>
+              <p className="text-2xl font-bold text-rose-900 dark:text-rose-100">{formatAmount(safeStats.totalOperationsCost, amountsVisible)}</p>
             </div>
           </div>
         </Card>
@@ -194,7 +237,7 @@ const Dashboard = () => {
             </div>
             <div>
               <p className="text-sm text-indigo-700 dark:text-indigo-300">Avg Order Value</p>
-              <p className="text-2xl font-bold text-indigo-900 dark:text-indigo-100">₹{parseFloat(avgOrderValue).toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
+              <p className="text-2xl font-bold text-indigo-900 dark:text-indigo-100">{formatAmount(parseFloat(avgOrderValue), amountsVisible)}</p>
             </div>
           </div>
         </Card>
