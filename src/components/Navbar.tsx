@@ -37,14 +37,27 @@ const Navbar = () => {
   ];
 
   const isActive = (path: string) => location.pathname === path;
-  const isHomePage = location.pathname === "/" || location.pathname === "/home";
+  
+  // Pages with dark hero backgrounds where text should be white when not scrolled
+  const darkHeroPages = ["/", "/home", "/women", "/men", "/collections", "/about"];
+  const hasDarkHero = darkHeroPages.includes(location.pathname);
+  
+  // Determine text color based on scroll state and page type
+  const getTextColorClass = (isActiveLink: boolean = false) => {
+    if (isActiveLink) return "text-accent";
+    if (isScrolled) return "text-foreground";
+    if (hasDarkHero) return "text-white";
+    return "text-foreground";
+  };
 
   return (
     <nav 
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        isScrolled || !isHomePage
+        isScrolled
           ? "bg-background/98 backdrop-blur-md border-b border-border shadow-sm"
-          : "bg-transparent"
+          : hasDarkHero 
+            ? "bg-transparent"
+            : "bg-background/98 backdrop-blur-md border-b border-border"
       }`}
     >
       <div className="container mx-auto px-6">
@@ -56,9 +69,7 @@ const Navbar = () => {
                 key={link.path}
                 to={link.path}
                 className={`text-sm font-medium tracking-wide transition-all duration-300 hover:text-accent ${
-                  isActive(link.path) 
-                    ? "text-accent" 
-                    : isScrolled || !isHomePage ? "text-foreground" : "text-foreground"
+                  getTextColorClass(isActive(link.path))
                 }`}
               >
                 {link.name.toUpperCase()}
@@ -69,7 +80,7 @@ const Navbar = () => {
           {/* Center - Logo */}
           <Link to="/" className="absolute left-1/2 -translate-x-1/2 lg:static lg:translate-x-0 lg:mx-auto">
             <h1 className={`text-xl font-semibold tracking-[0.3em] transition-colors duration-300 ${
-              isScrolled || !isHomePage ? "text-foreground" : "text-foreground"
+              getTextColorClass()
             }`}>
               FEATHER
             </h1>
@@ -78,7 +89,7 @@ const Navbar = () => {
           {/* Right - Actions */}
           <div className="hidden lg:flex items-center space-x-6">
             <button className={`transition-colors duration-300 hover:text-accent ${
-              isScrolled || !isHomePage ? "text-foreground" : "text-foreground"
+              getTextColorClass()
             }`}>
               <Search className="h-5 w-5" />
             </button>
@@ -89,7 +100,7 @@ const Navbar = () => {
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button className={`transition-colors duration-300 hover:text-accent ${
-                      isScrolled || !isHomePage ? "text-foreground" : "text-foreground"
+                      getTextColorClass()
                     }`}>
                       <User className="h-5 w-5" />
                     </button>
@@ -122,7 +133,7 @@ const Navbar = () => {
               <Link 
                 to="/auth"
                 className={`text-sm font-medium tracking-wide transition-colors duration-300 hover:text-accent ${
-                  isScrolled || !isHomePage ? "text-foreground" : "text-foreground"
+                  getTextColorClass()
                 }`}
               >
                 SIGN IN
@@ -134,7 +145,7 @@ const Navbar = () => {
           <button
             onClick={() => setIsOpen(!isOpen)}
             className={`lg:hidden p-2 transition-colors ${
-              isScrolled || !isHomePage ? "text-foreground" : "text-foreground"
+              getTextColorClass()
             }`}
           >
             {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}

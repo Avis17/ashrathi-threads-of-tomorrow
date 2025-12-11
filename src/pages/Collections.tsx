@@ -3,12 +3,12 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Star, Sparkles, Crown, Gem } from "lucide-react";
 
 // Import images
-import heroLuxury1 from "@/assets/hero-luxury-1.jpg";
-import heroLuxury2 from "@/assets/hero-luxury-2.jpg";
-import heroLuxury3 from "@/assets/hero-luxury-3.jpg";
+import collectionsHero from "@/assets/collections-hero.jpg";
+import collectionsWomenActivewear from "@/assets/collections-women-activewear.jpg";
+import collectionsMenSportswear from "@/assets/collections-men-sportswear.jpg";
+import collectionsWinterAthleisure from "@/assets/collections-winter-athleisure.jpg";
+import collectionsSeamlessInnerwear from "@/assets/collections-seamless-innerwear.jpg";
 import heroLuxury4 from "@/assets/hero-luxury-4.jpg";
-import heroModelWoman1 from "@/assets/hero-model-woman-1.jpg";
-import heroModelMan1 from "@/assets/hero-model-man-1.jpg";
 
 const Collections = () => {
   const featuredCollections = [
@@ -16,7 +16,7 @@ const Collections = () => {
       title: "Women's Activewear",
       subtitle: "Sculpt & Support",
       description: "Premium leggings, sports bras, and yoga sets designed for the modern woman",
-      image: heroModelWoman1,
+      image: collectionsWomenActivewear,
       link: "/women",
       badge: "Bestseller"
     },
@@ -24,7 +24,7 @@ const Collections = () => {
       title: "Men's Sportswear",
       subtitle: "Performance Driven",
       description: "Gym tees, joggers, and training shorts built for peak performance",
-      image: heroModelMan1,
+      image: collectionsMenSportswear,
       link: "/men",
       badge: "New Arrivals"
     },
@@ -32,7 +32,7 @@ const Collections = () => {
       title: "Winter Athleisure",
       subtitle: "Cozy & Stylish",
       description: "Premium sweaters and hoodies for cold-weather comfort",
-      image: heroLuxury2,
+      image: collectionsWinterAthleisure,
       link: "/shop?category=winter",
       badge: "Seasonal"
     },
@@ -40,7 +40,7 @@ const Collections = () => {
       title: "Seamless Innerwear",
       subtitle: "Invisible Comfort",
       description: "Ultra-soft seamless innerwear for all-day comfort",
-      image: heroLuxury3,
+      image: collectionsSeamlessInnerwear,
       link: "/shop?category=innerwear",
       badge: "Premium"
     }
@@ -75,11 +75,11 @@ const Collections = () => {
       <section className="relative h-[85vh] overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src={heroLuxury1}
+            src={collectionsHero}
             alt="Collections"
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/80" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/80" />
         </div>
         
         <div className="relative z-10 h-full flex items-center justify-center text-center">
@@ -90,7 +90,7 @@ const Collections = () => {
             <h1 className="text-5xl md:text-7xl lg:text-8xl font-serif text-white mb-6 leading-[1.1] animate-fade-in-up">
               Our Collections
             </h1>
-            <p className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto mb-8 animate-fade-in-up">
+            <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto mb-8 animate-fade-in-up">
               Discover curated collections designed for every moment of your active lifestyle. 
               From studio to street, we've got you covered.
             </p>
@@ -194,7 +194,7 @@ const Collections = () => {
             alt="Premium Quality"
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-black/70" />
+          <div className="absolute inset-0 bg-black/75" />
         </div>
         <div className="relative z-10 container mx-auto px-6 lg:px-12 text-center">
           <p className="text-accent font-medium tracking-wide-premium uppercase text-sm mb-4">
@@ -203,7 +203,7 @@ const Collections = () => {
           <h2 className="text-4xl md:text-6xl font-serif text-white max-w-4xl mx-auto leading-tight mb-8">
             "Quality is not an act, it's a habit. Every stitch tells our story."
           </h2>
-          <p className="text-white/80 text-lg max-w-2xl mx-auto">
+          <p className="text-white/90 text-lg max-w-2xl mx-auto">
             At Feather Fashions, we're committed to delivering premium activewear 
             that combines style, comfort, and performance.
           </p>
@@ -250,10 +250,10 @@ const Collections = () => {
       {/* CTA Section */}
       <section className="py-20 lg:py-32 bg-primary text-white">
         <div className="container mx-auto px-6 lg:px-12 text-center">
-          <h2 className="text-4xl md:text-5xl font-serif mb-6">
+          <h2 className="text-4xl md:text-5xl font-serif text-white mb-6">
             Find Your Perfect Fit
           </h2>
-          <p className="text-white/80 text-lg max-w-2xl mx-auto mb-8">
+          <p className="text-white/90 text-lg max-w-2xl mx-auto mb-8">
             Browse our complete catalog and discover activewear designed for your lifestyle.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
