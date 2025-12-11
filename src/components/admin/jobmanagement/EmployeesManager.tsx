@@ -145,7 +145,7 @@ const EmployeesManager = () => {
                       <h3 className="font-semibold text-lg">{employee.name}</h3>
                       <p className="text-sm text-muted-foreground">{employee.employee_code}</p>
                     </div>
-                    <Badge variant={employee.employee_type === 'direct' ? 'default' : 'secondary'}>
+                    <Badge className={employee.employee_type === 'direct' ? "bg-blue-500 text-white" : "bg-purple-500 text-white"}>
                       {employee.employee_type === 'direct' ? 'Direct' : 'Contract'}
                     </Badge>
                   </div>
@@ -187,7 +187,7 @@ const EmployeesManager = () => {
                   </div>
 
                   <div className="flex items-center gap-2 pt-2 border-t">
-                    <Badge variant={employee.is_active ? 'default' : 'secondary'}>
+                    <Badge className={employee.is_active ? "bg-green-500 text-white" : "bg-gray-400 text-white"}>
                       {employee.is_active ? 'Active' : 'Inactive'}
                     </Badge>
                     <div className="ml-auto flex gap-1">

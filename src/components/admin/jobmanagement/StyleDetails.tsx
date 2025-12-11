@@ -153,7 +153,7 @@ const StyleDetails = ({ style, open, onClose, onEdit }: StyleDetailsProps) => {
 
           {/* Status Badge */}
           <div className="flex items-center gap-2">
-            <Badge variant={style.is_active ? 'default' : 'secondary'}>
+            <Badge className={style.is_active ? 'bg-green-500 text-white' : 'bg-gray-400 text-white'}>
               {style.is_active ? 'Active' : 'Inactive'}
             </Badge>
           </div>

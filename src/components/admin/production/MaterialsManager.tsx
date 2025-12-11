@@ -64,12 +64,12 @@ export const MaterialsManager = () => {
                   <td className="p-2 text-right">{material.reorder_level}</td>
                   <td className="p-2 text-center">
                     {material.is_active ? (
-                      <Badge variant="default">Active</Badge>
+                      <Badge className="bg-green-500 text-white">Active</Badge>
                     ) : (
-                      <Badge variant="secondary">Inactive</Badge>
+                      <Badge className="bg-gray-400 text-white">Inactive</Badge>
                     )}
                     {material.available_stock <= material.reorder_level && (
-                      <Badge variant="destructive" className="ml-2">
+                      <Badge className="bg-red-500 text-white ml-2">
                         Low Stock
                       </Badge>
                     )}

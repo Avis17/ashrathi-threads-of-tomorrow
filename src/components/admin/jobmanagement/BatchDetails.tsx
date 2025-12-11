@@ -112,10 +112,10 @@ const BatchDetails = ({ batchId }: BatchDetailsProps) => {
                       {isCompleted ? (
                         <>
                           <span className="font-semibold text-green-600">{section.qty} pieces</span>
-                          <Badge variant="default" className="bg-green-500">Completed</Badge>
+                          <Badge className="bg-green-500 text-white">Completed</Badge>
                         </>
                       ) : (
-                        <Badge variant="secondary">Pending</Badge>
+                        <Badge className="bg-amber-500 text-white">Pending</Badge>
                       )}
                     </div>
                   </div>

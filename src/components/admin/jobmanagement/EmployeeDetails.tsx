@@ -169,7 +169,7 @@ const EmployeeDetails = ({ employeeId, onClose, onEdit }: EmployeeDetailsProps) 
               <div className="flex items-center gap-2">
                 <User className="h-4 w-4 text-muted-foreground" />
                 <span className="text-muted-foreground">Type:</span>
-                <Badge variant={employee.employee_type === 'direct' ? 'default' : 'secondary'}>
+                <Badge className={employee.employee_type === 'direct' ? 'bg-blue-500 text-white' : 'bg-purple-500 text-white'}>
                   {employee.employee_type}
                 </Badge>
               </div>

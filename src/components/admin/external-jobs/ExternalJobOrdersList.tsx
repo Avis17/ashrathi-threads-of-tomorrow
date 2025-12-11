@@ -112,27 +112,29 @@ export const ExternalJobOrdersList = () => {
   }, [filteredOrders]);
 
   const getPaymentStatusBadge = (status: string) => {
-    const variants: Record<string, "default" | "secondary" | "destructive"> = {
-      paid: "default",
-      partial: "secondary",
-      unpaid: "destructive",
+    const colorClasses: Record<string, string> = {
+      paid: "bg-green-500 text-white hover:bg-green-600",
+      partial: "bg-amber-500 text-white hover:bg-amber-600",
+      unpaid: "bg-red-500 text-white hover:bg-red-600",
+      delayed: "bg-orange-500 text-white hover:bg-orange-600",
+      hold: "bg-gray-500 text-white hover:bg-gray-600",
     };
     return (
-      <Badge variant={variants[status] || "default"}>
+      <Badge className={colorClasses[status] || "bg-gray-500 text-white"}>
         {status.toUpperCase()}
       </Badge>
     );
   };
 
   const getJobStatusBadge = (status: string) => {
-    const variants: Record<string, "default" | "secondary" | "destructive"> = {
-      completed: "default",
-      in_progress: "secondary",
-      pending: "secondary",
-      cancelled: "destructive",
+    const colorClasses: Record<string, string> = {
+      completed: "bg-green-500 text-white hover:bg-green-600",
+      in_progress: "bg-blue-500 text-white hover:bg-blue-600",
+      pending: "bg-amber-500 text-white hover:bg-amber-600",
+      cancelled: "bg-red-500 text-white hover:bg-red-600",
     };
     return (
-      <Badge variant={variants[status] || "default"}>
+      <Badge className={colorClasses[status] || "bg-gray-500 text-white"}>
         {status.replace('_', ' ').toUpperCase()}
       </Badge>
     );

@@ -136,7 +136,7 @@ const RateCards = () => {
                       ₹{card.rate_per_piece.toFixed(2)}
                     </TableCell>
                     <TableCell className="text-center">
-                      <Badge variant={card.is_active ? "default" : "secondary"}>
+                      <Badge className={card.is_active ? "bg-green-500 text-white" : "bg-gray-400 text-white"}>
                         {card.is_active ? "Active" : "Inactive"}
                       </Badge>
                     </TableCell>

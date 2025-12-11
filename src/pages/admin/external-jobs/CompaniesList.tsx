@@ -131,7 +131,7 @@ const CompaniesList = () => {
                     )}
                   </TableCell>
                   <TableCell>
-                    <Badge variant={company.is_active ? "default" : "secondary"}>
+                    <Badge className={company.is_active ? "bg-green-500 text-white" : "bg-gray-400 text-white"}>
                       {company.is_active ? "Active" : "Inactive"}
                     </Badge>
                   </TableCell>

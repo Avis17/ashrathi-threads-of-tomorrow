@@ -355,7 +355,7 @@ const RateCardDetailsDialog = ({ rateCard, open, onClose }: RateCardDetailsDialo
               </div>
               <div className="text-right">
                 <p className="text-2xl font-bold text-primary">₹{companyProfit.toFixed(2)}</p>
-                <Badge variant={companyProfit > 0 ? "default" : "destructive"}>
+                <Badge className={companyProfit > 0 ? "bg-green-500 text-white" : "bg-red-500 text-white"}>
                   {profitPercent}% Margin
                 </Badge>
               </div>
@@ -364,7 +364,7 @@ const RateCardDetailsDialog = ({ rateCard, open, onClose }: RateCardDetailsDialo
 
           {/* Status */}
           <div className="flex justify-end">
-            <Badge variant={rateCard.is_active ? "default" : "secondary"} className="text-sm">
+            <Badge className={rateCard.is_active ? "bg-green-500 text-white" : "bg-gray-400 text-white"}>
               {rateCard.is_active ? "Active" : "Inactive"}
             </Badge>
           </div>

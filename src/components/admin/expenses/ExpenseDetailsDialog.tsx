@@ -43,11 +43,11 @@ export function ExpenseDetailsDialog({ expense, open, onOpenChange }: ExpenseDet
           <div className="flex items-center justify-between pb-4 border-b">
             <h3 className="text-lg font-semibold">Status</h3>
             {expense.is_approved ? (
-              <Badge variant="default" className="bg-green-600">
+              <Badge className="bg-green-500 text-white">
                 Approved
               </Badge>
             ) : (
-              <Badge variant="secondary">Pending Approval</Badge>
+              <Badge className="bg-amber-500 text-white">Pending Approval</Badge>
             )}
           </div>
 

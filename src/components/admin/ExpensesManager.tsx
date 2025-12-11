@@ -519,11 +519,11 @@ export default function ExpensesManager() {
                     </TableCell>
                     <TableCell>
                       {expense.is_approved ? (
-                        <Badge variant="default" className="bg-green-600">
+                        <Badge className="bg-green-500 text-white">
                           Approved
                         </Badge>
                       ) : (
-                        <Badge variant="secondary">Pending</Badge>
+                        <Badge className="bg-amber-500 text-white">Pending</Badge>
                       )}
                     </TableCell>
                     <TableCell>
