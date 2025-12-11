@@ -113,7 +113,7 @@ const Collections = () => {
             {highlights.map((item, index) => (
               <div key={index} className="text-center">
                 <item.icon className="h-8 w-8 text-accent mx-auto mb-3" />
-                <h3 className="font-semibold text-foreground mb-1">{item.title}</h3>
+                <h3 className="font-semibold text-white mb-1">{item.title}</h3>
                 <p className="text-sm text-muted-foreground">{item.description}</p>
               </div>
             ))}

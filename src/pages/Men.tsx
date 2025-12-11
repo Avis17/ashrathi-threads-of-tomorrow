@@ -108,7 +108,7 @@ const Men = () => {
               <div key={index} className="flex items-center gap-3">
                 <feature.icon className="h-6 w-6 text-accent" />
                 <div>
-                  <p className="font-semibold text-foreground">{feature.title}</p>
+                  <p className="font-semibold text-white">{feature.title}</p>
                   <p className="text-sm text-muted-foreground">{feature.description}</p>
                 </div>
               </div>
