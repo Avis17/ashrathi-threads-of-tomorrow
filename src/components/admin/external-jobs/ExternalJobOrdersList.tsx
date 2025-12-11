@@ -1,7 +1,9 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Eye, EyeOff, Calendar, Trash2, IndianRupee, Package, TrendingUp, CreditCard } from "lucide-react";
-import { useExternalJobOrders, useDeleteExternalJobOrder } from "@/hooks/useExternalJobOrders";
+import { Search, Eye, EyeOff, Calendar, Trash2, IndianRupee, Package, TrendingUp, CreditCard, Wallet, BadgeIndianRupee } from "lucide-react";
+import { useDeleteExternalJobOrder } from "@/hooks/useExternalJobOrders";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -40,7 +42,24 @@ const formatAmount = (amount: number, visible: boolean) => {
 
 export const ExternalJobOrdersList = () => {
   const navigate = useNavigate();
-  const { data: orders, isLoading } = useExternalJobOrders();
+  const { data: orders, isLoading } = useQuery({
+    queryKey: ['external-job-orders-with-ops'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('external_job_orders')
+        .select(`
+          *,
+          external_job_companies (company_name),
+          external_job_operations (
+            *,
+            external_job_operation_categories (*)
+          )
+        `)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
   const deleteJobOrder = useDeleteExternalJobOrder();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -93,6 +112,8 @@ export const ExternalJobOrdersList = () => {
         paidAmount: 0,
         pendingAmount: 0,
         totalPieces: 0,
+        totalCommission: 0,
+        grossProfit: 0,
       };
     }
 
@@ -107,12 +128,40 @@ export const ExternalJobOrdersList = () => {
     const pendingAmount = totalAmount - paidAmount;
     const totalPieces = filteredOrders.reduce((sum, order) => sum + (order.number_of_pieces || 0), 0);
 
+    // Calculate commission and operations cost
+    let totalCommission = 0;
+    let totalOperationsCost = 0;
+    filteredOrders.forEach((order: any) => {
+      order.external_job_operations?.forEach((op: any) => {
+        const categoriesTotal = op.external_job_operation_categories
+          ?.reduce((sum: number, cat: any) => sum + cat.rate, 0) || 0;
+        
+        const commissionPercent = op.commission_percent || 0;
+        const roundOff = op.round_off || 0;
+        const adjustment = op.adjustment || 0;
+        
+        // Calculate commission
+        if (commissionPercent > 0) {
+          const commissionAmount = (categoriesTotal * commissionPercent) / 100;
+          totalCommission += commissionAmount * order.number_of_pieces;
+        }
+        
+        // Calculate operations cost
+        const operationTotal = roundOff > 0 ? roundOff : (categoriesTotal + (categoriesTotal * commissionPercent / 100) + adjustment);
+        totalOperationsCost += operationTotal * order.number_of_pieces;
+      });
+    });
+
+    const grossProfit = totalAmount - totalOperationsCost;
+
     return {
       totalOrders,
       totalAmount,
       paidAmount,
       pendingAmount,
       totalPieces,
+      totalCommission,
+      grossProfit,
     };
   }, [filteredOrders]);
 
@@ -178,7 +227,7 @@ export const ExternalJobOrdersList = () => {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         <Card className="p-4 bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0 shadow-lg">
           <div className="flex items-center justify-between">
             <div>
@@ -231,6 +280,34 @@ export const ExternalJobOrdersList = () => {
             </div>
             <div className="h-12 w-12 bg-white/20 rounded-xl flex items-center justify-center">
               <TrendingUp className="h-6 w-6" />
+            </div>
+          </div>
+        </Card>
+
+        <Card className="p-4 bg-gradient-to-br from-teal-500 to-teal-600 text-white border-0 shadow-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-teal-100 text-sm font-medium">Company Profit</p>
+              <p className="text-3xl font-bold mt-1">{formatAmount(stats.grossProfit, amountsVisible)}</p>
+              <p className="text-teal-100 text-xs mt-1">
+                {stats.totalAmount > 0 ? Math.round((stats.grossProfit / stats.totalAmount) * 100) : 0}% margin
+              </p>
+            </div>
+            <div className="h-12 w-12 bg-white/20 rounded-xl flex items-center justify-center">
+              <Wallet className="h-6 w-6" />
+            </div>
+          </div>
+        </Card>
+
+        <Card className="p-4 bg-gradient-to-br from-pink-500 to-rose-500 text-white border-0 shadow-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-pink-100 text-sm font-medium">Commission Paid</p>
+              <p className="text-3xl font-bold mt-1">{formatAmount(stats.totalCommission, amountsVisible)}</p>
+              <p className="text-pink-100 text-xs mt-1">Contractor commissions</p>
+            </div>
+            <div className="h-12 w-12 bg-white/20 rounded-xl flex items-center justify-center">
+              <BadgeIndianRupee className="h-6 w-6" />
             </div>
           </div>
         </Card>

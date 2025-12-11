@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Building2, Phone, Mail, MapPin, Eye } from "lucide-react";
+import { ArrowLeft, Building2, Phone, Mail, MapPin, Eye, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,13 +14,38 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useExternalJobCompanies } from "@/hooks/useExternalJobOrders";
-import { useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useExternalJobCompanies, useDeleteExternalJobCompany } from "@/hooks/useExternalJobOrders";
 
 const CompaniesList = () => {
   const navigate = useNavigate();
   const { data: companies = [], isLoading } = useExternalJobCompanies();
+  const deleteCompany = useDeleteExternalJobCompany();
   const [searchQuery, setSearchQuery] = useState("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [companyToDelete, setCompanyToDelete] = useState<{ id: string; name: string } | null>(null);
+
+  const handleDeleteClick = (company: { id: string; company_name: string }) => {
+    setCompanyToDelete({ id: company.id, name: company.company_name });
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (companyToDelete) {
+      await deleteCompany.mutateAsync(companyToDelete.id);
+      setDeleteDialogOpen(false);
+      setCompanyToDelete(null);
+    }
+  };
 
   const filteredCompanies = companies.filter(
     (company) =>
@@ -136,14 +162,24 @@ const CompaniesList = () => {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate(`/admin/external-jobs/company/${company.id}`)}
-                    >
-                      <Eye className="h-4 w-4 mr-1" />
-                      View Details
-                    </Button>
+                    <div className="flex items-center justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/admin/external-jobs/company/${company.id}`)}
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
+                        View
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        onClick={() => handleDeleteClick(company)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))
@@ -157,6 +193,28 @@ const CompaniesList = () => {
           Showing {filteredCompanies.length} of {companies.length} companies
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Company</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{companyToDelete?.name}"? This action cannot be undone.
+              All associated job orders will remain but will no longer be linked to this company.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
