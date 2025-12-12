@@ -39,7 +39,7 @@ const Navbar = () => {
   const isActive = (path: string) => location.pathname === path;
   
   // Pages with dark hero backgrounds where text should be white when not scrolled
-  const darkHeroPages = ["/", "/home", "/women", "/men", "/collections", "/about", "/shop", "/size-guide", "/size-chart/womens-leggings", "/size-chart/mens-track-pants", "/size-chart/mens-tshirts", "/size-chart/womens-sports-bra", "/size-chart/kids"];
+  const darkHeroPages = ["/", "/home", "/women", "/men", "/collections", "/about", "/shop", "/size-guide", "/size-chart/womens-leggings", "/size-chart/mens-track-pants", "/size-chart/mens-tshirts", "/size-chart/womens-sports-bra", "/size-chart/kids", "/shipping-return-refund", "/privacy-policy", "/terms-and-conditions"];
   const hasDarkHero = darkHeroPages.includes(location.pathname);
   
   // Determine text color based on scroll state and page type
