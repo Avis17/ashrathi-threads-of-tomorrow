@@ -21,6 +21,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { ProductImageLoader } from "@/components/product/ProductImageLoader";
 import noDataImage from "@/assets/no-data.png";
 
+// Package images
+import packageFront from "@/assets/package-front.jpg";
+import packageBack from "@/assets/package-back.jpg";
+
 // Model showcase images
 import heroModelWoman1 from "@/assets/hero-model-woman-1.jpg";
 import heroModelMan1 from "@/assets/hero-model-man-1.jpg";
@@ -463,6 +467,86 @@ const Products = () => {
           <p className="text-white/80 text-lg md:text-xl font-light max-w-2xl mx-auto">
             Curated essentials designed for movement and comfort
           </p>
+        </div>
+      </section>
+
+      {/* Premium Package Showcase Carousel */}
+      <section className="relative bg-gradient-to-b from-[#0A0A0A] via-[#1A1A1A] to-[#0A0A0A] py-16 md:py-24 overflow-hidden">
+        {/* Background decorative elements */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-0 left-0 w-96 h-96 bg-[#D4AF37]/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-[#D4AF37]/10 rounded-full blur-3xl translate-x-1/2 translate-y-1/2" />
+        </div>
+        
+        <div className="relative z-10 container mx-auto px-4">
+          {/* Section Header */}
+          <div className="text-center mb-12">
+            <p className="text-[#D4AF37] uppercase tracking-[0.4em] text-xs font-medium mb-4">Premium Packaging</p>
+            <h2 className="font-playfair text-3xl md:text-5xl text-white mb-4">Unbox the Experience</h2>
+            <p className="text-white/60 text-sm md:text-base max-w-xl mx-auto">
+              Every piece arrives in our signature resealable packaging, designed to preserve freshness and showcase premium quality.
+            </p>
+          </div>
+
+          {/* Premium Carousel */}
+          <div className="max-w-5xl mx-auto">
+            <Carousel
+              opts={{ align: "center", loop: true }}
+              plugins={[Autoplay({ delay: 4000, stopOnInteraction: false })]}
+              className="w-full"
+            >
+              <CarouselContent className="-ml-4">
+                {[
+                  { src: packageFront, alt: "Feather Fashions Premium Package Front", title: "Premium Active & Daily Wear", subtitle: "GYM | YOGA | TRAVEL | OFFICE WEAR" },
+                  { src: packageBack, alt: "Feather Fashions Premium Package Back", title: "Quality You Can Feel", subtitle: "4-Way Stretch • Moisture-Wicking • Breathable Fabric" }
+                ].map((item, index) => (
+                  <CarouselItem key={index} className="pl-4 basis-full md:basis-4/5 lg:basis-3/4">
+                    <div className="relative group">
+                      {/* Image Container with premium styling */}
+                      <div className="relative aspect-[4/3] md:aspect-[16/10] overflow-hidden rounded-2xl shadow-2xl">
+                        <img
+                          src={item.src}
+                          alt={item.alt}
+                          className="w-full h-full object-contain bg-[#6B6B5E] transition-transform duration-700 group-hover:scale-105"
+                        />
+                        {/* Gradient overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                        
+                        {/* Content overlay on hover */}
+                        <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10 transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500">
+                          <h3 className="font-playfair text-xl md:text-3xl text-white mb-2">{item.title}</h3>
+                          <p className="text-white/80 text-sm md:text-base tracking-wide">{item.subtitle}</p>
+                        </div>
+                      </div>
+                      
+                      {/* Gold accent line */}
+                      <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-24 h-1 bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              
+              {/* Custom styled navigation */}
+              <CarouselPrevious className="left-4 md:-left-4 bg-white/10 backdrop-blur-sm border-white/20 text-white hover:bg-white/20 hover:text-white" />
+              <CarouselNext className="right-4 md:-right-4 bg-white/10 backdrop-blur-sm border-white/20 text-white hover:bg-white/20 hover:text-white" />
+            </Carousel>
+
+            {/* Slide indicators */}
+            <div className="flex justify-center gap-3 mt-8">
+              <span className="w-8 h-1 bg-[#D4AF37] rounded-full" />
+              <span className="w-8 h-1 bg-white/20 rounded-full" />
+            </div>
+          </div>
+
+          {/* Feature badges */}
+          <div className="flex flex-wrap justify-center gap-4 md:gap-8 mt-12">
+            {['Resealable Packaging', 'Made in India', 'Premium Quality', 'Butter-Soft Fabric'].map((feature) => (
+              <div key={feature} className="flex items-center gap-2 px-4 py-2 rounded-full border border-[#D4AF37]/30 bg-[#D4AF37]/5">
+                <Sparkles className="w-3 h-3 text-[#D4AF37]" />
+                <span className="text-xs text-white/80 uppercase tracking-wider">{feature}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
