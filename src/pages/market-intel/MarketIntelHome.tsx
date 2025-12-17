@@ -1,18 +1,30 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Store, Calendar, TrendingUp, Target, MapPin, Clock, ChevronRight } from 'lucide-react';
+import { Plus, Store, Calendar, TrendingUp, Target, MapPin, Clock, ChevronRight, LogOut, User, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useMarketIntel, INTEREST_LEVELS } from '@/hooks/useMarketIntel';
 import { useAuth } from '@/hooks/useAuth';
 import { format } from 'date-fns';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export default function MarketIntelHome() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { shops, todayVisits, visits, todayLoading, getStats } = useMarketIntel();
   const stats = getStats();
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/auth');
+  };
 
   const getInterestBadge = (level: string | null) => {
     const interest = INTEREST_LEVELS.find(i => i.value === level);
@@ -25,20 +37,43 @@ export default function MarketIntelHome() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b sticky top-0 z-10">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      {/* Premium Header */}
+      <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 text-white sticky top-0 z-10 shadow-lg">
         <div className="px-4 py-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">Feather Market Intel</h1>
-              <p className="text-sm text-gray-500">{format(new Date(), 'EEEE, dd MMM yyyy')}</p>
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center">
+                <Zap className="h-5 w-5 text-yellow-300" />
+              </div>
+              <div>
+                <h1 className="text-lg font-bold tracking-tight">Feather Market Intel</h1>
+                <p className="text-xs text-blue-200">{format(new Date(), 'EEEE, dd MMM yyyy')}</p>
+              </div>
             </div>
-            <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-              <span className="text-blue-600 font-semibold text-sm">
-                {user?.email?.charAt(0).toUpperCase()}
-              </span>
-            </div>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="h-10 w-10 rounded-full bg-white/20 backdrop-blur flex items-center justify-center hover:bg-white/30 transition-colors">
+                  <span className="text-white font-semibold text-sm">
+                    {user?.email?.charAt(0).toUpperCase()}
+                  </span>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium">Account</p>
+                    <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="text-red-600 cursor-pointer">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
@@ -47,7 +82,7 @@ export default function MarketIntelHome() {
         {/* Primary CTA */}
         <Button 
           onClick={() => navigate('/market-intel/new-visit')}
-          className="w-full h-14 text-lg font-semibold bg-blue-600 hover:bg-blue-700"
+          className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg shadow-blue-500/30 transition-all hover:shadow-xl hover:shadow-blue-500/40"
         >
           <Plus className="w-5 h-5 mr-2" />
           Add New Shop Visit
@@ -55,57 +90,57 @@ export default function MarketIntelHome() {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 gap-3">
-          <Card className="bg-white">
+          <Card className="bg-white/80 backdrop-blur border-0 shadow-md hover:shadow-lg transition-shadow">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                  <Calendar className="w-5 h-5 text-blue-600" />
+                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
+                  <Calendar className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-gray-900">{stats.todayVisitCount}</p>
-                  <p className="text-xs text-gray-500">Today's Visits</p>
+                  <p className="text-3xl font-bold text-slate-900">{stats.todayVisitCount}</p>
+                  <p className="text-xs text-slate-500 font-medium">Today's Visits</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-white">
+          <Card className="bg-white/80 backdrop-blur border-0 shadow-md hover:shadow-lg transition-shadow">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-green-100 flex items-center justify-center">
-                  <Store className="w-5 h-5 text-green-600" />
+                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                  <Store className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-gray-900">{stats.totalShops}</p>
-                  <p className="text-xs text-gray-500">Total Shops</p>
+                  <p className="text-3xl font-bold text-slate-900">{stats.totalShops}</p>
+                  <p className="text-xs text-slate-500 font-medium">Total Shops</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-white">
+          <Card className="bg-white/80 backdrop-blur border-0 shadow-md hover:shadow-lg transition-shadow">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-red-100 flex items-center justify-center">
-                  <Target className="w-5 h-5 text-red-600" />
+                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-rose-500 to-red-600 flex items-center justify-center shadow-lg shadow-rose-500/30">
+                  <Target className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-gray-900">{stats.hotLeads}</p>
-                  <p className="text-xs text-gray-500">Hot Leads</p>
+                  <p className="text-3xl font-bold text-slate-900">{stats.hotLeads}</p>
+                  <p className="text-xs text-slate-500 font-medium">Hot Leads</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-white">
+          <Card className="bg-white/80 backdrop-blur border-0 shadow-md hover:shadow-lg transition-shadow">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-purple-100 flex items-center justify-center">
-                  <TrendingUp className="w-5 h-5 text-purple-600" />
+                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg shadow-violet-500/30">
+                  <TrendingUp className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-gray-900">{stats.ordersThisMonth}</p>
-                  <p className="text-xs text-gray-500">Month Orders</p>
+                  <p className="text-3xl font-bold text-slate-900">{stats.ordersThisMonth}</p>
+                  <p className="text-xs text-slate-500 font-medium">Month Orders</p>
                 </div>
               </div>
             </CardContent>
@@ -116,71 +151,73 @@ export default function MarketIntelHome() {
         <div className="grid grid-cols-2 gap-3">
           <Button 
             variant="outline" 
-            className="h-12 justify-start"
+            className="h-12 justify-start bg-white/80 backdrop-blur border-slate-200 hover:bg-white hover:border-blue-300 transition-all"
             onClick={() => navigate('/market-intel/shops')}
           >
-            <Store className="w-4 h-4 mr-2" />
+            <Store className="w-4 h-4 mr-2 text-blue-600" />
             View All Shops
           </Button>
           <Button 
             variant="outline" 
-            className="h-12 justify-start"
+            className="h-12 justify-start bg-white/80 backdrop-blur border-slate-200 hover:bg-white hover:border-blue-300 transition-all"
             onClick={() => navigate('/market-intel/visits')}
           >
-            <Calendar className="w-4 h-4 mr-2" />
+            <Calendar className="w-4 h-4 mr-2 text-blue-600" />
             Visit History
           </Button>
         </div>
 
         {/* Today's Visits */}
-        <Card className="bg-white">
+        <Card className="bg-white/90 backdrop-blur border-0 shadow-md">
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-semibold flex items-center justify-between">
-              <span>Today's Visits</span>
-              <Badge variant="secondary">{todayVisits.length}</Badge>
+              <span className="text-slate-800">Today's Visits</span>
+              <Badge variant="secondary" className="bg-blue-100 text-blue-700">{todayVisits.length}</Badge>
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             {todayLoading ? (
-              <div className="p-4 text-center text-gray-500">Loading...</div>
+              <div className="p-4 text-center text-slate-500">Loading...</div>
             ) : todayVisits.length === 0 ? (
               <div className="p-6 text-center">
-                <MapPin className="w-10 h-10 mx-auto text-gray-300 mb-2" />
-                <p className="text-sm text-gray-500">No visits recorded today</p>
+                <div className="h-16 w-16 mx-auto rounded-full bg-slate-100 flex items-center justify-center mb-3">
+                  <MapPin className="w-8 h-8 text-slate-300" />
+                </div>
+                <p className="text-sm text-slate-500 mb-2">No visits recorded today</p>
                 <Button 
                   variant="link" 
-                  className="mt-1 text-blue-600"
+                  className="text-blue-600 font-medium"
                   onClick={() => navigate('/market-intel/new-visit')}
                 >
-                  Add your first visit
+                  Add your first visit →
                 </Button>
               </div>
             ) : (
-              <div className="divide-y">
+              <div className="divide-y divide-slate-100">
                 {todayVisits.slice(0, 5).map((visit) => (
                   <div 
                     key={visit.id} 
-                    className="p-4 flex items-center justify-between hover:bg-gray-50 cursor-pointer"
+                    className="p-4 flex items-center justify-between hover:bg-blue-50/50 cursor-pointer transition-colors"
                     onClick={() => navigate(`/market-intel/visits/${visit.id}`)}
                   >
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900 truncate">
+                      <p className="font-medium text-slate-900 truncate">
                         {visit.market_intel_shops?.shop_name}
                       </p>
                       <div className="flex items-center gap-2 mt-1">
-                        <Clock className="w-3 h-3 text-gray-400" />
-                        <span className="text-xs text-gray-500">
+                        <Clock className="w-3 h-3 text-slate-400" />
+                        <span className="text-xs text-slate-500">
                           {visit.visit_time?.slice(0, 5)}
                         </span>
-                        <span className="text-xs text-gray-400">•</span>
-                        <span className="text-xs text-gray-500 capitalize">
+                        <span className="text-xs text-slate-300">•</span>
+                        <span className="text-xs text-slate-500 capitalize">
                           {visit.visit_purpose?.replace('_', ' ')}
                         </span>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       {getInterestBadge(visit.interest_level)}
-                      <ChevronRight className="w-4 h-4 text-gray-400" />
+                      <ChevronRight className="w-4 h-4 text-slate-400" />
                     </div>
                   </div>
                 ))}
@@ -190,33 +227,35 @@ export default function MarketIntelHome() {
         </Card>
 
         {/* Recent Shops Added */}
-        <Card className="bg-white">
+        <Card className="bg-white/90 backdrop-blur border-0 shadow-md">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base font-semibold">Recently Added Shops</CardTitle>
+            <CardTitle className="text-base font-semibold text-slate-800">Recently Added Shops</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             {shops.length === 0 ? (
               <div className="p-6 text-center">
-                <Store className="w-10 h-10 mx-auto text-gray-300 mb-2" />
-                <p className="text-sm text-gray-500">No shops added yet</p>
+                <div className="h-16 w-16 mx-auto rounded-full bg-slate-100 flex items-center justify-center mb-3">
+                  <Store className="w-8 h-8 text-slate-300" />
+                </div>
+                <p className="text-sm text-slate-500">No shops added yet</p>
               </div>
             ) : (
-              <div className="divide-y">
+              <div className="divide-y divide-slate-100">
                 {shops.slice(0, 5).map((shop) => (
                   <div 
                     key={shop.id} 
-                    className="p-4 flex items-center justify-between hover:bg-gray-50"
+                    className="p-4 flex items-center justify-between hover:bg-blue-50/50 transition-colors"
                   >
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900 truncate">{shop.shop_name}</p>
-                      <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
+                      <p className="font-medium text-slate-900 truncate">{shop.shop_name}</p>
+                      <p className="text-xs text-slate-500 flex items-center gap-1 mt-1">
                         <MapPin className="w-3 h-3" />
                         {shop.city}
-                        <span className="text-gray-400">•</span>
+                        <span className="text-slate-300">•</span>
                         <span className="capitalize">{shop.shop_type?.replace('_', ' ')}</span>
                       </p>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-gray-400" />
+                    <ChevronRight className="w-4 h-4 text-slate-400" />
                   </div>
                 ))}
               </div>
