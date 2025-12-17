@@ -425,7 +425,132 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Lifestyle Banner - Full Width */}
+      {/* Premium Video Section */}
+      <section className="relative h-[70vh] md:h-[90vh] overflow-hidden bg-black">
+        {/* Video Background */}
+        <div className="absolute inset-0">
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="w-full h-full object-cover"
+            poster="https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=1920&q=80"
+          >
+            <source 
+              src="https://cdn.coverr.co/videos/coverr-woman-doing-yoga-at-sunrise-1565/1080p.mp4" 
+              type="video/mp4" 
+            />
+          </video>
+          {/* Fallback gradient overlay for when video doesn't load */}
+          <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/60 to-black/80" />
+        </div>
+
+        {/* Animated Grain Overlay */}
+        <div className="absolute inset-0 opacity-20 mix-blend-overlay bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJhIiB4PSIwIiB5PSIwIj48ZmVUdXJidWxlbmNlIGJhc2VGcmVxdWVuY3k9Ii43NSIgc3RpdGNoVGlsZXM9InN0aXRjaCIgdHlwZT0iZnJhY3RhbE5vaXNlIi8+PC9maWx0ZXI+PHJlY3Qgd2lkdGg9IjMwMCIgaGVpZ2h0PSIzMDAiIGZpbHRlcj0idXJsKCNhKSIgb3BhY2l0eT0iMC4wNSIvPjwvc3ZnPg==')]" />
+
+        {/* Cinematic Bars */}
+        <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-black to-transparent z-10" />
+        <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black to-transparent z-10" />
+
+        {/* Main Content */}
+        <div className="relative z-20 h-full flex items-center justify-center">
+          <div className="text-center px-6 max-w-5xl">
+            {/* Animated Play Button */}
+            <div className="mb-8 md:mb-12">
+              <button className="group relative w-24 h-24 md:w-32 md:h-32">
+                {/* Outer ring animation */}
+                <span className="absolute inset-0 rounded-full border-2 border-neon/50 animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite]" />
+                <span className="absolute inset-2 rounded-full border border-neon/30 animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite_0.5s]" />
+                
+                {/* Main button */}
+                <span className="relative flex items-center justify-center w-full h-full rounded-full bg-neon/20 backdrop-blur-md border border-neon/50 group-hover:bg-neon group-hover:scale-110 transition-all duration-500">
+                  <Play className="h-8 w-8 md:h-10 md:w-10 text-neon group-hover:text-black ml-1 transition-colors duration-300" fill="currentColor" />
+                </span>
+              </button>
+            </div>
+
+            {/* Premium Typography */}
+            <p className="text-xs md:text-sm tracking-[0.5em] text-neon mb-4 md:mb-6 font-bold uppercase animate-fade-in">
+              WATCH THE JOURNEY
+            </p>
+            <h2 className="text-4xl md:text-6xl lg:text-8xl font-black text-white mb-4 md:mb-6 leading-[0.85] uppercase tracking-tight">
+              CRAFTED FOR
+              <br />
+              <span className="bg-gradient-to-r from-neon via-cyan-300 to-neon bg-clip-text text-transparent animate-pulse">
+                ATHLETES
+              </span>
+            </h2>
+            <p className="text-sm md:text-lg text-white/60 max-w-2xl mx-auto mb-8 md:mb-10 leading-relaxed">
+              From the manufacturing floor to your workout routine. 
+              Experience the quality that sets us apart.
+            </p>
+
+            {/* Glassmorphism CTA */}
+            <div className="inline-flex flex-col sm:flex-row items-center gap-4">
+              <Link 
+                to="/about"
+                className="group flex items-center gap-3 px-8 py-4 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-neon hover:border-neon transition-all duration-500"
+              >
+                <span className="text-sm font-bold tracking-[0.15em] text-white group-hover:text-black uppercase">
+                  Watch Full Story
+                </span>
+                <ArrowRight className="h-4 w-4 text-neon group-hover:text-black transition-colors" />
+              </Link>
+              <Link 
+                to="/shop"
+                className="text-sm font-bold tracking-[0.15em] text-white/60 hover:text-neon transition-colors uppercase"
+              >
+                Skip to Shop →
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Side Decorative Elements */}
+        <div className="absolute left-6 md:left-12 top-1/2 -translate-y-1/2 z-20 hidden lg:flex flex-col gap-4 items-center">
+          <div className="w-[1px] h-20 bg-gradient-to-b from-transparent via-neon to-transparent" />
+          <span className="text-[10px] tracking-[0.3em] text-neon font-bold uppercase rotate-[-90deg] whitespace-nowrap">
+            Premium Quality
+          </span>
+          <div className="w-[1px] h-20 bg-gradient-to-b from-transparent via-neon to-transparent" />
+        </div>
+
+        <div className="absolute right-6 md:right-12 top-1/2 -translate-y-1/2 z-20 hidden lg:flex flex-col gap-4 items-center">
+          <div className="w-[1px] h-20 bg-gradient-to-b from-transparent via-white/30 to-transparent" />
+          <span className="text-[10px] tracking-[0.3em] text-white/50 font-bold uppercase rotate-90 whitespace-nowrap">
+            Since 2015
+          </span>
+          <div className="w-[1px] h-20 bg-gradient-to-b from-transparent via-white/30 to-transparent" />
+        </div>
+
+        {/* Bottom Stats Bar */}
+        <div className="absolute bottom-0 left-0 right-0 z-20">
+          <div className="flex items-center justify-center gap-8 md:gap-16 py-6 bg-gradient-to-t from-black/80 to-transparent backdrop-blur-sm">
+            {[
+              { value: "270", label: "GSM Fabric" },
+              { value: "20+", label: "Machines" },
+              { value: "10K+", label: "Happy Customers" },
+              { value: "100%", label: "Quality Promise" },
+            ].map((stat, index) => (
+              <div key={index} className="text-center hidden sm:block">
+                <p className="text-2xl md:text-3xl font-black text-neon">{stat.value}</p>
+                <p className="text-[10px] md:text-xs text-white/50 font-medium tracking-wider uppercase">{stat.label}</p>
+              </div>
+            ))}
+            {/* Mobile: Show only 2 stats */}
+            {[
+              { value: "270", label: "GSM" },
+              { value: "10K+", label: "Customers" },
+            ].map((stat, index) => (
+              <div key={index} className="text-center sm:hidden">
+                <p className="text-xl font-black text-neon">{stat.value}</p>
+                <p className="text-[10px] text-white/50 font-medium tracking-wider uppercase">{stat.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
       <section className="relative h-[60vh] md:h-[80vh] overflow-hidden">
         <div 
           className="absolute inset-0 bg-cover bg-center bg-fixed"
