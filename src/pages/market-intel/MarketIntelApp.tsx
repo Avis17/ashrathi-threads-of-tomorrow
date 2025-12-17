@@ -6,7 +6,8 @@ import NewVisitForm from './NewVisitForm';
 import ShopsList from './ShopsList';
 import VisitsList from './VisitsList';
 import VisitDetails from './VisitDetails';
-import { ShieldX, ArrowLeft, Home } from 'lucide-react';
+import MarketIntelDashboard from './MarketIntelDashboard';
+import { ShieldX, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 function AccessDenied() {
@@ -63,6 +64,7 @@ export default function MarketIntelApp() {
       <Route path="/shops" element={<ShopsList />} />
       <Route path="/visits" element={<VisitsList />} />
       <Route path="/visits/:id" element={<VisitDetails />} />
+      <Route path="/dashboard" element={<MarketIntelDashboard />} />
     </Routes>
   );
 }

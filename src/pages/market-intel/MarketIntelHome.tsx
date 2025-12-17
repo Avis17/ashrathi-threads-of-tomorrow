@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Plus, Store, Calendar, TrendingUp, Target, MapPin, Clock, ChevronRight, LogOut, User, Zap } from 'lucide-react';
+import { Plus, Store, Calendar, TrendingUp, Target, MapPin, Clock, ChevronRight, LogOut, User, Zap, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -17,7 +17,7 @@ import {
 
 export default function MarketIntelHome() {
   const navigate = useNavigate();
-  const { user, signOut } = useAuth();
+  const { user, signOut, isAdmin } = useAuth();
   const { shops, todayVisits, visits, todayLoading, getStats } = useMarketIntel();
   const stats = getStats();
 
@@ -148,14 +148,14 @@ export default function MarketIntelHome() {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className={`grid ${isAdmin ? 'grid-cols-3' : 'grid-cols-2'} gap-3`}>
           <Button 
             variant="outline" 
             className="h-12 justify-start bg-white/80 backdrop-blur border-slate-200 hover:bg-white hover:border-blue-300 transition-all"
             onClick={() => navigate('/market-intel/shops')}
           >
             <Store className="w-4 h-4 mr-2 text-blue-600" />
-            View All Shops
+            <span className="truncate">All Shops</span>
           </Button>
           <Button 
             variant="outline" 
@@ -163,8 +163,18 @@ export default function MarketIntelHome() {
             onClick={() => navigate('/market-intel/visits')}
           >
             <Calendar className="w-4 h-4 mr-2 text-blue-600" />
-            Visit History
+            <span className="truncate">History</span>
           </Button>
+          {isAdmin && (
+            <Button 
+              variant="outline" 
+              className="h-12 justify-start bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200 hover:border-indigo-400 hover:from-indigo-100 hover:to-purple-100 transition-all"
+              onClick={() => navigate('/market-intel/dashboard')}
+            >
+              <BarChart3 className="w-4 h-4 mr-2 text-indigo-600" />
+              <span className="truncate text-indigo-700 font-medium">Dashboard</span>
+            </Button>
+          )}
         </div>
 
         {/* Today's Visits */}
