@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, Shield, ShieldCheck, ShieldX, Users, MapPin, BarChart3, Factory, Package } from 'lucide-react';
+import { Plus, Shield, ShieldCheck, ShieldX, Users, MapPin, BarChart3, Factory, Package, Trash2, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -35,58 +35,72 @@ const APP_INFO: Record<InternalApp, { name: string; icon: React.ReactNode; descr
 
 export default function AppAccessManagement() {
   const { toast } = useToast();
-  const { allAccessRecords, recordsLoading, grantAccess, revokeAccess, searchUserByEmail } = useAppAccess();
+  const { allAccessRecords, recordsLoading, grantAccess, revokeAccess, deleteAccess } = useAppAccess();
   
-  const [searchEmail, setSearchEmail] = useState('');
-  const [searchResults, setSearchResults] = useState<Array<{ id: string; email: string; full_name: string | null }>>([]);
+  const [newEmail, setNewEmail] = useState('');
   const [selectedApp, setSelectedApp] = useState<InternalApp>('market_intel');
-  const [isSearching, setIsSearching] = useState(false);
 
-  const handleSearch = async () => {
-    if (!searchEmail.trim()) return;
-    
-    setIsSearching(true);
-    const results = await searchUserByEmail(searchEmail);
-    setSearchResults(results);
-    setIsSearching(false);
-  };
+  const handleAddAccess = async () => {
+    if (!newEmail.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Please enter an email address',
+        variant: 'destructive',
+      });
+      return;
+    }
 
-  const handleGrantAccess = async (userId: string, userEmail: string) => {
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newEmail)) {
+      toast({
+        title: 'Error',
+        description: 'Please enter a valid email address',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     try {
-      await grantAccess.mutateAsync({ userId, appName: selectedApp, userEmail });
+      await grantAccess.mutateAsync({ email: newEmail, appName: selectedApp });
       toast({
         title: 'Access Granted',
-        description: `User ${userEmail} now has access to ${APP_INFO[selectedApp].name}`,
+        description: `${newEmail} now has access to ${APP_INFO[selectedApp].name}`,
       });
-      setSearchResults([]);
-      setSearchEmail('');
+      setNewEmail('');
     } catch (error) {
       toast({
         title: 'Error',
-        description: 'Failed to grant access',
+        description: 'Failed to grant access. Email may already have access to this app.',
         variant: 'destructive',
       });
     }
   };
 
-  const handleRevokeAccess = async (userId: string, appName: InternalApp) => {
+  const handleToggleAccess = async (email: string, appName: InternalApp, currentlyApproved: boolean) => {
     try {
-      await revokeAccess.mutateAsync({ userId, appName });
-      toast({
-        title: 'Access Revoked',
-        description: 'User access has been revoked',
-      });
+      if (currentlyApproved) {
+        await revokeAccess.mutateAsync({ email, appName });
+        toast({ title: 'Access Revoked', description: `Access revoked for ${email}` });
+      } else {
+        await grantAccess.mutateAsync({ email, appName });
+        toast({ title: 'Access Granted', description: `Access granted for ${email}` });
+      }
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to revoke access',
-        variant: 'destructive',
-      });
+      toast({ title: 'Error', description: 'Failed to update access', variant: 'destructive' });
     }
   };
 
-  const approvedRecords = allAccessRecords.filter(r => r.is_approved);
-  const pendingRecords = allAccessRecords.filter(r => !r.is_approved);
+  const handleDelete = async (email: string, appName: InternalApp) => {
+    try {
+      await deleteAccess.mutateAsync({ email, appName });
+      toast({ title: 'Removed', description: `${email} removed from access list` });
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to remove access', variant: 'destructive' });
+    }
+  };
+
+  const approvedCount = allAccessRecords.filter(r => r.is_approved).length;
 
   return (
     <div className="space-y-6">
@@ -94,35 +108,36 @@ export default function AppAccessManagement() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">App Access Management</h1>
-          <p className="text-muted-foreground">Manage user access to internal applications</p>
+          <p className="text-muted-foreground">Manage user access to internal applications by email</p>
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="gap-1">
             <Users className="h-3 w-3" />
-            {approvedRecords.length} Approved Users
+            {approvedCount} Approved
           </Badge>
         </div>
       </div>
 
-      {/* Grant Access Card */}
+      {/* Add Access Card */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <ShieldCheck className="h-5 w-5 text-green-600" />
-            Grant App Access
+            <Plus className="h-5 w-5 text-green-600" />
+            Add User Access
           </CardTitle>
           <CardDescription>
-            Search for a user by email and grant them access to an internal app
+            Enter an email address to grant access to an internal app
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent>
           <div className="flex gap-3">
             <div className="flex-1">
               <Input
-                placeholder="Search user by email..."
-                value={searchEmail}
-                onChange={(e) => setSearchEmail(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                type="email"
+                placeholder="Enter user email..."
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleAddAccess()}
               />
             </div>
             <Select value={selectedApp} onValueChange={(v) => setSelectedApp(v as InternalApp)}>
@@ -140,77 +155,52 @@ export default function AppAccessManagement() {
                 ))}
               </SelectContent>
             </Select>
-            <Button onClick={handleSearch} disabled={isSearching}>
-              <Search className="h-4 w-4 mr-2" />
-              Search
+            <Button onClick={handleAddAccess} disabled={grantAccess.isPending}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add
             </Button>
           </div>
-
-          {/* Search Results */}
-          {searchResults.length > 0 && (
-            <div className="border rounded-lg divide-y">
-              {searchResults.map((user) => (
-                <div key={user.id} className="p-3 flex items-center justify-between hover:bg-muted/50">
-                  <div>
-                    <p className="font-medium">{user.full_name || 'No Name'}</p>
-                    <p className="text-sm text-muted-foreground">{user.email}</p>
-                  </div>
-                  <Button
-                    size="sm"
-                    onClick={() => handleGrantAccess(user.id, user.email)}
-                    disabled={grantAccess.isPending}
-                  >
-                    <ShieldCheck className="h-4 w-4 mr-1" />
-                    Grant Access
-                  </Button>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {searchResults.length === 0 && searchEmail && !isSearching && (
-            <p className="text-sm text-muted-foreground text-center py-4">
-              No users found. Try a different email.
-            </p>
-          )}
         </CardContent>
       </Card>
 
-      {/* Active Access Table */}
+      {/* Access List Table */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Shield className="h-5 w-5" />
-            Active Access Permissions
+            Access List
           </CardTitle>
           <CardDescription>
-            Users with approved access to internal applications
+            All users with access to internal applications
           </CardDescription>
         </CardHeader>
         <CardContent>
           {recordsLoading ? (
             <div className="text-center py-8 text-muted-foreground">Loading...</div>
-          ) : approvedRecords.length === 0 ? (
+          ) : allAccessRecords.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              No users have been granted access yet
+              <Mail className="h-12 w-12 mx-auto mb-3 opacity-30" />
+              <p>No users have been added yet</p>
+              <p className="text-sm">Add an email above to grant access</p>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>User ID</TableHead>
+                  <TableHead>Email</TableHead>
                   <TableHead>Application</TableHead>
-                  <TableHead>Approved At</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Added</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {approvedRecords.map((record) => {
+                {allAccessRecords.map((record) => {
                   const appInfo = APP_INFO[record.app_name];
                   return (
                     <TableRow key={record.id}>
-                      <TableCell className="font-mono text-xs">
-                        {record.user_id.slice(0, 8)}...
+                      <TableCell className="font-medium">
+                        {record.user_email}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
@@ -219,21 +209,44 @@ export default function AppAccessManagement() {
                         </div>
                       </TableCell>
                       <TableCell>
+                        {record.is_approved ? (
+                          <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
+                            <ShieldCheck className="h-3 w-3 mr-1" />
+                            Active
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary" className="bg-gray-100 text-gray-600">
+                            <ShieldX className="h-3 w-3 mr-1" />
+                            Revoked
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground text-sm">
                         {record.approved_at 
-                          ? format(new Date(record.approved_at), 'dd MMM yyyy, HH:mm')
+                          ? format(new Date(record.approved_at), 'dd MMM yyyy')
                           : '-'
                         }
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handleRevokeAccess(record.user_id, record.app_name)}
-                          disabled={revokeAccess.isPending}
-                        >
-                          <ShieldX className="h-4 w-4 mr-1" />
-                          Revoke
-                        </Button>
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant={record.is_approved ? "outline" : "default"}
+                            size="sm"
+                            onClick={() => handleToggleAccess(record.user_email, record.app_name, record.is_approved)}
+                            disabled={revokeAccess.isPending || grantAccess.isPending}
+                          >
+                            {record.is_approved ? 'Revoke' : 'Grant'}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(record.user_email, record.app_name)}
+                            disabled={deleteAccess.isPending}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
