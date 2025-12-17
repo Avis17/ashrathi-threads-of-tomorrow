@@ -2433,6 +2433,124 @@ export type Database = {
         }
         Relationships: []
       }
+      po_files: {
+        Row: {
+          file_name: string
+          file_path: string
+          file_size: number | null
+          file_type: string | null
+          id: string
+          purchase_order_id: string
+          uploaded_at: string | null
+        }
+        Insert: {
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          purchase_order_id: string
+          uploaded_at?: string | null
+        }
+        Update: {
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          purchase_order_id?: string
+          uploaded_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "po_files_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      po_line_items: {
+        Row: {
+          amount: number
+          created_at: string | null
+          id: string
+          item_name: string
+          purchase_order_id: string
+          quantity: number
+          rate: number
+          unit: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string | null
+          id?: string
+          item_name: string
+          purchase_order_id: string
+          quantity?: number
+          rate?: number
+          unit?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          id?: string
+          item_name?: string
+          purchase_order_id?: string
+          quantity?: number
+          rate?: number
+          unit?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "po_line_items_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      po_suppliers: {
+        Row: {
+          address: string | null
+          contact_person: string | null
+          created_at: string | null
+          email: string | null
+          gst_number: string | null
+          id: string
+          is_active: boolean | null
+          phone: string | null
+          supplier_name: string
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          contact_person?: string | null
+          created_at?: string | null
+          email?: string | null
+          gst_number?: string | null
+          id?: string
+          is_active?: boolean | null
+          phone?: string | null
+          supplier_name: string
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          contact_person?: string | null
+          created_at?: string | null
+          email?: string | null
+          gst_number?: string | null
+          id?: string
+          is_active?: boolean | null
+          phone?: string | null
+          supplier_name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       product_inventory: {
         Row: {
           available_quantity: number
@@ -2679,6 +2797,95 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      purchase_orders: {
+        Row: {
+          category: string
+          cgst_amount: number | null
+          cgst_rate: number | null
+          created_at: string | null
+          discount: number | null
+          grand_total: number
+          gst_type: string
+          id: string
+          igst_amount: number | null
+          igst_rate: number | null
+          invoice_date: string | null
+          invoice_number: string | null
+          locked_at: string | null
+          locked_by: string | null
+          notes: string | null
+          payment_type: string
+          po_number: string
+          purchase_date: string
+          sgst_amount: number | null
+          sgst_rate: number | null
+          status: string
+          subtotal: number
+          supplier_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          cgst_amount?: number | null
+          cgst_rate?: number | null
+          created_at?: string | null
+          discount?: number | null
+          grand_total?: number
+          gst_type?: string
+          id?: string
+          igst_amount?: number | null
+          igst_rate?: number | null
+          invoice_date?: string | null
+          invoice_number?: string | null
+          locked_at?: string | null
+          locked_by?: string | null
+          notes?: string | null
+          payment_type?: string
+          po_number: string
+          purchase_date?: string
+          sgst_amount?: number | null
+          sgst_rate?: number | null
+          status?: string
+          subtotal?: number
+          supplier_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          cgst_amount?: number | null
+          cgst_rate?: number | null
+          created_at?: string | null
+          discount?: number | null
+          grand_total?: number
+          gst_type?: string
+          id?: string
+          igst_amount?: number | null
+          igst_rate?: number | null
+          invoice_date?: string | null
+          invoice_number?: string | null
+          locked_at?: string | null
+          locked_by?: string | null
+          notes?: string | null
+          payment_type?: string
+          po_number?: string
+          purchase_date?: string
+          sgst_amount?: number | null
+          sgst_rate?: number | null
+          status?: string
+          subtotal?: number
+          supplier_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_orders_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "po_suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       purchases: {
         Row: {
@@ -2943,6 +3150,7 @@ export type Database = {
         Returns: string
       }
       generate_order_number: { Args: never; Returns: string }
+      generate_po_number: { Args: never; Returns: string }
       generate_production_run_code: { Args: never; Returns: string }
       generate_purchase_batch_code: { Args: never; Returns: string }
       get_all_roles: {
