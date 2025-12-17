@@ -68,7 +68,11 @@ export default function VisitsList() {
           </div>
         ) : (
           filteredVisits.map(visit => (
-            <Card key={visit.id} className="bg-white">
+            <Card 
+              key={visit.id} 
+              className="bg-white cursor-pointer hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
+              onClick={() => navigate(`/market-intel/visits/${visit.id}`)}
+            >
               <CardContent className="p-4">
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
