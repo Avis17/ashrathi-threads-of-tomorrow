@@ -45,11 +45,12 @@ const Navbar = () => {
   // Determine text color based on scroll state and page type
   const getTextColorClass = (isActiveLink: boolean = false) => {
     if (isActiveLink) return "text-accent";
-    // When scrolled and navbar has background, use foreground
-    // if (isScrolled) return "text-white";
-    // When over dark background, use white text
-    // if (isOverDarkBg) return "text-white";
-    return "text-white";
+    // When scrolled, navbar has light background - use dark text
+    if (isScrolled) return "text-foreground";
+    // When on dark hero pages and not scrolled - use white text
+    if (hasDarkHero) return "text-white";
+    // Default for pages with light backgrounds (profile, my-orders, checkout, etc.) - use dark text
+    return "text-foreground";
   };
 
   return (
