@@ -21,11 +21,11 @@ function AccessDenied() {
         </p>
         <Button 
           variant="outline" 
-          onClick={() => window.close()}
+          onClick={() => window.location.href = '/'}
           className="gap-2"
         >
           <ArrowLeft className="h-4 w-4" />
-          Close Tab
+          Go to Home
         </Button>
       </div>
     </div>
