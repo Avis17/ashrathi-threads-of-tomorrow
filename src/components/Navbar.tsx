@@ -12,9 +12,6 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { CartButton } from "@/components/cart/CartButton";
 
-// Pages that have dark hero sections at the top
-const DARK_HERO_PAGES = ['/', '/women', '/men', '/collections', '/about'];
-
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -22,25 +19,13 @@ const Navbar = () => {
   const navigate = useNavigate();
   const { user, isAdmin, signOut } = useAuth();
 
-  // Check if current page has a dark hero section
-  const hasDarkHero = DARK_HERO_PAGES.includes(location.pathname);
-  
-  // When not scrolled and on a dark hero page, use light text
-  const useWhiteText = hasDarkHero && !isScrolled;
-
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
+      setIsScrolled(window.scrollY > 20);
     };
-    
     window.addEventListener("scroll", handleScroll);
-    // Reset scroll state on route change
-    handleScroll();
-    
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, [location.pathname]);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const navLinks = [
     { name: "Home", path: "/" },
@@ -53,10 +38,15 @@ const Navbar = () => {
 
   const isActive = (path: string) => location.pathname === path;
   
+  // Pages with dark hero backgrounds where text should be white when not scrolled
+  const darkHeroPages = ["/", "/home", "/women", "/men", "/collections", "/about", "/shop", "/size-guide", "/size-chart/womens-leggings", "/size-chart/mens-track-pants", "/size-chart/mens-tshirts", "/size-chart/womens-sports-bra", "/size-chart/kids", "/shipping-return-refund", "/privacy-policy", "/terms-and-conditions"];
+  const hasDarkHero = darkHeroPages.includes(location.pathname);
+  
   // Determine text color based on scroll state and page type
   const getTextColorClass = (isActiveLink: boolean = false) => {
     if (isActiveLink) return "text-accent";
-    if (useWhiteText) return "text-white";
+    if (isScrolled) return "text-foreground";
+    if (hasDarkHero) return "text-white";
     return "text-foreground";
   };
 
@@ -65,7 +55,7 @@ const Navbar = () => {
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
         isScrolled
           ? "bg-background/98 backdrop-blur-md border-b border-border shadow-sm"
-          : useWhiteText 
+          : hasDarkHero 
             ? "bg-transparent"
             : "bg-background/98 backdrop-blur-md border-b border-border"
       }`}
