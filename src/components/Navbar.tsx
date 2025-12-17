@@ -113,10 +113,10 @@ const Navbar = () => {
   const getTextColorClass = (isActiveLink: boolean = false) => {
     if (isActiveLink) return "text-accent";
     // When scrolled and navbar has background, use foreground
-    if (isScrolled) return "text-foreground";
+    // if (isScrolled) return "text-foreground";
     // When over dark background, use white text
     if (isOverDarkBg) return "text-white";
-    return "text-foreground";
+    return "text-white";
   };
 
   return (
