@@ -1,38 +1,44 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Premium Athleisure Design System - Lululemon Inspired */
+/* Premium Sportswear Design System - Technosport Inspired */
 
 @layer base {
   :root {
-    /* Core Palette - Matte Black & White Foundation */
+    /* Core Palette - Deep Black & White with Neon Accent */
     --background: 0 0% 100%;
-    --foreground: 0 0% 4%;
+    --foreground: 0 0% 0%;
 
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 4%;
+    --card-foreground: 0 0% 0%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 4%;
+    --popover-foreground: 0 0% 0%;
 
-    /* Primary - Matte Black */
-    --primary: 0 0% 4%;
+    /* Primary - Pure Black */
+    --primary: 0 0% 0%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary - Charcoal Grey */
+    /* Secondary - Dark Grey */
     --secondary: 0 0% 10%;
     --secondary-foreground: 0 0% 100%;
 
-    /* Muted - Soft Neutral Sand */
-    --muted: 40 20% 93%;
+    /* Muted - Light Grey */
+    --muted: 0 0% 96%;
     --muted-foreground: 0 0% 40%;
 
-    /* Accent - Metallic Gold */
-    --accent: 43 74% 52%;
-    --accent-foreground: 0 0% 4%;
+    /* Accent - Electric Neon Blue */
+    --accent: 191 100% 50%;
+    --accent-foreground: 0 0% 0%;
 
-    /* Gold (same as accent for consistency) */
+    /* Neon - Electric Blue for sportswear energy */
+    --neon: 191 100% 50%;
+    --neon-foreground: 0 0% 0%;
+
+    /* Gold (keeping for admin compatibility) */
     --gold: 43 74% 52%;
     --gold-foreground: 0 0% 4%;
 
@@ -41,19 +47,19 @@
 
     --border: 0 0% 90%;
     --input: 0 0% 90%;
-    --ring: 43 74% 52%;
+    --ring: 191 100% 50%;
 
     --radius: 0px;
     
     /* Premium Gradients */
-    --gradient-hero: linear-gradient(180deg, hsl(0 0% 4%) 0%, hsl(0 0% 10%) 100%);
-    --gradient-gold: linear-gradient(135deg, hsl(43 74% 52%) 0%, hsl(43 74% 42%) 100%);
-    --gradient-subtle: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(40 20% 97%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(0 0% 0%) 0%, hsl(0 0% 5%) 100%);
+    --gradient-neon: linear-gradient(135deg, hsl(191 100% 50%) 0%, hsl(180 100% 40%) 100%);
+    --gradient-subtle: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(0 0% 96%) 100%);
     
     /* Premium Shadows */
-    --shadow-soft: 0 4px 30px -4px hsl(0 0% 0% / 0.08);
-    --shadow-hover: 0 20px 40px -12px hsl(0 0% 0% / 0.15);
-    --shadow-gold: 0 4px 20px -4px hsl(43 74% 52% / 0.3);
+    --shadow-soft: 0 4px 30px -4px hsl(0 0% 0% / 0.1);
+    --shadow-hover: 0 20px 40px -12px hsl(0 0% 0% / 0.2);
+    --shadow-neon: 0 0 30px hsl(191 100% 50% / 0.4);
     
     /* Smooth Transitions */
     --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -67,30 +73,33 @@
     --sidebar-accent: 0 0% 95%;
     --sidebar-accent-foreground: 0 0% 10%;
     --sidebar-border: 0 0% 90%;
-    --sidebar-ring: 43 74% 52%;
+    --sidebar-ring: 191 100% 50%;
   }
 
   .dark {
-    --background: 0 0% 4%;
+    --background: 0 0% 0%;
     --foreground: 0 0% 98%;
 
-    --card: 0 0% 7%;
+    --card: 0 0% 5%;
     --card-foreground: 0 0% 98%;
 
-    --popover: 0 0% 7%;
+    --popover: 0 0% 5%;
     --popover-foreground: 0 0% 98%;
 
     --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 4%;
+    --primary-foreground: 0 0% 0%;
 
-    --secondary: 0 0% 15%;
+    --secondary: 0 0% 12%;
     --secondary-foreground: 0 0% 98%;
 
-    --muted: 0 0% 15%;
+    --muted: 0 0% 12%;
     --muted-foreground: 0 0% 60%;
 
-    --accent: 43 74% 52%;
-    --accent-foreground: 0 0% 4%;
+    --accent: 191 100% 50%;
+    --accent-foreground: 0 0% 0%;
+
+    --neon: 191 100% 50%;
+    --neon-foreground: 0 0% 0%;
 
     --gold: 43 74% 52%;
     --gold-foreground: 0 0% 4%;
@@ -100,7 +109,7 @@
 
     --border: 0 0% 15%;
     --input: 0 0% 15%;
-    --ring: 43 74% 52%;
+    --ring: 191 100% 50%;
   }
 }
 
@@ -116,10 +125,16 @@
   }
   
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Inter', sans-serif;
-    @apply font-semibold tracking-tight;
+    font-family: 'Montserrat', sans-serif;
+    @apply font-bold tracking-tight;
   }
   
+  /* Athletic bold font */
+  .font-athletic {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 900;
+  }
+
   /* Serif accent for luxury feel */
   .font-serif {
     font-family: 'Playfair Display', Georgia, serif;
