@@ -57,6 +57,7 @@ import TermsAndConditions from "./pages/TermsAndConditions";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import ShippingReturnRefund from "./pages/ShippingReturnRefund";
 import PaymentCallback from "./pages/PaymentCallback";
+import MarketIntelApp from "./pages/market-intel/MarketIntelApp";
 
 const queryClient = new QueryClient();
 
@@ -71,6 +72,9 @@ const App = () => (
           <Routes>
             {/* Admin Routes - No Navbar/Footer */}
             <Route path="/admin/*" element={<Admin />} />
+            
+            {/* Market Intel App - Standalone Mobile-First App */}
+            <Route path="/market-intel/*" element={<MarketIntelApp />} />
             
             {/* Public Routes - With Navbar/Footer */}
             <Route
