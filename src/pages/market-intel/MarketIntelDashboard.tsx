@@ -18,7 +18,13 @@ import {
   Flame,
   CheckCircle2,
   Clock,
-  ShieldCheck
+  ShieldCheck,
+  ShoppingBag,
+  Shirt,
+  Baby,
+  Heart,
+  Eye,
+  Award
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -41,7 +47,7 @@ import {
   Area,
   Legend
 } from 'recharts';
-import { INTEREST_LEVELS, VISIT_PURPOSES, SHOP_TYPES, CITIES } from '@/hooks/useMarketIntel';
+import { INTEREST_LEVELS, VISIT_PURPOSES, SHOP_TYPES, CITIES, PRODUCT_CATEGORIES, PRICE_SEGMENTS } from '@/hooks/useMarketIntel';
 
 const CHART_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
 
@@ -161,6 +167,97 @@ export default function MarketIntelDashboard() {
   const sampleConversionRate = totalSamples > 0 
     ? ((visits.filter(v => v.sample_given && v.order_taken).length / totalSamples) * 100).toFixed(1) 
     : '0';
+
+  // SECTOR CATEGORIZATION
+  const sectorMapping: Record<string, string> = {
+    'Leggings': 'Women',
+    'Sports Bras': 'Women',
+    'Coord Sets': 'Women',
+    'Nightwear': 'Women',
+    'Track Pants': 'Men',
+    'T-Shirts': 'Men',
+    'Joggers': 'Men',
+    'Shorts': 'Men',
+    'Kids Wear': 'Kids',
+    'Innerwear': 'Unisex',
+  };
+
+  // Products shown vs interested analysis
+  const allProductsShown = visits.flatMap(v => v.products_shown || []);
+  const allProductsInterested = visits.flatMap(v => v.products_interested || []);
+  
+  const productShowCount: Record<string, number> = {};
+  const productInterestCount: Record<string, number> = {};
+  
+  allProductsShown.forEach(p => { productShowCount[p] = (productShowCount[p] || 0) + 1; });
+  allProductsInterested.forEach(p => { productInterestCount[p] = (productInterestCount[p] || 0) + 1; });
+  
+  const productComparisonData = PRODUCT_CATEGORIES.map(cat => ({
+    name: cat,
+    shown: productShowCount[cat] || 0,
+    interested: productInterestCount[cat] || 0,
+    conversionRate: productShowCount[cat] > 0 
+      ? Math.round((productInterestCount[cat] || 0) / productShowCount[cat] * 100) 
+      : 0
+  })).filter(d => d.shown > 0 || d.interested > 0);
+
+  // Sector breakdown from shop categories
+  const shopSectorCounts: Record<string, number> = { 'Women': 0, 'Men': 0, 'Kids': 0, 'Unisex': 0 };
+  shops.forEach(shop => {
+    (shop.product_categories || []).forEach(cat => {
+      const sector = sectorMapping[cat];
+      if (sector) shopSectorCounts[sector]++;
+    });
+  });
+  
+  const sectorData = Object.entries(shopSectorCounts)
+    .filter(([_, count]) => count > 0)
+    .map(([name, value]) => ({ name, value }));
+
+  // Products interested from visits - sector breakdown
+  const interestSectorCounts: Record<string, number> = { 'Women': 0, 'Men': 0, 'Kids': 0, 'Unisex': 0 };
+  allProductsInterested.forEach(product => {
+    const sector = sectorMapping[product];
+    if (sector) interestSectorCounts[sector]++;
+  });
+  
+  const interestSectorData = Object.entries(interestSectorCounts)
+    .filter(([_, count]) => count > 0)
+    .map(([name, value]) => ({ name, value }));
+
+  // Competitor analysis - brands they currently stock
+  const allCurrentBrands = shops.flatMap(s => s.current_brands || []);
+  const brandCount: Record<string, number> = {};
+  allCurrentBrands.forEach(brand => {
+    if (brand && brand.trim()) {
+      brandCount[brand.trim()] = (brandCount[brand.trim()] || 0) + 1;
+    }
+  });
+  
+  const topCompetitorBrands = Object.entries(brandCount)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 10)
+    .map(([name, count]) => ({ name, count }));
+
+  // Competitor products mentioned in visits
+  const allCompetitorProducts = visits.flatMap(v => v.competitor_products || []);
+  const competitorProductCount: Record<string, number> = {};
+  allCompetitorProducts.forEach(product => {
+    if (product && product.trim()) {
+      competitorProductCount[product.trim()] = (competitorProductCount[product.trim()] || 0) + 1;
+    }
+  });
+  
+  const topCompetitorProducts = Object.entries(competitorProductCount)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 8)
+    .map(([name, count]) => ({ name, count }));
+
+  // Price segment distribution
+  const priceSegmentData = PRICE_SEGMENTS.map(segment => ({
+    name: segment.label.split(' ')[0],
+    value: shops.filter(s => s.price_segment === segment.value).length
+  })).filter(d => d.value > 0);
 
   const isLoading = visitsLoading || shopsLoading;
 
@@ -285,10 +382,11 @@ export default function MarketIntelDashboard() {
 
         {/* Charts Tabs */}
         <Tabs defaultValue="trends" className="w-full">
-          <TabsList className="w-full bg-slate-800/50 border-slate-700">
-            <TabsTrigger value="trends" className="flex-1 data-[state=active]:bg-blue-600">Trends</TabsTrigger>
-            <TabsTrigger value="distribution" className="flex-1 data-[state=active]:bg-blue-600">Distribution</TabsTrigger>
-            <TabsTrigger value="geography" className="flex-1 data-[state=active]:bg-blue-600">Geography</TabsTrigger>
+          <TabsList className="w-full bg-slate-800/50 border-slate-700 grid grid-cols-4">
+            <TabsTrigger value="trends" className="data-[state=active]:bg-blue-600 text-xs">Trends</TabsTrigger>
+            <TabsTrigger value="products" className="data-[state=active]:bg-blue-600 text-xs">Products</TabsTrigger>
+            <TabsTrigger value="distribution" className="data-[state=active]:bg-blue-600 text-xs">Distribution</TabsTrigger>
+            <TabsTrigger value="geography" className="data-[state=active]:bg-blue-600 text-xs">Geography</TabsTrigger>
           </TabsList>
 
           <TabsContent value="trends" className="space-y-4 mt-4">
@@ -501,6 +599,227 @@ export default function MarketIntelDashboard() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Products & Competitors Tab */}
+          <TabsContent value="products" className="space-y-4 mt-4">
+            {/* Sector Breakdown */}
+            <div className="grid grid-cols-2 gap-3">
+              <Card className="bg-slate-800/50 border-slate-700">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-xs text-white flex items-center gap-2">
+                    <Shirt className="w-4 h-4 text-pink-400" />
+                    Shop Categories
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={140}>
+                    <PieChart>
+                      <Pie
+                        data={sectorData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={30}
+                        outerRadius={55}
+                        paddingAngle={2}
+                        dataKey="value"
+                      >
+                        {sectorData.map((_, index) => (
+                          <Cell key={`cell-${index}`} fill={['#ec4899', '#3b82f6', '#f59e0b', '#8b5cf6'][index % 4]} />
+                        ))}
+                      </Pie>
+                      <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: 8 }} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="flex flex-wrap gap-1 justify-center mt-2">
+                    {sectorData.map((d, i) => (
+                      <span key={d.name} className="text-[10px] px-2 py-0.5 rounded-full" style={{ backgroundColor: ['#ec4899', '#3b82f6', '#f59e0b', '#8b5cf6'][i % 4] + '33', color: ['#ec4899', '#3b82f6', '#f59e0b', '#8b5cf6'][i % 4] }}>
+                        {d.name}: {d.value}
+                      </span>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-slate-800/50 border-slate-700">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-xs text-white flex items-center gap-2">
+                    <Heart className="w-4 h-4 text-rose-400" />
+                    Interest by Sector
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={140}>
+                    <PieChart>
+                      <Pie
+                        data={interestSectorData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={30}
+                        outerRadius={55}
+                        paddingAngle={2}
+                        dataKey="value"
+                      >
+                        {interestSectorData.map((_, index) => (
+                          <Cell key={`cell-${index}`} fill={['#f43f5e', '#0ea5e9', '#eab308', '#a855f7'][index % 4]} />
+                        ))}
+                      </Pie>
+                      <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: 8 }} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="flex flex-wrap gap-1 justify-center mt-2">
+                    {interestSectorData.map((d, i) => (
+                      <span key={d.name} className="text-[10px] px-2 py-0.5 rounded-full" style={{ backgroundColor: ['#f43f5e', '#0ea5e9', '#eab308', '#a855f7'][i % 4] + '33', color: ['#f43f5e', '#0ea5e9', '#eab308', '#a855f7'][i % 4] }}>
+                        {d.name}: {d.value}
+                      </span>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Products Shown vs Interested */}
+            <Card className="bg-slate-800/50 border-slate-700">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-white flex items-center gap-2">
+                  <Eye className="w-4 h-4 text-cyan-400" />
+                  Products: Shown vs Interested
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={220}>
+                  <BarChart data={productComparisonData} layout="vertical">
+                    <XAxis type="number" tick={{ fill: '#94a3b8', fontSize: 10 }} axisLine={false} tickLine={false} />
+                    <YAxis type="category" dataKey="name" tick={{ fill: '#94a3b8', fontSize: 9 }} axisLine={false} tickLine={false} width={70} />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: 8 }}
+                      formatter={(value, name) => [value, name === 'shown' ? 'Shown' : 'Interested']}
+                    />
+                    <Legend wrapperStyle={{ fontSize: 10 }} />
+                    <Bar dataKey="shown" fill="#06b6d4" radius={[0, 4, 4, 0]} name="Shown" />
+                    <Bar dataKey="interested" fill="#10b981" radius={[0, 4, 4, 0]} name="Interested" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {/* Top Product Interest with Conversion */}
+            <Card className="bg-slate-800/50 border-slate-700">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-white flex items-center gap-2">
+                  <ShoppingBag className="w-4 h-4 text-emerald-400" />
+                  Product Interest Rankings
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {productComparisonData.sort((a, b) => b.interested - a.interested).slice(0, 6).map((product, index) => (
+                  <div key={product.name} className="flex items-center gap-3">
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold ${
+                      index === 0 ? 'bg-gradient-to-br from-amber-400 to-amber-600' :
+                      index === 1 ? 'bg-gradient-to-br from-slate-300 to-slate-500' :
+                      index === 2 ? 'bg-gradient-to-br from-amber-600 to-amber-800' :
+                      'bg-slate-600'
+                    }`}>
+                      {index + 1}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs font-medium text-white truncate">{product.name}</p>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-emerald-400">{product.interested} interested</span>
+                          <Badge variant="outline" className="text-[10px] border-cyan-500/30 text-cyan-400">
+                            {product.conversionRate}% conv
+                          </Badge>
+                        </div>
+                      </div>
+                      <div className="w-full bg-slate-700 rounded-full h-1.5 mt-1">
+                        <div 
+                          className="bg-gradient-to-r from-emerald-500 to-cyan-400 h-1.5 rounded-full"
+                          style={{ width: `${Math.min(100, (product.interested / (productComparisonData[0]?.interested || 1)) * 100)}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {productComparisonData.length === 0 && (
+                  <p className="text-center text-slate-500 py-4 text-sm">No product data available</p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Competitor Analysis */}
+            <Card className="bg-gradient-to-br from-rose-900/50 to-orange-900/50 border-rose-700/30">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-white flex items-center gap-2">
+                  <Award className="w-4 h-4 text-rose-400" />
+                  Competitor Brands in Market
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {topCompetitorBrands.length > 0 ? (
+                  <div className="space-y-2">
+                    {topCompetitorBrands.map((brand, index) => (
+                      <div key={brand.name} className="flex items-center gap-3">
+                        <div className="w-6 h-6 rounded-full bg-rose-500/20 flex items-center justify-center text-rose-400 text-xs font-bold">
+                          {index + 1}
+                        </div>
+                        <div className="flex-1 flex items-center justify-between">
+                          <p className="text-sm text-white truncate">{brand.name}</p>
+                          <Badge className="bg-rose-500/20 text-rose-300 border-rose-500/30 text-xs">
+                            {brand.count} shops
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-center text-rose-300/70 py-4 text-sm">No competitor data recorded</p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Competitor Products Mentioned */}
+            {topCompetitorProducts.length > 0 && (
+              <Card className="bg-slate-800/50 border-slate-700">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm text-white flex items-center gap-2">
+                    <Package className="w-4 h-4 text-orange-400" />
+                    Competitor Products Mentioned
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-2">
+                    {topCompetitorProducts.map((product) => (
+                      <Badge key={product.name} variant="outline" className="border-orange-500/30 text-orange-300 px-3 py-1">
+                        {product.name} <span className="ml-1 text-orange-400 font-bold">({product.count})</span>
+                      </Badge>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Price Segment Distribution */}
+            {priceSegmentData.length > 0 && (
+              <Card className="bg-slate-800/50 border-slate-700">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm text-white flex items-center gap-2">
+                    <DollarSign className="w-4 h-4 text-green-400" />
+                    Shop Price Segments
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={150}>
+                    <BarChart data={priceSegmentData}>
+                      <XAxis dataKey="name" tick={{ fill: '#94a3b8', fontSize: 10 }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fill: '#94a3b8', fontSize: 10 }} axisLine={false} tickLine={false} />
+                      <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: 8 }} />
+                      <Bar dataKey="value" fill="#22c55e" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
         </Tabs>
 
