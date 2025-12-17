@@ -59,6 +59,10 @@ const JobDetails = () => {
   const [gstEnabled, setGstEnabled] = useState(false);
   const [gstPercentage, setGstPercentage] = useState<number>(0);
   
+  // Add pieces dialog state
+  const [showAddPiecesDialog, setShowAddPiecesDialog] = useState(false);
+  const [additionalPieces, setAdditionalPieces] = useState<number>(0);
+  
   // Expense states
   const [showExpenseForm, setShowExpenseForm] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<ExternalJobExpense | null>(null);
@@ -408,7 +412,21 @@ const JobDetails = () => {
                 className="mt-1"
               />
             ) : (
-              <p className="font-medium">{jobOrder.number_of_pieces}</p>
+              <div className="flex items-center gap-2">
+                <p className="font-medium">{jobOrder.number_of_pieces}</p>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="h-7 px-2 text-green-600 hover:text-green-700 hover:bg-green-50"
+                  onClick={() => {
+                    setAdditionalPieces(0);
+                    setShowAddPiecesDialog(true);
+                  }}
+                >
+                  <Plus className="h-3 w-3 mr-1" />
+                  Add
+                </Button>
+              </div>
             )}
           </div>
           <div>
@@ -1241,6 +1259,71 @@ const JobDetails = () => {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteExpenseConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Add Pieces Dialog */}
+      <AlertDialog open={showAddPiecesDialog} onOpenChange={setShowAddPiecesDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Add Additional Pieces</AlertDialogTitle>
+            <AlertDialogDescription>
+              Current pieces: <span className="font-semibold">{jobOrder.number_of_pieces}</span>. Enter the number of additional pieces to add.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-4">
+            <Label htmlFor="additionalPieces" className="text-sm font-medium">Additional Pieces</Label>
+            <Input
+              id="additionalPieces"
+              type="number"
+              min="1"
+              value={additionalPieces || ''}
+              onChange={(e) => setAdditionalPieces(parseInt(e.target.value) || 0)}
+              placeholder="Enter number of pieces to add"
+              className="mt-2"
+            />
+            {additionalPieces > 0 && (
+              <p className="text-sm text-muted-foreground mt-2">
+                New total: <span className="font-semibold text-green-600">{jobOrder.number_of_pieces + additionalPieces}</span> pieces
+              </p>
+            )}
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setAdditionalPieces(0)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              disabled={additionalPieces <= 0}
+              className="bg-green-600 hover:bg-green-700"
+              onClick={async () => {
+                if (additionalPieces <= 0) return;
+                try {
+                  const newPieces = jobOrder.number_of_pieces + additionalPieces;
+                  const newTotalAmount = newPieces * jobOrder.rate_per_piece;
+                  const currentGstPercentage = jobOrder.gst_percentage || 0;
+                  const newGstAmount = currentGstPercentage > 0 ? (newTotalAmount * currentGstPercentage) / 100 : 0;
+                  const newTotalWithGst = newTotalAmount + newGstAmount;
+                  
+                  await updateStatus.mutateAsync({
+                    id: jobOrder.id,
+                    data: {
+                      number_of_pieces: newPieces,
+                      total_amount: newTotalAmount,
+                      gst_amount: newGstAmount,
+                      total_with_gst: newTotalWithGst,
+                      balance_amount: newTotalWithGst - (jobOrder.paid_amount || 0),
+                    },
+                  });
+                  toast.success(`Added ${additionalPieces} pieces. New total: ${newPieces} pieces`);
+                  setShowAddPiecesDialog(false);
+                  setAdditionalPieces(0);
+                  refetch();
+                } catch (error: any) {
+                  toast.error(error.message || 'Failed to add pieces');
+                }
+              }}
+            >
+              Add Pieces
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

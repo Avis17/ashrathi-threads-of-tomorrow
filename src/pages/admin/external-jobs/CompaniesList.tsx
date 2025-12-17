@@ -51,7 +51,9 @@ const CompaniesList = () => {
     (company) =>
       company.company_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       company.contact_person.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      company.address.toLowerCase().includes(searchQuery.toLowerCase())
+      company.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      company.contact_number.includes(searchQuery) ||
+      (company.alternate_number && company.alternate_number.includes(searchQuery))
   );
 
   if (isLoading) {
@@ -96,7 +98,7 @@ const CompaniesList = () => {
 
       <Card className="p-4">
         <Input
-          placeholder="Search companies by name, contact person, or address..."
+          placeholder="Search by name, contact person, address, or phone number..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="max-w-md"

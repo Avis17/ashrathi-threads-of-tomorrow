@@ -78,6 +78,10 @@ const AddJob = () => {
   const [operationCommissions, setOperationCommissions] = useState<Record<string, number>>({});
   const [operationRoundOffs, setOperationRoundOffs] = useState<Record<string, number | null>>({});
   
+  // Special case mode - simplified rate entry
+  const [specialCaseMode, setSpecialCaseMode] = useState(false);
+  const [directOperationRates, setDirectOperationRates] = useState<Record<string, number>>({});
+  
   const { data: tasks } = useExternalJobTasks(selectedProduct || undefined);
 
   const form = useForm<JobFormData>({
@@ -281,40 +285,65 @@ const AddJob = () => {
     let totalOperationsCost = 0;
     let totalCommission = 0;
 
-    selectedOperations.forEach((op) => {
-      const cats = operationCategories[op] || [];
-      const commissionPercent = operationCommissions[op] || 0;
-      const roundOff = operationRoundOffs[op];
-      
-      // Sum up all category rates (in rupees)
-      let categoriesTotal = 0;
-      const categoryList: Array<{name: string, rate: number}> = [];
-      
-      cats.forEach((cat) => {
-        categoriesTotal += (cat.rate || 0);
-        categoryList.push({ name: cat.name, rate: cat.rate || 0 });
+    if (specialCaseMode) {
+      // Special case mode - use direct rates
+      selectedOperations.forEach((op) => {
+        const directRate = directOperationRates[op] || 0;
+        const commissionPercent = operationCommissions[op] || 0;
+        const commissionAmount = (directRate * commissionPercent) / 100;
+        const opTotal = directRate + commissionAmount;
+        
+        operationBreakdown[op] = {
+          categories: [{ name: 'Direct Rate', rate: directRate }],
+          categoriesTotal: directRate,
+          commissionPercent,
+          commissionAmount,
+          calculatedTotal: opTotal,
+          roundOff: null,
+          adjustment: 0,
+          total: opTotal
+        };
+        
+        totalOperationsCost += opTotal;
+        totalCommission += commissionAmount;
       });
-      
-      // Calculate commission as percentage of categories total
-      const commissionAmount = (categoriesTotal * commissionPercent) / 100;
-      const calculatedTotal = categoriesTotal + commissionAmount;
-      const adjustment = (roundOff !== null && roundOff !== undefined) ? roundOff - calculatedTotal : 0;
-      const opTotal = (roundOff !== null && roundOff !== undefined) ? roundOff : calculatedTotal;
-      
-      operationBreakdown[op] = {
-        categories: categoryList,
-        categoriesTotal,
-        commissionPercent,
-        commissionAmount,
-        calculatedTotal,
-        roundOff: roundOff ?? null,
-        adjustment,
-        total: opTotal
-      };
-      
-      totalOperationsCost += opTotal;
-      totalCommission += commissionAmount;
-    });
+    } else {
+      // Normal mode - use category-based rates
+      selectedOperations.forEach((op) => {
+        const cats = operationCategories[op] || [];
+        const commissionPercent = operationCommissions[op] || 0;
+        const roundOff = operationRoundOffs[op];
+        
+        // Sum up all category rates (in rupees)
+        let categoriesTotal = 0;
+        const categoryList: Array<{name: string, rate: number}> = [];
+        
+        cats.forEach((cat) => {
+          categoriesTotal += (cat.rate || 0);
+          categoryList.push({ name: cat.name, rate: cat.rate || 0 });
+        });
+        
+        // Calculate commission as percentage of categories total
+        const commissionAmount = (categoriesTotal * commissionPercent) / 100;
+        const calculatedTotal = categoriesTotal + commissionAmount;
+        const adjustment = (roundOff !== null && roundOff !== undefined) ? roundOff - calculatedTotal : 0;
+        const opTotal = (roundOff !== null && roundOff !== undefined) ? roundOff : calculatedTotal;
+        
+        operationBreakdown[op] = {
+          categories: categoryList,
+          categoriesTotal,
+          commissionPercent,
+          commissionAmount,
+          calculatedTotal,
+          roundOff: roundOff ?? null,
+          adjustment,
+          total: opTotal
+        };
+        
+        totalOperationsCost += opTotal;
+        totalCommission += commissionAmount;
+      });
+    }
 
     // Auto-calculate company profit
     const companyProfitPerPiece = clientRatePerPiece - totalOperationsCost;
@@ -368,20 +397,41 @@ const AddJob = () => {
   };
 
   const onSubmit = async (data: JobFormData) => {
-    const operations = selectedOperations.map((op) => {
-      const breakdown = operationBreakdown[op];
-      return {
-        operation_name: op,
-        commission_percent: operationCommissions[op] || 0,
-        round_off: operationRoundOffs[op] ?? null,
-        adjustment: breakdown?.adjustment || 0,
-        categories: (operationCategories[op] || []).map((cat) => ({
-          job_name: cat.jobName === "Other" && cat.customJobName ? cat.customJobName : cat.jobName,
-          category_name: cat.name === "Other" && cat.customName ? cat.customName : cat.name,
-          rate: cat.rate,
-        })),
-      };
-    });
+    let operations;
+    
+    if (specialCaseMode) {
+      // Special case mode - create simplified operations
+      operations = selectedOperations.map((op) => {
+        const breakdown = operationBreakdown[op];
+        return {
+          operation_name: op,
+          commission_percent: operationCommissions[op] || 0,
+          round_off: null,
+          adjustment: 0,
+          categories: [{
+            job_name: 'Direct Entry',
+            category_name: 'Special Case Rate',
+            rate: directOperationRates[op] || 0,
+          }],
+        };
+      });
+    } else {
+      // Normal mode
+      operations = selectedOperations.map((op) => {
+        const breakdown = operationBreakdown[op];
+        return {
+          operation_name: op,
+          commission_percent: operationCommissions[op] || 0,
+          round_off: operationRoundOffs[op] ?? null,
+          adjustment: breakdown?.adjustment || 0,
+          categories: (operationCategories[op] || []).map((cat) => ({
+            job_name: cat.jobName === "Other" && cat.customJobName ? cat.customJobName : cat.jobName,
+            category_name: cat.name === "Other" && cat.customName ? cat.customName : cat.name,
+            rate: cat.rate,
+          })),
+        };
+      });
+    }
 
     await createJob.mutateAsync({
       jobOrder: {
@@ -593,41 +643,78 @@ const AddJob = () => {
           </Card>
 
           <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Operations & Categories</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">Operations & Categories</h3>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="specialCaseMode"
+                    checked={specialCaseMode}
+                    onCheckedChange={(checked) => {
+                      setSpecialCaseMode(checked as boolean);
+                      // Clear data when switching modes
+                      if (checked) {
+                        setOperationCategories({});
+                        setOperationRoundOffs({});
+                      } else {
+                        setDirectOperationRates({});
+                      }
+                    }}
+                  />
+                  <label 
+                    htmlFor="specialCaseMode" 
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                  >
+                    Special Case Mode
+                  </label>
+                </div>
+              </div>
+            </div>
             
-            {/* Product Selection */}
-            <div className="mb-6 p-4 bg-muted/30 rounded-lg">
-              <FormLabel className="text-base font-semibold mb-2 block">Product Selection</FormLabel>
-              <div className="flex gap-2">
-                <Select value={selectedProduct} onValueChange={setSelectedProduct}>
-                  <SelectTrigger className="flex-1">
-                    <SelectValue placeholder="Select a product type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {products?.map((product) => (
-                      <SelectItem key={product.id} value={product.id}>
-                        {product.product_name} {product.category && `(${product.category})`}
-                      </SelectItem>
-                    ))}
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-                {selectedProduct === "other" && (
-                  <>
-                    <Input
-                      placeholder="Enter custom product name"
-                      value={customProductName}
-                      onChange={(e) => setCustomProductName(e.target.value)}
-                      className="flex-1"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={handleAddProduct}
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
+            {specialCaseMode && (
+              <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                <p className="text-sm text-amber-800">
+                  <strong>Special Case Mode:</strong> Enter direct rates per operation without detailed category breakdown. 
+                  Useful when you only know the total rate for each operation with commission.
+                </p>
+              </div>
+            )}
+            
+            {!specialCaseMode && (
+              <>
+                {/* Product Selection - only in normal mode */}
+                <div className="mb-6 p-4 bg-muted/30 rounded-lg">
+                  <FormLabel className="text-base font-semibold mb-2 block">Product Selection</FormLabel>
+                  <div className="flex gap-2">
+                    <Select value={selectedProduct} onValueChange={setSelectedProduct}>
+                      <SelectTrigger className="flex-1">
+                        <SelectValue placeholder="Select a product type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {products?.map((product) => (
+                          <SelectItem key={product.id} value={product.id}>
+                            {product.product_name} {product.category && `(${product.category})`}
+                          </SelectItem>
+                        ))}
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {selectedProduct === "other" && (
+                      <>
+                        <Input
+                          placeholder="Enter custom product name"
+                          value={customProductName}
+                          onChange={(e) => setCustomProductName(e.target.value)}
+                          className="flex-1"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={handleAddProduct}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
                   </>
                 )}
               </div>
@@ -826,6 +913,85 @@ const AddJob = () => {
                 </div>
               ))}
             </div>
+              </>
+            )}
+            
+            {/* Special Case Mode - Simplified Operation Entry */}
+            {specialCaseMode && (
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground mb-4">Select operations and enter direct rates with commission</p>
+                {OPERATIONS.map((operation) => (
+                  <div key={operation} className="p-4 border rounded-lg">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Checkbox
+                        checked={selectedOperations.includes(operation)}
+                        onCheckedChange={() => {
+                          if (selectedOperations.includes(operation)) {
+                            setSelectedOperations(selectedOperations.filter((op) => op !== operation));
+                            const newRates = { ...directOperationRates };
+                            delete newRates[operation];
+                            setDirectOperationRates(newRates);
+                            const newCommissions = { ...operationCommissions };
+                            delete newCommissions[operation];
+                            setOperationCommissions(newCommissions);
+                          } else {
+                            setSelectedOperations([...selectedOperations, operation]);
+                            setDirectOperationRates({
+                              ...directOperationRates,
+                              [operation]: 0,
+                            });
+                            setOperationCommissions({
+                              ...operationCommissions,
+                              [operation]: 0,
+                            });
+                          }
+                        }}
+                      />
+                      <span className="font-medium">{operation}</span>
+                    </div>
+                    
+                    {selectedOperations.includes(operation) && (
+                      <div className="ml-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                          <label className="text-sm font-medium mb-1 block">Rate (₹)</label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            placeholder="e.g. 20"
+                            value={directOperationRates[operation] || ''}
+                            onChange={(e) => setDirectOperationRates({
+                              ...directOperationRates,
+                              [operation]: parseFloat(e.target.value) || 0,
+                            })}
+                          />
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium mb-1 block">Commission (%)</label>
+                          <Input
+                            type="number"
+                            step="0.1"
+                            placeholder="e.g. 5"
+                            value={operationCommissions[operation] || ''}
+                            onChange={(e) => setOperationCommissions({
+                              ...operationCommissions,
+                              [operation]: parseFloat(e.target.value) || 0,
+                            })}
+                          />
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium mb-1 block">Total with Commission</label>
+                          <div className="h-10 px-3 py-2 bg-muted rounded-md flex items-center">
+                            <span className="font-semibold text-green-600">
+                              ₹{((directOperationRates[operation] || 0) + ((directOperationRates[operation] || 0) * (operationCommissions[operation] || 0) / 100)).toFixed(2)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </Card>
 
           <Card className="p-6">
