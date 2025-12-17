@@ -2172,6 +2172,236 @@ export type Database = {
         }
         Relationships: []
       }
+      market_intel_shops: {
+        Row: {
+          address: string
+          alternate_phone: string | null
+          city: string
+          created_at: string | null
+          created_by: string | null
+          current_brands: string[] | null
+          district: string | null
+          email: string | null
+          employee_count: string | null
+          established_year: number | null
+          gst_number: string | null
+          id: string
+          is_active: boolean | null
+          is_verified: boolean | null
+          landmark: string | null
+          monthly_purchase_volume: string | null
+          owner_name: string | null
+          phone: string
+          pincode: string | null
+          price_segment: string | null
+          product_categories: string[] | null
+          shop_name: string
+          shop_size: string | null
+          shop_type: Database["public"]["Enums"]["shop_type"]
+          state: string
+          updated_at: string | null
+        }
+        Insert: {
+          address: string
+          alternate_phone?: string | null
+          city: string
+          created_at?: string | null
+          created_by?: string | null
+          current_brands?: string[] | null
+          district?: string | null
+          email?: string | null
+          employee_count?: string | null
+          established_year?: number | null
+          gst_number?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_verified?: boolean | null
+          landmark?: string | null
+          monthly_purchase_volume?: string | null
+          owner_name?: string | null
+          phone: string
+          pincode?: string | null
+          price_segment?: string | null
+          product_categories?: string[] | null
+          shop_name: string
+          shop_size?: string | null
+          shop_type: Database["public"]["Enums"]["shop_type"]
+          state?: string
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string
+          alternate_phone?: string | null
+          city?: string
+          created_at?: string | null
+          created_by?: string | null
+          current_brands?: string[] | null
+          district?: string | null
+          email?: string | null
+          employee_count?: string | null
+          established_year?: number | null
+          gst_number?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_verified?: boolean | null
+          landmark?: string | null
+          monthly_purchase_volume?: string | null
+          owner_name?: string | null
+          phone?: string
+          pincode?: string | null
+          price_segment?: string | null
+          product_categories?: string[] | null
+          shop_name?: string
+          shop_size?: string | null
+          shop_type?: Database["public"]["Enums"]["shop_type"]
+          state?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      market_intel_staff: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          phone: string
+          staff_code: string
+          territory: string[] | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          phone: string
+          staff_code: string
+          territory?: string[] | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          phone?: string
+          staff_code?: string
+          territory?: string[] | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      market_intel_visits: {
+        Row: {
+          competitor_prices: Json | null
+          competitor_products: string[] | null
+          created_at: string | null
+          id: string
+          interest_level: Database["public"]["Enums"]["interest_level"] | null
+          is_synced: boolean | null
+          location_lat: number | null
+          location_lng: number | null
+          market_feedback: string | null
+          next_action: string | null
+          next_visit_date: string | null
+          notes: string | null
+          order_amount: number | null
+          order_taken: boolean | null
+          payment_amount: number | null
+          payment_collected: boolean | null
+          payment_terms_preferred:
+            | Database["public"]["Enums"]["payment_terms"]
+            | null
+          photos: string[] | null
+          products_interested: string[] | null
+          products_shown: string[] | null
+          sample_details: string | null
+          sample_given: boolean | null
+          shop_id: string
+          visit_date: string
+          visit_outcome: string | null
+          visit_purpose: Database["public"]["Enums"]["visit_purpose"]
+          visit_rating: number | null
+          visit_time: string
+          visited_by: string
+        }
+        Insert: {
+          competitor_prices?: Json | null
+          competitor_products?: string[] | null
+          created_at?: string | null
+          id?: string
+          interest_level?: Database["public"]["Enums"]["interest_level"] | null
+          is_synced?: boolean | null
+          location_lat?: number | null
+          location_lng?: number | null
+          market_feedback?: string | null
+          next_action?: string | null
+          next_visit_date?: string | null
+          notes?: string | null
+          order_amount?: number | null
+          order_taken?: boolean | null
+          payment_amount?: number | null
+          payment_collected?: boolean | null
+          payment_terms_preferred?:
+            | Database["public"]["Enums"]["payment_terms"]
+            | null
+          photos?: string[] | null
+          products_interested?: string[] | null
+          products_shown?: string[] | null
+          sample_details?: string | null
+          sample_given?: boolean | null
+          shop_id: string
+          visit_date?: string
+          visit_outcome?: string | null
+          visit_purpose: Database["public"]["Enums"]["visit_purpose"]
+          visit_rating?: number | null
+          visit_time?: string
+          visited_by: string
+        }
+        Update: {
+          competitor_prices?: Json | null
+          competitor_products?: string[] | null
+          created_at?: string | null
+          id?: string
+          interest_level?: Database["public"]["Enums"]["interest_level"] | null
+          is_synced?: boolean | null
+          location_lat?: number | null
+          location_lng?: number | null
+          market_feedback?: string | null
+          next_action?: string | null
+          next_visit_date?: string | null
+          notes?: string | null
+          order_amount?: number | null
+          order_taken?: boolean | null
+          payment_amount?: number | null
+          payment_collected?: boolean | null
+          payment_terms_preferred?:
+            | Database["public"]["Enums"]["payment_terms"]
+            | null
+          photos?: string[] | null
+          products_interested?: string[] | null
+          products_shown?: string[] | null
+          sample_details?: string | null
+          sample_given?: boolean | null
+          shop_id?: string
+          visit_date?: string
+          visit_outcome?: string | null
+          visit_purpose?: Database["public"]["Enums"]["visit_purpose"]
+          visit_rating?: number | null
+          visit_time?: string
+          visited_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "market_intel_visits_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "market_intel_shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       materials: {
         Row: {
           available_stock: number
@@ -3258,6 +3488,33 @@ export type Database = {
         | "professional_fees"
         | "marketing"
         | "insurance"
+      interest_level: "hot" | "warm" | "cold" | "not_interested"
+      payment_terms:
+        | "advance"
+        | "cod"
+        | "credit_7"
+        | "credit_15"
+        | "credit_30"
+        | "credit_45"
+        | "credit_60"
+      shop_type:
+        | "retail_showroom"
+        | "wholesale_dealer"
+        | "distributor"
+        | "boutique"
+        | "department_store"
+        | "online_seller"
+        | "factory_outlet"
+        | "other"
+      visit_purpose:
+        | "new_lead"
+        | "follow_up"
+        | "order_collection"
+        | "payment_collection"
+        | "complaint"
+        | "market_survey"
+        | "competitor_analysis"
+        | "other"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -3409,6 +3666,36 @@ export const Constants = {
         "professional_fees",
         "marketing",
         "insurance",
+      ],
+      interest_level: ["hot", "warm", "cold", "not_interested"],
+      payment_terms: [
+        "advance",
+        "cod",
+        "credit_7",
+        "credit_15",
+        "credit_30",
+        "credit_45",
+        "credit_60",
+      ],
+      shop_type: [
+        "retail_showroom",
+        "wholesale_dealer",
+        "distributor",
+        "boutique",
+        "department_store",
+        "online_seller",
+        "factory_outlet",
+        "other",
+      ],
+      visit_purpose: [
+        "new_lead",
+        "follow_up",
+        "order_collection",
+        "payment_collection",
+        "complaint",
+        "market_survey",
+        "competitor_analysis",
+        "other",
       ],
     },
   },
