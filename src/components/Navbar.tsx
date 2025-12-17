@@ -107,25 +107,39 @@ const Navbar = () => {
                       <User className="h-5 w-5" />
                     </button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuItem onClick={() => navigate('/my-orders')}>
+                  <DropdownMenuContent align="end" className="w-56 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-slate-700/50 shadow-2xl backdrop-blur-xl">
+                    <DropdownMenuItem 
+                      onClick={() => navigate('/my-orders')}
+                      className="text-slate-200 hover:bg-accent/20 hover:text-accent focus:bg-accent/20 focus:text-accent cursor-pointer transition-all duration-200"
+                    >
+                      <ShoppingBag className="h-4 w-4 mr-3 text-accent" />
                       My Orders
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/profile')}>
+                    <DropdownMenuItem 
+                      onClick={() => navigate('/profile')}
+                      className="text-slate-200 hover:bg-accent/20 hover:text-accent focus:bg-accent/20 focus:text-accent cursor-pointer transition-all duration-200"
+                    >
+                      <User className="h-4 w-4 mr-3 text-accent" />
                       My Profile
                     </DropdownMenuItem>
                     {isAdmin && (
                       <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => navigate('/admin')}>
-                          <Shield className="h-4 w-4 mr-2" />
-                          Admin
+                        <DropdownMenuSeparator className="bg-slate-700/50" />
+                        <DropdownMenuItem 
+                          onClick={() => navigate('/admin')}
+                          className="text-slate-200 hover:bg-accent/20 hover:text-accent focus:bg-accent/20 focus:text-accent cursor-pointer transition-all duration-200"
+                        >
+                          <Shield className="h-4 w-4 mr-3 text-amber-500" />
+                          Admin Dashboard
                         </DropdownMenuItem>
                       </>
                     )}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={signOut}>
-                      <LogOut className="h-4 w-4 mr-2" />
+                    <DropdownMenuSeparator className="bg-slate-700/50" />
+                    <DropdownMenuItem 
+                      onClick={signOut}
+                      className="text-red-400 hover:bg-red-500/20 hover:text-red-300 focus:bg-red-500/20 focus:text-red-300 cursor-pointer transition-all duration-200"
+                    >
+                      <LogOut className="h-4 w-4 mr-3" />
                       Sign Out
                     </DropdownMenuItem>
                   </DropdownMenuContent>
