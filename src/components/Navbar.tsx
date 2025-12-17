@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X, User, LogOut, Shield, Search, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,91 +12,20 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { CartButton } from "@/components/cart/CartButton";
 
-// Helper to check if a color is dark
-const isColorDark = (color: string): boolean => {
-  // Handle transparent
-  if (color === 'transparent' || color === 'rgba(0, 0, 0, 0)') return false;
-  
-  // Parse RGB values
-  const rgb = color.match(/\d+/g);
-  if (!rgb || rgb.length < 3) return false;
-  
-  const r = parseInt(rgb[0]);
-  const g = parseInt(rgb[1]);
-  const b = parseInt(rgb[2]);
-  
-  // Calculate luminance
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminance < 0.5;
-};
-
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isOverDarkBg, setIsOverDarkBg] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isAdmin, signOut } = useAuth();
 
-  // Check background color under navbar
-  const checkBackgroundColor = useCallback(() => {
-    const navbarHeight = 80;
-    const checkPoint = navbarHeight / 2;
-    
-    // Get all elements at the check point
-    const elementsAtPoint = document.elementsFromPoint(window.innerWidth / 2, checkPoint);
-    
-    // Skip the navbar itself and find the first element with a background
-    for (const el of elementsAtPoint) {
-      if (el.closest('nav')) continue;
-      
-      const style = window.getComputedStyle(el);
-      const bgColor = style.backgroundColor;
-      const bgImage = style.backgroundImage;
-      
-      // Check for dark background image (common for hero sections)
-      if (bgImage && bgImage !== 'none') {
-        // If there's a background image, check if the element has dark overlay or is a hero section
-        const classList = el.className || '';
-        if (classList.includes('hero') || classList.includes('bg-black') || classList.includes('bg-foreground')) {
-          setIsOverDarkBg(true);
-          return;
-        }
-      }
-      
-      // Check background color
-      if (bgColor && bgColor !== 'rgba(0, 0, 0, 0)' && bgColor !== 'transparent') {
-        setIsOverDarkBg(isColorDark(bgColor));
-        return;
-      }
-    }
-    
-    // Default: check body background
-    const bodyBg = window.getComputedStyle(document.body).backgroundColor;
-    setIsOverDarkBg(isColorDark(bodyBg));
-  }, []);
-
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
-      checkBackgroundColor();
     };
-    
-    // Initial check
-    checkBackgroundColor();
-    
     window.addEventListener("scroll", handleScroll);
-    window.addEventListener("resize", checkBackgroundColor);
-    
-    // Re-check on route change
-    const timeout = setTimeout(checkBackgroundColor, 100);
-    
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("resize", checkBackgroundColor);
-      clearTimeout(timeout);
-    };
-  }, [checkBackgroundColor, location.pathname]);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const navLinks = [
     { name: "Home", path: "/" },
@@ -109,13 +38,17 @@ const Navbar = () => {
 
   const isActive = (path: string) => location.pathname === path;
   
-  // Determine text color based on scroll state and background detection
+  // Pages with dark hero backgrounds where text should be white when not scrolled
+  const darkHeroPages = ["/", "/home", "/women", "/men", "/collections", "/about", "/shop", "/size-guide", "/size-chart/womens-leggings", "/size-chart/mens-track-pants", "/size-chart/mens-tshirts", "/size-chart/womens-sports-bra", "/size-chart/kids", "/shipping-return-refund", "/privacy-policy", "/terms-and-conditions"];
+  const hasDarkHero = darkHeroPages.includes(location.pathname);
+  
+  // Determine text color based on scroll state and page type
   const getTextColorClass = (isActiveLink: boolean = false) => {
     if (isActiveLink) return "text-accent";
     // When scrolled and navbar has background, use foreground
-    // if (isScrolled) return "text-foreground";
+    // if (isScrolled) return "text-white";
     // When over dark background, use white text
-    if (isOverDarkBg) return "text-white";
+    // if (isOverDarkBg) return "text-white";
     return "text-white";
   };
 
@@ -124,7 +57,7 @@ const Navbar = () => {
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
         isScrolled
           ? "bg-background/98 backdrop-blur-md border-b border-border shadow-sm"
-          : isOverDarkBg 
+          : hasDarkHero 
             ? "bg-transparent"
             : "bg-background/98 backdrop-blur-md border-b border-border"
       }`}
