@@ -1,6 +1,18 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Droplets, Shield, Zap, Wind, ChevronLeft, ChevronRight } from "lucide-react";
+import { 
+  ArrowRight, 
+  Droplets, 
+  Zap, 
+  Wind, 
+  ChevronLeft, 
+  ChevronRight,
+  Factory,
+  Sparkles,
+  Timer,
+  Star,
+  Play
+} from "lucide-react";
 import { useState, useEffect } from "react";
 
 // Hero slides
@@ -9,36 +21,22 @@ import heroSlide2 from "@/assets/hero-slide-2.jpg";
 import heroSlide3 from "@/assets/hero-slide-3.jpg";
 import heroSlide4 from "@/assets/hero-slide-4.jpg";
 
-// Hero and main images
-import heroLuxury2 from "@/assets/hero-luxury-2.jpg";
-import heroModel1 from "@/assets/hero-model-woman-1.jpg";
-
-// Activity images
-import activityRunning from "@/assets/activity-running.jpg";
-import activityYoga from "@/assets/activity-yoga.jpg";
-import activityGym from "@/assets/activity-gym.jpg";
-import activityCycling from "@/assets/activity-cycling.jpg";
-import activityPilates from "@/assets/activity-pilates.jpg";
-
 // Category images
 import categoryLeggings from "@/assets/category-leggings.jpg";
 import categoryTshirts from "@/assets/category-tshirts.jpg";
 import categorySportsbra from "@/assets/category-sportsbra.jpg";
 import categoryJoggers from "@/assets/category-joggers.jpg";
 
-// Color images
-import colorBlack from "@/assets/color-black.jpg";
-import colorSage from "@/assets/color-sage.jpg";
-import colorRose from "@/assets/color-rose.jpg";
-import colorNavy from "@/assets/color-navy.jpg";
+// Highlights
+import highlightCampaign from "@/assets/highlight-campaign.jpg";
+import highlightDetail from "@/assets/highlight-detail.jpg";
 
 // New arrivals
 import newArrival1 from "@/assets/new-arrival-1.jpg";
 import newArrival2 from "@/assets/new-arrival-2.jpg";
 
-// Highlights
-import highlightCampaign from "@/assets/highlight-campaign.jpg";
-import highlightDetail from "@/assets/highlight-detail.jpg";
+// Hero model
+import heroModel1 from "@/assets/hero-model-woman-1.jpg";
 
 const Home = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -46,35 +44,47 @@ const Home = () => {
   const heroSlides = [
     {
       image: heroSlide1,
-      subtitle: "WOMEN'S COLLECTION",
-      title: "Effortless Elegance",
-      highlight: "in Motion",
-      description: "Premium yoga & activewear crafted for comfort and style.",
-      cta: "/women"
+      subtitle: "PERFORMANCE WEAR",
+      title: "ENGINEERED FOR",
+      highlight: "COMFORT",
+      description: "Premium Quality • Factory Direct Pricing",
+      ctaMain: "/women",
+      ctaMainText: "SHOP WOMEN",
+      ctaSecondary: "/men",
+      ctaSecondaryText: "SHOP MEN"
     },
     {
       image: heroSlide2,
-      subtitle: "MEN'S COLLECTION",
-      title: "Performance",
-      highlight: "Redefined",
-      description: "Sportswear engineered for champions who push limits.",
-      cta: "/men"
+      subtitle: "MEN'S ACTIVEWEAR",
+      title: "PUSH YOUR",
+      highlight: "LIMITS",
+      description: "270 GSM Premium Fabric • Built to Last",
+      ctaMain: "/men",
+      ctaMainText: "SHOP MEN",
+      ctaSecondary: "/shop",
+      ctaSecondaryText: "VIEW ALL"
     },
     {
       image: heroSlide3,
-      subtitle: "NEW ARRIVALS",
-      title: "Move With",
-      highlight: "Confidence",
-      description: "Discover activewear that moves as beautifully as you do.",
-      cta: "/shop"
+      subtitle: "NEW COLLECTION",
+      title: "MOVE WITHOUT",
+      highlight: "BOUNDARIES",
+      description: "4-Way Stretch • Ultimate Freedom",
+      ctaMain: "/shop",
+      ctaMainText: "SHOP NOW",
+      ctaSecondary: "/collections",
+      ctaSecondaryText: "COLLECTIONS"
     },
     {
       image: heroSlide4,
-      subtitle: "MATCHING SETS",
-      title: "Together We",
-      highlight: "Train",
-      description: "Premium coordinated sets for couples who inspire each other.",
-      cta: "/collections"
+      subtitle: "WORKOUT ESSENTIALS",
+      title: "TRAIN",
+      highlight: "HARDER",
+      description: "Sweat-Wicking Technology • Quick Dry",
+      ctaMain: "/shop",
+      ctaMainText: "EXPLORE",
+      ctaSecondary: "/women",
+      ctaSecondaryText: "WOMEN"
     }
   ];
 
@@ -93,90 +103,130 @@ const Home = () => {
     setCurrentSlide((prev) => (prev - 1 + heroSlides.length) % heroSlides.length);
   };
 
-  const features = [
-    { icon: Zap, title: "4-Way Stretch", desc: "Move freely" },
-    { icon: Droplets, title: "Moisture-Wicking", desc: "Stay dry" },
-    { icon: Shield, title: "Squat-Proof", desc: "Full coverage" },
-    { icon: Wind, title: "Ultra-Soft", desc: "Buttery feel" },
-  ];
-
-  const activities = [
-    { name: "Running", image: activityRunning, link: "/shop" },
-    { name: "Yoga", image: activityYoga, link: "/shop" },
-    { name: "Gym", image: activityGym, link: "/shop" },
-    { name: "Cycling", image: activityCycling, link: "/shop" },
-    { name: "Pilates", image: activityPilates, link: "/shop" },
+  const uspFeatures = [
+    { icon: Droplets, title: "SWEAT-WICKING", desc: "Stay Dry" },
+    { icon: Zap, title: "4-WAY STRETCH", desc: "Move Free" },
+    { icon: Timer, title: "QUICK DRY", desc: "Fast Dry" },
+    { icon: Factory, title: "FACTORY DIRECT", desc: "Best Price" },
+    { icon: Sparkles, title: "PREMIUM FABRIC", desc: "270 GSM" },
+    { icon: Wind, title: "BREATHABLE", desc: "Stay Cool" },
   ];
 
   const categories = [
-    { name: "Leggings", count: "50+ Styles", image: categoryLeggings, link: "/women" },
-    { name: "T-Shirts", count: "40+ Styles", image: categoryTshirts, link: "/men" },
-    { name: "Sports Bras", count: "30+ Styles", image: categorySportsbra, link: "/women" },
-    { name: "Joggers", count: "25+ Styles", image: categoryJoggers, link: "/men" },
+    { 
+      name: "MEN'S ACTIVEWEAR", 
+      subtitle: "Performance Essentials",
+      image: categoryTshirts, 
+      link: "/men",
+      count: "50+ Products"
+    },
+    { 
+      name: "WOMEN'S ACTIVEWEAR", 
+      subtitle: "Style Meets Comfort",
+      image: categoryLeggings, 
+      link: "/women",
+      count: "60+ Products"
+    },
+    { 
+      name: "TRACK PANTS", 
+      subtitle: "All Day Comfort",
+      image: categoryJoggers, 
+      link: "/shop",
+      count: "30+ Products"
+    },
+    { 
+      name: "T-SHIRTS", 
+      subtitle: "Essential Basics",
+      image: categorySportsbra, 
+      link: "/shop",
+      count: "40+ Products"
+    },
   ];
 
-  const colors = [
-    { name: "Midnight Black", hex: "#0A0A0A", image: colorBlack },
-    { name: "Sage Green", hex: "#9CAF88", image: colorSage },
-    { name: "Dusty Rose", hex: "#D4A5A5", image: colorRose },
-    { name: "Navy Blue", hex: "#1E3A5F", image: colorNavy },
+  const trendingProducts = [
+    { name: "Pro Training Tee", price: "₹799", originalPrice: "₹1,299", image: newArrival1, discount: "38% OFF" },
+    { name: "Performance Joggers", price: "₹1,299", originalPrice: "₹1,999", image: newArrival2, discount: "35% OFF" },
+    { name: "Compression Shorts", price: "₹699", originalPrice: "₹1,099", image: highlightCampaign, discount: "36% OFF" },
+    { name: "Sports Tank Top", price: "₹599", originalPrice: "₹999", image: highlightDetail, discount: "40% OFF" },
+    { name: "Training Leggings", price: "₹1,199", originalPrice: "₹1,799", image: categoryLeggings, discount: "33% OFF" },
   ];
 
-  const newArrivals = [
-    { name: "Ribbed Seamless Set", price: "₹2,499", image: newArrival1, tag: "NEW" },
-    { name: "Compression Training Set", price: "₹1,999", image: newArrival2, tag: "NEW" },
-  ];
-
-  const whyFeather = [
-    { title: "Breathable Fabric", desc: "Advanced ventilation technology" },
-    { title: "Diamond Gusset", desc: "Ergonomic design for movement" },
-    { title: "High-Waist Sculpt", desc: "Flattering fit that moves with you" },
-    { title: "Anti-Odor Tech", desc: "Stay fresh all day" },
+  const reviews = [
+    { name: "Rahul S.", rating: 5, comment: "Best quality activewear I've ever owned. The fabric is premium and the fit is perfect!", location: "Mumbai" },
+    { name: "Priya M.", rating: 5, comment: "Love the 4-way stretch! Perfect for my yoga sessions. Will definitely order more.", location: "Bangalore" },
+    { name: "Amit K.", rating: 5, comment: "Factory direct pricing with premium quality. Can't beat this value!", location: "Delhi" },
   ];
 
   return (
-    <div className="min-h-screen">
-      {/* Hero Section with Carousel */}
+    <div className="min-h-screen bg-background font-sans">
+      {/* Hero Section with Full-Width Slider */}
       <section className="relative h-screen overflow-hidden">
         {/* Slides */}
         {heroSlides.map((slide, index) => (
           <div
             key={index}
-            className={`absolute inset-0 transition-opacity duration-1000 ${
+            className={`absolute inset-0 transition-all duration-1000 ${
               index === currentSlide ? "opacity-100 z-10" : "opacity-0 z-0"
             }`}
           >
             <div 
-              className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-[5000ms]"
+              className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-[8000ms] ease-out"
               style={{ 
                 backgroundImage: `url(${slide.image})`,
-                transform: index === currentSlide ? "scale(1.05)" : "scale(1)"
+                transform: index === currentSlide ? "scale(1.1)" : "scale(1)"
               }}
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/70" />
+            {/* Dark overlay with gradient */}
+            <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30" />
           </div>
         ))}
         
-        {/* Content */}
-        <div className="relative z-20 h-full flex items-center justify-center text-center px-6">
-          <div className="max-w-4xl mx-auto">
-            <p className="text-xs tracking-[0.4em] text-accent mb-6 animate-fade-in font-medium">
-              {heroSlides[currentSlide].subtitle}
-            </p>
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-light tracking-tight mb-6 text-white animate-fade-in-up">
+        {/* Content - Left Aligned */}
+        <div className="relative z-20 h-full flex items-center px-6 md:px-12 lg:px-20">
+          <div className="max-w-3xl">
+            {/* Subtitle with neon accent */}
+            <div className="inline-flex items-center gap-2 mb-6">
+              <div className="w-12 h-[2px] bg-neon" />
+              <p className="text-xs md:text-sm tracking-[0.4em] text-neon font-bold uppercase">
+                {heroSlides[currentSlide].subtitle}
+              </p>
+            </div>
+            
+            {/* Main Title - Bold Athletic Typography */}
+            <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight mb-2 text-white leading-[0.9] uppercase">
               {heroSlides[currentSlide].title}
-              <br />
-              <span className="font-serif italic text-accent">{heroSlides[currentSlide].highlight}</span>
             </h1>
-            <p className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto mb-10 animate-fade-in-delay">
+            <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight mb-6 text-neon leading-[0.9] uppercase">
+              {heroSlides[currentSlide].highlight}
+            </h1>
+            
+            {/* Description */}
+            <p className="text-base md:text-lg text-white/80 max-w-xl mb-10 font-medium tracking-wide">
               {heroSlides[currentSlide].description}
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-delay">
-              <Button asChild size="lg" className="px-10 py-6 text-sm tracking-[0.15em] bg-accent hover:bg-accent/90 text-primary glow-gold">
-                <Link to={heroSlides[currentSlide].cta}>SHOP NOW</Link>
+            
+            {/* CTA Buttons */}
+            <div className="flex flex-col sm:flex-row items-start gap-4">
+              <Button 
+                asChild 
+                size="lg" 
+                className="px-8 md:px-12 py-6 md:py-7 text-sm md:text-base font-bold tracking-[0.1em] bg-neon hover:bg-neon/90 text-black rounded-none uppercase transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_rgba(0,212,255,0.5)]"
+              >
+                <Link to={heroSlides[currentSlide].ctaMain}>
+                  {heroSlides[currentSlide].ctaMainText}
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="px-10 py-6 text-sm tracking-[0.15em] border-white/30 text-white hover:bg-white/10">
-                <Link to="/collections">VIEW COLLECTIONS</Link>
+              <Button 
+                asChild 
+                size="lg" 
+                variant="outline" 
+                className="px-8 md:px-12 py-6 md:py-7 text-sm md:text-base font-bold tracking-[0.1em] border-2 border-white text-white hover:bg-white hover:text-black rounded-none uppercase transition-all duration-300"
+              >
+                <Link to={heroSlides[currentSlide].ctaSecondary}>
+                  {heroSlides[currentSlide].ctaSecondaryText}
+                </Link>
               </Button>
             </div>
           </div>
@@ -185,46 +235,58 @@ const Home = () => {
         {/* Navigation Arrows */}
         <button
           onClick={prevSlide}
-          className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-all"
+          className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 z-30 w-12 h-12 md:w-14 md:h-14 bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-neon hover:text-black hover:border-neon transition-all duration-300"
           aria-label="Previous slide"
         >
           <ChevronLeft className="w-6 h-6" />
         </button>
         <button
           onClick={nextSlide}
-          className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-all"
+          className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 z-30 w-12 h-12 md:w-14 md:h-14 bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-neon hover:text-black hover:border-neon transition-all duration-300"
           aria-label="Next slide"
         >
           <ChevronRight className="w-6 h-6" />
         </button>
 
-        {/* Slide Indicators */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 flex gap-3">
+        {/* Slide Indicators - Vertical on right */}
+        <div className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 z-30 flex flex-col gap-3 translate-x-20 md:translate-x-0">
           {heroSlides.map((_, index) => (
             <button
               key={index}
               onClick={() => setCurrentSlide(index)}
-              className={`h-2 rounded-full transition-all duration-300 ${
+              className={`w-1 transition-all duration-500 ${
                 index === currentSlide 
-                  ? "w-8 bg-accent" 
-                  : "w-2 bg-white/40 hover:bg-white/60"
+                  ? "h-12 bg-neon" 
+                  : "h-6 bg-white/30 hover:bg-white/60"
               }`}
               aria-label={`Go to slide ${index + 1}`}
             />
           ))}
         </div>
+
+        {/* Bottom Slide Counter */}
+        <div className="absolute bottom-8 left-6 md:left-20 z-30 flex items-center gap-4">
+          <span className="text-5xl md:text-6xl font-black text-neon">0{currentSlide + 1}</span>
+          <div className="w-12 h-[1px] bg-white/30" />
+          <span className="text-xl text-white/50 font-medium">0{heroSlides.length}</span>
+        </div>
       </section>
 
-      {/* Feature Strip */}
-      <section className="py-6 bg-primary text-white">
-        <div className="container mx-auto px-6">
-          <div className="flex flex-wrap items-center justify-center gap-8 md:gap-16">
-            {features.map((feature, index) => (
-              <div key={index} className="flex items-center gap-3">
-                <feature.icon className="h-5 w-5 text-accent" />
+      {/* USP Strip - Horizontal Scroll on Mobile */}
+      <section className="py-4 md:py-6 bg-black border-y border-white/10">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-start md:justify-center gap-6 md:gap-10 lg:gap-16 overflow-x-auto scrollbar-hide pb-2 md:pb-0">
+            {uspFeatures.map((feature, index) => (
+              <div 
+                key={index} 
+                className="flex items-center gap-3 flex-shrink-0 group cursor-pointer"
+              >
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-neon/10 border border-neon/30 flex items-center justify-center group-hover:bg-neon group-hover:border-neon transition-all duration-300">
+                  <feature.icon className="h-4 w-4 md:h-5 md:w-5 text-neon group-hover:text-black transition-colors" />
+                </div>
                 <div>
-                  <p className="text-sm font-medium">{feature.title}</p>
-                  <p className="text-xs text-white/60 hidden md:block">{feature.desc}</p>
+                  <p className="text-xs md:text-sm font-bold text-white tracking-wide">{feature.title}</p>
+                  <p className="text-[10px] md:text-xs text-white/50 hidden md:block">{feature.desc}</p>
                 </div>
               </div>
             ))}
@@ -232,134 +294,130 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Shop by Activity */}
-      <section className="py-20 bg-muted/30">
-        <div className="container mx-auto px-6">
-          <div className="text-center mb-12">
-            <p className="text-xs tracking-[0.3em] text-accent mb-3">MADE FOR MOVEMENT</p>
-            <h2 className="text-3xl md:text-4xl font-light tracking-tight">Shop Popular Activities</h2>
+      {/* Category Cards Section */}
+      <section className="py-16 md:py-24 bg-[#0a0a0a]">
+        <div className="container mx-auto px-4 md:px-6">
+          {/* Section Header */}
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-10 md:mb-14">
+            <div>
+              <p className="text-xs tracking-[0.3em] text-neon mb-3 font-bold uppercase">SHOP BY CATEGORY</p>
+              <h2 className="text-3xl md:text-5xl font-black tracking-tight text-white uppercase">
+                EXPLORE <span className="text-neon">COLLECTIONS</span>
+              </h2>
+            </div>
+            <Link 
+              to="/shop" 
+              className="hidden md:inline-flex items-center text-white hover:text-neon transition-colors font-bold text-sm tracking-wide mt-4 md:mt-0"
+            >
+              VIEW ALL <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
           </div>
           
-          <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide">
-            {activities.map((activity, index) => (
-              <Link
-                key={index}
-                to={activity.link}
-                className="group flex-shrink-0 w-[280px] snap-start"
-              >
-                <div className="relative h-[380px] overflow-hidden rounded-2xl">
-                  <img 
-                    src={activity.image} 
-                    alt={activity.name}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                  <div className="absolute bottom-6 left-6 right-6">
-                    <h3 className="text-2xl font-light text-white mb-2">{activity.name}</h3>
-                    <span className="inline-flex items-center text-sm text-white/80 group-hover:text-accent transition-colors">
-                      Shop Now <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                    </span>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Popular Categories Grid */}
-      <section className="py-20">
-        <div className="container mx-auto px-6">
-          <div className="text-center mb-12">
-            <p className="text-xs tracking-[0.3em] text-accent mb-3">DISCOVER</p>
-            <h2 className="text-3xl md:text-4xl font-light tracking-tight">Shop Popular Categories</h2>
-          </div>
-          
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {/* Category Grid */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
             {categories.map((category, index) => (
               <Link
                 key={index}
                 to={category.link}
-                className="group relative h-[400px] md:h-[500px] overflow-hidden rounded-xl"
+                className="group relative h-[280px] md:h-[450px] overflow-hidden"
               >
+                {/* Image */}
                 <img 
                   src={category.image} 
                   alt={category.name}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
-                <div className="absolute bottom-6 left-6 right-6">
-                  <p className="text-xs text-accent mb-1">{category.count}</p>
-                  <h3 className="text-xl md:text-2xl font-light text-white">{category.name}</h3>
+                {/* Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
+                
+                {/* Content */}
+                <div className="absolute inset-0 flex flex-col justify-end p-4 md:p-6">
+                  <p className="text-[10px] md:text-xs text-neon font-bold mb-1 tracking-wider">{category.count}</p>
+                  <h3 className="text-sm md:text-xl font-black text-white uppercase mb-1 tracking-wide">
+                    {category.name}
+                  </h3>
+                  <p className="text-xs md:text-sm text-white/60 mb-3 hidden md:block">{category.subtitle}</p>
+                  
+                  {/* Hover CTA */}
+                  <div className="flex items-center gap-2 text-neon opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300">
+                    <span className="text-xs md:text-sm font-bold tracking-wide">SHOP NOW</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </div>
                 </div>
+
+                {/* Corner accent */}
+                <div className="absolute top-0 right-0 w-0 h-0 border-t-[50px] md:border-t-[80px] border-t-neon border-l-[50px] md:border-l-[80px] border-l-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               </Link>
             ))}
           </div>
+
+          {/* Mobile View All */}
+          <Link 
+            to="/shop" 
+            className="md:hidden flex items-center justify-center text-white hover:text-neon transition-colors font-bold text-sm tracking-wide mt-8 py-4 border border-white/20"
+          >
+            VIEW ALL CATEGORIES <ArrowRight className="ml-2 h-4 w-4" />
+          </Link>
         </div>
       </section>
 
-      {/* What's New Section */}
-      <section className="py-20 bg-muted/50">
-        <div className="container mx-auto px-6">
-          <div className="text-center mb-12">
-            <p className="text-xs tracking-[0.3em] text-accent mb-3">FRESH DROPS</p>
-            <h2 className="text-3xl md:text-4xl font-light tracking-tight">
-              What's new? <span className="font-serif italic">So glad you asked.</span>
-            </h2>
+      {/* Trending Products Slider */}
+      <section className="py-16 md:py-24 bg-[#111]">
+        <div className="container mx-auto px-4 md:px-6">
+          {/* Section Header */}
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-10 md:mb-14">
+            <div>
+              <p className="text-xs tracking-[0.3em] text-neon mb-3 font-bold uppercase">HOT RIGHT NOW</p>
+              <h2 className="text-3xl md:text-5xl font-black tracking-tight text-white uppercase">
+                TRENDING <span className="text-neon">PRODUCTS</span>
+              </h2>
+            </div>
+            <Link 
+              to="/shop" 
+              className="hidden md:inline-flex items-center text-white hover:text-neon transition-colors font-bold text-sm tracking-wide"
+            >
+              SHOP ALL <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8">
-            {newArrivals.map((item, index) => (
-              <Link key={index} to="/shop" className="group">
-                <div className="relative h-[500px] md:h-[600px] overflow-hidden rounded-2xl">
-                  <img 
-                    src={item.image} 
-                    alt={item.name}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
-                  <div className="absolute top-6 left-6">
-                    <span className="bg-accent text-primary px-4 py-2 text-xs tracking-wider font-medium rounded-full">
-                      {item.tag}
-                    </span>
-                  </div>
-                  <div className="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-black/90 to-transparent">
-                    <h3 className="text-2xl font-light text-white mb-2">{item.name}</h3>
-                    <p className="text-accent text-lg">{item.price}</p>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Shop by Color */}
-      <section className="py-20">
-        <div className="container mx-auto px-6">
-          <div className="text-center mb-12">
-            <p className="text-xs tracking-[0.3em] text-accent mb-3">EXPRESS YOURSELF</p>
-            <h2 className="text-3xl md:text-4xl font-light tracking-tight">Shop by Colour</h2>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {colors.map((color, index) => (
+          {/* Products Horizontal Scroll */}
+          <div className="flex gap-4 md:gap-6 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
+            {trendingProducts.map((product, index) => (
               <Link
                 key={index}
                 to="/shop"
-                className="group relative h-[300px] md:h-[400px] overflow-hidden rounded-xl"
+                className="group flex-shrink-0 w-[220px] md:w-[280px] snap-start"
               >
-                <img 
-                  src={color.image} 
-                  alt={color.name}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                />
-                <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-colors" />
-                <div className="absolute bottom-6 left-6 right-6 flex items-center gap-3">
-                  <div 
-                    className="w-6 h-6 rounded-full border-2 border-white shadow-lg"
-                    style={{ backgroundColor: color.hex }}
+                {/* Product Card */}
+                <div className="relative h-[280px] md:h-[360px] overflow-hidden bg-[#1a1a1a] mb-4">
+                  <img 
+                    src={product.image} 
+                    alt={product.name}
+                    className="w-full h-full object-cover transition-all duration-500 group-hover:scale-110"
                   />
-                  <span className="text-white font-medium text-sm">{color.name}</span>
+                  
+                  {/* Discount Badge */}
+                  <div className="absolute top-3 left-3 bg-neon text-black px-3 py-1 text-xs font-black tracking-wide">
+                    {product.discount}
+                  </div>
+
+                  {/* Quick Add Overlay */}
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center">
+                    <button className="bg-neon text-black px-6 py-3 font-bold text-sm tracking-wide transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 hover:bg-white">
+                      + QUICK ADD
+                    </button>
+                  </div>
+                </div>
+
+                {/* Product Info */}
+                <div>
+                  <h3 className="text-sm md:text-base font-bold text-white mb-2 group-hover:text-neon transition-colors tracking-wide">
+                    {product.name}
+                  </h3>
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg md:text-xl font-black text-neon">{product.price}</span>
+                    <span className="text-sm text-white/40 line-through">{product.originalPrice}</span>
+                  </div>
                 </div>
               </Link>
             ))}
@@ -367,138 +425,204 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Catch the Highlights */}
-      <section className="py-20 bg-[#1A1A1A]">
-        <div className="container mx-auto px-6">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <p className="text-xs tracking-[0.3em] text-accent mb-4">BEHIND THE SEAMS</p>
-              <h2 className="text-4xl md:text-5xl font-light tracking-tight mb-6 text-white">
-                Catch the
-                <br />
-                <span className="font-serif italic text-accent">highlights</span>
-              </h2>
-              <p className="text-white/70 text-lg mb-8 max-w-md">
-                See what makes Feather Fashions different. Premium fabrics, precision craftsmanship, and designs that move with you.
-              </p>
-              <div className="flex flex-wrap gap-4">
-                <Button asChild variant="outline" className="border-white/30 text-white hover:bg-white/10">
-                  <Link to="/about">
-                    Our Story <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-                <Button asChild className="bg-accent hover:bg-accent/90 text-primary">
-                  <Link to="/shop">
-                    Shop Collection
-                  </Link>
-                </Button>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="relative h-[300px] rounded-xl overflow-hidden">
-                <img 
-                  src={highlightCampaign}
-                  alt="Campaign"
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-                <div className="absolute bottom-4 left-4">
-                  <p className="text-white text-sm font-medium">Community</p>
-                </div>
-              </div>
-              <div className="relative h-[300px] rounded-xl overflow-hidden mt-8">
-                <img 
-                  src={highlightDetail}
-                  alt="Detail"
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-                <div className="absolute bottom-4 left-4">
-                  <p className="text-white text-sm font-medium">Quality Details</p>
-                </div>
-              </div>
+      {/* Lifestyle Banner - Full Width */}
+      <section className="relative h-[60vh] md:h-[80vh] overflow-hidden">
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-fixed"
+          style={{ backgroundImage: `url(${heroModel1})` }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-transparent" />
+        
+        <div className="relative z-10 h-full flex items-center px-6 md:px-12 lg:px-20">
+          <div className="max-w-2xl">
+            <p className="text-xs tracking-[0.4em] text-neon mb-4 font-bold uppercase">DESIGNED FOR PERFORMANCE</p>
+            <h2 className="text-4xl md:text-6xl lg:text-7xl font-black text-white mb-6 leading-[0.9] uppercase">
+              ELEVATE YOUR
+              <br />
+              <span className="text-neon">WORKOUT</span>
+            </h2>
+            <p className="text-base md:text-lg text-white/70 mb-8 max-w-lg">
+              From intense gym sessions to peaceful yoga flows, our activewear moves with you. 
+              Premium fabric technology meets style.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Button 
+                asChild 
+                size="lg" 
+                className="px-10 py-7 text-sm font-bold tracking-[0.1em] bg-neon hover:bg-neon/90 text-black rounded-none uppercase"
+              >
+                <Link to="/shop">
+                  SHOP NOW <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
+              </Button>
+              <Button 
+                asChild 
+                size="lg" 
+                variant="outline" 
+                className="px-10 py-7 text-sm font-bold tracking-[0.1em] border-2 border-white text-white hover:bg-white hover:text-black rounded-none uppercase"
+              >
+                <Link to="/about" className="flex items-center gap-2">
+                  <Play className="h-4 w-4" /> WATCH VIDEO
+                </Link>
+              </Button>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Why Feather Section */}
-      <section className="py-20">
-        <div className="container mx-auto px-6">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            <div className="relative h-[500px] rounded-2xl overflow-hidden">
-              <img 
-                src={heroModel1}
-                alt="Premium activewear"
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute -bottom-6 -right-6 w-32 h-32 border border-accent/30 rounded-xl" />
+      {/* Brand Story Preview */}
+      <section className="py-16 md:py-24 bg-[#0a0a0a]">
+        <div className="container mx-auto px-4 md:px-6">
+          <div className="grid lg:grid-cols-2 gap-10 md:gap-16 items-center">
+            {/* Image Grid */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-4">
+                <div className="h-[200px] md:h-[280px] overflow-hidden">
+                  <img 
+                    src={highlightCampaign}
+                    alt="Manufacturing"
+                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-700"
+                  />
+                </div>
+                <div className="h-[150px] md:h-[200px] overflow-hidden bg-neon flex items-center justify-center">
+                  <div className="text-center">
+                    <p className="text-4xl md:text-5xl font-black text-black">20+</p>
+                    <p className="text-xs md:text-sm font-bold text-black/70 tracking-wide">MACHINES</p>
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-4 mt-8">
+                <div className="h-[150px] md:h-[200px] overflow-hidden bg-white/10 flex items-center justify-center">
+                  <div className="text-center">
+                    <p className="text-4xl md:text-5xl font-black text-neon">270</p>
+                    <p className="text-xs md:text-sm font-bold text-white/70 tracking-wide">GSM FABRIC</p>
+                  </div>
+                </div>
+                <div className="h-[200px] md:h-[280px] overflow-hidden">
+                  <img 
+                    src={highlightDetail}
+                    alt="Quality Detail"
+                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-700"
+                  />
+                </div>
+              </div>
             </div>
-            
+
+            {/* Content */}
             <div>
-              <p className="text-xs tracking-[0.3em] text-accent mb-4">WHY FEATHER</p>
-              <h2 className="text-4xl md:text-5xl font-light tracking-tight mb-8">
-                Engineered for
+              <p className="text-xs tracking-[0.3em] text-neon mb-4 font-bold uppercase">OUR STORY</p>
+              <h2 className="text-3xl md:text-5xl font-black text-white mb-6 leading-tight uppercase">
+                PREMIUM QUALITY
                 <br />
-                <span className="font-serif italic">Excellence</span>
+                <span className="text-neon">FACTORY DIRECT</span>
               </h2>
-              <div className="grid sm:grid-cols-2 gap-6">
-                {whyFeather.map((item, index) => (
-                  <div key={index} className="group">
-                    <div className="w-8 h-px bg-accent mb-4 group-hover:w-12 transition-all duration-300" />
-                    <h3 className="text-lg font-medium mb-2">{item.title}</h3>
-                    <p className="text-sm text-muted-foreground">{item.desc}</p>
+              <p className="text-base md:text-lg text-white/60 mb-6 leading-relaxed">
+                Feather Fashions is a professional garment manufacturing unit equipped with cutting-edge 
+                machinery including flatlock, overlock, and fusing machines. With 20+ industrial machines 
+                and 2 precision cutting tables, we deliver premium activewear at factory-direct prices.
+              </p>
+              
+              {/* Features */}
+              <div className="grid grid-cols-2 gap-4 mb-8">
+                {[
+                  { label: "Cutting Tables", value: "2" },
+                  { label: "Industrial Machines", value: "20+" },
+                  { label: "GSM Quality", value: "270" },
+                  { label: "Years Experience", value: "10+" },
+                ].map((item, index) => (
+                  <div key={index} className="border-l-2 border-neon pl-4">
+                    <p className="text-2xl md:text-3xl font-black text-white">{item.value}</p>
+                    <p className="text-xs md:text-sm text-white/50 font-medium tracking-wide">{item.label}</p>
                   </div>
                 ))}
               </div>
+
+              <Button 
+                asChild 
+                className="px-8 py-6 text-sm font-bold tracking-[0.1em] bg-transparent border-2 border-neon text-neon hover:bg-neon hover:text-black rounded-none uppercase transition-all duration-300"
+              >
+                <Link to="/about">
+                  EXPLORE MORE <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Editorial Banner */}
-      <section className="relative h-[60vh] overflow-hidden">
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-fixed"
-          style={{ backgroundImage: `url(${heroLuxury2})` }}
-        />
-        <div className="absolute inset-0 bg-black/70" />
-        <div className="relative z-10 h-full flex items-center justify-center text-center px-6">
-          <div className="max-w-3xl">
-            <p className="text-xs tracking-[0.3em] text-accent mb-6">THE FEATHER DIFFERENCE</p>
-            <h2 className="text-3xl md:text-5xl font-light text-white mb-6 leading-tight">
-              "Comfort should never
-              <br />
-              compromise style."
+      {/* Customer Reviews */}
+      <section className="py-16 md:py-24 bg-[#111]">
+        <div className="container mx-auto px-4 md:px-6">
+          {/* Section Header */}
+          <div className="text-center mb-10 md:mb-14">
+            <p className="text-xs tracking-[0.3em] text-neon mb-3 font-bold uppercase">TESTIMONIALS</p>
+            <h2 className="text-3xl md:text-5xl font-black tracking-tight text-white uppercase">
+              WHAT OUR <span className="text-neon">CUSTOMERS SAY</span>
             </h2>
-            <Button asChild variant="outline" size="lg" className="border-white/30 text-white hover:bg-white/10 px-10 py-6 text-sm tracking-[0.15em]">
-              <Link to="/about">
-                OUR STORY <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
+          </div>
+
+          {/* Reviews Grid */}
+          <div className="grid md:grid-cols-3 gap-6">
+            {reviews.map((review, index) => (
+              <div 
+                key={index} 
+                className="bg-[#1a1a1a] p-6 md:p-8 border border-white/5 hover:border-neon/30 transition-all duration-300 group"
+              >
+                {/* Stars */}
+                <div className="flex gap-1 mb-4">
+                  {[...Array(review.rating)].map((_, i) => (
+                    <Star key={i} className="h-4 w-4 fill-neon text-neon" />
+                  ))}
+                </div>
+                
+                {/* Comment */}
+                <p className="text-white/70 mb-6 text-sm md:text-base leading-relaxed">
+                  "{review.comment}"
+                </p>
+                
+                {/* Author */}
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-neon/20 flex items-center justify-center">
+                    <span className="text-neon font-bold text-sm">{review.name.charAt(0)}</span>
+                  </div>
+                  <div>
+                    <p className="text-white font-bold text-sm">{review.name}</p>
+                    <p className="text-white/40 text-xs">{review.location}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-20">
-        <div className="container mx-auto px-6 text-center">
-          <p className="text-xs tracking-[0.3em] text-accent mb-4">GET IN TOUCH</p>
-          <h2 className="text-3xl md:text-4xl font-light tracking-tight mb-6">
-            Ready to elevate your
+      <section className="py-16 md:py-24 bg-neon">
+        <div className="container mx-auto px-4 md:px-6 text-center">
+          <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-black mb-6 uppercase tracking-tight">
+            READY TO UPGRADE YOUR
             <br />
-            <span className="font-serif italic">activewear game?</span>
+            ACTIVEWEAR GAME?
           </h2>
-          <p className="text-muted-foreground max-w-xl mx-auto mb-10">
-            Whether you're looking for wholesale partnerships or custom designs, we'd love to hear from you.
+          <p className="text-black/70 max-w-2xl mx-auto mb-10 text-base md:text-lg">
+            Join thousands of fitness enthusiasts who trust Feather Fashions for premium quality activewear 
+            at factory-direct prices.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button asChild size="lg" className="px-10 py-6 text-sm tracking-[0.15em] bg-accent hover:bg-accent/90 text-primary">
-              <Link to="/contact">CONTACT US</Link>
+            <Button 
+              asChild 
+              size="lg" 
+              className="px-10 md:px-14 py-7 text-sm md:text-base font-bold tracking-[0.1em] bg-black hover:bg-black/80 text-white rounded-none uppercase"
+            >
+              <Link to="/shop">SHOP NOW</Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="px-10 py-6 text-sm tracking-[0.15em]">
-              <Link to="/shop">BROWSE CATALOG</Link>
+            <Button 
+              asChild 
+              size="lg" 
+              variant="outline" 
+              className="px-10 md:px-14 py-7 text-sm md:text-base font-bold tracking-[0.1em] border-2 border-black text-black hover:bg-black hover:text-white rounded-none uppercase"
+            >
+              <Link to="/contact">CONTACT US</Link>
             </Button>
           </div>
         </div>
