@@ -6,14 +6,14 @@ export type InternalApp = 'market_intel' | 'analytics_hub' | 'production_tracker
 
 export interface AppAccessRecord {
   id: string;
-  user_id: string;
+  user_id: string | null;
+  user_email: string;
   app_name: InternalApp;
   is_approved: boolean;
   approved_by: string | null;
   approved_at: string | null;
   created_at: string;
   updated_at: string;
-  user_email?: string;
 }
 
 export function useAppAccess(appName?: InternalApp) {
@@ -22,9 +22,9 @@ export function useAppAccess(appName?: InternalApp) {
 
   // Check if current user has access to a specific app
   const { data: hasAccess, isLoading: accessLoading } = useQuery({
-    queryKey: ['app-access', user?.id, appName],
+    queryKey: ['app-access', user?.email, appName],
     queryFn: async () => {
-      if (!user || !appName) return false;
+      if (!user?.email || !appName) return false;
       
       // Admins always have access
       if (isAdmin) return true;
@@ -32,7 +32,7 @@ export function useAppAccess(appName?: InternalApp) {
       const { data, error } = await supabase
         .from('internal_app_access')
         .select('is_approved')
-        .eq('user_id', user.id)
+        .eq('user_email', user.email)
         .eq('app_name', appName)
         .maybeSingle();
 
@@ -43,7 +43,7 @@ export function useAppAccess(appName?: InternalApp) {
 
       return data?.is_approved ?? false;
     },
-    enabled: !!user && !!appName,
+    enabled: !!user?.email && !!appName,
   });
 
   // Get all access records (admin only)
@@ -65,14 +65,14 @@ export function useAppAccess(appName?: InternalApp) {
     enabled: isAdmin,
   });
 
-  // Grant access to a user
+  // Grant access to a user by email
   const grantAccess = useMutation({
-    mutationFn: async ({ userId, appName, userEmail }: { userId: string; appName: InternalApp; userEmail: string }) => {
-      // First check if record exists
+    mutationFn: async ({ email, appName }: { email: string; appName: InternalApp }) => {
+      // Check if record already exists
       const { data: existing } = await supabase
         .from('internal_app_access')
         .select('id')
-        .eq('user_id', userId)
+        .eq('user_email', email.toLowerCase())
         .eq('app_name', appName)
         .maybeSingle();
 
@@ -94,7 +94,7 @@ export function useAppAccess(appName?: InternalApp) {
         const { error } = await supabase
           .from('internal_app_access')
           .insert({
-            user_id: userId,
+            user_email: email.toLowerCase(),
             app_name: appName,
             is_approved: true,
             approved_by: user?.id,
@@ -111,14 +111,14 @@ export function useAppAccess(appName?: InternalApp) {
 
   // Revoke access from a user
   const revokeAccess = useMutation({
-    mutationFn: async ({ userId, appName }: { userId: string; appName: InternalApp }) => {
+    mutationFn: async ({ email, appName }: { email: string; appName: InternalApp }) => {
       const { error } = await supabase
         .from('internal_app_access')
         .update({
           is_approved: false,
           updated_at: new Date().toISOString(),
         })
-        .eq('user_id', userId)
+        .eq('user_email', email.toLowerCase())
         .eq('app_name', appName);
 
       if (error) throw error;
@@ -128,21 +128,21 @@ export function useAppAccess(appName?: InternalApp) {
     },
   });
 
-  // Search users by email
-  const searchUserByEmail = async (email: string) => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('id, email, full_name')
-      .ilike('email', `%${email}%`)
-      .limit(10);
+  // Delete access record
+  const deleteAccess = useMutation({
+    mutationFn: async ({ email, appName }: { email: string; appName: InternalApp }) => {
+      const { error } = await supabase
+        .from('internal_app_access')
+        .delete()
+        .eq('user_email', email.toLowerCase())
+        .eq('app_name', appName);
 
-    if (error) {
-      console.error('Error searching users:', error);
-      return [];
-    }
-
-    return data || [];
-  };
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['all-app-access'] });
+    },
+  });
 
   return {
     hasAccess: hasAccess ?? false,
@@ -151,7 +151,7 @@ export function useAppAccess(appName?: InternalApp) {
     recordsLoading,
     grantAccess,
     revokeAccess,
-    searchUserByEmail,
+    deleteAccess,
     isAdmin,
   };
 }

@@ -1101,7 +1101,8 @@ export type Database = {
           id: string
           is_approved: boolean | null
           updated_at: string | null
-          user_id: string
+          user_email: string | null
+          user_id: string | null
         }
         Insert: {
           app_name: Database["public"]["Enums"]["internal_app"]
@@ -1111,7 +1112,8 @@ export type Database = {
           id?: string
           is_approved?: boolean | null
           updated_at?: string | null
-          user_id: string
+          user_email?: string | null
+          user_id?: string | null
         }
         Update: {
           app_name?: Database["public"]["Enums"]["internal_app"]
@@ -1121,7 +1123,8 @@ export type Database = {
           id?: string
           is_approved?: boolean | null
           updated_at?: string | null
-          user_id?: string
+          user_email?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
