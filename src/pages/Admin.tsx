@@ -42,6 +42,7 @@ import RateCardsDashboard from './admin/external-jobs/RateCardsDashboard';
 import CompanyLetterhead from './admin/CompanyLetterhead';
 import CompaniesList from './admin/external-jobs/CompaniesList';
 import LabelGenerator from './admin/LabelGenerator';
+import PurchasesExpenses from './admin/PurchasesExpenses';
 
 const Admin = () => {
   const { isAdmin, loading } = useAuth();
@@ -83,6 +84,7 @@ const Admin = () => {
               <Route path="/job-management/employee/:id" element={<EmployeeDetailsPage />} />
               <Route path="/branches" element={<BranchesManager />} />
               <Route path="/expenses" element={<ExpensesManager />} />
+              <Route path="/purchases" element={<PurchasesExpenses />} />
               <Route path="/invoice" element={<InvoiceGenerator />} />
               <Route path="/customers" element={<CustomersManager />} />
               <Route path="/customers/:id" element={<CustomerDetails />} />
