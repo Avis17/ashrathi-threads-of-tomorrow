@@ -1092,6 +1092,39 @@ export type Database = {
           },
         ]
       }
+      internal_app_access: {
+        Row: {
+          app_name: Database["public"]["Enums"]["internal_app"]
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string | null
+          id: string
+          is_approved: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          app_name: Database["public"]["Enums"]["internal_app"]
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string | null
+          id?: string
+          is_approved?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          app_name?: Database["public"]["Enums"]["internal_app"]
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string | null
+          id?: string
+          is_approved?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       invoice_items: {
         Row: {
           amount: number
@@ -3404,6 +3437,13 @@ export type Database = {
           resource: string
         }[]
       }
+      has_app_access: {
+        Args: {
+          _app_name: Database["public"]["Enums"]["internal_app"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       has_permission: {
         Args: { _permission_name: string; _user_id: string }
         Returns: boolean
@@ -3489,6 +3529,11 @@ export type Database = {
         | "marketing"
         | "insurance"
       interest_level: "hot" | "warm" | "cold" | "not_interested"
+      internal_app:
+        | "market_intel"
+        | "analytics_hub"
+        | "production_tracker"
+        | "inventory_scanner"
       payment_terms:
         | "advance"
         | "cod"
@@ -3668,6 +3713,12 @@ export const Constants = {
         "insurance",
       ],
       interest_level: ["hot", "warm", "cold", "not_interested"],
+      internal_app: [
+        "market_intel",
+        "analytics_hub",
+        "production_tracker",
+        "inventory_scanner",
+      ],
       payment_terms: [
         "advance",
         "cod",

@@ -44,6 +44,7 @@ import CompaniesList from './admin/external-jobs/CompaniesList';
 import LabelGenerator from './admin/LabelGenerator';
 import PurchasesExpenses from './admin/PurchasesExpenses';
 import FeatherApps from './admin/FeatherApps';
+import AppAccessManagement from './admin/AppAccessManagement';
 
 const Admin = () => {
   const { isAdmin, loading } = useAuth();
@@ -104,6 +105,7 @@ const Admin = () => {
               <Route path="/label-generator" element={<LabelGenerator />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/apps" element={<FeatherApps />} />
+              <Route path="/app-access" element={<AppAccessManagement />} />
               <Route path="/external-jobs" element={<ExternalJobOrders />} />
               <Route path="/external-jobs/register-company" element={<RegisterCompany />} />
               <Route path="/external-jobs/add-job" element={<AddJob />} />
