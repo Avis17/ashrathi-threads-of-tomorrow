@@ -138,6 +138,25 @@ export default function InvoiceGenerator() {
     setItems(newItems);
   };
 
+  const handlePriceChange = (index: number, price: number) => {
+    const newItems = [...items];
+    newItems[index].price = price;
+    newItems[index].amount = price * newItems[index].quantity;
+    setItems(newItems);
+  };
+
+  const handleHsnChange = (index: number, hsn_code: string) => {
+    const newItems = [...items];
+    newItems[index].hsn_code = hsn_code;
+    setItems(newItems);
+  };
+
+  const handleProductCodeChange = (index: number, product_code: string) => {
+    const newItems = [...items];
+    newItems[index].product_code = product_code;
+    setItems(newItems);
+  };
+
   const addItem = () => {
     setItems([...items, {
       product_id: '',
@@ -814,17 +833,31 @@ export default function InvoiceGenerator() {
 
               <div className="col-span-2 space-y-2">
                 <Label>HSN Code</Label>
-                <Input value={item.hsn_code} disabled />
+                <Input 
+                  value={item.hsn_code} 
+                  onChange={(e) => handleHsnChange(index, e.target.value)}
+                  placeholder="HSN Code"
+                />
               </div>
 
               <div className="col-span-2 space-y-2">
                 <Label>Product Code</Label>
-                <Input value={item.product_code} disabled />
+                <Input 
+                  value={item.product_code} 
+                  onChange={(e) => handleProductCodeChange(index, e.target.value)}
+                  placeholder="Product Code"
+                />
               </div>
 
               <div className="col-span-2 space-y-2">
                 <Label>Price</Label>
-                <Input value={item.price} disabled />
+                <Input 
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={item.price} 
+                  onChange={(e) => handlePriceChange(index, Number(e.target.value))}
+                />
               </div>
 
               <div className="col-span-1 space-y-2">

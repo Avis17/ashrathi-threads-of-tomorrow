@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Eye, EyeOff, Calendar, Trash2, IndianRupee, Package, TrendingUp, CreditCard, Wallet, BadgeIndianRupee } from "lucide-react";
+import { Search, Eye, EyeOff, Calendar, Trash2, IndianRupee, Package, TrendingUp, CreditCard, Wallet, BadgeIndianRupee, Receipt } from "lucide-react";
 import { useDeleteExternalJobOrder } from "@/hooks/useExternalJobOrders";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -114,6 +114,7 @@ export const ExternalJobOrdersList = () => {
         totalPieces: 0,
         totalCommission: 0,
         grossProfit: 0,
+        totalGstAmount: 0,
       };
     }
 
@@ -127,6 +128,9 @@ export const ExternalJobOrdersList = () => {
     const paidAmount = filteredOrders.reduce((sum, order) => sum + (order.paid_amount || 0), 0);
     const pendingAmount = totalAmount - paidAmount;
     const totalPieces = filteredOrders.reduce((sum, order) => sum + (order.number_of_pieces || 0), 0);
+    
+    // Calculate total GST amount
+    const totalGstAmount = filteredOrders.reduce((sum, order) => sum + (order.gst_amount || 0), 0);
 
     // Calculate commission and operations cost
     let totalCommission = 0;
@@ -162,6 +166,7 @@ export const ExternalJobOrdersList = () => {
       totalPieces,
       totalCommission,
       grossProfit,
+      totalGstAmount,
     };
   }, [filteredOrders]);
 
@@ -227,7 +232,7 @@ export const ExternalJobOrdersList = () => {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <Card className="p-4 bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0 shadow-lg">
           <div className="flex items-center justify-between">
             <div>
@@ -250,6 +255,19 @@ export const ExternalJobOrdersList = () => {
             </div>
             <div className="h-12 w-12 bg-white/20 rounded-xl flex items-center justify-center">
               <IndianRupee className="h-6 w-6" />
+            </div>
+          </div>
+        </Card>
+
+        <Card className="p-4 bg-gradient-to-br from-cyan-500 to-cyan-600 text-white border-0 shadow-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-cyan-100 text-sm font-medium">Total GST Amount</p>
+              <p className="text-3xl font-bold mt-1">{formatAmount(stats.totalGstAmount, amountsVisible)}</p>
+              <p className="text-cyan-100 text-xs mt-1">GST collected</p>
+            </div>
+            <div className="h-12 w-12 bg-white/20 rounded-xl flex items-center justify-center">
+              <Receipt className="h-6 w-6" />
             </div>
           </div>
         </Card>
