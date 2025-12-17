@@ -13,12 +13,6 @@ interface AppCardProps {
 }
 
 const AppCard = ({ title, description, icon, status, accentColor, route }: AppCardProps) => {
-  const handleLaunch = () => {
-    if (route) {
-      window.open(route, '_blank');
-    }
-  };
-
   return (
     <Card className={`group relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-0 bg-card`}>
       {/* Accent top border */}
@@ -58,21 +52,18 @@ const AppCard = ({ title, description, icon, status, accentColor, route }: AppCa
       </CardHeader>
       
       <CardContent className="pt-0">
-        <Button 
-          onClick={handleLaunch}
-          disabled={status !== 'active'}
-          className="w-full group/btn"
-          variant={status === 'active' ? 'default' : 'secondary'}
-        >
-          {status === 'active' ? (
-            <>
+        {status === 'active' && route ? (
+          <a href={route} target="_blank" rel="noopener noreferrer" className="block">
+            <Button className="w-full group/btn" variant="default">
               Launch App
               <ExternalLink className="ml-2 h-4 w-4 transition-transform group-hover/btn:translate-x-0.5" />
-            </>
-          ) : (
-            'Coming Soon'
-          )}
-        </Button>
+            </Button>
+          </a>
+        ) : (
+          <Button disabled className="w-full" variant="secondary">
+            Coming Soon
+          </Button>
+        )}
       </CardContent>
     </Card>
   );
