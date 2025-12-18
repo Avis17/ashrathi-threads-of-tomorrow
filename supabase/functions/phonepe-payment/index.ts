@@ -8,6 +8,7 @@ const corsHeaders = {
 
 const PHONEPE_CLIENT_ID = Deno.env.get('PHONEPE_CLIENT_ID');
 const PHONEPE_CLIENT_SECRET = Deno.env.get('PHONEPE_CLIENT_SECRET');
+const PHONEPE_CLIENT_VERSION = Deno.env.get('PHONEPE_CLIENT_VERSION') || '1';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
@@ -41,11 +42,16 @@ async function getAccessToken(): Promise<string> {
   }
   
   console.log('Getting new PhonePe access token...');
+  console.log('Using Client ID:', PHONEPE_CLIENT_ID?.substring(0, 10) + '...');
+  console.log('Using Client Version:', PHONEPE_CLIENT_VERSION);
   
   const formData = new URLSearchParams();
   formData.append('client_id', PHONEPE_CLIENT_ID!);
+  formData.append('client_version', PHONEPE_CLIENT_VERSION);
   formData.append('client_secret', PHONEPE_CLIENT_SECRET!);
   formData.append('grant_type', 'client_credentials');
+  
+  console.log('Token request URL:', TOKEN_URL);
   
   const response = await fetch(TOKEN_URL, {
     method: 'POST',
@@ -56,18 +62,21 @@ async function getAccessToken(): Promise<string> {
   });
   
   const responseText = await response.text();
+  console.log('Token response status:', response.status);
   
   if (!response.ok) {
-    console.error('Token error:', responseText);
+    console.error('Token error response:', responseText);
     throw new Error(`Failed to get access token: ${response.status} - ${responseText}`);
   }
   
   const data = JSON.parse(responseText);
+  console.log('Token response parsed successfully');
   
-  // Cache the token (expires in ~15 minutes, we'll use 14 to be safe)
+  // Cache the token using expires_at from response
+  const expiresAt = data.expires_at ? data.expires_at * 1000 : Date.now() + (14 * 60 * 1000);
   cachedToken = {
     token: data.access_token,
-    expiresAt: Date.now() + (14 * 60 * 1000),
+    expiresAt: expiresAt - 60000, // Refresh 1 minute before expiry
   };
   
   console.log('Access token obtained and cached successfully');
@@ -77,30 +86,37 @@ async function getAccessToken(): Promise<string> {
 // Create payment order using Standard Checkout v2
 async function createPayment(payload: PaymentRequest, accessToken: string) {
   console.log('Creating PhonePe payment for order:', payload.orderId);
+  console.log('Amount (INR):', payload.amount);
+  console.log('Amount (paise):', Math.round(payload.amount * 100));
   
   const paymentUrl = `${PHONEPE_BASE_URL}/checkout/v2/pay`;
   
-  const requestBody = {
+  // Build request body exactly as per PhonePe docs
+  const requestBody: Record<string, unknown> = {
     merchantOrderId: payload.orderId,
     amount: Math.round(payload.amount * 100), // Convert to paise
-    expireAfter: 1800, // 30 minutes
-    metaInfo: {
-      udf1: payload.userId,
-      udf2: payload.orderId,
-      udf3: payload.customerPhone || '',
-      udf4: payload.customerEmail || '',
-    },
+    expireAfter: 1200, // 20 minutes in seconds
     paymentFlow: {
       type: "PG_CHECKOUT",
-      message: `Payment for Order #${payload.orderId}`,
+      message: `Payment for Order ${payload.orderId}`,
       merchantUrls: {
         redirectUrl: payload.redirectUrl,
-        callbackUrl: `${SUPABASE_URL}/functions/v1/phonepe-payment?action=webhook`,
       },
     },
   };
   
-  console.log('Payment request to PhonePe:', JSON.stringify(requestBody, null, 2));
+  // Add metaInfo only if we have data
+  if (payload.userId || payload.customerPhone || payload.customerEmail) {
+    requestBody.metaInfo = {
+      udf1: payload.userId || '',
+      udf2: payload.orderId || '',
+      udf3: payload.customerPhone || '',
+      udf4: payload.customerEmail || '',
+    };
+  }
+  
+  console.log('Payment request URL:', paymentUrl);
+  console.log('Payment request body:', JSON.stringify(requestBody, null, 2));
   
   const response = await fetch(paymentUrl, {
     method: 'POST',
@@ -113,7 +129,7 @@ async function createPayment(payload: PaymentRequest, accessToken: string) {
   
   const responseText = await response.text();
   console.log('PhonePe create payment response status:', response.status);
-  console.log('PhonePe create payment response:', responseText);
+  console.log('PhonePe create payment response body:', responseText);
   
   if (!response.ok) {
     console.error('Payment creation failed:', responseText);
@@ -121,7 +137,7 @@ async function createPayment(payload: PaymentRequest, accessToken: string) {
   }
   
   const result = JSON.parse(responseText);
-  console.log('Payment created successfully, response:', JSON.stringify(result, null, 2));
+  console.log('Payment created successfully');
   return result;
 }
 
@@ -130,6 +146,7 @@ async function checkPaymentStatus(merchantOrderId: string, accessToken: string) 
   console.log('Checking payment status for:', merchantOrderId);
   
   const statusUrl = `${PHONEPE_BASE_URL}/checkout/v2/order/${merchantOrderId}/status`;
+  console.log('Status check URL:', statusUrl);
   
   const response = await fetch(statusUrl, {
     method: 'GET',
@@ -141,7 +158,7 @@ async function checkPaymentStatus(merchantOrderId: string, accessToken: string) 
   
   const responseText = await response.text();
   console.log('PhonePe status response status:', response.status);
-  console.log('PhonePe status response:', responseText);
+  console.log('PhonePe status response body:', responseText);
   
   if (!response.ok) {
     console.error('Status check failed:', responseText);
@@ -162,12 +179,12 @@ async function handleWebhook(req: Request) {
     const webhookData = JSON.parse(body);
     
     // Standard Checkout v2 webhook format
-    const merchantOrderId = webhookData.merchantOrderId || webhookData.data?.merchantOrderId;
-    const transactionId = webhookData.transactionId || webhookData.data?.transactionId;
-    const state = webhookData.state || webhookData.data?.state;
-    const code = webhookData.code || webhookData.data?.code;
+    const payload = webhookData.payload || webhookData;
+    const merchantOrderId = payload.merchantOrderId;
+    const transactionId = payload.transactionId;
+    const state = payload.state;
     
-    console.log('Webhook data - OrderId:', merchantOrderId, 'State:', state, 'Code:', code);
+    console.log('Webhook data - OrderId:', merchantOrderId, 'State:', state);
     
     if (!merchantOrderId) {
       console.error('No merchantOrderId in webhook');
@@ -177,13 +194,13 @@ async function handleWebhook(req: Request) {
       });
     }
     
-    // Determine payment status based on state/code
+    // Determine payment status based on state
     let paymentStatus = 'pending';
-    if (state === 'COMPLETED' || code === 'PAYMENT_SUCCESS') {
+    if (state === 'COMPLETED') {
       paymentStatus = 'paid';
-    } else if (state === 'FAILED' || code === 'PAYMENT_ERROR' || code === 'PAYMENT_DECLINED') {
+    } else if (state === 'FAILED') {
       paymentStatus = 'failed';
-    } else if (state === 'CANCELLED' || code === 'PAYMENT_CANCELLED') {
+    } else if (state === 'CANCELLED') {
       paymentStatus = 'cancelled';
     }
     
@@ -235,6 +252,9 @@ serve(async (req) => {
     const url = new URL(req.url);
     const action = url.searchParams.get('action');
     
+    console.log('=== PhonePe Payment Request ===');
+    console.log('Action:', action);
+    
     if (!PHONEPE_CLIENT_ID || !PHONEPE_CLIENT_SECRET) {
       throw new Error('PhonePe credentials not configured');
     }
@@ -252,6 +272,7 @@ serve(async (req) => {
     if (action === 'create') {
       // Create payment
       const body: PaymentRequest = await req.json();
+      console.log('Create payment request body:', JSON.stringify(body));
       
       if (!body.orderId || !body.amount || !body.redirectUrl) {
         throw new Error('Missing required fields: orderId, amount, redirectUrl');
@@ -259,13 +280,16 @@ serve(async (req) => {
       
       const paymentResponse = await createPayment(body, accessToken);
       
-      // Extract checkout URL from response (Standard Checkout v2 format)
+      // Extract checkout URL from response
       const checkoutUrl = paymentResponse.redirectUrl || 
-                         paymentResponse.data?.redirectUrl ||
-                         paymentResponse.instrumentResponse?.redirectInfo?.url;
+                         paymentResponse.data?.redirectUrl;
+      
+      const phonePeOrderId = paymentResponse.orderId || paymentResponse.data?.orderId;
+      
+      console.log('Checkout URL:', checkoutUrl);
+      console.log('PhonePe Order ID:', phonePeOrderId);
       
       // Store PhonePe order ID in our database
-      const phonePeOrderId = paymentResponse.orderId || paymentResponse.data?.orderId;
       if (phonePeOrderId) {
         const { error: updateError } = await supabase
           .from('orders')
@@ -281,8 +305,6 @@ serve(async (req) => {
         }
       }
       
-      console.log('Returning checkout URL:', checkoutUrl);
-      
       return new Response(JSON.stringify({
         success: true,
         checkoutUrl: checkoutUrl,
@@ -295,6 +317,7 @@ serve(async (req) => {
     } else if (action === 'status') {
       // Check payment status
       const body: StatusCheckRequest = await req.json();
+      console.log('Status check request:', JSON.stringify(body));
       
       if (!body.merchantOrderId) {
         throw new Error('Missing merchantOrderId');
@@ -302,17 +325,17 @@ serve(async (req) => {
       
       const statusResponse = await checkPaymentStatus(body.merchantOrderId, accessToken);
       
-      // Standard Checkout v2 status format
-      const state = statusResponse.state || statusResponse.data?.state;
-      const code = statusResponse.code || statusResponse.data?.code;
-      const transactionId = statusResponse.transactionId || statusResponse.data?.transactionId;
-      const amount = statusResponse.amount || statusResponse.data?.amount;
+      // Extract status from response
+      const payload = statusResponse.payload || statusResponse;
+      const state = payload.state;
+      const transactionId = payload.transactionId;
+      const amount = payload.amount;
       
       // Update order payment status in database
       let paymentStatus = 'pending';
-      if (state === 'COMPLETED' || code === 'PAYMENT_SUCCESS') {
+      if (state === 'COMPLETED') {
         paymentStatus = 'paid';
-      } else if (state === 'FAILED' || code === 'PAYMENT_ERROR') {
+      } else if (state === 'FAILED') {
         paymentStatus = 'failed';
       }
       
@@ -331,7 +354,6 @@ serve(async (req) => {
       return new Response(JSON.stringify({
         success: true,
         state: state,
-        code: code,
         paymentStatus,
         transactionId: transactionId,
         amount: amount,
