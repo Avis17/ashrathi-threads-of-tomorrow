@@ -1,10 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
-import { Maximize, ShoppingCart, Plus, Minus, Check, Shield, Award, Sparkles, PackageSearch, ChevronRight, Star } from "lucide-react";
+import { Maximize, ShoppingCart, Plus, Minus, Check, Shield, Award, Sparkles, ChevronRight, Star, Grid3X3, LayoutGrid } from "lucide-react";
 import ImageZoomDialog from "@/components/ImageZoomDialog";
 import { useProducts } from "@/hooks/useProducts";
 import { useCart } from "@/hooks/useCart";
@@ -19,6 +18,7 @@ import Autoplay from "embla-carousel-autoplay";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ProductImageLoader } from "@/components/product/ProductImageLoader";
+import { ShopFilters } from "@/components/shop/ShopFilters";
 import noDataImage from "@/assets/no-data.png";
 
 // Package images
@@ -120,6 +120,13 @@ const Products = () => {
   const [selectedVariants, setSelectedVariants] = useState<Record<string, { size?: string; color?: string }>>({});
   const [displayImages, setDisplayImages] = useState<Record<string, string>>({});
   const [loadingImages, setLoadingImages] = useState<Record<string, boolean>>({});
+  const [gridCols, setGridCols] = useState<3 | 4>(3);
+  
+  // Filter states
+  const [selectedColors, setSelectedColors] = useState<string[]>([]);
+  const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 5000]);
+  
   const { data: products = [], isLoading, error, refetch } = useProducts();
 
   // Fetch inventory data for all products
@@ -232,13 +239,61 @@ const Products = () => {
     setSelectedVariants((prev) => ({ ...prev, [product.id]: {} }));
   };
 
-  const filteredProducts = products.filter((product) => {
-    const matchesTier = product.quality_tier === selectedTier;
-    const matchesCategory = activeCategory === "All" || product.category === activeCategory;
-    return matchesTier && matchesCategory;
-  });
+  // Get all available colors and sizes from products for filter
+  const allColors = useMemo(() => {
+    const colorMap = new Map<string, string>();
+    products.forEach(p => {
+      p.available_colors?.forEach(c => {
+        if (!colorMap.has(c.name)) colorMap.set(c.name, c.hex);
+      });
+    });
+    return Array.from(colorMap.entries()).map(([name, hex]) => ({ name, hex }));
+  }, [products]);
 
-  const categories = ["All", ...Array.from(new Set(filteredProducts.map(p => p.category)))];
+  const allSizes = useMemo(() => {
+    const sizes = new Set<string>();
+    products.forEach(p => {
+      p.available_sizes?.forEach(s => sizes.add(s));
+    });
+    return Array.from(sizes);
+  }, [products]);
+
+  const maxPrice = useMemo(() => {
+    return Math.max(...products.map(p => p.price || 0), 5000);
+  }, [products]);
+
+  // Filter products based on tier and all filters
+  const filteredProducts = useMemo(() => {
+    return products.filter((product) => {
+      const matchesTier = product.quality_tier === selectedTier;
+      const matchesCategory = activeCategory === "All" || product.category === activeCategory;
+      
+      // Color filter
+      const matchesColor = selectedColors.length === 0 || 
+        product.available_colors?.some(c => selectedColors.includes(c.name));
+      
+      // Size filter
+      const matchesSize = selectedSizes.length === 0 || 
+        product.available_sizes?.some(s => selectedSizes.includes(s));
+      
+      // Price filter
+      const productPrice = product.discount_percentage 
+        ? product.price * (1 - product.discount_percentage / 100)
+        : product.price;
+      const matchesPrice = productPrice >= priceRange[0] && productPrice <= priceRange[1];
+      
+      return matchesTier && matchesCategory && matchesColor && matchesSize && matchesPrice;
+    });
+  }, [products, selectedTier, activeCategory, selectedColors, selectedSizes, priceRange]);
+
+  const categories = ["All", ...Array.from(new Set(products.filter(p => p.quality_tier === selectedTier).map(p => p.category)))];
+
+  const handleClearFilters = () => {
+    setActiveCategory("All");
+    setSelectedColors([]);
+    setSelectedSizes([]);
+    setPriceRange([0, maxPrice]);
+  };
 
   if (error) {
     return (
@@ -248,12 +303,12 @@ const Products = () => {
     );
   }
 
-  // Product Card Component for cleaner code
+  // Product Card Component
   const ProductCard = ({ product, accentColor }: { product: any; accentColor: 'green' | 'amber' }) => {
     const isGreen = accentColor === 'green';
     
     return (
-      <div className="group relative bg-card rounded-none overflow-hidden border-0 hover:shadow-2xl transition-all duration-500">
+      <div className="group relative bg-card overflow-hidden border border-border/30 hover:border-border hover:shadow-xl transition-all duration-500">
         {/* Image */}
         <div className="relative aspect-[3/4] overflow-hidden bg-muted">
           <img
@@ -264,13 +319,13 @@ const Products = () => {
           {loadingImages[product.id] && <ProductImageLoader />}
           
           {/* Overlay on hover */}
-          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-500" />
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all duration-500" />
           
           {/* Quick view button */}
           <Button
             size="icon"
             variant="secondary"
-            className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-300 bg-white/90 hover:bg-white rounded-full shadow-lg"
+            className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-300 bg-white/95 hover:bg-white rounded-full shadow-lg h-9 w-9"
             onClick={(e) => {
               e.stopPropagation();
               setSelectedImage({ src: displayImages[product.id] || product.image_url, alt: product.name });
@@ -280,20 +335,20 @@ const Products = () => {
           </Button>
 
           {/* Badge */}
-          <div className="absolute top-4 left-4">
-            <span className={`text-[10px] font-medium tracking-wider uppercase px-3 py-1.5 ${
+          <div className="absolute top-3 left-3">
+            <span className={`text-[10px] font-semibold tracking-wider uppercase px-2.5 py-1 ${
               isGreen 
-                ? 'bg-emerald-900/90 text-white' 
-                : 'bg-amber-900/90 text-white'
+                ? 'bg-emerald-600 text-white' 
+                : 'bg-amber-600 text-white'
             }`}>
-              {isGreen ? 'Smart Value' : 'Premium'}
+              {isGreen ? 'Smart' : 'Elite'}
             </span>
           </div>
 
           {/* Discount badge */}
           {product.discount_percentage && product.discount_percentage > 0 && (
-            <div className="absolute bottom-4 left-4">
-              <span className="bg-red-600 text-white text-xs font-bold px-2 py-1">
+            <div className="absolute bottom-3 left-3">
+              <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-1">
                 -{product.discount_percentage}%
               </span>
             </div>
@@ -301,7 +356,7 @@ const Products = () => {
         </div>
 
         {/* Content */}
-        <div className="p-5 space-y-4 bg-card">
+        <div className="p-4 space-y-3 bg-card">
           {/* Offer messages */}
           {product.offer_messages && product.offer_messages.length > 0 && (
             <OfferMessageCycle messages={product.offer_messages} />
@@ -309,12 +364,9 @@ const Products = () => {
 
           {/* Title */}
           <div>
-            <h3 className="font-serif text-lg font-medium text-foreground leading-tight line-clamp-2 group-hover:text-accent transition-colors">
+            <h3 className="font-medium text-sm text-foreground leading-tight line-clamp-2 group-hover:text-accent transition-colors">
               {product.name}
             </h3>
-            {product.description && (
-              <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{product.description}</p>
-            )}
           </div>
 
           {/* Price */}
@@ -322,13 +374,13 @@ const Products = () => {
             <div className="flex items-baseline gap-2">
               {product.discount_percentage && product.discount_percentage > 0 ? (
                 <>
-                  <span className={`text-xl font-semibold ${isGreen ? 'text-emerald-600' : 'text-amber-600'}`}>
+                  <span className={`text-lg font-bold ${isGreen ? 'text-emerald-600' : 'text-amber-600'}`}>
                     ₹{Math.round(product.price * (1 - product.discount_percentage / 100))}
                   </span>
-                  <span className="text-sm text-muted-foreground line-through">₹{Math.round(product.price)}</span>
+                  <span className="text-xs text-muted-foreground line-through">₹{Math.round(product.price)}</span>
                 </>
               ) : (
-                <span className={`text-xl font-semibold ${isGreen ? 'text-emerald-600' : 'text-amber-600'}`}>
+                <span className={`text-lg font-bold ${isGreen ? 'text-emerald-600' : 'text-amber-600'}`}>
                   ₹{Math.round(product.price)}
                 </span>
               )}
@@ -342,7 +394,7 @@ const Products = () => {
                 const regularPrice = product.price * combo.quantity;
                 const savingsPercent = (((regularPrice - combo.price) / regularPrice) * 100).toFixed(0);
                 return (
-                  <span key={idx} className={`text-[10px] px-2 py-1 ${isGreen ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300'}`}>
+                  <span key={idx} className={`text-[9px] px-1.5 py-0.5 font-medium ${isGreen ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300'}`}>
                     Buy {combo.quantity} Save {savingsPercent}%
                   </span>
                 );
@@ -352,12 +404,12 @@ const Products = () => {
 
           {/* Size Selection */}
           {product.available_sizes && product.available_sizes.length > 0 && (
-            <div className="space-y-2">
-              <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Size</Label>
+            <div className="space-y-1.5">
+              <Label className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Size</Label>
               <RadioGroup
                 value={selectedVariants[product.id]?.size || ""}
                 onValueChange={(value) => handleSizeSelect(product.id, value)}
-                className="flex flex-wrap gap-1.5"
+                className="flex flex-wrap gap-1"
               >
                 {product.available_sizes.map((size: string) => {
                   const availableSizes = getAvailableSizes(product.id, selectedVariants[product.id]?.color);
@@ -369,7 +421,7 @@ const Products = () => {
                       <RadioGroupItem value={size} id={`${product.id}-size-${size}`} className="sr-only" disabled={!isAvailable} />
                       <Label
                         htmlFor={`${product.id}-size-${size}`}
-                        className={`w-9 h-9 flex items-center justify-center text-xs font-medium border transition-all cursor-pointer ${
+                        className={`w-8 h-8 flex items-center justify-center text-[10px] font-medium border transition-all cursor-pointer ${
                           !isAvailable 
                             ? "opacity-30 cursor-not-allowed line-through border-muted" 
                             : isSelected
@@ -388,14 +440,14 @@ const Products = () => {
 
           {/* Color Selection */}
           {product.available_colors && product.available_colors.length > 0 && (
-            <div className="space-y-2">
-              <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            <div className="space-y-1.5">
+              <Label className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
                 Color {selectedVariants[product.id]?.color && <span className="normal-case">— {selectedVariants[product.id]?.color}</span>}
               </Label>
               <RadioGroup
                 value={selectedVariants[product.id]?.color || ""}
                 onValueChange={(value) => handleColorSelect(product.id, value)}
-                className="flex flex-wrap gap-2"
+                className="flex flex-wrap gap-1.5"
               >
                 {product.available_colors.map((color: { name: string; hex: string }) => {
                   const availableColors = getAvailableColors(product.id, selectedVariants[product.id]?.size);
@@ -407,16 +459,16 @@ const Products = () => {
                       <RadioGroupItem value={color.name} id={`${product.id}-color-${color.name}`} className="sr-only" disabled={!isAvailable} />
                       <Label
                         htmlFor={`${product.id}-color-${color.name}`}
-                        className={`w-7 h-7 rounded-full border-2 transition-all cursor-pointer flex items-center justify-center ${
+                        className={`w-6 h-6 rounded-full border-2 transition-all cursor-pointer flex items-center justify-center ${
                           !isAvailable
                             ? "opacity-30 cursor-not-allowed"
                             : isSelected
-                            ? "border-foreground ring-2 ring-foreground ring-offset-2 ring-offset-background"
+                            ? "border-foreground ring-1 ring-foreground ring-offset-1 ring-offset-background"
                             : "border-transparent hover:border-muted-foreground"
                         }`}
                         title={color.name}
                       >
-                        <span className="w-5 h-5 rounded-full" style={{ backgroundColor: color.hex }} />
+                        <span className="w-4 h-4 rounded-full" style={{ backgroundColor: color.hex }} />
                       </Label>
                     </div>
                   );
@@ -426,26 +478,26 @@ const Products = () => {
           )}
 
           {/* Quantity and Add to Cart */}
-          <div className="flex items-center gap-3 pt-2">
+          <div className="flex items-center gap-2 pt-2">
             <div className="flex items-center border border-border">
-              <Button variant="ghost" size="icon" className="h-9 w-9 rounded-none" onClick={() => handleQuantityChange(product.id, -1)} disabled={quantities[product.id] === 1}>
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-none" onClick={() => handleQuantityChange(product.id, -1)} disabled={quantities[product.id] === 1}>
                 <Minus className="h-3 w-3" />
               </Button>
-              <span className="w-10 text-center text-sm font-medium">{quantities[product.id] || 1}</span>
-              <Button variant="ghost" size="icon" className="h-9 w-9 rounded-none" onClick={() => handleQuantityChange(product.id, 1)}>
+              <span className="w-8 text-center text-xs font-medium">{quantities[product.id] || 1}</span>
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-none" onClick={() => handleQuantityChange(product.id, 1)}>
                 <Plus className="h-3 w-3" />
               </Button>
             </div>
             <Button
-              className={`flex-1 h-10 rounded-none font-medium text-sm tracking-wide ${
+              className={`flex-1 h-9 rounded-none font-medium text-xs tracking-wide ${
                 isGreen 
                   ? 'bg-emerald-900 hover:bg-emerald-800 text-white' 
                   : 'bg-amber-900 hover:bg-amber-800 text-white'
               }`}
               onClick={() => handleAddToCart(product)}
             >
-              <ShoppingCart className="h-4 w-4 mr-2" />
-              Add to Bag
+              <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
+              Add
             </Button>
           </div>
         </div>
@@ -456,40 +508,37 @@ const Products = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <section className="relative h-[50vh] min-h-[400px] flex items-center justify-center overflow-hidden">
+      <section className="relative h-[45vh] min-h-[350px] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${productsHero})` }} />
         <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/30" />
         <div className="relative z-10 text-center px-4 max-w-4xl">
-          <p className="text-accent font-medium tracking-[0.3em] mb-4 text-xs uppercase">Shop Collection</p>
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-serif font-bold text-white mb-6 tracking-tight">
+          <p className="text-accent font-medium tracking-[0.3em] mb-3 text-xs uppercase">Shop Collection</p>
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 tracking-tight">
             THE SHOP
           </h1>
-          <p className="text-white/80 text-lg md:text-xl font-light max-w-2xl mx-auto">
+          <p className="text-white/80 text-base md:text-lg font-light max-w-xl mx-auto">
             Curated essentials designed for movement and comfort
           </p>
         </div>
       </section>
 
       {/* Premium Package Showcase Carousel */}
-      <section className="relative bg-gradient-to-b from-[#0A0A0A] via-[#1A1A1A] to-[#0A0A0A] py-16 md:py-24 overflow-hidden">
-        {/* Background decorative elements */}
+      <section className="relative bg-gradient-to-b from-[#0A0A0A] via-[#1A1A1A] to-[#0A0A0A] py-12 md:py-16 overflow-hidden">
         <div className="absolute inset-0 opacity-20">
           <div className="absolute top-0 left-0 w-96 h-96 bg-[#D4AF37]/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
           <div className="absolute bottom-0 right-0 w-96 h-96 bg-[#D4AF37]/10 rounded-full blur-3xl translate-x-1/2 translate-y-1/2" />
         </div>
         
         <div className="relative z-10 container mx-auto px-4">
-          {/* Section Header */}
-          <div className="text-center mb-12">
-            <p className="text-[#D4AF37] uppercase tracking-[0.4em] text-xs font-medium mb-4">Premium Packaging</p>
-            <h2 className="font-playfair text-3xl md:text-5xl text-white mb-4">Unbox the Experience</h2>
-            <p className="text-white/60 text-sm md:text-base max-w-xl mx-auto">
-              Every piece arrives in our signature resealable packaging, designed to preserve freshness and showcase premium quality.
+          <div className="text-center mb-8">
+            <p className="text-[#D4AF37] uppercase tracking-[0.4em] text-xs font-medium mb-3">Premium Packaging</p>
+            <h2 className="font-bold text-2xl md:text-4xl text-white mb-3">Unbox the Experience</h2>
+            <p className="text-white/60 text-sm max-w-lg mx-auto">
+              Every piece arrives in our signature resealable packaging.
             </p>
           </div>
 
-          {/* Premium Carousel */}
-          <div className="max-w-5xl mx-auto">
+          <div className="max-w-4xl mx-auto">
             <Carousel
               opts={{ align: "center", loop: true }}
               plugins={[Autoplay({ delay: 4000, stopOnInteraction: false })]}
@@ -498,52 +547,36 @@ const Products = () => {
               <CarouselContent className="-ml-4">
                 {[
                   { src: packageFront, alt: "Feather Fashions Premium Package Front", title: "Premium Active & Daily Wear", subtitle: "GYM | YOGA | TRAVEL | OFFICE WEAR" },
-                  { src: packageBack, alt: "Feather Fashions Premium Package Back", title: "Quality You Can Feel", subtitle: "4-Way Stretch • Moisture-Wicking • Breathable Fabric" }
+                  { src: packageBack, alt: "Feather Fashions Premium Package Back", title: "Quality You Can Feel", subtitle: "4-Way Stretch • Moisture-Wicking • Breathable" }
                 ].map((item, index) => (
-                  <CarouselItem key={index} className="pl-4 basis-full md:basis-4/5 lg:basis-3/4">
+                  <CarouselItem key={index} className="pl-4 basis-full md:basis-4/5">
                     <div className="relative group">
-                      {/* Image Container with premium styling */}
-                      <div className="relative aspect-[4/3] md:aspect-[16/10] overflow-hidden rounded-2xl shadow-2xl">
+                      <div className="relative aspect-[4/3] md:aspect-[16/10] overflow-hidden rounded-xl shadow-2xl">
                         <img
                           src={item.src}
                           alt={item.alt}
                           className="w-full h-full object-contain bg-[#6B6B5E] transition-transform duration-700 group-hover:scale-105"
                         />
-                        {/* Gradient overlay */}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                        
-                        {/* Content overlay on hover */}
-                        <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10 transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500">
-                          <h3 className="font-playfair text-xl md:text-3xl text-white mb-2">{item.title}</h3>
-                          <p className="text-white/80 text-sm md:text-base tracking-wide">{item.subtitle}</p>
+                        <div className="absolute bottom-0 left-0 right-0 p-6 transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500">
+                          <h3 className="font-bold text-lg md:text-2xl text-white mb-1">{item.title}</h3>
+                          <p className="text-white/80 text-xs md:text-sm tracking-wide">{item.subtitle}</p>
                         </div>
                       </div>
-                      
-                      {/* Gold accent line */}
-                      <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-24 h-1 bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                     </div>
                   </CarouselItem>
                 ))}
               </CarouselContent>
-              
-              {/* Custom styled navigation */}
-              <CarouselPrevious className="left-4 md:-left-4 bg-white/10 backdrop-blur-sm border-white/20 text-white hover:bg-white/20 hover:text-white" />
-              <CarouselNext className="right-4 md:-right-4 bg-white/10 backdrop-blur-sm border-white/20 text-white hover:bg-white/20 hover:text-white" />
+              <CarouselPrevious className="left-2 md:-left-4 bg-white/10 backdrop-blur-sm border-white/20 text-white hover:bg-white/20 hover:text-white" />
+              <CarouselNext className="right-2 md:-right-4 bg-white/10 backdrop-blur-sm border-white/20 text-white hover:bg-white/20 hover:text-white" />
             </Carousel>
-
-            {/* Slide indicators */}
-            <div className="flex justify-center gap-3 mt-8">
-              <span className="w-8 h-1 bg-[#D4AF37] rounded-full" />
-              <span className="w-8 h-1 bg-white/20 rounded-full" />
-            </div>
           </div>
 
-          {/* Feature badges */}
-          <div className="flex flex-wrap justify-center gap-4 md:gap-8 mt-12">
-            {['Resealable Packaging', 'Made in India', 'Premium Quality', 'Butter-Soft Fabric'].map((feature) => (
-              <div key={feature} className="flex items-center gap-2 px-4 py-2 rounded-full border border-[#D4AF37]/30 bg-[#D4AF37]/5">
+          <div className="flex flex-wrap justify-center gap-3 md:gap-6 mt-8">
+            {['Resealable Packaging', 'Made in India', 'Premium Quality'].map((feature) => (
+              <div key={feature} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#D4AF37]/30 bg-[#D4AF37]/5">
                 <Sparkles className="w-3 h-3 text-[#D4AF37]" />
-                <span className="text-xs text-white/80 uppercase tracking-wider">{feature}</span>
+                <span className="text-[10px] text-white/80 uppercase tracking-wider">{feature}</span>
               </div>
             ))}
           </div>
@@ -552,8 +585,8 @@ const Products = () => {
 
       {/* Trust Strip */}
       <div className="border-y border-border bg-muted/30">
-        <div className="container mx-auto px-4 py-5">
-          <div className="flex flex-wrap justify-center gap-8 md:gap-16">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex flex-wrap justify-center gap-6 md:gap-12">
             <div className="flex items-center gap-2">
               <Shield className="h-4 w-4 text-accent" />
               <span className="text-xs font-medium tracking-wide uppercase">Quality Assured</span>
@@ -570,162 +603,158 @@ const Products = () => {
         </div>
       </div>
 
-      {/* Collection Tabs */}
-      <div className="container mx-auto px-4 py-12">
-        <Tabs value={selectedTier} onValueChange={(value) => { setSelectedTier(value as 'elite' | 'smart_basics'); setActiveCategory("All"); }} className="w-full">
+      {/* Main Shop Section with Filters */}
+      <div className="container mx-auto px-4 py-10">
+        <Tabs value={selectedTier} onValueChange={(value) => { setSelectedTier(value as 'elite' | 'smart_basics'); setActiveCategory("All"); handleClearFilters(); }} className="w-full">
           {/* Premium Tab Design */}
-          <div className="flex justify-center mb-10">
+          <div className="flex justify-center mb-8">
             <TabsList className="h-auto p-0 bg-transparent gap-0 border-b border-border rounded-none">
               <TabsTrigger 
                 value="smart_basics"
-                className="px-8 py-4 rounded-none border-b-2 border-transparent data-[state=active]:border-emerald-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-muted-foreground data-[state=active]:text-foreground transition-all"
+                className="px-6 md:px-10 py-4 rounded-none border-b-2 border-transparent data-[state=active]:border-emerald-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-muted-foreground data-[state=active]:text-foreground transition-all"
               >
-                <div className="flex flex-col items-center gap-1">
-                  <span className="text-sm md:text-base font-medium tracking-wide">SMART BASICS</span>
+                <div className="flex flex-col items-center gap-0.5">
+                  <span className="text-sm md:text-base font-semibold tracking-wide">SMART BASICS</span>
                   <span className="text-[10px] text-muted-foreground hidden md:block">Everyday Comfort</span>
                 </div>
               </TabsTrigger>
               <TabsTrigger 
                 value="elite" 
-                className="px-8 py-4 rounded-none border-b-2 border-transparent data-[state=active]:border-amber-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-muted-foreground data-[state=active]:text-foreground transition-all"
+                className="px-6 md:px-10 py-4 rounded-none border-b-2 border-transparent data-[state=active]:border-amber-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-muted-foreground data-[state=active]:text-foreground transition-all"
               >
-                <div className="flex flex-col items-center gap-1">
-                  <span className="text-sm md:text-base font-medium tracking-wide">ELITE COLLECTION</span>
+                <div className="flex flex-col items-center gap-0.5">
+                  <span className="text-sm md:text-base font-semibold tracking-wide">ELITE COLLECTION</span>
                   <span className="text-[10px] text-muted-foreground hidden md:block">Premium Quality</span>
                 </div>
               </TabsTrigger>
             </TabsList>
           </div>
 
-          {/* Smart Basics Tab */}
-          <TabsContent value="smart_basics" className="mt-0">
-            {/* Collection Description */}
-            <div className="text-center mb-10 max-w-2xl mx-auto">
-              <h2 className="font-serif text-2xl md:text-3xl text-foreground mb-3">Everyday Comfort, Smart Value</h2>
-              <p className="text-muted-foreground text-sm leading-relaxed">
-                Quality fabrics at economical prices. Smart choices without compromising comfort.
-              </p>
-              <div className="flex justify-center gap-6 mt-6">
-                {['Economical', 'Comfortable', 'Daily Wear', 'Great Value'].map((item) => (
-                  <div key={item} className="flex items-center gap-1.5">
-                    <Check className="h-3 w-3 text-emerald-600" />
-                    <span className="text-xs text-muted-foreground">{item}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+          {/* Collection Description */}
+          <div className="text-center mb-8 max-w-2xl mx-auto">
+            {selectedTier === 'smart_basics' ? (
+              <>
+                <h2 className="font-bold text-xl md:text-2xl text-foreground mb-2">Everyday Comfort, Smart Value</h2>
+                <p className="text-muted-foreground text-sm leading-relaxed mb-4">
+                  Quality fabrics at economical prices. Smart choices without compromising comfort.
+                </p>
+                <div className="flex justify-center gap-4 flex-wrap">
+                  {['Economical', 'Comfortable', 'Daily Wear', 'Great Value'].map((item) => (
+                    <div key={item} className="flex items-center gap-1">
+                      <Check className="h-3 w-3 text-emerald-600" />
+                      <span className="text-xs text-muted-foreground">{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <>
+                <h2 className="font-bold text-xl md:text-2xl text-foreground mb-2">Premium Craftsmanship</h2>
+                <p className="text-muted-foreground text-sm leading-relaxed mb-4">
+                  Experience the finest fabrics with superior stitching and designer-level finishing.
+                </p>
+                <div className="flex justify-center gap-4 flex-wrap">
+                  {['Higher GSM', 'Designer Finish', 'Superior Stitch', 'Premium Feel'].map((item) => (
+                    <div key={item} className="flex items-center gap-1">
+                      <Check className="h-3 w-3 text-amber-600" />
+                      <span className="text-xs text-muted-foreground">{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
 
-            {/* Category Filter */}
-            <div className="flex justify-center gap-2 mb-10 overflow-x-auto pb-2 scrollbar-hide">
-              {categories.map((category) => (
-                <Button
-                  key={category}
-                  variant="ghost"
-                  onClick={() => setActiveCategory(category)}
-                  className={`px-5 py-2 text-xs font-medium tracking-wide uppercase rounded-none border-b-2 transition-all ${
-                    activeCategory === category 
-                      ? 'border-foreground text-foreground' 
-                      : 'border-transparent text-muted-foreground hover:text-foreground hover:border-muted'
-                  }`}
-                >
-                  {category}
-                </Button>
-              ))}
-            </div>
+          {/* Shop Layout: Sidebar + Products */}
+          <div className="flex gap-8">
+            {/* Filters Sidebar */}
+            <ShopFilters
+              categories={categories}
+              activeCategory={activeCategory}
+              setActiveCategory={setActiveCategory}
+              selectedColors={selectedColors}
+              setSelectedColors={setSelectedColors}
+              selectedSizes={selectedSizes}
+              setSelectedSizes={setSelectedSizes}
+              priceRange={priceRange}
+              setPriceRange={setPriceRange}
+              maxPrice={maxPrice}
+              availableColors={allColors}
+              availableSizes={allSizes}
+              onClearFilters={handleClearFilters}
+            />
 
             {/* Products Grid */}
-            {isLoading ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-                {[...Array(8)].map((_, i) => <Skeleton key={i} className="aspect-[3/4]" />)}
-              </div>
-            ) : filteredProducts.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-20 px-4">
-                <img src={noDataImage} alt="Products coming soon" className="w-32 h-32 object-contain opacity-50 mb-6" />
-                <h3 className="font-serif text-2xl text-foreground mb-2">Coming Soon</h3>
-                <p className="text-muted-foreground text-sm text-center max-w-md">
-                  We're curating a premium selection of Smart Basics collection just for you.
+            <div className="flex-1 min-w-0">
+              {/* Results Header */}
+              <div className="flex items-center justify-between mb-6 pb-4 border-b border-border/50">
+                <p className="text-sm text-muted-foreground">
+                  <span className="font-semibold text-foreground">{filteredProducts.length}</span> products
                 </p>
+                <div className="hidden md:flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground mr-2">View:</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={`h-8 w-8 ${gridCols === 3 ? 'bg-muted' : ''}`}
+                    onClick={() => setGridCols(3)}
+                  >
+                    <Grid3X3 className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={`h-8 w-8 ${gridCols === 4 ? 'bg-muted' : ''}`}
+                    onClick={() => setGridCols(4)}
+                  >
+                    <LayoutGrid className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-            ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-                {filteredProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} accentColor="green" />
-                ))}
-              </div>
-            )}
-          </TabsContent>
 
-          {/* Elite Collection Tab */}
-          <TabsContent value="elite" className="mt-0">
-            {/* Collection Description */}
-            <div className="text-center mb-10 max-w-2xl mx-auto">
-              <h2 className="font-serif text-2xl md:text-3xl text-foreground mb-3">Premium Craftsmanship</h2>
-              <p className="text-muted-foreground text-sm leading-relaxed">
-                Experience the finest fabrics with superior stitching, higher GSM for durability, and designer-level finishing.
-              </p>
-              <div className="flex justify-center gap-6 mt-6">
-                {['Higher GSM', 'Designer Finish', 'Superior Stitch', 'Premium Feel'].map((item) => (
-                  <div key={item} className="flex items-center gap-1.5">
-                    <Check className="h-3 w-3 text-amber-600" />
-                    <span className="text-xs text-muted-foreground">{item}</span>
-                  </div>
-                ))}
-              </div>
+              {/* Products */}
+              {isLoading ? (
+                <div className={`grid grid-cols-2 ${gridCols === 3 ? 'lg:grid-cols-3' : 'lg:grid-cols-4'} gap-4`}>
+                  {[...Array(8)].map((_, i) => <Skeleton key={i} className="aspect-[3/4]" />)}
+                </div>
+              ) : filteredProducts.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 px-4">
+                  <img src={noDataImage} alt="Products coming soon" className="w-28 h-28 object-contain opacity-50 mb-5" />
+                  <h3 className="font-bold text-xl text-foreground mb-2">No Products Found</h3>
+                  <p className="text-muted-foreground text-sm text-center max-w-md mb-4">
+                    Try adjusting your filters to find what you're looking for.
+                  </p>
+                  <Button variant="outline" onClick={handleClearFilters} className="rounded-none">
+                    Clear all filters
+                  </Button>
+                </div>
+              ) : (
+                <div className={`grid grid-cols-2 ${gridCols === 3 ? 'lg:grid-cols-3' : 'lg:grid-cols-4'} gap-4`}>
+                  {filteredProducts.map((product) => (
+                    <ProductCard 
+                      key={product.id} 
+                      product={product} 
+                      accentColor={selectedTier === 'smart_basics' ? 'green' : 'amber'} 
+                    />
+                  ))}
+                </div>
+              )}
             </div>
-
-            {/* Category Filter */}
-            <div className="flex justify-center gap-2 mb-10 overflow-x-auto pb-2 scrollbar-hide">
-              {categories.map((category) => (
-                <Button
-                  key={category}
-                  variant="ghost"
-                  onClick={() => setActiveCategory(category)}
-                  className={`px-5 py-2 text-xs font-medium tracking-wide uppercase rounded-none border-b-2 transition-all ${
-                    activeCategory === category 
-                      ? 'border-foreground text-foreground' 
-                      : 'border-transparent text-muted-foreground hover:text-foreground hover:border-muted'
-                  }`}
-                >
-                  {category}
-                </Button>
-              ))}
-            </div>
-
-            {/* Products Grid */}
-            {isLoading ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-                {[...Array(8)].map((_, i) => <Skeleton key={i} className="aspect-[3/4]" />)}
-              </div>
-            ) : filteredProducts.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-20 px-4">
-                <img src={noDataImage} alt="Products coming soon" className="w-32 h-32 object-contain opacity-50 mb-6" />
-                <h3 className="font-serif text-2xl text-foreground mb-2">Coming Soon</h3>
-                <p className="text-muted-foreground text-sm text-center max-w-md">
-                  Our Elite Collection is being carefully curated with premium products.
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-                {filteredProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} accentColor="amber" />
-                ))}
-              </div>
-            )}
-          </TabsContent>
+          </div>
         </Tabs>
       </div>
 
       {/* Quality Promise */}
-      <section className="bg-foreground text-background py-16">
+      <section className="bg-foreground text-background py-14">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
-            <p className="text-accent font-medium tracking-[0.3em] mb-4 text-xs uppercase">Our Promise</p>
-            <h2 className="font-serif text-3xl md:text-4xl mb-6">Honest Quality, Honest Prices</h2>
-            <p className="text-background/70 leading-relaxed">
+            <p className="text-accent font-medium tracking-[0.3em] mb-3 text-xs uppercase">Our Promise</p>
+            <h2 className="font-bold text-2xl md:text-3xl mb-5">Honest Quality, Honest Prices</h2>
+            <p className="text-background/70 leading-relaxed text-sm">
               Unlike others, we don't sell low-quality products at premium prices. Our transparent tier system lets you choose what matters to you.
               Whether you choose Elite Collection for premium durability or Smart Basics for everyday value, you always know exactly what you're getting.
             </p>
-            <p className="text-accent text-sm mt-6 italic">
+            <p className="text-accent text-sm mt-5 italic">
               "No deception. No false promises. Just honest quality at honest prices."
             </p>
           </div>
@@ -733,11 +762,11 @@ const Products = () => {
       </section>
 
       {/* Model Showcase */}
-      <section className="py-16 bg-muted/30">
+      <section className="py-14 bg-muted/30">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-10">
+          <div className="text-center mb-8">
             <p className="text-accent font-medium tracking-[0.3em] mb-2 text-xs uppercase">Lookbook</p>
-            <h2 className="font-serif text-3xl md:text-4xl text-foreground">Our Collections</h2>
+            <h2 className="font-bold text-2xl md:text-3xl text-foreground">Our Collections</h2>
           </div>
           <Carousel opts={{ align: "start", loop: true }} plugins={[Autoplay({ delay: 3000 })]} className="w-full">
             <CarouselContent className="-ml-4">
@@ -746,8 +775,8 @@ const Products = () => {
                   <div className="group relative aspect-[3/4] overflow-hidden">
                     <img src={image.src} alt={image.alt} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                    <div className="absolute bottom-0 left-0 right-0 p-5">
-                      <span className="text-[10px] font-medium tracking-wider uppercase text-white/70 block mb-1">{image.category}</span>
+                    <div className="absolute bottom-0 left-0 right-0 p-4">
+                      <span className="text-[10px] font-medium tracking-wider uppercase text-white/70 block mb-0.5">{image.category}</span>
                       <p className="text-white font-medium text-sm">{image.alt}</p>
                     </div>
                   </div>
@@ -761,16 +790,16 @@ const Products = () => {
       </section>
 
       {/* Leggings Collection */}
-      <section className="py-16">
+      <section className="py-14">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-10">
+          <div className="text-center mb-8">
             <p className="text-accent font-medium tracking-[0.3em] mb-2 text-xs uppercase">Featured</p>
-            <h2 className="font-serif text-3xl md:text-4xl text-foreground mb-4">Women's Leggings</h2>
-            <p className="text-muted-foreground max-w-xl mx-auto text-sm mb-6">
-              Discover your perfect fit from our range of premium leggings designed for every lifestyle
+            <h2 className="font-bold text-2xl md:text-3xl text-foreground mb-3">Women's Leggings</h2>
+            <p className="text-muted-foreground max-w-lg mx-auto text-sm mb-5">
+              Discover your perfect fit from our range of premium leggings
             </p>
             <Link to="/leggings-features">
-              <Button variant="outline" className="rounded-none px-8 py-5 text-sm font-medium tracking-wide border-foreground hover:bg-foreground hover:text-background transition-all group">
+              <Button variant="outline" className="rounded-none px-6 py-5 text-sm font-medium tracking-wide border-foreground hover:bg-foreground hover:text-background transition-all group">
                 Discover Features
                 <ChevronRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
               </Button>
@@ -784,8 +813,8 @@ const Products = () => {
                   <div className="group relative aspect-[3/4] overflow-hidden">
                     <img src={legging.src} alt={legging.alt} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                    <div className="absolute bottom-0 left-0 right-0 p-5 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-                      <h3 className="text-white font-medium mb-1">{legging.title}</h3>
+                    <div className="absolute bottom-0 left-0 right-0 p-4 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                      <h3 className="text-white font-medium mb-0.5">{legging.title}</h3>
                       <p className="text-white/70 text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100">
                         {legging.description}
                       </p>
