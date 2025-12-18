@@ -40,6 +40,7 @@ const menuItems = [
   { title: 'Orders', url: '/admin/orders', icon: ClipboardList },
   { title: 'External Job Orders', url: '/admin/external-jobs', icon: Briefcase },
   { title: 'Job Management', url: '/admin/job-management', icon: Shirt },
+  { title: 'Returns & Quality', url: '/admin/returns', icon: RotateCcw },
   { title: 'Branches', url: '/admin/branches', icon: Building2 },
   { title: 'Purchases & Expenses', url: '/admin/purchases', icon: ShoppingBag },
   { title: 'Expenses', url: '/admin/expenses', icon: Receipt },
@@ -53,7 +54,7 @@ const menuItems = [
   { title: 'History', url: '/admin/history', icon: History },
   { title: 'Enquiries', url: '/admin/enquiries', icon: Mail },
   { title: 'Newsletter', url: '/admin/newsletter', icon: Newspaper },
-  { title: 'Invoice Reset', url: '/admin/invoice-reset', icon: RotateCcw },
+  { title: 'Invoice Reset', url: '/admin/invoice-reset', icon: Settings },
   { title: 'Settings', url: '/admin/settings', icon: Settings },
 ];
 

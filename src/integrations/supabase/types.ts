@@ -3198,6 +3198,96 @@ export type Database = {
         }
         Relationships: []
       }
+      returns_rejections: {
+        Row: {
+          action_taken: string | null
+          batch_id: string | null
+          cost_per_unit: number | null
+          created_at: string | null
+          customer_name: string | null
+          id: string
+          images: string[] | null
+          job_order_id: string | null
+          notes: string | null
+          product_name: string
+          quantity: number
+          reason_category: string
+          reason_details: string | null
+          reference_id: string | null
+          reference_type: string | null
+          reported_by: string | null
+          reported_date: string
+          resolved_date: string | null
+          return_type: string
+          status: string
+          total_cost_impact: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          action_taken?: string | null
+          batch_id?: string | null
+          cost_per_unit?: number | null
+          created_at?: string | null
+          customer_name?: string | null
+          id?: string
+          images?: string[] | null
+          job_order_id?: string | null
+          notes?: string | null
+          product_name: string
+          quantity?: number
+          reason_category: string
+          reason_details?: string | null
+          reference_id?: string | null
+          reference_type?: string | null
+          reported_by?: string | null
+          reported_date?: string
+          resolved_date?: string | null
+          return_type: string
+          status?: string
+          total_cost_impact?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          action_taken?: string | null
+          batch_id?: string | null
+          cost_per_unit?: number | null
+          created_at?: string | null
+          customer_name?: string | null
+          id?: string
+          images?: string[] | null
+          job_order_id?: string | null
+          notes?: string | null
+          product_name?: string
+          quantity?: number
+          reason_category?: string
+          reason_details?: string | null
+          reference_id?: string | null
+          reference_type?: string | null
+          reported_by?: string | null
+          reported_date?: string
+          resolved_date?: string | null
+          return_type?: string
+          status?: string
+          total_cost_impact?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "returns_rejections_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "job_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "returns_rejections_job_order_id_fkey"
+            columns: ["job_order_id"]
+            isOneToOne: false
+            referencedRelation: "external_job_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       role_permissions: {
         Row: {
           created_at: string | null
