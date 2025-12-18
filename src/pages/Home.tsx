@@ -272,22 +272,112 @@ const Home = () => {
         </div>
       </section>
 
-      {/* USP Strip - Horizontal Scroll on Mobile */}
-      <section className="py-4 md:py-6 bg-black border-y border-white/10">
+      {/* Premium Service Benefits Strip */}
+      <section className="py-6 md:py-8 bg-gradient-to-r from-[#0a0a0a] via-[#111] to-[#0a0a0a] border-y border-neon/20 relative overflow-hidden">
+        {/* Background Glow Effects */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute left-1/4 top-0 w-64 h-32 bg-neon/5 blur-3xl rounded-full" />
+          <div className="absolute right-1/4 bottom-0 w-64 h-32 bg-neon/5 blur-3xl rounded-full" />
+        </div>
+
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-0">
+            {/* Free Shipping */}
+            <div className="flex items-center justify-center gap-4 md:gap-5 py-3 md:py-0 group cursor-pointer md:border-r md:border-neon/20">
+              <div className="relative">
+                <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-gradient-to-br from-neon/20 to-neon/5 border border-neon/30 flex items-center justify-center group-hover:border-neon group-hover:shadow-[0_0_20px_rgba(0,144,255,0.3)] transition-all duration-500">
+                  <svg className="w-7 h-7 md:w-8 md:h-8 text-neon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M12 2v1m0 18v1m-7-7H4m17 0h-1M7.05 7.05L6.34 6.34m11.31 11.31-.71-.71M7.05 16.95l-.71.71m11.31-11.31-.71-.71" />
+                    <circle cx="12" cy="12" r="4" />
+                    <path d="M12 8v4l2 2" />
+                  </svg>
+                  <svg className="w-7 h-7 md:w-8 md:h-8 text-neon absolute" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4z" />
+                    <circle cx="6" cy="17" r="2" />
+                    <circle cx="18" cy="17" r="2" />
+                  </svg>
+                </div>
+                {/* Animated Ring */}
+                <div className="absolute inset-0 rounded-2xl border border-neon/50 opacity-0 group-hover:opacity-100 group-hover:scale-110 transition-all duration-500" />
+              </div>
+              <div className="text-left">
+                <h3 className="text-base md:text-lg font-black text-white tracking-wide group-hover:text-neon transition-colors duration-300">
+                  FREE SHIPPING
+                </h3>
+                <p className="text-xs md:text-sm text-white/60 font-medium">
+                  above <span className="text-neon font-bold">₹999</span>
+                </p>
+              </div>
+            </div>
+
+            {/* Cash on Delivery */}
+            <div className="flex items-center justify-center gap-4 md:gap-5 py-3 md:py-0 group cursor-pointer md:border-r md:border-neon/20">
+              <div className="relative">
+                <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-gradient-to-br from-neon/20 to-neon/5 border border-neon/30 flex items-center justify-center group-hover:border-neon group-hover:shadow-[0_0_20px_rgba(0,144,255,0.3)] transition-all duration-500">
+                  <svg className="w-7 h-7 md:w-8 md:h-8 text-neon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <rect x="3" y="8" width="18" height="13" rx="2" />
+                    <path d="M12 12v5" />
+                    <path d="M9.5 14.5L12 12l2.5 2.5" />
+                    <path d="M7 8V6a5 5 0 0 1 10 0v2" />
+                    <circle cx="12" cy="17" r="1" fill="currentColor" />
+                  </svg>
+                </div>
+                {/* Animated Ring */}
+                <div className="absolute inset-0 rounded-2xl border border-neon/50 opacity-0 group-hover:opacity-100 group-hover:scale-110 transition-all duration-500" />
+              </div>
+              <div className="text-left">
+                <h3 className="text-base md:text-lg font-black text-white tracking-wide group-hover:text-neon transition-colors duration-300">
+                  CASH ON DELIVERY
+                </h3>
+                <p className="text-xs md:text-sm text-white/60 font-medium">
+                  on <span className="text-neon font-bold">all orders</span>
+                </p>
+              </div>
+            </div>
+
+            {/* Easy Returns */}
+            <div className="flex items-center justify-center gap-4 md:gap-5 py-3 md:py-0 group cursor-pointer">
+              <div className="relative">
+                <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-gradient-to-br from-neon/20 to-neon/5 border border-neon/30 flex items-center justify-center group-hover:border-neon group-hover:shadow-[0_0_20px_rgba(0,144,255,0.3)] transition-all duration-500">
+                  <svg className="w-7 h-7 md:w-8 md:h-8 text-neon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M21 8V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-2" />
+                    <path d="M16 12H8" />
+                    <path d="M12 16l-4-4 4-4" />
+                    <path d="M21 12h-5" />
+                  </svg>
+                </div>
+                {/* Animated Ring */}
+                <div className="absolute inset-0 rounded-2xl border border-neon/50 opacity-0 group-hover:opacity-100 group-hover:scale-110 transition-all duration-500" />
+              </div>
+              <div className="text-left">
+                <h3 className="text-base md:text-lg font-black text-white tracking-wide group-hover:text-neon transition-colors duration-300">
+                  EASY RETURNS
+                </h3>
+                <p className="text-xs md:text-sm text-white/60 font-medium">
+                  within <span className="text-neon font-bold">7 days</span>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Accent Line */}
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-32 h-[2px] bg-gradient-to-r from-transparent via-neon to-transparent" />
+      </section>
+
+      {/* Product Features Strip */}
+      <section className="py-4 md:py-5 bg-black/80 backdrop-blur-sm">
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-start md:justify-center gap-6 md:gap-10 lg:gap-16 overflow-x-auto scrollbar-hide pb-2 md:pb-0">
+          <div className="flex items-center justify-start md:justify-center gap-6 md:gap-10 lg:gap-14 overflow-x-auto scrollbar-hide pb-2 md:pb-0">
             {uspFeatures.map((feature, index) => (
               <div 
                 key={index} 
-                className="flex items-center gap-3 flex-shrink-0 group cursor-pointer"
+                className="flex items-center gap-2 flex-shrink-0 group cursor-pointer"
               >
-                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-neon/10 border border-neon/30 flex items-center justify-center group-hover:bg-neon group-hover:border-neon transition-all duration-300">
-                  <feature.icon className="h-4 w-4 md:h-5 md:w-5 text-neon group-hover:text-black transition-colors" />
-                </div>
-                <div>
-                  <p className="text-xs md:text-sm font-bold text-white tracking-wide">{feature.title}</p>
-                  <p className="text-[10px] md:text-xs text-white/50 hidden md:block">{feature.desc}</p>
-                </div>
+                <feature.icon className="h-4 w-4 text-neon/80 group-hover:text-neon transition-colors" />
+                <span className="text-xs font-bold text-white/70 tracking-wider group-hover:text-white transition-colors whitespace-nowrap">
+                  {feature.title}
+                </span>
               </div>
             ))}
           </div>
