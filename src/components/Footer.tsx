@@ -90,6 +90,12 @@ const Footer = () => {
                   About Us
                 </Link>
               </li>
+              <li>
+                <Link to="/b2b-enquiry" className="text-sm text-primary-foreground/80 hover:text-accent transition-colors flex items-center gap-1.5">
+                  B2B Partnership
+                  <span className="text-[9px] px-1.5 py-0.5 bg-accent text-accent-foreground font-semibold rounded-sm">NEW</span>
+                </Link>
+              </li>
             </ul>
           </div>
 
