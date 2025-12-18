@@ -58,6 +58,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import ShippingReturnRefund from "./pages/ShippingReturnRefund";
 import PaymentCallback from "./pages/PaymentCallback";
 import MarketIntelApp from "./pages/market-intel/MarketIntelApp";
+import B2BEnquiry from "./pages/B2BEnquiry";
 
 const queryClient = new QueryClient();
 
@@ -139,6 +140,7 @@ const App = () => (
                       <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
                       <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                       <Route path="/shipping-return-refund" element={<ShippingReturnRefund />} />
+                      <Route path="/b2b-enquiry" element={<B2BEnquiry />} />
                       
                       <Route path="*" element={<NotFound />} />
                     </Routes>
