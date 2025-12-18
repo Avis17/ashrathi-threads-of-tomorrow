@@ -685,79 +685,129 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Brand Story Preview */}
-      <section className="py-16 md:py-24 bg-[#0a0a0a]">
+      {/* Our Story Section - Premium Split Layout */}
+      <section className="py-20 md:py-32 bg-gradient-to-br from-[#f5f5f0] via-[#faf9f5] to-[#f0efe8]">
         <div className="container mx-auto px-4 md:px-6">
-          <div className="grid lg:grid-cols-2 gap-10 md:gap-16 items-center">
-            {/* Image Grid */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-4">
-                <div className="h-[200px] md:h-[280px] overflow-hidden">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+            
+            {/* Left - Premium Image Card */}
+            <div className="relative group">
+              {/* Main Image Container with Frame Effect */}
+              <div className="relative overflow-hidden bg-gradient-to-br from-[#e8e6dd] to-[#d9d5c8] p-3 md:p-4">
+                {/* Inner Border */}
+                <div className="relative overflow-hidden border-2 border-[#c9c4b5]">
                   <img 
                     src={highlightCampaign}
-                    alt="Manufacturing"
-                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-700"
+                    alt="Feather Fashions Manufacturing Unit"
+                    className="w-full h-[350px] md:h-[450px] object-cover group-hover:scale-105 transition-transform duration-1000"
                   />
+                  
+                  {/* Premium Gradient Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                  
+                  {/* Decorative Corner Elements */}
+                  <div className="absolute top-4 left-4 w-8 h-8 border-l-2 border-t-2 border-neon opacity-80" />
+                  <div className="absolute top-4 right-4 w-8 h-8 border-r-2 border-t-2 border-neon opacity-80" />
+                  <div className="absolute bottom-4 left-4 w-8 h-8 border-l-2 border-b-2 border-neon opacity-80" />
+                  <div className="absolute bottom-4 right-4 w-8 h-8 border-r-2 border-b-2 border-neon opacity-80" />
                 </div>
-                <div className="h-[150px] md:h-[200px] overflow-hidden bg-neon flex items-center justify-center">
-                  <div className="text-center">
-                    <p className="text-4xl md:text-5xl font-black text-black">20+</p>
-                    <p className="text-xs md:text-sm font-bold text-black/70 tracking-wide">MACHINES</p>
+                
+                {/* Bottom Stats Bar */}
+                <div className="relative mt-4 pt-4 border-t-2 border-[#c9c4b5]">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-black text-2xl md:text-3xl text-[#c65a10] tracking-tight uppercase" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                        OUR STORY
+                      </h3>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs md:text-sm font-bold text-[#c65a10] tracking-wide uppercase leading-tight">
+                        STATE OF THE ART MANUFACTURING.
+                        <br />
+                        <span className="text-[#d97a3a]">20+ MACHINES. 270 GSM QUALITY.</span>
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
-              <div className="space-y-4 mt-8">
-                <div className="h-[150px] md:h-[200px] overflow-hidden bg-white/10 flex items-center justify-center">
-                  <div className="text-center">
-                    <p className="text-4xl md:text-5xl font-black text-neon">270</p>
-                    <p className="text-xs md:text-sm font-bold text-white/70 tracking-wide">GSM FABRIC</p>
-                  </div>
-                </div>
-                <div className="h-[200px] md:h-[280px] overflow-hidden">
-                  <img 
-                    src={highlightDetail}
-                    alt="Quality Detail"
-                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-700"
-                  />
-                </div>
-              </div>
+              
+              {/* Floating Accent */}
+              <div className="absolute -z-10 -bottom-4 -right-4 w-full h-full bg-neon/10 transform translate-x-2 translate-y-2" />
             </div>
-
-            {/* Content */}
-            <div>
-              <p className="text-xs tracking-[0.3em] text-neon mb-4 font-bold uppercase">OUR STORY</p>
-              <h2 className="text-3xl md:text-5xl font-black text-white mb-6 leading-tight uppercase">
-                PREMIUM QUALITY
-                <br />
-                <span className="text-neon">FACTORY DIRECT</span>
+            
+            {/* Right - Content with Accordion Features */}
+            <div className="lg:pl-6">
+              {/* Section Title */}
+              <h2 className="font-black text-4xl md:text-5xl lg:text-6xl text-[#1a1a1a] mb-6 leading-[1.1]" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                Our story
               </h2>
-              <p className="text-base md:text-lg text-white/60 mb-6 leading-relaxed">
-                Feather Fashions is a professional garment manufacturing unit equipped with cutting-edge 
-                machinery including flatlock, overlock, and fusing machines. With 20+ industrial machines 
-                and 2 precision cutting tables, we deliver premium activewear at factory-direct prices.
+              
+              {/* Description */}
+              <p className="text-base md:text-lg text-[#555] mb-10 leading-relaxed">
+                Feather Fashions is a premium activewear manufacturing unit; 100% made in India. 
+                Where innovation meets craftsmanship, we're redefining performance wear standards 
+                for the modern athlete and fitness enthusiast.
               </p>
               
-              {/* Features */}
-              <div className="grid grid-cols-2 gap-4 mb-8">
-                {[
-                  { label: "Cutting Tables", value: "2" },
-                  { label: "Industrial Machines", value: "20+" },
-                  { label: "GSM Quality", value: "270" },
-                  { label: "Years Experience", value: "10+" },
-                ].map((item, index) => (
-                  <div key={index} className="border-l-2 border-neon pl-4">
-                    <p className="text-2xl md:text-3xl font-black text-white">{item.value}</p>
-                    <p className="text-xs md:text-sm text-white/50 font-medium tracking-wide">{item.label}</p>
+              {/* Accordion Features */}
+              <div className="space-y-0 mb-10">
+                {/* Feature 1 - Expanded */}
+                <div className="border-t border-[#ddd] py-5 group">
+                  <div className="flex items-start justify-between cursor-pointer">
+                    <div className="flex items-start gap-3">
+                      <svg className="w-5 h-5 mt-1 text-neon flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                      </svg>
+                      <div>
+                        <h4 className="font-bold text-lg text-[#1a1a1a] mb-2">Technology for your lifestyle</h4>
+                        <p className="text-sm text-[#666] leading-relaxed">
+                          Our success is our technological innovation in our finished product. This 
+                          has arrived after years of continuous R&D and innovation right through the 
+                          entire process of manufacturing.
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-2xl text-[#1a1a1a] font-light ml-4 flex-shrink-0">−</span>
                   </div>
-                ))}
+                </div>
+                
+                {/* Feature 2 - Collapsed */}
+                <div className="border-t border-[#ddd] py-5 group hover:bg-[#f0efe8]/50 transition-colors">
+                  <div className="flex items-center justify-between cursor-pointer">
+                    <div className="flex items-center gap-3">
+                      <svg className="w-5 h-5 text-neon flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
+                        <polyline points="22 4 12 14.01 9 11.01" />
+                      </svg>
+                      <h4 className="font-bold text-lg text-[#1a1a1a]">Materials that offer comfort</h4>
+                    </div>
+                    <span className="text-2xl text-[#1a1a1a] font-light">+</span>
+                  </div>
+                </div>
+                
+                {/* Feature 3 - Collapsed */}
+                <div className="border-t border-b border-[#ddd] py-5 group hover:bg-[#f0efe8]/50 transition-colors">
+                  <div className="flex items-center justify-between cursor-pointer">
+                    <div className="flex items-center gap-3">
+                      <svg className="w-5 h-5 text-neon flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M12 6v6l4 2" />
+                      </svg>
+                      <h4 className="font-bold text-lg text-[#1a1a1a]">Factory direct pricing</h4>
+                    </div>
+                    <span className="text-2xl text-[#1a1a1a] font-light">+</span>
+                  </div>
+                </div>
               </div>
-
+              
+              {/* Read More Button */}
               <Button 
                 asChild 
-                className="px-8 py-6 text-sm font-bold tracking-[0.1em] bg-transparent border-2 border-neon text-neon hover:bg-neon hover:text-black rounded-none uppercase transition-all duration-300"
+                className="px-10 py-6 text-sm font-bold tracking-[0.05em] bg-[#0090FF] hover:bg-[#0077d4] text-white rounded-none uppercase transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-neon/20 group"
               >
-                <Link to="/about">
-                  EXPLORE MORE <ArrowRight className="ml-2 h-4 w-4" />
+                <Link to="/about" className="inline-flex items-center gap-2">
+                  Read More
+                  <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
                 </Link>
               </Button>
             </div>
