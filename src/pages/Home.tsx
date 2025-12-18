@@ -40,6 +40,40 @@ import heroModel1 from "@/assets/hero-model-woman-1.jpg";
 
 const Home = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [activeAccordion, setActiveAccordion] = useState<number | null>(0);
+
+  const storyFeatures = [
+    {
+      icon: (
+        <svg className="w-5 h-5 text-neon flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+        </svg>
+      ),
+      title: "Designed for your confidence",
+      content: "Every stitch is crafted to make you feel unstoppable. Our designs blend style with performance, so whether you're hitting the gym or grabbing coffee, you look and feel your absolute best."
+    },
+    {
+      icon: (
+        <svg className="w-5 h-5 text-neon flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        </svg>
+      ),
+      title: "Premium fabrics that move with you",
+      content: "We source only the finest 270 GSM performance fabrics with 4-way stretch technology. Buttery-soft against your skin, yet durable enough to keep up with your most intense workouts."
+    },
+    {
+      icon: (
+        <svg className="w-5 h-5 text-neon flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <circle cx="12" cy="12" r="10" />
+          <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+          <line x1="9" y1="9" x2="9.01" y2="9" />
+          <line x1="15" y1="9" x2="15.01" y2="9" />
+        </svg>
+      ),
+      title: "Happy customers, always",
+      content: "From factory floor to your doorstep, we eliminate middlemen to bring you luxury activewear at honest prices. Plus, hassle-free returns and dedicated support because your satisfaction is our priority."
+    }
+  ];
 
   const heroSlides = [
     {
@@ -749,55 +783,42 @@ const Home = () => {
                 for the modern athlete and fitness enthusiast.
               </p>
               
-              {/* Accordion Features */}
+              {/* Interactive Accordion Features */}
               <div className="space-y-0 mb-10">
-                {/* Feature 1 - Expanded */}
-                <div className="border-t border-[#ddd] py-5 group">
-                  <div className="flex items-start justify-between cursor-pointer">
-                    <div className="flex items-start gap-3">
-                      <svg className="w-5 h-5 mt-1 text-neon flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                      </svg>
-                      <div>
-                        <h4 className="font-bold text-lg text-[#1a1a1a] mb-2">Technology for your lifestyle</h4>
-                        <p className="text-sm text-[#666] leading-relaxed">
-                          Our success is our technological innovation in our finished product. This 
-                          has arrived after years of continuous R&D and innovation right through the 
-                          entire process of manufacturing.
-                        </p>
+                {storyFeatures.map((feature, index) => (
+                  <div 
+                    key={index}
+                    className={`border-t border-[#ddd] ${index === storyFeatures.length - 1 ? 'border-b' : ''} transition-all duration-300 ${
+                      activeAccordion === index ? 'bg-gradient-to-r from-neon/5 to-transparent' : 'hover:bg-[#f0efe8]/50'
+                    }`}
+                  >
+                    <button 
+                      onClick={() => setActiveAccordion(activeAccordion === index ? null : index)}
+                      className="w-full py-5 flex items-start justify-between cursor-pointer text-left"
+                    >
+                      <div className="flex items-start gap-3">
+                        <span className={`mt-0.5 transition-transform duration-300 ${activeAccordion === index ? 'scale-110' : ''}`}>
+                          {feature.icon}
+                        </span>
+                        <h4 className="font-bold text-lg text-[#1a1a1a]">{feature.title}</h4>
                       </div>
+                      <span className={`text-2xl font-light ml-4 flex-shrink-0 transition-transform duration-300 ${
+                        activeAccordion === index ? 'text-neon rotate-0' : 'text-[#1a1a1a]'
+                      }`}>
+                        {activeAccordion === index ? '−' : '+'}
+                      </span>
+                    </button>
+                    
+                    {/* Expandable Content */}
+                    <div className={`overflow-hidden transition-all duration-500 ease-in-out ${
+                      activeAccordion === index ? 'max-h-40 opacity-100 pb-5' : 'max-h-0 opacity-0'
+                    }`}>
+                      <p className="text-sm text-[#666] leading-relaxed pl-8 pr-4">
+                        {feature.content}
+                      </p>
                     </div>
-                    <span className="text-2xl text-[#1a1a1a] font-light ml-4 flex-shrink-0">−</span>
                   </div>
-                </div>
-                
-                {/* Feature 2 - Collapsed */}
-                <div className="border-t border-[#ddd] py-5 group hover:bg-[#f0efe8]/50 transition-colors">
-                  <div className="flex items-center justify-between cursor-pointer">
-                    <div className="flex items-center gap-3">
-                      <svg className="w-5 h-5 text-neon flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
-                        <polyline points="22 4 12 14.01 9 11.01" />
-                      </svg>
-                      <h4 className="font-bold text-lg text-[#1a1a1a]">Materials that offer comfort</h4>
-                    </div>
-                    <span className="text-2xl text-[#1a1a1a] font-light">+</span>
-                  </div>
-                </div>
-                
-                {/* Feature 3 - Collapsed */}
-                <div className="border-t border-b border-[#ddd] py-5 group hover:bg-[#f0efe8]/50 transition-colors">
-                  <div className="flex items-center justify-between cursor-pointer">
-                    <div className="flex items-center gap-3">
-                      <svg className="w-5 h-5 text-neon flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <circle cx="12" cy="12" r="10" />
-                        <path d="M12 6v6l4 2" />
-                      </svg>
-                      <h4 className="font-bold text-lg text-[#1a1a1a]">Factory direct pricing</h4>
-                    </div>
-                    <span className="text-2xl text-[#1a1a1a] font-light">+</span>
-                  </div>
-                </div>
+                ))}
               </div>
               
               {/* Read More Button */}
