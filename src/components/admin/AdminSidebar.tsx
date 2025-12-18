@@ -19,7 +19,8 @@ import {
   Tags,
   ShoppingBag,
   Boxes,
-  ShieldCheck
+  ShieldCheck,
+  Activity
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import {
@@ -54,6 +55,7 @@ const menuItems = [
   { title: 'History', url: '/admin/history', icon: History },
   { title: 'Enquiries', url: '/admin/enquiries', icon: Mail },
   { title: 'Newsletter', url: '/admin/newsletter', icon: Newspaper },
+  { title: 'Activity Logs', url: '/admin/activity-logs', icon: Activity },
   { title: 'Invoice Reset', url: '/admin/invoice-reset', icon: Settings },
   { title: 'Settings', url: '/admin/settings', icon: Settings },
 ];

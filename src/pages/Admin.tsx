@@ -44,6 +44,7 @@ import PurchasesExpenses from './admin/PurchasesExpenses';
 import FeatherApps from './admin/FeatherApps';
 import AppAccessManagement from './admin/AppAccessManagement';
 import ReturnsRejections from './admin/ReturnsRejections';
+import ActivityLogs from './admin/ActivityLogs';
 import Enquiries from './admin/Enquiries';
 
 const Admin = () => {
@@ -106,6 +107,7 @@ const Admin = () => {
               <Route path="/apps" element={<FeatherApps />} />
               <Route path="/app-access" element={<AppAccessManagement />} />
               <Route path="/returns" element={<ReturnsRejections />} />
+              <Route path="/activity-logs" element={<ActivityLogs />} />
               <Route path="/external-jobs" element={<ExternalJobOrders />} />
               <Route path="/external-jobs/register-company" element={<RegisterCompany />} />
               <Route path="/external-jobs/add-job" element={<AddJob />} />
