@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
-export type InternalApp = 'market_intel' | 'analytics_hub' | 'production_tracker' | 'inventory_scanner';
+export type InternalApp = 'market_intel' | 'analytics_hub' | 'production_tracker' | 'inventory_scanner' | 'admin_forms';
 
 export interface AppAccessRecord {
   id: string;

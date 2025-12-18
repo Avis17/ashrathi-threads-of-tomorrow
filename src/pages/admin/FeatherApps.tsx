@@ -79,6 +79,14 @@ const apps: AppCardProps[] = [
     route: '/market-intel'
   },
   {
+    title: 'Admin Forms',
+    description: 'Quick data entry forms for job orders, companies, purchases, expenses, customers, and products.',
+    icon: <Package className="h-6 w-6" />,
+    status: 'active',
+    accentColor: 'bg-emerald-500',
+    route: '/admin-forms'
+  },
+  {
     title: 'Analytics Hub',
     description: 'Advanced business analytics, custom reports, and data visualization for comprehensive business insights.',
     icon: <BarChart3 className="h-6 w-6" />,
@@ -97,7 +105,7 @@ const apps: AppCardProps[] = [
     description: 'Mobile-first inventory management with barcode scanning and stock level tracking.',
     icon: <Package className="h-6 w-6" />,
     status: 'coming-soon',
-    accentColor: 'bg-emerald-500'
+    accentColor: 'bg-teal-500'
   }
 ];
 
