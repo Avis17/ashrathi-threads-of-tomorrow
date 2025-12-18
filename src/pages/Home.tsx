@@ -194,7 +194,7 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-background font-sans">
       {/* Hero Section with Full-Width Slider */}
-      <section className="relative h-screen overflow-hidden">
+      <section data-navbar-dark="true" className="relative h-screen overflow-hidden">
         {/* Slides */}
         {heroSlides.map((slide, index) => (
           <div

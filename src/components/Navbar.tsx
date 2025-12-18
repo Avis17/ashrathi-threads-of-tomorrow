@@ -34,6 +34,64 @@ const isDarkColor = (rgb: string): boolean => {
   }
 };
 
+// Check if an element or its parents indicate a dark background
+const isElementDark = (element: Element): boolean => {
+  let current: Element | null = element;
+  
+  while (current && current !== document.documentElement) {
+    // Check for data attribute (most reliable method)
+    if (current.getAttribute('data-navbar-dark') === 'true') {
+      return true;
+    }
+    
+    const classes = current.className?.toString() || '';
+    
+    // Check for dark-indicating class patterns
+    const darkPatterns = [
+      /bg-black/,
+      /bg-\[#0/,
+      /bg-\[#1/,
+      /bg-slate-9/,
+      /bg-zinc-9/,
+      /bg-neutral-9/,
+      /bg-gray-9/,
+      /from-black/,
+      /via-black/,
+      /to-black/,
+      /bg-\[#0a0a0a\]/i,
+      /bg-\[#111\]/,
+      /bg-\[#000\]/,
+      /bg-background/,
+    ];
+    
+    if (darkPatterns.some(pattern => pattern.test(classes))) {
+      return true;
+    }
+    
+    // Check computed background color
+    const computed = window.getComputedStyle(current);
+    const bgColor = computed.backgroundColor;
+    
+    if (bgColor && bgColor !== 'rgba(0, 0, 0, 0)' && bgColor !== 'transparent') {
+      return isDarkColor(bgColor);
+    }
+    
+    // Check for background images (hero sections often have these)
+    const bgImage = computed.backgroundImage;
+    if (bgImage && bgImage !== 'none') {
+      // If there's a background image, check if there's an overlay that's dark
+      const overlay = current.querySelector('[class*="bg-gradient"], [class*="bg-black"]');
+      if (overlay) {
+        return true;
+      }
+    }
+    
+    current = current.parentElement;
+  }
+  
+  return false;
+};
+
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -47,61 +105,32 @@ const Navbar = () => {
   const detectBackgroundColor = useCallback(() => {
     if (!navRef.current) return;
     
-    // Get the center point of the navbar
     const navRect = navRef.current.getBoundingClientRect();
-    const x = navRect.left + navRect.width / 2;
-    const y = navRect.top + navRect.height / 2;
+    
+    // Sample multiple points across the navbar for better accuracy
+    const samplePoints = [
+      { x: navRect.left + 100, y: navRect.top + navRect.height + 20 },
+      { x: navRect.left + navRect.width / 2, y: navRect.top + navRect.height + 20 },
+      { x: navRect.right - 100, y: navRect.top + navRect.height + 20 }
+    ];
     
     // Temporarily hide navbar to sample what's behind it
-    const originalVisibility = navRef.current.style.visibility;
     navRef.current.style.visibility = 'hidden';
     
-    // Get element at the center point behind navbar
-    const elementBehind = document.elementFromPoint(x, y);
+    let darkCount = 0;
+    
+    for (const point of samplePoints) {
+      const element = document.elementFromPoint(point.x, point.y);
+      if (element && isElementDark(element)) {
+        darkCount++;
+      }
+    }
     
     // Restore navbar visibility
-    navRef.current.style.visibility = originalVisibility;
+    navRef.current.style.visibility = '';
     
-    if (elementBehind) {
-      // Walk up the DOM to find an element with a background color
-      let currentElement: Element | null = elementBehind;
-      let bgColor = '';
-      
-      while (currentElement && currentElement !== document.documentElement) {
-        const computedStyle = window.getComputedStyle(currentElement);
-        const bg = computedStyle.backgroundColor;
-        
-        // Check if we have a valid non-transparent background
-        if (bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') {
-          bgColor = bg;
-          break;
-        }
-        
-        // Also check for background images (like gradients or images)
-        const bgImage = computedStyle.backgroundImage;
-        if (bgImage && bgImage !== 'none') {
-          // If there's a background image, check if the element has dark styling
-          // This handles hero sections with dark overlays
-          const hasDataDark = currentElement.classList.contains('bg-black') ||
-                              currentElement.classList.contains('bg-[#0a0a0a]') ||
-                              currentElement.classList.contains('bg-[#111]') ||
-                              currentElement.classList.contains('bg-[#0A0A0A]');
-          if (hasDataDark) {
-            setIsDarkBg(true);
-            return;
-          }
-        }
-        
-        currentElement = currentElement.parentElement;
-      }
-      
-      // Fallback to body background if nothing found
-      if (!bgColor) {
-        bgColor = window.getComputedStyle(document.body).backgroundColor || 'rgb(255, 255, 255)';
-      }
-      
-      setIsDarkBg(isDarkColor(bgColor));
-    }
+    // If majority of sample points indicate dark background
+    setIsDarkBg(darkCount >= 2);
   }, []);
 
   useEffect(() => {
