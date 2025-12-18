@@ -38,29 +38,40 @@ const Navbar = () => {
 
   const isActive = (path: string) => location.pathname === path;
   
-  // Pages with dark hero backgrounds where text should be white when not scrolled
-  const darkHeroPages = ["/", "/home", "/women", "/men", "/collections", "/about", "/shop", "/size-guide", "/size-chart/womens-leggings", "/size-chart/mens-track-pants", "/size-chart/mens-tshirts", "/size-chart/womens-sports-bra", "/size-chart/kids", "/shipping-return-refund", "/privacy-policy", "/terms-and-conditions"];
-  const hasDarkHero = darkHeroPages.includes(location.pathname);
+  // Pages with dark hero/header backgrounds where text should be light (#F5F5F5) when not scrolled
+  const darkBackgroundPages = ["/", "/home", "/women", "/men", "/collections", "/shop", "/size-guide", "/size-chart/womens-leggings", "/size-chart/mens-track-pants", "/size-chart/mens-tshirts", "/size-chart/womens-sports-bra", "/size-chart/kids"];
   
-  // Determine text color based on scroll state and page type
+  // Pages with light backgrounds where text should always be dark (#111111)
+  const lightBackgroundPages = ["/about", "/profile", "/my-orders", "/checkout", "/cart", "/auth", "/forgot-password", "/reset-password", "/shipping-return-refund", "/privacy-policy", "/terms-and-conditions"];
+  
+  const hasDarkBackground = darkBackgroundPages.includes(location.pathname);
+  const hasLightBackground = lightBackgroundPages.includes(location.pathname) || location.pathname.startsWith("/product/");
+  
+  // Determine text color based on scroll state and page background
   const getTextColorClass = (isActiveLink: boolean = false) => {
-    if (isActiveLink) return "text-accent";
-    // When scrolled, navbar has light background - use dark text
-    if (isScrolled) return "text-foreground";
-    // When on dark hero pages and not scrolled - use white text
-    if (hasDarkHero) return "text-white";
-    // Default for pages with light backgrounds (profile, my-orders, checkout, etc.) - use dark text
-    return "text-foreground";
+    if (isActiveLink) return "text-[#0090FF]"; // Accent color for active links
+    
+    // When scrolled, navbar has light background - always use dark text
+    if (isScrolled) return "text-[#111111]";
+    
+    // When on light background pages - use dark text
+    if (hasLightBackground) return "text-[#111111]";
+    
+    // When on dark background pages and not scrolled - use light text
+    if (hasDarkBackground) return "text-[#F5F5F5]";
+    
+    // Default fallback - dark text
+    return "text-[#111111]";
   };
 
   return (
     <nav 
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
         isScrolled
-          ? "bg-background/98 backdrop-blur-md border-b border-border shadow-sm"
-          : hasDarkHero 
+          ? "bg-white/98 backdrop-blur-md border-b border-[#e5e5e5] shadow-sm"
+          : hasDarkBackground && !hasLightBackground
             ? "bg-transparent"
-            : "bg-background/98 backdrop-blur-md border-b border-border"
+            : "bg-white/98 backdrop-blur-md border-b border-[#e5e5e5]"
       }`}
     >
       <div className="container mx-auto px-6">
