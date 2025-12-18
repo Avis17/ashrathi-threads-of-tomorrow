@@ -46,7 +46,7 @@ const isElementDark = (element: Element): boolean => {
     
     const classes = current.className?.toString() || '';
     
-    // Check for dark-indicating class patterns
+    // Check for dark-indicating class patterns (excluding bg-background which depends on theme)
     const darkPatterns = [
       /bg-black/,
       /bg-\[#0/,
@@ -61,7 +61,6 @@ const isElementDark = (element: Element): boolean => {
       /bg-\[#0a0a0a\]/i,
       /bg-\[#111\]/,
       /bg-\[#000\]/,
-      /bg-background/,
     ];
     
     if (darkPatterns.some(pattern => pattern.test(classes))) {
@@ -73,20 +72,28 @@ const isElementDark = (element: Element): boolean => {
     const bgColor = computed.backgroundColor;
     
     if (bgColor && bgColor !== 'rgba(0, 0, 0, 0)' && bgColor !== 'transparent') {
-      return isDarkColor(bgColor);
-    }
-    
-    // Check for background images (hero sections often have these)
-    const bgImage = computed.backgroundImage;
-    if (bgImage && bgImage !== 'none') {
-      // If there's a background image, check if there's an overlay that's dark
-      const overlay = current.querySelector('[class*="bg-gradient"], [class*="bg-black"]');
-      if (overlay) {
+      if (isDarkColor(bgColor)) {
         return true;
       }
     }
     
     current = current.parentElement;
+  }
+  
+  return false;
+};
+
+// Direct check for sections with data-navbar-dark attribute
+const checkForDarkSections = (): boolean => {
+  // Find all elements with data-navbar-dark="true"
+  const darkSections = document.querySelectorAll('[data-navbar-dark="true"]');
+  
+  for (const section of darkSections) {
+    const rect = section.getBoundingClientRect();
+    // Check if this section is at the top of the viewport (where navbar is)
+    if (rect.top <= 80 && rect.bottom > 0) {
+      return true;
+    }
   }
   
   return false;
@@ -103,15 +110,25 @@ const Navbar = () => {
 
   // Function to detect background color at navbar position
   const detectBackgroundColor = useCallback(() => {
-    if (!navRef.current) return;
+    // First, check for data-navbar-dark sections (most reliable)
+    if (checkForDarkSections()) {
+      setIsDarkBg(true);
+      return;
+    }
+    
+    if (!navRef.current) {
+      setIsDarkBg(false);
+      return;
+    }
     
     const navRect = navRef.current.getBoundingClientRect();
     
-    // Sample multiple points across the navbar for better accuracy
+    // Sample points at the center of the navbar height, not below
+    const sampleY = navRect.top + navRect.height / 2;
     const samplePoints = [
-      { x: navRect.left + 100, y: navRect.top + navRect.height + 20 },
-      { x: navRect.left + navRect.width / 2, y: navRect.top + navRect.height + 20 },
-      { x: navRect.right - 100, y: navRect.top + navRect.height + 20 }
+      { x: navRect.left + 50, y: sampleY },
+      { x: navRect.left + navRect.width / 2, y: sampleY },
+      { x: navRect.right - 50, y: sampleY }
     ];
     
     // Temporarily hide navbar to sample what's behind it
@@ -129,8 +146,8 @@ const Navbar = () => {
     // Restore navbar visibility
     navRef.current.style.visibility = '';
     
-    // If majority of sample points indicate dark background
-    setIsDarkBg(darkCount >= 2);
+    // If any sample point indicates dark background
+    setIsDarkBg(darkCount >= 1);
   }, []);
 
   useEffect(() => {
