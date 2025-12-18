@@ -31,6 +31,11 @@ const APP_INFO: Record<InternalApp, { name: string; icon: React.ReactNode; descr
     icon: <Package className="h-4 w-4" />,
     description: 'Mobile inventory management',
   },
+  admin_forms: {
+    name: 'Admin Forms',
+    icon: <Users className="h-4 w-4" />,
+    description: 'Data entry forms for staff',
+  },
 };
 
 export default function AppAccessManagement() {

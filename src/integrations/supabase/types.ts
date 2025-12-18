@@ -3537,6 +3537,7 @@ export type Database = {
         | "analytics_hub"
         | "production_tracker"
         | "inventory_scanner"
+        | "admin_forms"
       payment_terms:
         | "advance"
         | "cod"
@@ -3721,6 +3722,7 @@ export const Constants = {
         "analytics_hub",
         "production_tracker",
         "inventory_scanner",
+        "admin_forms",
       ],
       payment_terms: [
         "advance",
