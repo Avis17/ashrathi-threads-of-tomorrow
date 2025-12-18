@@ -4,9 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { AdminHeader } from '@/components/admin/AdminHeader';
-import ContactInquiries from '@/components/admin/ContactInquiries';
 import ProductsManager from '@/components/admin/ProductsManager';
-import BulkOrdersManager from '@/components/admin/BulkOrdersManager';
 import NewsletterManager from '@/components/admin/NewsletterManager';
 import CustomersManager from '@/components/admin/CustomersManager';
 import CustomerDetails from './admin/CustomerDetails';
@@ -45,6 +43,7 @@ import LabelGenerator from './admin/LabelGenerator';
 import PurchasesExpenses from './admin/PurchasesExpenses';
 import FeatherApps from './admin/FeatherApps';
 import AppAccessManagement from './admin/AppAccessManagement';
+import Enquiries from './admin/Enquiries';
 
 const Admin = () => {
   const { isAdmin, loading } = useAuth();
@@ -97,8 +96,7 @@ const Admin = () => {
               <Route path="/history" element={<InvoiceHistory />} />
               <Route path="/invoices/:id" element={<InvoiceDetails />} />
               <Route path="/invoices/edit/:id" element={<InvoiceEdit />} />
-              <Route path="/inquiries" element={<ContactInquiries />} />
-              <Route path="/bulk-orders" element={<BulkOrdersManager />} />
+              <Route path="/enquiries" element={<Enquiries />} />
               <Route path="/newsletter" element={<NewsletterManager />} />
               <Route path="/invoice-reset" element={<InvoiceReset />} />
               <Route path="/letterhead" element={<CompanyLetterhead />} />
