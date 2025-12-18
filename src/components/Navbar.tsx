@@ -39,7 +39,7 @@ const Navbar = () => {
   const isActive = (path: string) => location.pathname === path;
   
   // Pages with dark hero/header backgrounds where text should be light (#F5F5F5) when not scrolled
-  const darkBackgroundPages = ["/", "/home", "/women", "/men", "/collections", "/shop", "/about", "/size-guide", "/size-chart/womens-leggings", "/size-chart/mens-track-pants", "/size-chart/mens-tshirts", "/size-chart/womens-sports-bra", "/size-chart/kids"];
+  const darkBackgroundPages = ["/", "/home", "/women", "/men", "/collections", "/shop", "/about", "/size-guide", "/size-chart/womens-leggings", "/size-chart/mens-track-pants", "/size-chart/mens-tshirts", "/size-chart/womens-sports-bra", "/size-chart/kids", "/bulk-order", "/b2b-enquiry"];
   
   // Pages with light backgrounds where text should always be dark (#111111)
   const lightBackgroundPages = ["/profile", "/my-orders", "/checkout", "/cart", "/auth", "/forgot-password", "/reset-password", "/shipping-return-refund", "/privacy-policy", "/terms-and-conditions"];
