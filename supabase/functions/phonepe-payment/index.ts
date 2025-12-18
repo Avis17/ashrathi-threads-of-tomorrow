@@ -10,35 +10,44 @@ const PHONEPE_CLIENT_ID = Deno.env.get('PHONEPE_CLIENT_ID');
 const PHONEPE_CLIENT_SECRET = Deno.env.get('PHONEPE_CLIENT_SECRET');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
-// PhonePe API endpoints (UAT/Sandbox)
-const PHONEPE_BASE_URL = 'https://api-preprod.phonepe.com/apis/pg-sandbox';
+// PhonePe Production API endpoint
+const PHONEPE_BASE_URL = 'https://api.phonepe.com/apis/hermes';
 
 interface PaymentRequest {
   orderId: string;
   amount: number;
   redirectUrl: string;
   userId: string;
+  customerPhone?: string;
+  customerEmail?: string;
 }
 
 interface StatusCheckRequest {
   merchantOrderId: string;
 }
 
-// Generate OAuth token for PhonePe API
+// Token cache to avoid repeated token requests
+let cachedToken: { token: string; expiresAt: number } | null = null;
+
+// Generate OAuth token for PhonePe API with caching
 async function getAccessToken(): Promise<string> {
-  console.log('Getting PhonePe access token...');
+  // Check if we have a valid cached token
+  if (cachedToken && cachedToken.expiresAt > Date.now()) {
+    console.log('Using cached access token');
+    return cachedToken.token;
+  }
+  
+  console.log('Getting new PhonePe access token...');
   
   const tokenUrl = `${PHONEPE_BASE_URL}/v1/oauth/token`;
   
-  // PhonePe requires client_id, client_secret, client_version in form body
   const formData = new URLSearchParams();
   formData.append('client_id', PHONEPE_CLIENT_ID!);
   formData.append('client_secret', PHONEPE_CLIENT_SECRET!);
   formData.append('client_version', '1');
   formData.append('grant_type', 'client_credentials');
-  
-  console.log('Token request URL:', tokenUrl);
   
   const response = await fetch(tokenUrl, {
     method: 'POST',
@@ -49,7 +58,6 @@ async function getAccessToken(): Promise<string> {
   });
   
   const responseText = await response.text();
-  console.log('Token response:', responseText);
   
   if (!response.ok) {
     console.error('Token error:', responseText);
@@ -57,7 +65,14 @@ async function getAccessToken(): Promise<string> {
   }
   
   const data = JSON.parse(responseText);
-  console.log('Access token obtained successfully');
+  
+  // Cache the token (expires in ~15 minutes, we'll use 14 to be safe)
+  cachedToken = {
+    token: data.access_token,
+    expiresAt: Date.now() + (14 * 60 * 1000),
+  };
+  
+  console.log('Access token obtained and cached successfully');
   return data.access_token;
 }
 
@@ -65,26 +80,30 @@ async function getAccessToken(): Promise<string> {
 async function createPayment(payload: PaymentRequest, accessToken: string) {
   console.log('Creating PhonePe payment for order:', payload.orderId);
   
-  const paymentUrl = `${PHONEPE_BASE_URL}/checkout/v2/pay`;
+  const paymentUrl = `${PHONEPE_BASE_URL}/pg/v1/pay`;
   
   const requestBody = {
+    merchantId: PHONEPE_CLIENT_ID,
     merchantOrderId: payload.orderId,
     amount: Math.round(payload.amount * 100), // Convert to paise
-    expireAfter: 1200, // 20 minutes
-    paymentFlow: {
-      type: "PG_CHECKOUT",
-      message: `Payment for Order ${payload.orderId}`,
-      merchantUrls: {
-        redirectUrl: payload.redirectUrl,
-      },
-    },
+    expireAfter: 1800, // 30 minutes
     metaInfo: {
       udf1: payload.userId,
       udf2: payload.orderId,
+      udf3: payload.customerPhone || '',
+      udf4: payload.customerEmail || '',
+    },
+    paymentFlow: {
+      type: "PG_CHECKOUT",
+      message: `Payment for Order #${payload.orderId}`,
+      merchantUrls: {
+        redirectUrl: payload.redirectUrl,
+        callbackUrl: `${SUPABASE_URL}/functions/v1/phonepe-payment?action=webhook`,
+      },
     },
   };
   
-  console.log('Payment request body:', JSON.stringify(requestBody));
+  console.log('Payment request to PhonePe...');
   
   const response = await fetch(paymentUrl, {
     method: 'POST',
@@ -96,20 +115,23 @@ async function createPayment(payload: PaymentRequest, accessToken: string) {
   });
   
   const responseText = await response.text();
-  console.log('PhonePe create payment response:', responseText);
+  console.log('PhonePe create payment response status:', response.status);
   
   if (!response.ok) {
+    console.error('Payment creation failed:', responseText);
     throw new Error(`Payment creation failed: ${response.status} - ${responseText}`);
   }
   
-  return JSON.parse(responseText);
+  const result = JSON.parse(responseText);
+  console.log('Payment created successfully, orderId:', result.orderId);
+  return result;
 }
 
 // Check payment status
 async function checkPaymentStatus(merchantOrderId: string, accessToken: string) {
   console.log('Checking payment status for:', merchantOrderId);
   
-  const statusUrl = `${PHONEPE_BASE_URL}/checkout/v2/order/${merchantOrderId}/status`;
+  const statusUrl = `${PHONEPE_BASE_URL}/pg/v1/status/${PHONEPE_CLIENT_ID}/${merchantOrderId}`;
   
   const response = await fetch(statusUrl, {
     method: 'GET',
@@ -120,13 +142,87 @@ async function checkPaymentStatus(merchantOrderId: string, accessToken: string) 
   });
   
   const responseText = await response.text();
-  console.log('PhonePe status response:', responseText);
+  console.log('PhonePe status response status:', response.status);
   
   if (!response.ok) {
+    console.error('Status check failed:', responseText);
     throw new Error(`Status check failed: ${response.status} - ${responseText}`);
   }
   
   return JSON.parse(responseText);
+}
+
+// Handle webhook callback from PhonePe
+async function handleWebhook(req: Request) {
+  console.log('Processing PhonePe webhook...');
+  
+  const body = await req.text();
+  console.log('Webhook payload received');
+  
+  try {
+    const webhookData = JSON.parse(body);
+    
+    const merchantOrderId = webhookData.merchantOrderId || webhookData.data?.merchantOrderId;
+    const transactionId = webhookData.transactionId || webhookData.data?.transactionId;
+    const state = webhookData.state || webhookData.data?.state;
+    const code = webhookData.code || webhookData.data?.code;
+    
+    console.log('Webhook data - OrderId:', merchantOrderId, 'State:', state, 'Code:', code);
+    
+    if (!merchantOrderId) {
+      console.error('No merchantOrderId in webhook');
+      return new Response(JSON.stringify({ success: false, message: 'Missing merchantOrderId' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    
+    // Determine payment status
+    let paymentStatus = 'pending';
+    if (state === 'COMPLETED' || code === 'PAYMENT_SUCCESS') {
+      paymentStatus = 'paid';
+    } else if (state === 'FAILED' || code === 'PAYMENT_ERROR' || code === 'PAYMENT_DECLINED') {
+      paymentStatus = 'failed';
+    } else if (state === 'CANCELLED' || code === 'PAYMENT_CANCELLED') {
+      paymentStatus = 'cancelled';
+    }
+    
+    console.log('Updating order with payment status:', paymentStatus);
+    
+    // Update order in database using service role for webhook
+    const adminSupabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+    
+    const { error: updateError } = await adminSupabase
+      .from('orders')
+      .update({
+        payment_status: paymentStatus,
+        phonepe_transaction_id: transactionId || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('order_number', merchantOrderId);
+    
+    if (updateError) {
+      console.error('Failed to update order from webhook:', updateError);
+      return new Response(JSON.stringify({ success: false, message: 'Database update failed' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    
+    console.log('Order updated successfully from webhook');
+    
+    return new Response(JSON.stringify({ success: true, message: 'Webhook processed' }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+    
+  } catch (error) {
+    console.error('Webhook processing error:', error);
+    return new Response(JSON.stringify({ success: false, message: 'Webhook processing failed' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
 }
 
 serve(async (req) => {
@@ -145,7 +241,12 @@ serve(async (req) => {
     
     const supabase = createClient(SUPABASE_URL!, SUPABASE_ANON_KEY!);
     
-    // Get access token
+    // Handle webhook separately (no auth needed, comes from PhonePe)
+    if (action === 'webhook') {
+      return await handleWebhook(req);
+    }
+    
+    // Get access token for other actions
     const accessToken = await getAccessToken();
     
     if (action === 'create') {
@@ -178,6 +279,7 @@ serve(async (req) => {
         success: true,
         redirectUrl: paymentResponse.redirectUrl,
         orderId: paymentResponse.orderId,
+        checkoutUrl: paymentResponse.instrumentResponse?.redirectInfo?.url,
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -194,9 +296,9 @@ serve(async (req) => {
       
       // Update order payment status in database
       let paymentStatus = 'pending';
-      if (statusResponse.state === 'COMPLETED') {
+      if (statusResponse.state === 'COMPLETED' || statusResponse.code === 'PAYMENT_SUCCESS') {
         paymentStatus = 'paid';
-      } else if (statusResponse.state === 'FAILED') {
+      } else if (statusResponse.state === 'FAILED' || statusResponse.code === 'PAYMENT_ERROR') {
         paymentStatus = 'failed';
       }
       
@@ -215,14 +317,16 @@ serve(async (req) => {
       return new Response(JSON.stringify({
         success: true,
         state: statusResponse.state,
+        code: statusResponse.code,
         paymentStatus,
         transactionId: statusResponse.transactionId,
+        amount: statusResponse.amount,
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
       
     } else {
-      throw new Error('Invalid action. Use ?action=create or ?action=status');
+      throw new Error('Invalid action. Use ?action=create, ?action=status, or ?action=webhook');
     }
     
   } catch (error: unknown) {
