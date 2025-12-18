@@ -58,7 +58,7 @@ const Men = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <section className="relative h-[90vh] overflow-hidden">
+      <section data-navbar-dark="true" className="relative h-[90vh] overflow-hidden">
         <div className="absolute inset-0">
           <img
             src={menHeroModel}
