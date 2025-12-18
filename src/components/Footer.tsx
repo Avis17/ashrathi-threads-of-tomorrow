@@ -96,6 +96,11 @@ const Footer = () => {
                   <span className="text-[9px] px-1.5 py-0.5 bg-accent text-accent-foreground font-semibold rounded-sm">NEW</span>
                 </Link>
               </li>
+              <li>
+                <Link to="/bulk-order" className="text-sm text-primary-foreground/80 hover:text-accent transition-colors">
+                  Bulk Orders
+                </Link>
+              </li>
             </ul>
           </div>
 
