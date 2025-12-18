@@ -10,12 +10,14 @@ import { OrderStatusBadge } from '@/components/customer/OrderStatusBadge';
 import { OrderTimeline } from '@/components/customer/OrderTimeline';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
-import { ArrowLeft, Package, MapPin, Phone, User, Save, Printer } from 'lucide-react';
+import { ArrowLeft, Package, MapPin, Phone, User, Save, Printer, CreditCard, Banknote } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState } from 'react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { calculateComboPrice } from '@/lib/calculateComboPrice';
+import logo from '@/assets/logo.png';
+import { numberToWords, formatCurrencyAscii, sanitizePdfText } from '@/lib/invoiceUtils';
 
 export default function AdminOrderDetails() {
   const { orderId } = useParams();
@@ -107,35 +109,60 @@ export default function AdminOrderDetails() {
     if (!order) return;
 
     const doc = new jsPDF();
-    
-    // Company Info
-    doc.setFontSize(20);
-    doc.setFont('helvetica', 'bold');
-    doc.text('FEATHER FASHIONS', 105, 20, { align: 'center' });
-    
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text('No.1, Nallappa Gounder Street, Gandhi Nagar,', 105, 28, { align: 'center' });
-    doc.text('Tirupur - 641 601, Tamil Nadu, India', 105, 33, { align: 'center' });
-    doc.text('Phone: +91 99999 99999', 105, 38, { align: 'center' });
-    
-    // Invoice Title
+    const pageWidth = doc.internal.pageSize.width;
+    const pageHeight = doc.internal.pageSize.height;
+
+    // Add logo (left side)
+    doc.addImage(logo, 'PNG', 14, 8, 40, 30);
+
+    // Company details (right side)
     doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
-    doc.text('INVOICE', 105, 50, { align: 'center' });
+    doc.text('Feather Fashions', pageWidth - 14, 15, { align: 'right' });
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Vadivel Nagar, 538-C, Boyampalayam PO', pageWidth - 14, 21, { align: 'right' });
+    doc.text('Pooluvapatti, Tiruppur, TN - 641602', pageWidth - 14, 26, { align: 'right' });
+    doc.text('Ph: +91 97892 25510 | hello@featherfashions.in', pageWidth - 14, 31, { align: 'right' });
+    doc.text('www.featherfashions.in', pageWidth - 14, 36, { align: 'right' });
+
+    // Invoice title with decorative line
+    doc.setDrawColor(0, 144, 255); // Neon blue accent
+    doc.setLineWidth(0.5);
+    doc.line(14, 45, pageWidth - 14, 45);
     
-    // Invoice Details
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(45, 64, 87);
+    doc.text('ORDER INVOICE', pageWidth / 2, 55, { align: 'center' });
+    doc.setTextColor(0, 0, 0);
+    
+    doc.setDrawColor(0, 144, 255);
+    doc.line(14, 60, pageWidth - 14, 60);
+
+    // Order details box
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Invoice No: ${order.order_number}`, 14, 60);
-    doc.text(`Date: ${format(new Date(order.created_at), 'dd/MM/yyyy')}`, 14, 66);
+    doc.text(`Order No: ${order.order_number}`, 14, 70);
+    doc.text(`Date: ${format(new Date(order.created_at), 'dd-MM-yyyy')}`, pageWidth - 14, 70, { align: 'right' });
     
-    // Bill To
+    // Payment method badge
+    const isOnlinePayment = order.payment_method === 'phonepe' || order.payment_method === 'online';
+    doc.setFillColor(isOnlinePayment ? 0 : 245, isOnlinePayment ? 144 : 158, isOnlinePayment ? 255 : 11);
+    doc.roundedRect(14, 74, 50, 8, 2, 2, 'F');
+    doc.setFontSize(8);
+    doc.setTextColor(255, 255, 255);
+    doc.text(isOnlinePayment ? 'PAID - PHONEPE/ONLINE' : 'CASH ON DELIVERY', 39, 79.5, { align: 'center' });
+    doc.setTextColor(0, 0, 0);
+
+    // Bill To section
+    doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
-    doc.text('Bill To:', 14, 76);
+    doc.text('Ship To:', 14, 92);
     doc.setFont('helvetica', 'normal');
-    doc.text(order.delivery_name, 14, 82);
-    doc.text(order.delivery_phone, 14, 88);
+    doc.setFontSize(10);
+    doc.text(sanitizePdfText(order.delivery_name), 14, 98);
+    doc.text(order.delivery_phone, 14, 104);
     
     const addressLines = [
       order.delivery_address_line_1,
@@ -143,68 +170,122 @@ export default function AdminOrderDetails() {
       `${order.delivery_city}, ${order.delivery_state} - ${order.delivery_pincode}`
     ].filter(Boolean);
     
-    let yPos = 94;
-    addressLines.forEach(line => {
-      doc.text(line, 14, yPos);
-      yPos += 6;
+    let yPos = 110;
+    addressLines.forEach((line: string) => {
+      doc.text(sanitizePdfText(line), 14, yPos);
+      yPos += 5;
     });
-    
+
     // Items Table
-    const tableData = order.order_items?.map((item: any) => {
+    const tableData = order.order_items?.map((item: any, idx: number) => {
       const variants = [
         item.selected_size ? `Size: ${item.selected_size}` : null,
         item.selected_color ? item.selected_color : null
       ].filter(Boolean).join(', ');
 
       return [
+        (idx + 1).toString(),
         item.product_code || '-',
-        `${item.product_name}${variants ? `\n(${variants})` : ''}`,
-        '-', // HSN (not available for orders)
+        `${sanitizePdfText(item.product_name)}${variants ? `\n(${variants})` : ''}`,
         item.quantity.toString(),
-        `₹${Number(item.unit_price).toFixed(2)}`,
-        `₹${Number(item.total_price).toFixed(2)}`
+        formatCurrencyAscii(Number(item.unit_price)),
+        formatCurrencyAscii(Number(item.total_price))
       ];
     }) || [];
     
     autoTable(doc, {
-      startY: yPos + 10,
-      head: [['Code', 'Description', 'HSN', 'Qty', 'Rate', 'Amount']],
+      startY: yPos + 8,
+      head: [['#', 'Code', 'Description', 'Qty', 'Rate', 'Amount']],
       body: tableData,
       theme: 'grid',
-      headStyles: { fillColor: [66, 66, 66], textColor: [255, 255, 255], fontStyle: 'bold' },
-      styles: { fontSize: 9 },
+      headStyles: { 
+        fillColor: [45, 64, 87], 
+        textColor: [255, 255, 255], 
+        fontStyle: 'bold',
+        fontSize: 9
+      },
+      styles: { fontSize: 9, cellPadding: 4 },
       columnStyles: {
-        0: { cellWidth: 25 },
-        1: { cellWidth: 70 },
-        2: { cellWidth: 20 },
-        3: { cellWidth: 15 },
-        4: { cellWidth: 25 },
-        5: { cellWidth: 30 }
+        0: { cellWidth: 12, halign: 'center' },
+        1: { cellWidth: 25 },
+        2: { cellWidth: 70 },
+        3: { cellWidth: 15, halign: 'center' },
+        4: { cellWidth: 30, halign: 'right' },
+        5: { cellWidth: 35, halign: 'right' }
       }
     });
     
-    // Summary
-    const finalY = (doc as any).lastAutoTable.finalY + 10;
-    const rightAlign = 196;
+    // Summary section
+    let finalY = (doc as any).lastAutoTable.finalY + 8;
     
-    doc.text('Subtotal:', rightAlign - 50, finalY, { align: 'right' });
-    doc.text(`₹${Number(order.subtotal).toFixed(2)}`, rightAlign, finalY, { align: 'right' });
+    // Summary box
+    doc.setFillColor(249, 250, 251);
+    doc.roundedRect(pageWidth - 90, finalY - 2, 76, 40, 2, 2, 'F');
     
-    doc.text('Shipping:', rightAlign - 50, finalY + 6, { align: 'right' });
-    doc.text(`₹${Number(order.shipping_charges || 0).toFixed(2)}`, rightAlign, finalY + 6, { align: 'right' });
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Subtotal:', pageWidth - 50, finalY + 5, { align: 'right' });
+    doc.text(formatCurrencyAscii(Number(order.subtotal)), pageWidth - 16, finalY + 5, { align: 'right' });
     
+    doc.text('Shipping:', pageWidth - 50, finalY + 12, { align: 'right' });
+    doc.text(formatCurrencyAscii(Number(order.shipping_charges || 0)), pageWidth - 16, finalY + 12, { align: 'right' });
+    
+    doc.setDrawColor(200, 200, 200);
+    doc.line(pageWidth - 88, finalY + 17, pageWidth - 16, finalY + 17);
+    
+    doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
-    doc.text('Total Amount:', rightAlign - 50, finalY + 14, { align: 'right' });
-    doc.text(`₹${Number(order.total_amount).toFixed(2)}`, rightAlign, finalY + 14, { align: 'right' });
-    
-    // Payment Method
+    doc.text('Total:', pageWidth - 50, finalY + 26, { align: 'right' });
+    doc.setTextColor(0, 144, 255);
+    doc.text(formatCurrencyAscii(Number(order.total_amount)), pageWidth - 16, finalY + 26, { align: 'right' });
+    doc.setTextColor(0, 0, 0);
+
+    // Amount in words
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'italic');
+    const amountInWords = numberToWords(Math.round(Number(order.total_amount)));
+    doc.text(`Amount in words: ${amountInWords} Rupees Only`, 14, finalY + 10);
+
+    // Payment info
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.text('Payment Information:', 14, finalY + 50);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
-    doc.text(`Payment Method: ${order.payment_method.toUpperCase().replace('_', ' ')}`, 14, finalY + 20);
-    
-    // Footer
+    doc.text(`Method: ${isOnlinePayment ? 'PhonePe / Online Payment' : 'Cash on Delivery'}`, 14, finalY + 56);
+    doc.text(`Status: ${order.payment_status === 'completed' ? 'Paid' : 'Pending'}`, 14, finalY + 62);
+
+    // Terms & Notes section
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.text('Terms & Conditions:', 14, finalY + 75);
+    doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
-    doc.text('Thank you for your business!', 105, 280, { align: 'center' });
+    const terms = [
+      '1. Goods once sold will not be taken back or exchanged.',
+      '2. Please check the product immediately upon delivery.',
+      '3. Report any damage within 24 hours of delivery.',
+      '4. For queries, contact: hello@featherfashions.in'
+    ];
+    terms.forEach((term, idx) => {
+      doc.text(term, 14, finalY + 81 + (idx * 5));
+    });
+
+    // Footer with decorative line
+    const footerY = pageHeight - 25;
+    doc.setDrawColor(0, 144, 255);
+    doc.setLineWidth(0.3);
+    doc.line(14, footerY - 5, pageWidth - 14, footerY - 5);
+    
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(45, 64, 87);
+    doc.text('Thank you for shopping with Feather Fashions!', pageWidth / 2, footerY, { align: 'center' });
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(8);
+    doc.setTextColor(100, 100, 100);
+    doc.text('Feather-Light Comfort. Limitless Style.', pageWidth / 2, footerY + 5, { align: 'center' });
+    doc.text('www.featherfashions.in', pageWidth / 2, footerY + 10, { align: 'center' });
     
     // Open print dialog
     doc.autoPrint();
@@ -314,7 +395,7 @@ export default function AdminOrderDetails() {
             <CardContent className="grid md:grid-cols-2 gap-4">
               <div>
                 <p className="text-sm text-muted-foreground">Full Name</p>
-                <p className="font-medium">{order.profile?.full_name || 'N/A'}</p>
+                <p className="font-medium">{order.delivery_name || order.profile?.full_name || 'N/A'}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Email</p>
@@ -322,26 +403,25 @@ export default function AdminOrderDetails() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Phone</p>
-                <p className="font-medium">{order.profile?.phone || 'N/A'}</p>
+                <p className="font-medium">{order.delivery_phone || order.profile?.phone || 'N/A'}</p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Date of Birth</p>
-                <p className="font-medium">
-                  {order.profile?.date_of_birth 
-                    ? format(new Date(order.profile.date_of_birth), 'PPP')
-                    : 'N/A'
-                  }
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Gender</p>
-                <p className="font-medium capitalize">{order.profile?.gender || 'N/A'}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Marital Status</p>
+                <p className="text-sm text-muted-foreground">Payment Method</p>
                 <p className="font-medium capitalize">
-                  {order.profile?.marital_status?.replace('_', ' ') || 'N/A'}
+                  {order.payment_method === 'phonepe' || order.payment_method === 'online' 
+                    ? 'PhonePe / Online' 
+                    : 'Cash on Delivery'}
                 </p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Payment Status</p>
+                <Badge variant={order.payment_status === 'completed' ? 'default' : 'secondary'} className="capitalize">
+                  {order.payment_status || 'Pending'}
+                </Badge>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">User ID</p>
+                <p className="font-medium text-xs font-mono text-muted-foreground">{order.user_id}</p>
               </div>
             </CardContent>
           </Card>

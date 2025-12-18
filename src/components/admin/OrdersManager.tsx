@@ -49,6 +49,7 @@ interface Order {
 export function OrdersManager() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [paymentFilter, setPaymentFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const navigate = useNavigate();
@@ -58,7 +59,7 @@ export function OrdersManager() {
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
   const { data: orders, isLoading, isFetching } = useQuery({
-    queryKey: ['admin-orders', debouncedSearchTerm, statusFilter, currentPage],
+    queryKey: ['admin-orders', debouncedSearchTerm, statusFilter, paymentFilter, currentPage],
     queryFn: async () => {
       let query = supabase
         .from('orders')
@@ -71,6 +72,10 @@ export function OrdersManager() {
 
       if (statusFilter !== 'all') {
         query = query.eq('status', statusFilter);
+      }
+
+      if (paymentFilter !== 'all') {
+        query = query.eq('payment_method', paymentFilter);
       }
 
       const from = (currentPage - 1) * itemsPerPage;
@@ -183,7 +188,7 @@ export function OrdersManager() {
               )}
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full md:w-[200px]">
+              <SelectTrigger className="w-full md:w-[180px]">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
@@ -194,6 +199,16 @@ export function OrdersManager() {
                 <SelectItem value="shipped">Shipped</SelectItem>
                 <SelectItem value="delivered">Delivered</SelectItem>
                 <SelectItem value="cancelled">Cancelled</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={paymentFilter} onValueChange={setPaymentFilter}>
+              <SelectTrigger className="w-full md:w-[180px]">
+                <SelectValue placeholder="Payment type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Payments</SelectItem>
+                <SelectItem value="cod">Cash on Delivery</SelectItem>
+                <SelectItem value="phonepe">PhonePe / Online</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -232,8 +247,17 @@ export function OrdersManager() {
                       </TableCell>
                       <TableCell className="font-semibold">₹{order.total_amount}</TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="capitalize">
-                          {order.payment_method}
+                        <Badge 
+                          variant="outline" 
+                          className={`capitalize ${
+                            order.payment_method === 'phonepe' || order.payment_method === 'online'
+                              ? 'border-blue-500 text-blue-600 bg-blue-50'
+                              : 'border-amber-500 text-amber-600 bg-amber-50'
+                          }`}
+                        >
+                          {order.payment_method === 'phonepe' || order.payment_method === 'online' 
+                            ? 'PhonePe/Online' 
+                            : 'Cash on Delivery'}
                         </Badge>
                       </TableCell>
                       <TableCell>
