@@ -201,16 +201,14 @@ export default function Checkout() {
         const redirectUrl = `${window.location.origin}/payment-callback?orderId=${order.id}`;
         
         const { data: paymentData, error: paymentError } = await supabase.functions.invoke(
-          'phonepe-payment',
+          'phonepe-payment?action=create',
           {
             body: {
               orderId: order.order_number,
               amount: selectedCartTotal + deliveryCharge.charge,
               redirectUrl,
               userId: user!.id,
-            },
-            headers: {
-              'Content-Type': 'application/json',
+              customerPhone: selectedAddress.phone,
             },
           }
         );
@@ -219,7 +217,7 @@ export default function Checkout() {
           console.error('PhonePe payment error:', paymentError || paymentData?.error);
           toast({
             title: 'Payment Initialization Failed',
-            description: 'Falling back to Cash on Delivery',
+            description: paymentData?.error || 'Unable to initiate payment. Please try again or use Cash on Delivery.',
             variant: 'destructive',
           });
           
@@ -238,8 +236,22 @@ export default function Checkout() {
         // Clear cart before redirecting to PhonePe
         await clearSelectedItems();
         
+        // Get the checkout URL - try multiple response formats
+        const checkoutUrl = paymentData.checkoutUrl || paymentData.redirectUrl || paymentData.instrumentResponse?.redirectInfo?.url;
+        
+        if (!checkoutUrl) {
+          console.error('No checkout URL in response:', paymentData);
+          toast({
+            title: 'Payment Error',
+            description: 'Could not get payment URL. Order placed as Cash on Delivery.',
+            variant: 'destructive',
+          });
+          navigate(`/my-orders/${order.id}`);
+          return;
+        }
+        
         // Redirect to PhonePe payment page
-        window.location.href = paymentData.redirectUrl;
+        window.location.href = checkoutUrl;
         return;
       }
 
