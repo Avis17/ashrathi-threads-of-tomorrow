@@ -53,7 +53,8 @@ export const ExternalJobOrdersList = () => {
           external_job_operations (
             *,
             external_job_operation_categories (*)
-          )
+          ),
+          external_job_expenses (amount)
         `)
         .order('created_at', { ascending: false });
       if (error) throw error;
@@ -113,7 +114,7 @@ export const ExternalJobOrdersList = () => {
         pendingAmount: 0,
         totalPieces: 0,
         totalCommission: 0,
-        grossProfit: 0,
+        expectedNetProfit: 0,
         totalGstAmount: 0,
       };
     }
@@ -132,10 +133,14 @@ export const ExternalJobOrdersList = () => {
     // Calculate total GST amount
     const totalGstAmount = filteredOrders.reduce((sum, order) => sum + (order.gst_amount || 0), 0);
 
-    // Calculate commission and operations cost
+    // Calculate commission and expected net profit per order (matching JobDetails.tsx formula)
     let totalCommission = 0;
-    let totalOperationsCost = 0;
+    let expectedNetProfit = 0;
+    
     filteredOrders.forEach((order: any) => {
+      // Calculate operations cost per piece (sum of total_rate from each operation)
+      let operationsCostPerPiece = 0;
+      
       order.external_job_operations?.forEach((op: any) => {
         const categoriesTotal = op.external_job_operation_categories
           ?.reduce((sum: number, cat: any) => sum + cat.rate, 0) || 0;
@@ -144,19 +149,33 @@ export const ExternalJobOrdersList = () => {
         const roundOff = op.round_off || 0;
         const adjustment = op.adjustment || 0;
         
-        // Calculate commission
+        // Calculate commission for this operation
         if (commissionPercent > 0) {
           const commissionAmount = (categoriesTotal * commissionPercent) / 100;
           totalCommission += commissionAmount * order.number_of_pieces;
         }
         
-        // Calculate operations cost
-        const operationTotal = roundOff > 0 ? roundOff : (categoriesTotal + (categoriesTotal * commissionPercent / 100) + adjustment);
-        totalOperationsCost += operationTotal * order.number_of_pieces;
+        // Use total_rate if available, otherwise calculate
+        const operationTotal = op.total_rate || (roundOff > 0 ? roundOff : (categoriesTotal + (categoriesTotal * commissionPercent / 100) + adjustment));
+        operationsCostPerPiece += operationTotal;
       });
+      
+      // Company profit per piece = rate per piece - operations cost per piece
+      const companyProfitPerPiece = (order.rate_per_piece || 0) - operationsCostPerPiece;
+      
+      // Total company profit for this order
+      const totalCompanyProfit = companyProfitPerPiece * (order.number_of_pieces || 0);
+      
+      // Subtract expenses for this order
+      const orderExpenses = order.external_job_expenses?.reduce(
+        (sum: number, exp: any) => sum + (exp.amount || 0), 0
+      ) || 0;
+      
+      // Net profit for this order = company profit - expenses
+      const orderNetProfit = totalCompanyProfit - orderExpenses;
+      
+      expectedNetProfit += orderNetProfit;
     });
-
-    const grossProfit = totalAmount - totalOperationsCost;
 
     return {
       totalOrders,
@@ -165,7 +184,7 @@ export const ExternalJobOrdersList = () => {
       pendingAmount,
       totalPieces,
       totalCommission,
-      grossProfit,
+      expectedNetProfit,
       totalGstAmount,
     };
   }, [filteredOrders]);
@@ -305,10 +324,10 @@ export const ExternalJobOrdersList = () => {
         <Card className="p-4 bg-gradient-to-br from-teal-500 to-teal-600 text-white border-0 shadow-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-teal-100 text-sm font-medium">Company Profit</p>
-              <p className="text-3xl font-bold mt-1">{formatAmount(stats.grossProfit, amountsVisible)}</p>
+              <p className="text-teal-100 text-sm font-medium">Expected Net Profit</p>
+              <p className="text-3xl font-bold mt-1">{formatAmount(stats.expectedNetProfit, amountsVisible)}</p>
               <p className="text-teal-100 text-xs mt-1">
-                {stats.totalAmount > 0 ? Math.round((stats.grossProfit / stats.totalAmount) * 100) : 0}% margin
+                {stats.totalAmount > 0 ? Math.round((stats.expectedNetProfit / stats.totalAmount) * 100) : 0}% margin
               </p>
             </div>
             <div className="h-12 w-12 bg-white/20 rounded-xl flex items-center justify-center">
