@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -79,6 +80,7 @@ const JobDetails = () => {
   const [editOrderDate, setEditOrderDate] = useState<string>("");
   const [editDeliveryDate, setEditDeliveryDate] = useState<string>("");
   const [editRatePerPiece, setEditRatePerPiece] = useState<number>(0);
+  const [editNotes, setEditNotes] = useState<string>("");
 
   useEffect(() => {
     if (jobOrder) {
@@ -91,6 +93,7 @@ const JobDetails = () => {
       setEditOrderDate(jobOrder.order_date || (jobOrder.created_at ? format(new Date(jobOrder.created_at), 'yyyy-MM-dd') : ''));
       setEditDeliveryDate(jobOrder.delivery_date || '');
       setEditRatePerPiece(jobOrder.rate_per_piece);
+      setEditNotes(jobOrder.notes || "");
     }
   }, [jobOrder]);
 
@@ -359,6 +362,7 @@ const JobDetails = () => {
                 setEditOrderDate(jobOrder.order_date || (jobOrder.created_at ? format(new Date(jobOrder.created_at), 'yyyy-MM-dd') : ''));
                 setEditDeliveryDate(jobOrder.delivery_date || '');
                 setEditRatePerPiece(jobOrder.rate_per_piece);
+                setEditNotes(jobOrder.notes || "");
               }}>
                 Cancel
               </Button>
@@ -379,6 +383,7 @@ const JobDetails = () => {
                       gst_amount: newGstAmount,
                       total_with_gst: newTotalWithGst,
                       balance_amount: newTotalWithGst - jobOrder.paid_amount,
+                      notes: editNotes,
                     },
                   });
                   toast.success('Job information updated successfully');
@@ -507,6 +512,21 @@ const JobDetails = () => {
                 <SelectItem value="hold">Hold</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+          <div className="md:col-span-2">
+            <p className="text-sm text-muted-foreground mb-2">Notes</p>
+            {isEditingJob ? (
+              <Textarea 
+                value={editNotes} 
+                onChange={(e) => setEditNotes(e.target.value)}
+                placeholder="Add notes about this job order..."
+                className="min-h-[80px]"
+              />
+            ) : (
+              <p className="font-medium text-muted-foreground whitespace-pre-wrap">
+                {jobOrder.notes || "No notes added"}
+              </p>
+            )}
           </div>
         </div>
       </Card>
