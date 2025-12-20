@@ -101,7 +101,9 @@ export default function Checkout() {
         }
       }
 
-      // STEP 2: Create order
+      // STEP 2: Create order - for PhonePe, use 'payment_pending' status and defer finalization
+      const isPhonePePayment = paymentMethod === 'phonepe';
+      
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
@@ -118,7 +120,10 @@ export default function Checkout() {
           total_amount: selectedCartTotal + deliveryCharge.charge,
           customer_notes: customerNotes || null,
           payment_method: paymentMethod,
-          payment_status: paymentMethod === 'cod' ? 'cod_pending' : 'pending',
+          // For PhonePe: use 'payment_pending' - order will be finalized after payment success
+          // For COD: use 'cod_pending' - order is immediately valid
+          payment_status: isPhonePePayment ? 'payment_pending' : 'cod_pending',
+          status: isPhonePePayment ? 'payment_pending' : 'pending',
         })
         .select()
         .single();
@@ -178,26 +183,29 @@ export default function Checkout() {
 
       if (itemsError) throw itemsError;
 
-      // STEP 3: Convert reserved to ordered for each item
-      for (const item of selectedCartItems) {
-        if (item.selected_size && item.selected_color) {
-          const { error: convertError } = await supabase.rpc('convert_reserved_to_ordered', {
-            p_product_id: item.product_id,
-            p_size: item.selected_size,
-            p_color: item.selected_color,
-            p_quantity: item.quantity,
-          });
-          
-          if (convertError) {
-            console.error('Inventory conversion failed:', convertError);
-            // Log but don't fail the order - admin can handle manually
+      // STEP 3: For PhonePe payments - DO NOT convert inventory or clear cart yet
+      // This will be done in PaymentCallback after successful payment
+      if (!isPhonePePayment) {
+        // COD flow - convert reserved to ordered immediately
+        for (const item of selectedCartItems) {
+          if (item.selected_size && item.selected_color) {
+            const { error: convertError } = await supabase.rpc('convert_reserved_to_ordered', {
+              p_product_id: item.product_id,
+              p_size: item.selected_size,
+              p_color: item.selected_color,
+              p_quantity: item.quantity,
+            });
+            
+            if (convertError) {
+              console.error('Inventory conversion failed:', convertError);
+            }
           }
         }
       }
 
       // STEP 4: Handle payment based on method
-      if (paymentMethod === 'phonepe') {
-        // Initiate PhonePe payment
+      if (isPhonePePayment) {
+        // Initiate PhonePe payment - DO NOT clear cart yet
         const redirectUrl = `${window.location.origin}/payment-callback?orderId=${order.id}`;
         
         const { data: paymentData, error: paymentError } = await supabase.functions.invoke(
@@ -215,42 +223,42 @@ export default function Checkout() {
         
         if (paymentError || !paymentData?.success) {
           console.error('PhonePe payment error:', paymentError || paymentData?.error);
+          
+          // Delete the payment_pending order since payment initiation failed
+          await supabase.from('order_items').delete().eq('order_id', order.id);
+          await supabase.from('orders').delete().eq('id', order.id);
+          
           toast({
             title: 'Payment Initialization Failed',
-            description: paymentData?.error || 'Unable to initiate payment. Please try again or use Cash on Delivery.',
+            description: paymentData?.error || 'Unable to initiate payment. Please try again.',
             variant: 'destructive',
           });
           
-          // Update order to COD if payment fails
-          await supabase.from('orders').update({
-            payment_method: 'cod',
-            payment_status: 'cod_pending',
-          }).eq('id', order.id);
-          
-          // Clear cart and navigate
-          await clearSelectedItems();
-          navigate(`/my-orders/${order.id}`);
+          setIsPlacingOrder(false);
           return;
         }
         
-        // Clear cart before redirecting to PhonePe
-        await clearSelectedItems();
-        
-        // Get the checkout URL - try multiple response formats
+        // Get the checkout URL
         const checkoutUrl = paymentData.checkoutUrl || paymentData.redirectUrl || paymentData.instrumentResponse?.redirectInfo?.url;
         
         if (!checkoutUrl) {
           console.error('No checkout URL in response:', paymentData);
+          
+          // Delete the order since we can't proceed
+          await supabase.from('order_items').delete().eq('order_id', order.id);
+          await supabase.from('orders').delete().eq('id', order.id);
+          
           toast({
             title: 'Payment Error',
-            description: 'Could not get payment URL. Order placed as Cash on Delivery.',
+            description: 'Could not get payment URL. Please try again.',
             variant: 'destructive',
           });
-          navigate(`/my-orders/${order.id}`);
+          
+          setIsPlacingOrder(false);
           return;
         }
         
-        // Redirect to PhonePe payment page
+        // Redirect to PhonePe payment page - cart stays intact until payment succeeds
         window.location.href = checkoutUrl;
         return;
       }
