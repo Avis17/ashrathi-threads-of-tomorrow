@@ -30,7 +30,7 @@ const Navbar = () => {
 
   return (
     <nav 
-      className="fixed top-0 left-0 right-0 z-50 bg-[#0E0E0E] shadow-[0_2px_10px_rgba(0,0,0,0.3)]"
+      className="fixed top-0 left-0 right-0 z-50 bg-[#0F1113]/95 backdrop-blur-md border-b border-white/[0.06] shadow-[0_2px_10px_rgba(0,0,0,0.3)]"
     >
       <div className="container mx-auto px-6">
         <div className="flex items-center justify-between h-[76px]">
@@ -138,7 +138,7 @@ const Navbar = () => {
 
         {/* Mobile Navigation */}
         {isOpen && (
-          <div className="lg:hidden fixed inset-0 top-[76px] bg-[#0E0E0E] z-50 animate-fade-in">
+          <div className="lg:hidden fixed inset-0 top-[76px] bg-[#0F1113] z-50 animate-fade-in">
             <div className="flex flex-col p-8 space-y-6">
               {navLinks.map((link) => (
                 <Link
