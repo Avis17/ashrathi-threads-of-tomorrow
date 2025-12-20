@@ -193,7 +193,8 @@ export function OrdersManager() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="payment_pending">Payment Pending</SelectItem>
+                <SelectItem value="pending">Confirmation Pending</SelectItem>
                 <SelectItem value="confirmed">Confirmed</SelectItem>
                 <SelectItem value="processing">Processing</SelectItem>
                 <SelectItem value="shipped">Shipped</SelectItem>
@@ -269,7 +270,8 @@ export function OrdersManager() {
                             <OrderStatusBadge status={order.status} />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="payment_pending">Payment Pending</SelectItem>
+                            <SelectItem value="pending">Confirmation Pending</SelectItem>
                             <SelectItem value="confirmed">Confirmed</SelectItem>
                             <SelectItem value="processing">Processing</SelectItem>
                             <SelectItem value="shipped">Shipped</SelectItem>
