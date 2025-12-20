@@ -77,14 +77,10 @@ const LetterheadPreview = forwardRef<HTMLDivElement, LetterheadPreviewProps>(({
           <p className="salutation mb-3" style={{ fontSize: '12px' }}>{salutation}</p>
         )}
 
-        {/* Body Content - renders HTML from TipTap editor */}
+        {/* Body Content - renders HTML from TipTap editor with proper indent styles */}
         {page.content && (
           <div 
-            className="letter-body text-justify"
-            style={{ 
-              fontSize: '12px',
-              lineHeight: '1.5',
-            }}
+            className="letter-body-content text-justify"
             dangerouslySetInnerHTML={{ __html: page.content }}
           />
         )}
@@ -134,6 +130,107 @@ const LetterheadPreview = forwardRef<HTMLDivElement, LetterheadPreviewProps>(({
         fontFamily: "'Inter', 'Roboto', 'Source Sans Pro', Arial, Helvetica, sans-serif"
       }}
     >
+      {/* Styles for letter body content - matches editor styles exactly */}
+      <style>{`
+        .letter-body-content {
+          font-size: 12px;
+          line-height: 1.5;
+        }
+        
+        .letter-body-content p {
+          margin-bottom: 12px;
+        }
+        
+        .letter-body-content p:last-child {
+          margin-bottom: 0;
+        }
+        
+        /* Indentation styles - must match editor exactly */
+        .letter-body-content p[data-indent="1"],
+        .letter-body-content p[style*="margin-left: 24px"] {
+          margin-left: 24px !important;
+        }
+        
+        .letter-body-content p[data-indent="2"],
+        .letter-body-content p[style*="margin-left: 48px"] {
+          margin-left: 48px !important;
+        }
+        
+        .letter-body-content p[data-indent="3"],
+        .letter-body-content p[style*="margin-left: 72px"] {
+          margin-left: 72px !important;
+        }
+        
+        .letter-body-content p[data-indent="4"],
+        .letter-body-content p[style*="margin-left: 96px"] {
+          margin-left: 96px !important;
+        }
+        
+        .letter-body-content p[data-indent="5"],
+        .letter-body-content p[style*="margin-left: 120px"] {
+          margin-left: 120px !important;
+        }
+        
+        /* List styles */
+        .letter-body-content ul,
+        .letter-body-content ol {
+          margin-left: 24px;
+          margin-bottom: 12px;
+        }
+        
+        .letter-body-content li {
+          margin-bottom: 4px;
+        }
+        
+        .letter-body-content li p {
+          margin-bottom: 0;
+        }
+        
+        /* Indentation for list items */
+        .letter-body-content li[data-indent="1"],
+        .letter-body-content li[style*="margin-left: 24px"] {
+          margin-left: 24px !important;
+        }
+        
+        .letter-body-content li[data-indent="2"],
+        .letter-body-content li[style*="margin-left: 48px"] {
+          margin-left: 48px !important;
+        }
+        
+        /* Hide page break markers in preview/print */
+        .letter-body-content .page-break-marker,
+        .letter-body-content [data-page-break] {
+          display: none !important;
+        }
+        
+        /* Text alignment */
+        .letter-body-content p[style*="text-align: center"],
+        .letter-body-content [style*="text-align: center"] {
+          text-align: center !important;
+        }
+        
+        .letter-body-content p[style*="text-align: right"],
+        .letter-body-content [style*="text-align: right"] {
+          text-align: right !important;
+        }
+        
+        .letter-body-content p[style*="text-align: left"],
+        .letter-body-content [style*="text-align: left"] {
+          text-align: left !important;
+        }
+        
+        /* Print styles */
+        @media print {
+          .letter-body-content p {
+            page-break-inside: avoid;
+          }
+          
+          .letter-body-content li {
+            page-break-inside: avoid;
+          }
+        }
+      `}</style>
+      
       <div className={forPrint ? '' : 'space-y-6'}>
         {pages.map((page, index) => (
           <div 

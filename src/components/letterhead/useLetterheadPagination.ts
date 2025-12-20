@@ -7,7 +7,7 @@ interface PaginationInput {
   recipientAddress: string;
   subject: string;
   salutation: string;
-  letterBody: string; // Now HTML content from TipTap
+  letterBody: string; // HTML content from TipTap
   closing: string;
   showSignature: boolean;
   signatureImage: string | null;
@@ -28,17 +28,18 @@ interface PageContent {
 }
 
 // A4 page dimensions and spacing calculations
-// Header height: ~80px, Footer height: ~50px, Margins: 45mm vertical = ~170px
-// Available body height: 297mm - 25mm top - 20mm bottom - header - footer ≈ 600px
+// Available body height: 297mm - 25mm top - 20mm bottom - header (~80px) - footer (~50px)
 // At 12px font with 1.5 line-height = 18px per line ≈ 33 lines per page
 // First page has meta, recipient, subject, salutation which takes ~10-12 lines
 // Last page needs space for closing and signature ~8-10 lines
 
-const LINES_PER_PAGE_FIRST = 22; // Less space due to meta, recipient, subject, salutation
-const LINES_PER_PAGE_MIDDLE = 35; // Full content area
-const LINES_PER_PAGE_LAST_RESERVE = 10; // Reserve for closing, signature
+const LINES_PER_PAGE_FIRST = 22;
+const LINES_PER_PAGE_MIDDLE = 35;
+const LINES_PER_PAGE_LAST_RESERVE = 10;
+const CHARS_PER_LINE = 90;
 
-const CHARS_PER_LINE = 90; // Approximate characters per line at 12px in A4 body width
+// Page break marker constant
+const PAGE_BREAK_MARKER = 'data-page-break';
 
 // Helper to extract text content from HTML for line calculation
 function stripHtml(html: string): string {
@@ -47,23 +48,8 @@ function stripHtml(html: string): string {
   return tmp.textContent || tmp.innerText || '';
 }
 
-// Helper to count lines in content (for both plain text and HTML)
-function countLines(content: string, isHtml: boolean = false): number {
-  const text = isHtml ? stripHtml(content) : content;
-  const lines = text.split('\n');
-  let totalLines = 0;
-  lines.forEach(line => {
-    totalLines += Math.max(1, Math.ceil(line.length / CHARS_PER_LINE));
-  });
-  // Add extra lines for paragraph breaks
-  const paragraphCount = isHtml 
-    ? (content.match(/<\/p>/gi) || []).length
-    : (content.match(/\n\n+/g) || []).length;
-  return totalLines + paragraphCount;
-}
-
-// Parse HTML into paragraphs (top-level elements)
-function parseHtmlToParagraphs(html: string): { html: string; lines: number }[] {
+// Parse HTML into paragraphs (top-level elements), detecting page breaks
+function parseHtmlToParagraphs(html: string): { html: string; lines: number; isPageBreak: boolean }[] {
   if (!html || html.trim() === '' || html === '<p></p>') {
     return [];
   }
@@ -71,21 +57,38 @@ function parseHtmlToParagraphs(html: string): { html: string; lines: number }[] 
   const tmp = document.createElement('div');
   tmp.innerHTML = html;
   
-  const paragraphs: { html: string; lines: number }[] = [];
+  const paragraphs: { html: string; lines: number; isPageBreak: boolean }[] = [];
   
   Array.from(tmp.childNodes).forEach(node => {
     if (node.nodeType === Node.ELEMENT_NODE) {
       const el = node as HTMLElement;
+      
+      // Check if this is a page break
+      if (el.hasAttribute(PAGE_BREAK_MARKER) || el.classList.contains('page-break-marker')) {
+        paragraphs.push({ html: '', lines: 0, isPageBreak: true });
+        return;
+      }
+      
       const nodeHtml = el.outerHTML;
       const nodeText = el.textContent || '';
       
       // Calculate lines for this element
-      let lineCount = 1; // At minimum 1 line
+      let lineCount = 1;
       const textLines = nodeText.split('\n');
       textLines.forEach(line => {
         lineCount += Math.max(0, Math.ceil(line.length / CHARS_PER_LINE) - 1);
       });
       lineCount += 1; // Add spacing after paragraph
+      
+      // Account for indentation (indented text takes more lines due to narrower effective width)
+      const indentMatch = el.getAttribute('data-indent') || el.style.marginLeft;
+      if (indentMatch) {
+        const indentLevel = parseInt(indentMatch) || (parseInt(indentMatch) / 24);
+        if (indentLevel > 0) {
+          const effectiveCharsPerLine = CHARS_PER_LINE - (indentLevel * 3);
+          lineCount = Math.ceil(nodeText.length / effectiveCharsPerLine) + 1;
+        }
+      }
       
       // Handle lists - each li is roughly 1+ lines
       if (el.tagName === 'UL' || el.tagName === 'OL') {
@@ -99,13 +102,13 @@ function parseHtmlToParagraphs(html: string): { html: string; lines: number }[] 
         });
       }
       
-      paragraphs.push({ html: nodeHtml, lines: lineCount });
+      paragraphs.push({ html: nodeHtml, lines: lineCount, isPageBreak: false });
     } else if (node.nodeType === Node.TEXT_NODE && node.textContent?.trim()) {
-      // Wrap raw text in paragraph
       const text = node.textContent || '';
       paragraphs.push({
         html: `<p>${text}</p>`,
-        lines: Math.max(1, Math.ceil(text.length / CHARS_PER_LINE)) + 1
+        lines: Math.max(1, Math.ceil(text.length / CHARS_PER_LINE)) + 1,
+        isPageBreak: false
       });
     }
   });
@@ -157,10 +160,36 @@ export function useLetterheadPagination(input: PaginationInput): PageContent[] {
 
     while (paragraphIndex < paragraphs.length) {
       const para = paragraphs[paragraphIndex];
+      
+      // If this is a page break marker, force a new page
+      if (para.isPageBreak) {
+        // Add current page if it has content
+        if (currentPageContent.length > 0 || isFirstPage) {
+          pages.push({
+            pageNumber: pages.length + 1,
+            content: currentPageContent.join(''),
+            isFirstPage,
+            isLastPage: false,
+            showMeta: isFirstPage,
+            showRecipient: isFirstPage,
+            showSubject: isFirstPage,
+            showSalutation: isFirstPage,
+            showClosing: false
+          });
+          isFirstPage = false;
+        }
+        currentPageContent = [];
+        currentPageLines = 0;
+        paragraphIndex++;
+        continue;
+      }
+      
       const maxLines = isFirstPage ? LINES_PER_PAGE_FIRST : LINES_PER_PAGE_MIDDLE;
       
       // Check if this is potentially the last page (remaining content fits)
-      const remainingLines = paragraphs.slice(paragraphIndex).reduce((sum, p) => sum + p.lines, 0);
+      const remainingLines = paragraphs.slice(paragraphIndex)
+        .filter(p => !p.isPageBreak)
+        .reduce((sum, p) => sum + p.lines, 0);
       const effectiveMaxLines = remainingLines <= maxLines ? maxLines - LINES_PER_PAGE_LAST_RESERVE : maxLines;
 
       if (currentPageLines + para.lines <= effectiveMaxLines) {
