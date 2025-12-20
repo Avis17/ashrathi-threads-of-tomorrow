@@ -13,7 +13,7 @@ export const CartButton = () => {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative">
+        <Button variant="ghost" size="icon" className="relative text-white/90 hover:text-[#1EC9FF] hover:bg-transparent">
           <ShoppingCart className="h-5 w-5" />
           {cartCount > 0 && (
             <Badge 
