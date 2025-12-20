@@ -256,10 +256,6 @@ const CompanyLetterhead = () => {
       return;
     }
 
-    // Format the reference and date for continuation header
-    const formattedDate = letterDate ? format(new Date(letterDate), 'dd MMM yyyy') : '';
-    const refDisplay = referenceNo || '';
-
     printWindow.document.write(`
       <!DOCTYPE html>
       <html>
@@ -272,18 +268,22 @@ const CompanyLetterhead = () => {
             
             @page {
               size: A4;
-              margin: 15mm 20mm 20mm 20mm;
+              margin: 0;
             }
             
             body {
               font-family: 'Inter', sans-serif;
-              font-size: 11pt;
+              font-size: 12pt;
               line-height: 1.6;
               color: #1a1a1a;
             }
             
             .letterhead-page {
-              width: 100%;
+              width: 210mm;
+              min-height: 297mm;
+              padding: 20mm 25mm;
+              background: #fff;
+              position: relative;
             }
             
             .header {
@@ -296,7 +296,7 @@ const CompanyLetterhead = () => {
             }
             
             .logo-section img {
-              height: 120px;
+              height: 150px;
               width: auto;
             }
             
@@ -315,28 +315,26 @@ const CompanyLetterhead = () => {
             }
             
             .letter-meta {
-              margin: 20px 0;
+              margin: 25px 0;
             }
             
             .letter-meta p {
               margin-bottom: 3px;
-              font-size: 10pt;
+              font-size: 11pt;
             }
             
             .recipient {
-              margin: 15px 0;
+              margin: 20px 0;
             }
             
             .recipient p {
               margin-bottom: 2px;
               white-space: pre-line;
-              font-size: 10pt;
             }
             
             .subject {
-              margin: 15px 0;
+              margin: 20px 0;
               font-weight: 600;
-              font-size: 10pt;
             }
             
             .subject span {
@@ -344,37 +342,34 @@ const CompanyLetterhead = () => {
             }
             
             .salutation {
-              margin: 15px 0 10px 0;
-              font-size: 10pt;
+              margin: 20px 0 15px 0;
             }
             
             .letter-body {
-              margin: 10px 0;
+              margin: 15px 0;
               text-align: justify;
               white-space: pre-wrap;
-              font-size: 10pt;
             }
             
             .closing {
-              margin-top: 30px;
-              font-size: 10pt;
+              margin-top: 40px;
             }
             
             .signature-section {
-              margin-top: 15px;
+              margin-top: 20px;
               display: flex;
               align-items: flex-end;
-              gap: 20px;
+              gap: 24px;
             }
             
             .signature-section img {
               height: auto;
-              max-height: 45px;
+              max-height: 50px;
               width: auto;
             }
             
             .seal-section img {
-              height: 60px;
+              height: 70px;
               width: auto;
               opacity: 0.9;
             }
@@ -382,138 +377,32 @@ const CompanyLetterhead = () => {
             .signature-name {
               font-weight: 600;
               color: #2D4057;
-              font-size: 10pt;
             }
             
             .signature-title {
-              font-size: 9pt;
+              font-size: 10pt;
               color: #4a5568;
             }
             
-            /* Hide preview footer */
-            .preview-footer {
-              display: none !important;
-            }
-            
-            /* Running footer on all pages */
-            .print-footer {
-              position: fixed;
-              bottom: 0;
-              left: 0;
-              right: 0;
+            .footer {
+              position: absolute;
+              bottom: 15mm;
+              left: 25mm;
+              right: 25mm;
               text-align: center;
               font-size: 8pt;
               color: #718096;
               border-top: 1px solid #e2e8f0;
-              padding-top: 8px;
-              padding-bottom: 3px;
-              background: white;
+              padding-top: 10px;
             }
             
-            .print-footer .gold-accent {
+            .gold-accent {
               color: #B8860B;
-            }
-            
-            /* Running header for page 2 onwards */
-            .print-continuation-header {
-              position: fixed;
-              top: 0;
-              left: 0;
-              right: 0;
-              display: none;
-              background: white;
-              padding-bottom: 10px;
-              margin-bottom: 15px;
-            }
-            
-            .continuation-content {
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              padding-bottom: 8px;
-              border-bottom: 1px solid #2D4057;
-            }
-            
-            .brand-mini {
-              display: flex;
-              align-items: center;
-              gap: 8px;
-            }
-            
-            .brand-mini img {
-              height: 35px;
-              width: auto;
-            }
-            
-            .brand-mini .brand-name {
-              font-family: 'Playfair Display', serif;
-              font-size: 11pt;
-              font-weight: 600;
-              color: #2D4057;
-            }
-            
-            .page-info {
-              font-size: 8pt;
-              color: #4a5568;
-              text-align: right;
-            }
-            
-            .page-info .ref {
-              color: #B8860B;
-              font-weight: 500;
-            }
-            
-            /* Page break handling */
-            .content-wrapper {
-              padding-bottom: 50px; /* Space for footer */
-            }
-            
-            @media print {
-              @page {
-                margin: 15mm 20mm 20mm 20mm;
-              }
-              
-              /* First page doesn't need continuation header */
-              @page :first {
-                margin-top: 15mm;
-              }
-              
-              /* Pages 2+ show continuation header */
-              .print-continuation-header {
-                display: block;
-              }
-              
-              .print-footer {
-                position: fixed;
-                bottom: 0;
-              }
             }
           </style>
         </head>
         <body>
-          <!-- Continuation header for pages 2+ -->
-          <div class="print-continuation-header">
-            <div class="continuation-content">
-              <div class="brand-mini">
-                <span class="brand-name">Feather Fashions</span>
-              </div>
-              <div class="page-info">
-                ${refDisplay ? `<span class="ref">Ref: ${refDisplay}</span><br>` : ''}
-                <span>Date: ${formattedDate}</span>
-                <br><span style="font-style: italic;">...continued</span>
-              </div>
-            </div>
-          </div>
-          
-          <div class="content-wrapper">
-            ${printContent.innerHTML}
-          </div>
-          
-          <!-- Fixed footer on all pages -->
-          <div class="print-footer">
-            <p>538-C, Vadivel Nagar, Boyampalayam, PO, Pooluvapatti, Tiruppur, Tamil Nadu 641602</p>
-            <p class="gold-accent">featherfashions.in | hello@featherfashions.in | +91 9789225510</p>
-          </div>
+          ${printContent.innerHTML}
         </body>
       </html>
     `);
@@ -931,22 +820,19 @@ const CompanyLetterhead = () => {
                 <Type className="h-5 w-5 text-primary" />
                 Live Preview
               </div>
-              <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">Scrollable Preview</span>
+              <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">A4 Format</span>
             </div>
             
-            {/* Letterhead Preview - Scrollable container */}
+            {/* Letterhead Preview */}
             <div 
-              className="bg-white shadow-xl rounded-lg overflow-y-auto"
+              ref={letterRef}
+              className="bg-white shadow-xl rounded-lg overflow-hidden"
               style={{ 
-                maxHeight: '800px',
-                width: '100%'
+                aspectRatio: '210/297',
+                maxHeight: '800px'
               }}
             >
-              <div 
-                ref={letterRef}
-                className="letterhead-page p-8 min-h-full flex flex-col text-sm" 
-                style={{ fontFamily: "'Inter', sans-serif", minWidth: '100%' }}
-              >
+              <div className="letterhead-page p-8 h-full flex flex-col text-sm" style={{ fontFamily: "'Inter', sans-serif" }}>
                 {/* Header */}
                 <div className="header flex justify-between items-start pb-4 border-b-2" style={{ borderColor: '#2D4057' }}>
                   <div className="logo-section">
@@ -1025,8 +911,8 @@ const CompanyLetterhead = () => {
                   )}
                 </div>
 
-                {/* Footer - Preview only, print footer is handled in handlePrint */}
-                <div className="preview-footer text-center text-xs border-t pt-3 mt-auto" style={{ color: '#718096', borderColor: '#e2e8f0' }}>
+                {/* Footer */}
+                <div className="footer text-center text-xs border-t pt-3" style={{ color: '#718096', borderColor: '#e2e8f0' }}>
                   <p>538-C, Vadivel Nagar, Boyampalayam, PO, Pooluvapatti, Tiruppur, Tamil Nadu 641602</p>
                   <p style={{ color: '#B8860B' }}>featherfashions.in | hello@featherfashions.in | +91 9789225510</p>
                 </div>
