@@ -15,7 +15,7 @@ export default function PaymentCallback() {
   const orderId = searchParams.get('orderId');
 
   useEffect(() => {
-    const verifyPayment = async () => {
+    const verifyAndFinalizePayment = async () => {
       if (!orderId) {
         setStatus('failed');
         setMessage('Invalid payment callback. Order ID not found.');
@@ -23,10 +23,22 @@ export default function PaymentCallback() {
       }
 
       try {
-        // Get order details
+        // Get order details including items for inventory management
         const { data: order, error: orderError } = await supabase
           .from('orders')
-          .select('order_number, payment_status, phonepe_order_id')
+          .select(`
+            id,
+            order_number, 
+            payment_status, 
+            phonepe_order_id,
+            user_id,
+            order_items (
+              product_id,
+              quantity,
+              selected_size,
+              selected_color
+            )
+          `)
           .eq('id', orderId)
           .single();
 
@@ -36,17 +48,17 @@ export default function PaymentCallback() {
 
         setOrderNumber(order.order_number);
 
-        // If already marked as paid in database (from webhook), show success
+        // If already finalized (paid), show success
         if (order.payment_status === 'paid') {
           setStatus('success');
           setMessage('Payment successful! Your order has been confirmed.');
           return;
         }
 
-        // If already marked as failed
-        if (order.payment_status === 'failed') {
+        // If already marked as failed or cancelled
+        if (order.payment_status === 'failed' || order.payment_status === 'cancelled') {
           setStatus('failed');
-          setMessage('Payment failed. Please try again or choose a different payment method.');
+          setMessage('Payment failed. Your cart items have been preserved. Please try again.');
           return;
         }
 
@@ -65,13 +77,21 @@ export default function PaymentCallback() {
           return;
         }
 
-        if (statusData?.state === 'COMPLETED' || statusData?.code === 'PAYMENT_SUCCESS' || statusData?.paymentStatus === 'paid') {
+        const paymentState = statusData?.state;
+        const isSuccess = paymentState === 'COMPLETED' || statusData?.code === 'PAYMENT_SUCCESS' || statusData?.paymentStatus === 'paid';
+        const isFailed = paymentState === 'FAILED' || statusData?.code === 'PAYMENT_ERROR' || statusData?.code === 'PAYMENT_DECLINED';
+
+        if (isSuccess) {
+          // PAYMENT SUCCESS - Finalize the order
+          await finalizeOrder(order);
           setStatus('success');
           setMessage('Payment successful! Your order has been confirmed.');
-        } else if (statusData?.state === 'FAILED' || statusData?.code === 'PAYMENT_ERROR' || statusData?.code === 'PAYMENT_DECLINED') {
+        } else if (isFailed) {
+          // PAYMENT FAILED - Cancel the order and release inventory
+          await cancelPaymentPendingOrder(order);
           setStatus('failed');
-          setMessage('Payment failed. Please try again or choose a different payment method.');
-        } else if (statusData?.state === 'PENDING' || statusData?.code === 'PAYMENT_PENDING') {
+          setMessage('Payment failed. Your cart items have been preserved. Please try again.');
+        } else if (paymentState === 'PENDING' || statusData?.code === 'PAYMENT_PENDING') {
           setStatus('pending');
           setMessage('Payment is being processed. You will receive a confirmation shortly.');
         } else {
@@ -85,8 +105,80 @@ export default function PaymentCallback() {
       }
     };
 
-    verifyPayment();
+    verifyAndFinalizePayment();
   }, [orderId, retryCount]);
+
+  // Finalize order after successful payment
+  const finalizeOrder = async (order: any) => {
+    try {
+      // 1. Update order status to confirmed
+      await supabase
+        .from('orders')
+        .update({
+          status: 'confirmed',
+          payment_status: 'paid',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', order.id);
+
+      // 2. Convert reserved inventory to ordered for each item
+      for (const item of order.order_items || []) {
+        if (item.selected_size && item.selected_color) {
+          await supabase.rpc('convert_reserved_to_ordered', {
+            p_product_id: item.product_id,
+            p_size: item.selected_size,
+            p_color: item.selected_color,
+            p_quantity: item.quantity,
+          });
+        }
+      }
+
+      // 3. Clear the cart items that were in this order
+      await supabase
+        .from('cart_items')
+        .delete()
+        .eq('user_id', order.user_id)
+        .eq('selected_for_checkout', true);
+
+      console.log('Order finalized successfully:', order.order_number);
+    } catch (error) {
+      console.error('Error finalizing order:', error);
+      // Don't throw - order is still valid, just log the error
+    }
+  };
+
+  // Cancel payment-pending order after failed payment
+  const cancelPaymentPendingOrder = async (order: any) => {
+    try {
+      // 1. Update order status to cancelled
+      await supabase
+        .from('orders')
+        .update({
+          status: 'cancelled',
+          payment_status: 'failed',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', order.id);
+
+      // 2. Release reserved inventory back (since it was never converted to ordered)
+      for (const item of order.order_items || []) {
+        if (item.selected_size && item.selected_color) {
+          await supabase.rpc('release_inventory', {
+            p_product_id: item.product_id,
+            p_size: item.selected_size,
+            p_color: item.selected_color,
+            p_quantity: item.quantity,
+          });
+        }
+      }
+
+      // 3. Keep cart items intact - user can try again
+
+      console.log('Payment-pending order cancelled:', order.order_number);
+    } catch (error) {
+      console.error('Error cancelling order:', error);
+    }
+  };
 
   const handleRetry = () => {
     setStatus('loading');
@@ -195,37 +287,59 @@ export default function PaymentCallback() {
             {/* Action buttons */}
             {status !== 'loading' && (
               <div className="space-y-3">
-                <Button 
-                  onClick={() => navigate(`/my-orders/${orderId}`)} 
-                  className="w-full h-12 text-base font-semibold shadow-lg hover:shadow-xl transition-all"
-                  size="lg"
-                >
-                  <ShoppingBag className="mr-2 h-5 w-5" />
-                  View Order Details
-                </Button>
-                
-                {status === 'pending' && (
+                {status === 'success' && (
                   <Button 
-                    variant="outline" 
-                    onClick={handleRetry} 
-                    className="w-full h-11"
+                    onClick={() => navigate(`/my-orders/${orderId}`)} 
+                    className="w-full h-12 text-base font-semibold shadow-lg hover:shadow-xl transition-all"
                     size="lg"
                   >
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    Refresh Status
+                    <ShoppingBag className="mr-2 h-5 w-5" />
+                    View Order Details
                   </Button>
                 )}
                 
+                {status === 'pending' && (
+                  <>
+                    <Button 
+                      onClick={() => navigate(`/my-orders/${orderId}`)} 
+                      className="w-full h-12 text-base font-semibold shadow-lg hover:shadow-xl transition-all"
+                      size="lg"
+                    >
+                      <ShoppingBag className="mr-2 h-5 w-5" />
+                      View Order Details
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      onClick={handleRetry} 
+                      className="w-full h-11"
+                      size="lg"
+                    >
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      Refresh Status
+                    </Button>
+                  </>
+                )}
+                
                 {status === 'failed' && (
-                  <Button 
-                    variant="outline" 
-                    onClick={() => navigate('/checkout')} 
-                    className="w-full h-11"
-                    size="lg"
-                  >
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    Try Again
-                  </Button>
+                  <>
+                    <Button 
+                      onClick={() => navigate('/cart')} 
+                      className="w-full h-12 text-base font-semibold shadow-lg hover:shadow-xl transition-all"
+                      size="lg"
+                    >
+                      <ShoppingBag className="mr-2 h-5 w-5" />
+                      Return to Cart
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => navigate('/checkout')} 
+                      className="w-full h-11"
+                      size="lg"
+                    >
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      Try Again
+                    </Button>
+                  </>
                 )}
                 
                 <Button 

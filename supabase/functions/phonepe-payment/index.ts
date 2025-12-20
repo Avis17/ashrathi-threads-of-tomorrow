@@ -194,39 +194,120 @@ async function handleWebhook(req: Request) {
       });
     }
     
-    // Determine payment status based on state
-    let paymentStatus = 'pending';
-    if (state === 'COMPLETED') {
-      paymentStatus = 'paid';
-    } else if (state === 'FAILED') {
-      paymentStatus = 'failed';
-    } else if (state === 'CANCELLED') {
-      paymentStatus = 'cancelled';
-    }
-    
-    console.log('Updating order with payment status:', paymentStatus);
-    
-    // Update order in database using service role for webhook
+    // Use admin client for webhook processing
     const adminSupabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
     
-    const { error: updateError } = await adminSupabase
+    // Get order with items for inventory management
+    const { data: order, error: orderFetchError } = await adminSupabase
       .from('orders')
-      .update({
-        payment_status: paymentStatus,
-        phonepe_transaction_id: transactionId || null,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('order_number', merchantOrderId);
+      .select(`
+        id,
+        user_id,
+        payment_status,
+        order_items (
+          product_id,
+          quantity,
+          selected_size,
+          selected_color
+        )
+      `)
+      .eq('order_number', merchantOrderId)
+      .single();
     
-    if (updateError) {
-      console.error('Failed to update order from webhook:', updateError);
-      return new Response(JSON.stringify({ success: false, message: 'Database update failed' }), {
-        status: 500,
+    if (orderFetchError || !order) {
+      console.error('Order not found for webhook:', merchantOrderId);
+      return new Response(JSON.stringify({ success: false, message: 'Order not found' }), {
+        status: 404,
         headers: { 'Content-Type': 'application/json' },
       });
     }
     
-    console.log('Order updated successfully from webhook');
+    // Skip if already processed
+    if (order.payment_status === 'paid' || order.payment_status === 'failed') {
+      console.log('Order already processed, skipping webhook:', merchantOrderId);
+      return new Response(JSON.stringify({ success: true, message: 'Already processed' }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    
+    if (state === 'COMPLETED') {
+      // PAYMENT SUCCESS - Finalize the order
+      console.log('Payment COMPLETED - finalizing order:', merchantOrderId);
+      
+      // 1. Update order status
+      await adminSupabase
+        .from('orders')
+        .update({
+          status: 'confirmed',
+          payment_status: 'paid',
+          phonepe_transaction_id: transactionId || null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', order.id);
+      
+      // 2. Convert reserved inventory to ordered
+      for (const item of order.order_items || []) {
+        if (item.selected_size && item.selected_color) {
+          await adminSupabase.rpc('convert_reserved_to_ordered', {
+            p_product_id: item.product_id,
+            p_size: item.selected_size,
+            p_color: item.selected_color,
+            p_quantity: item.quantity,
+          });
+        }
+      }
+      
+      // 3. Clear cart items for the user
+      await adminSupabase
+        .from('cart_items')
+        .delete()
+        .eq('user_id', order.user_id)
+        .eq('selected_for_checkout', true);
+      
+      console.log('Order finalized via webhook:', merchantOrderId);
+      
+    } else if (state === 'FAILED' || state === 'CANCELLED') {
+      // PAYMENT FAILED - Cancel the order and release inventory
+      console.log('Payment FAILED/CANCELLED - cancelling order:', merchantOrderId);
+      
+      // 1. Update order status
+      await adminSupabase
+        .from('orders')
+        .update({
+          status: 'cancelled',
+          payment_status: 'failed',
+          phonepe_transaction_id: transactionId || null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', order.id);
+      
+      // 2. Release reserved inventory back
+      for (const item of order.order_items || []) {
+        if (item.selected_size && item.selected_color) {
+          await adminSupabase.rpc('release_inventory', {
+            p_product_id: item.product_id,
+            p_size: item.selected_size,
+            p_color: item.selected_color,
+            p_quantity: item.quantity,
+          });
+        }
+      }
+      
+      // 3. Keep cart items intact - user can try again
+      
+      console.log('Order cancelled via webhook:', merchantOrderId);
+    } else {
+      // Still pending - just update status
+      await adminSupabase
+        .from('orders')
+        .update({
+          payment_status: 'pending',
+          phonepe_transaction_id: transactionId || null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', order.id);
+    }
     
     return new Response(JSON.stringify({ success: true, message: 'Webhook processed' }), {
       status: 200,
