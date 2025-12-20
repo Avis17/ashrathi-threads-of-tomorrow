@@ -145,56 +145,66 @@ const LetterheadPreview = forwardRef<HTMLDivElement, LetterheadPreviewProps>(({
           margin-bottom: 0;
         }
         
-        /* Indentation styles - must match editor exactly */
-        .letter-body-content p[data-indent="1"],
-        .letter-body-content p[style*="margin-left: 24px"] {
-          margin-left: 24px !important;
+        /* Indentation styles - inline styles from editor */
+        .letter-body-content p[style*="margin-left"] {
+          /* Inline margin-left will be applied automatically */
         }
         
-        .letter-body-content p[data-indent="2"],
-        .letter-body-content p[style*="margin-left: 48px"] {
-          margin-left: 48px !important;
-        }
-        
-        .letter-body-content p[data-indent="3"],
-        .letter-body-content p[style*="margin-left: 72px"] {
-          margin-left: 72px !important;
-        }
-        
-        .letter-body-content p[data-indent="4"],
-        .letter-body-content p[style*="margin-left: 96px"] {
-          margin-left: 96px !important;
-        }
-        
-        .letter-body-content p[data-indent="5"],
-        .letter-body-content p[style*="margin-left: 120px"] {
-          margin-left: 120px !important;
-        }
-        
-        /* List styles */
-        .letter-body-content ul,
+        /* Ordered list - proper hanging indent for wrapped text */
         .letter-body-content ol {
-          margin-left: 24px;
+          list-style: none;
+          counter-reset: list-counter;
+          padding-left: 0;
+          margin-left: 0;
           margin-bottom: 12px;
         }
         
-        .letter-body-content li {
-          margin-bottom: 4px;
+        .letter-body-content ol > li {
+          counter-increment: list-counter;
+          position: relative;
+          padding-left: 28px;
+          margin-bottom: 8px;
+          text-align: justify;
         }
         
-        .letter-body-content li p {
+        .letter-body-content ol > li::before {
+          content: counter(list-counter) ". ";
+          position: absolute;
+          left: 0;
+          top: 0;
+          font-weight: normal;
+        }
+        
+        .letter-body-content ol > li p {
           margin-bottom: 0;
+          display: inline;
         }
         
-        /* Indentation for list items */
-        .letter-body-content li[data-indent="1"],
-        .letter-body-content li[style*="margin-left: 24px"] {
-          margin-left: 24px !important;
+        /* Unordered list - proper hanging indent */
+        .letter-body-content ul {
+          list-style: none;
+          padding-left: 0;
+          margin-left: 0;
+          margin-bottom: 12px;
         }
         
-        .letter-body-content li[data-indent="2"],
-        .letter-body-content li[style*="margin-left: 48px"] {
-          margin-left: 48px !important;
+        .letter-body-content ul > li {
+          position: relative;
+          padding-left: 20px;
+          margin-bottom: 6px;
+          text-align: justify;
+        }
+        
+        .letter-body-content ul > li::before {
+          content: "•";
+          position: absolute;
+          left: 0;
+          top: 0;
+        }
+        
+        .letter-body-content ul > li p {
+          margin-bottom: 0;
+          display: inline;
         }
         
         /* Hide page break markers in preview/print */
@@ -219,14 +229,10 @@ const LetterheadPreview = forwardRef<HTMLDivElement, LetterheadPreviewProps>(({
           text-align: left !important;
         }
         
-        /* Print styles */
+        /* Print styles - allow natural page breaks */
         @media print {
-          .letter-body-content p {
-            page-break-inside: avoid;
-          }
-          
-          .letter-body-content li {
-            page-break-inside: avoid;
+          .letter-body-content {
+            /* Allow content to flow naturally across pages */
           }
         }
       `}</style>

@@ -303,7 +303,7 @@ const CompanyLetterhead = () => {
 
       const bodySection = page.content ? `
         <div class="letter-body">
-          ${page.content.split('\n\n').map(para => `<p>${para.replace(/\n/g, '<br>')}</p>`).join('')}
+          ${page.content}
         </div>
       ` : '';
 
@@ -489,7 +489,69 @@ const CompanyLetterhead = () => {
             
             .letter-body p {
               margin-bottom: 12px;
-              page-break-inside: avoid;
+            }
+            
+            /* Ordered list - proper hanging indent for wrapped text */
+            .letter-body ol {
+              list-style: none;
+              counter-reset: list-counter;
+              padding-left: 0;
+              margin-left: 0;
+              margin-bottom: 12px;
+            }
+            
+            .letter-body ol > li {
+              counter-increment: list-counter;
+              position: relative;
+              padding-left: 28px;
+              margin-bottom: 8px;
+              text-align: justify;
+            }
+            
+            .letter-body ol > li::before {
+              content: counter(list-counter) ". ";
+              position: absolute;
+              left: 0;
+              top: 0;
+              font-weight: normal;
+            }
+            
+            .letter-body ol > li p {
+              margin-bottom: 0;
+              display: inline;
+            }
+            
+            /* Unordered list - proper hanging indent */
+            .letter-body ul {
+              list-style: none;
+              padding-left: 0;
+              margin-left: 0;
+              margin-bottom: 12px;
+            }
+            
+            .letter-body ul > li {
+              position: relative;
+              padding-left: 20px;
+              margin-bottom: 6px;
+              text-align: justify;
+            }
+            
+            .letter-body ul > li::before {
+              content: "•";
+              position: absolute;
+              left: 0;
+              top: 0;
+            }
+            
+            .letter-body ul > li p {
+              margin-bottom: 0;
+              display: inline;
+            }
+            
+            /* Hide page break markers */
+            .letter-body .page-break-marker,
+            .letter-body [data-page-break] {
+              display: none !important;
             }
             
             .closing {
