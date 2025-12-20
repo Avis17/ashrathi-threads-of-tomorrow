@@ -330,7 +330,7 @@ const CompanyLetterhead = () => {
             </div>
             <div class="company-info">
               <p class="brand">Feather Fashions</p>
-              <p>538-C, Vadivel Nagar, Boyampalayam, PO</p>
+              <p>251/1, Vadivel Nagar, Thottipalayam</p>
               <p>Pooluvapatti, Tiruppur, Tamil Nadu 641602</p>
               <p class="gold-accent">+91 9789225510 | hello@featherfashions.in</p>
             </div>
@@ -346,7 +346,7 @@ const CompanyLetterhead = () => {
           </div>
           
           <div class="footer">
-            <p>538-C, Vadivel Nagar, Boyampalayam, PO, Pooluvapatti, Tiruppur, Tamil Nadu 641602</p>
+            <p>251/1, Vadivel Nagar, Thottipalayam, Pooluvapatti, Tiruppur, Tamil Nadu 641602</p>
             <p class="gold-accent">featherfashions.in | hello@featherfashions.in | +91 9789225510</p>
             ${pages.length > 1 ? `<p class="page-number">Page ${page.pageNumber} of ${pages.length}</p>` : ''}
           </div>

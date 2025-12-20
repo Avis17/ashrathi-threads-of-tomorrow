@@ -96,7 +96,7 @@ export const InvoiceLayoutEditor = ({
     // Company Header - Left
     initialElements.push({ id: 'company_name', type: 'text', content: 'Feather Fashions', x: leftMargin, y, fontSize: 16, fontWeight: 'bold', page: 1 });
     y += 6;
-    initialElements.push({ id: 'company_addr1', type: 'text', content: 'Vadivel Nagar, 538-C, Boyampalayam PO', x: leftMargin, y, fontSize: 9, page: 1 });
+    initialElements.push({ id: 'company_addr1', type: 'text', content: 'Vadivel Nagar, 251/1, Thottipalayam', x: leftMargin, y, fontSize: 9, page: 1 });
     y += 4;
     initialElements.push({ id: 'company_addr2', type: 'text', content: 'Pooluvapatti, Tiruppur, TN - 641602', x: leftMargin, y, fontSize: 9, page: 1 });
     y += 4;

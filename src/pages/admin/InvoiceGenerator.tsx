@@ -278,7 +278,7 @@ export default function InvoiceGenerator() {
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(7.5);
       doc.setTextColor(60, 60, 60);
-      const addressLines = doc.splitTextToSize('Vadivel Nagar, 538-C, Boyampalayam, PO, Pooluvapatti, Tiruppur, Tamil Nadu 641602', 90);
+      const addressLines = doc.splitTextToSize('Vadivel Nagar, 251/1, Thottipalayam, Pooluvapatti, Tiruppur, Tamil Nadu 641602', 90);
       let yPos = 28;
       addressLines.forEach((line: string) => {
         doc.text(line, 15, yPos);

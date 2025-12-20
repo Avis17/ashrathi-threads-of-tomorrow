@@ -18,7 +18,7 @@ const LetterheadFooter = ({ forPrint = false, isAbsolute = false }: LetterheadFo
         backgroundColor: '#fff'
       }}
     >
-      <p>538-C, Vadivel Nagar, Boyampalayam, PO, Pooluvapatti, Tiruppur, Tamil Nadu 641602</p>
+      <p>251/1, Vadivel Nagar, Thottipalayam, Pooluvapatti, Tiruppur, Tamil Nadu 641602</p>
       <p style={{ color: '#B8860B' }}>featherfashions.in | hello@featherfashions.in | +91 9789225510</p>
     </div>
   );

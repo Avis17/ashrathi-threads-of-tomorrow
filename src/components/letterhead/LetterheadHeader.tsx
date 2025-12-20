@@ -41,7 +41,7 @@ const LetterheadHeader = ({ forPrint = false }: LetterheadHeaderProps) => {
         >
           Feather Fashions
         </p>
-        <p>538-C, Vadivel Nagar, Boyampalayam, PO</p>
+        <p>251/1, Vadivel Nagar, Thottipalayam</p>
         <p>Pooluvapatti, Tiruppur, Tamil Nadu 641602</p>
         <p className="mt-1" style={{ color: '#B8860B' }}>+91 9789225510 | hello@featherfashions.in</p>
       </div>
