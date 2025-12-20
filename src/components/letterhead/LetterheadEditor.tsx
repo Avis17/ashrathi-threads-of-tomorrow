@@ -2,17 +2,10 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import TextAlign from '@tiptap/extension-text-align';
-import { Extension } from '@tiptap/core';
+import { Extension, Node } from '@tiptap/core';
 import { useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import {
   Bold,
   Italic,
@@ -27,6 +20,7 @@ import {
   RemoveFormatting,
   IndentIncrease,
   IndentDecrease,
+  SeparatorHorizontal,
 } from 'lucide-react';
 
 interface LetterheadEditorProps {
@@ -35,30 +29,137 @@ interface LetterheadEditorProps {
   placeholder?: string;
 }
 
-// Custom Tab extension for proper indentation
-const TabIndent = Extension.create({
-  name: 'tabIndent',
+// Extend command types for our custom commands
+declare module '@tiptap/core' {
+  interface Commands<ReturnType> {
+    pageBreak: {
+      insertPageBreak: () => ReturnType;
+    };
+    indent: {
+      increaseIndent: () => ReturnType;
+      decreaseIndent: () => ReturnType;
+    };
+  }
+}
 
+// Custom Page Break Node
+const PageBreak = Node.create({
+  name: 'pageBreak',
+  group: 'block',
+  atom: true,
+  
+  parseHTML() {
+    return [
+      { tag: 'div[data-page-break]' },
+      { tag: 'hr.page-break' },
+    ];
+  },
+  
+  renderHTML() {
+    return ['div', { 
+      'data-page-break': 'true', 
+      class: 'page-break-marker',
+      contenteditable: 'false'
+    }, ['hr']];
+  },
+  
+  addCommands() {
+    return {
+      insertPageBreak: () => ({ commands }) => {
+        return commands.insertContent({ type: this.name });
+      },
+    };
+  },
+  
   addKeyboardShortcuts() {
     return {
-      Tab: () => {
-        // Insert 4 spaces for indentation
-        this.editor.commands.insertContent('    ');
+      'Mod-Enter': () => this.editor.commands.insertPageBreak(),
+    };
+  },
+});
+
+// Custom Indent Extension - stores indent as paragraph attribute
+const IndentExtension = Extension.create({
+  name: 'indent',
+  
+  addGlobalAttributes() {
+    return [
+      {
+        types: ['paragraph', 'listItem'],
+        attributes: {
+          indent: {
+            default: 0,
+            parseHTML: element => {
+              const style = element.style.marginLeft || element.style.paddingLeft || '';
+              const match = style.match(/(\d+)/);
+              if (match) {
+                return Math.floor(parseInt(match[1]) / 24);
+              }
+              return parseInt(element.getAttribute('data-indent') || '0', 10);
+            },
+            renderHTML: attributes => {
+              if (!attributes.indent || attributes.indent === 0) {
+                return {};
+              }
+              return {
+                'data-indent': attributes.indent,
+                style: `margin-left: ${attributes.indent * 24}px;`
+              };
+            },
+          },
+        },
+      },
+    ];
+  },
+  
+  addCommands() {
+    return {
+      increaseIndent: () => ({ tr, state, dispatch }) => {
+        const { selection } = state;
+        const { from, to } = selection;
+        
+        state.doc.nodesBetween(from, to, (node, pos) => {
+          if (node.type.name === 'paragraph' || node.type.name === 'listItem') {
+            const currentIndent = node.attrs.indent || 0;
+            if (currentIndent < 5) { // Max 5 levels of indentation
+              tr.setNodeMarkup(pos, undefined, {
+                ...node.attrs,
+                indent: currentIndent + 1,
+              });
+            }
+          }
+        });
+        
+        if (dispatch) dispatch(tr);
         return true;
       },
-      'Shift-Tab': () => {
-        // Remove 4 spaces if they exist before cursor
-        const { state } = this.editor;
+      
+      decreaseIndent: () => ({ tr, state, dispatch }) => {
         const { selection } = state;
-        const pos = selection.$from.pos;
-        const textBefore = state.doc.textBetween(Math.max(0, pos - 4), pos);
+        const { from, to } = selection;
         
-        if (textBefore === '    ') {
-          this.editor.commands.deleteRange({ from: pos - 4, to: pos });
-          return true;
-        }
-        return false;
+        state.doc.nodesBetween(from, to, (node, pos) => {
+          if (node.type.name === 'paragraph' || node.type.name === 'listItem') {
+            const currentIndent = node.attrs.indent || 0;
+            if (currentIndent > 0) {
+              tr.setNodeMarkup(pos, undefined, {
+                ...node.attrs,
+                indent: currentIndent - 1,
+              });
+            }
+          }
+        });
+        
+        if (dispatch) dispatch(tr);
+        return true;
       },
+    };
+  },
+  
+  addKeyboardShortcuts() {
+    return {
+      Tab: () => this.editor.commands.increaseIndent(),
+      'Shift-Tab': () => this.editor.commands.decreaseIndent(),
     };
   },
 });
@@ -67,7 +168,7 @@ const LetterheadEditor = ({ value, onChange }: LetterheadEditorProps) => {
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
-        heading: false, // Disable headings - not needed for formal letters
+        heading: false,
         codeBlock: false,
         code: false,
         blockquote: false,
@@ -75,7 +176,8 @@ const LetterheadEditor = ({ value, onChange }: LetterheadEditorProps) => {
         strike: false,
       }),
       Underline,
-      TabIndent,
+      PageBreak,
+      IndentExtension,
       TextAlign.configure({
         types: ['paragraph', 'listItem'],
       }),
@@ -117,6 +219,24 @@ const LetterheadEditor = ({ value, onChange }: LetterheadEditorProps) => {
   const clearFormatting = useCallback(() => {
     if (editor) {
       editor.chain().focus().clearNodes().unsetAllMarks().run();
+    }
+  }, [editor]);
+
+  const insertPageBreak = useCallback(() => {
+    if (editor) {
+      editor.chain().focus().insertPageBreak().run();
+    }
+  }, [editor]);
+
+  const handleIncreaseIndent = useCallback(() => {
+    if (editor) {
+      editor.chain().focus().increaseIndent().run();
+    }
+  }, [editor]);
+
+  const handleDecreaseIndent = useCallback(() => {
+    if (editor) {
+      editor.chain().focus().decreaseIndent().run();
     }
   }, [editor]);
 
@@ -250,7 +370,7 @@ const LetterheadEditor = ({ value, onChange }: LetterheadEditorProps) => {
           variant="ghost"
           size="icon"
           className="h-8 w-8"
-          onClick={() => editor.chain().focus().insertContent('    ').run()}
+          onClick={handleIncreaseIndent}
           title="Increase Indent (Tab)"
         >
           <IndentIncrease className="h-4 w-4" />
@@ -259,18 +379,24 @@ const LetterheadEditor = ({ value, onChange }: LetterheadEditorProps) => {
           variant="ghost"
           size="icon"
           className="h-8 w-8"
-          onClick={() => {
-            const { state } = editor;
-            const { selection } = state;
-            const pos = selection.$from.pos;
-            const textBefore = state.doc.textBetween(Math.max(0, pos - 4), pos);
-            if (textBefore === '    ') {
-              editor.commands.deleteRange({ from: pos - 4, to: pos });
-            }
-          }}
+          onClick={handleDecreaseIndent}
           title="Decrease Indent (Shift+Tab)"
         >
           <IndentDecrease className="h-4 w-4" />
+        </Button>
+
+        <Separator orientation="vertical" className="mx-1 h-6" />
+
+        {/* Page Break */}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 px-2 gap-1"
+          onClick={insertPageBreak}
+          title="Insert Page Break (Ctrl+Enter)"
+        >
+          <SeparatorHorizontal className="h-4 w-4" />
+          <span className="text-xs">Page Break</span>
         </Button>
       </div>
 
@@ -315,6 +441,36 @@ const LetterheadEditor = ({ value, onChange }: LetterheadEditorProps) => {
         
         .letterhead-editor .ProseMirror li p {
           margin-bottom: 0;
+        }
+        
+        /* Page break marker styling in editor */
+        .letterhead-editor .ProseMirror .page-break-marker {
+          position: relative;
+          display: block;
+          margin: 16px 0;
+          padding: 8px 0;
+          border: none;
+          user-select: none;
+        }
+        
+        .letterhead-editor .ProseMirror .page-break-marker hr {
+          border: none;
+          border-top: 2px dashed #cbd5e1;
+        }
+        
+        .letterhead-editor .ProseMirror .page-break-marker::after {
+          content: '— Page Break —';
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          background: white;
+          padding: 0 12px;
+          font-size: 10px;
+          color: #94a3b8;
+          font-weight: 500;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
         }
         
         .letterhead-editor .ProseMirror-placeholder {
