@@ -348,7 +348,8 @@ const GenerateInvoice = () => {
     if (!jobOrder) return;
     
     const doc = createPDF(false) as jsPDF;
-    doc.save(`Job-Invoice-${jobOrder.job_id}.pdf`);
+    const invoiceSuffix = invoiceNumber ? `-${invoiceNumber.slice(-4).padStart(4, '0')}` : '';
+    doc.save(`Job-Invoice-${jobOrder.job_id}${invoiceSuffix}.pdf`);
     
     // Update invoice number for next invoice
     if (invoiceSettings) {
@@ -733,7 +734,8 @@ const GenerateInvoice = () => {
         open={showLayoutEditor}
         onClose={() => setShowLayoutEditor(false)}
         onConfirmDownload={(pdf) => {
-          pdf.save(`Job-Invoice-${jobOrder.job_id}.pdf`);
+          const invoiceSuffix = invoiceNumber ? `-${invoiceNumber.slice(-4).padStart(4, '0')}` : '';
+          pdf.save(`Job-Invoice-${jobOrder.job_id}${invoiceSuffix}.pdf`);
           if (invoiceSettings) {
             updateInvoiceNumberMutation.mutate(invoiceSettings.current_invoice_number);
           }
