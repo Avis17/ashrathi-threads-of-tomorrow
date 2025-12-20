@@ -72,7 +72,7 @@ const Collections = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <section data-navbar-dark="true" className="relative h-[85vh] overflow-hidden">
+      <section data-navbar-dark="true" className="relative h-[85vh] overflow-hidden -mt-[76px] pt-[76px]">
         <div className="absolute inset-0">
           <img
             src={collectionsHero}

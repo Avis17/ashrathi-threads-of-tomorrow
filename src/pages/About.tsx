@@ -20,7 +20,7 @@ const About = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section - Premium Banner */}
-      <section data-navbar-dark="true" className="relative h-[80vh] min-h-[600px] flex items-center justify-center overflow-hidden">
+      <section data-navbar-dark="true" className="relative h-[80vh] min-h-[600px] flex items-center justify-center overflow-hidden -mt-[76px] pt-[76px]">
         <div 
           className="absolute inset-0 bg-cover bg-center scale-105"
           style={{
