@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Eye, EyeOff, Calendar, Trash2, IndianRupee, Package, TrendingUp, CreditCard, Wallet, BadgeIndianRupee, Receipt } from "lucide-react";
+import { Search, Eye, EyeOff, Calendar, Trash2, IndianRupee, Package, TrendingUp, CreditCard, Wallet, BadgeIndianRupee, Receipt, TrendingDown } from "lucide-react";
 import { useDeleteExternalJobOrder } from "@/hooks/useExternalJobOrders";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -116,6 +116,7 @@ export const ExternalJobOrdersList = () => {
         totalCommission: 0,
         expectedNetProfit: 0,
         totalGstAmount: 0,
+        paymentShortfall: 0,
       };
     }
 
@@ -133,11 +134,23 @@ export const ExternalJobOrdersList = () => {
     // Calculate total GST amount
     const totalGstAmount = filteredOrders.reduce((sum, order) => sum + (order.gst_amount || 0), 0);
 
-    // Calculate commission and expected net profit per order (matching JobDetails.tsx formula)
+    // Calculate commission and net profit based on PAID orders only
     let totalCommission = 0;
     let expectedNetProfit = 0;
+    let paymentShortfall = 0;
     
     filteredOrders.forEach((order: any) => {
+      const isPaid = order.payment_status === 'paid';
+      const billedAmount = order.gst_amount && order.gst_amount > 0 
+        ? (order.total_with_gst || order.total_amount) 
+        : order.total_amount;
+      const receivedAmount = order.paid_amount || 0;
+      
+      // Calculate payment shortfall for paid orders (billed - received)
+      if (isPaid && billedAmount > receivedAmount) {
+        paymentShortfall += (billedAmount - receivedAmount);
+      }
+      
       // Calculate operations cost per piece (sum of total_rate from each operation)
       let operationsCostPerPiece = 0;
       
@@ -160,21 +173,21 @@ export const ExternalJobOrdersList = () => {
         operationsCostPerPiece += operationTotal;
       });
       
-      // Company profit per piece = rate per piece - operations cost per piece
-      const companyProfitPerPiece = (order.rate_per_piece || 0) - operationsCostPerPiece;
-      
-      // Total company profit for this order
-      const totalCompanyProfit = companyProfitPerPiece * (order.number_of_pieces || 0);
-      
-      // Subtract expenses for this order
-      const orderExpenses = order.external_job_expenses?.reduce(
-        (sum: number, exp: any) => sum + (exp.amount || 0), 0
-      ) || 0;
-      
-      // Net profit for this order = company profit - expenses
-      const orderNetProfit = totalCompanyProfit - orderExpenses;
-      
-      expectedNetProfit += orderNetProfit;
+      // Only calculate net profit for PAID orders
+      if (isPaid) {
+        // Total operations cost for this order
+        const totalOperationsCost = operationsCostPerPiece * (order.number_of_pieces || 0);
+        
+        // Subtract expenses for this order
+        const orderExpenses = order.external_job_expenses?.reduce(
+          (sum: number, exp: any) => sum + (exp.amount || 0), 0
+        ) || 0;
+        
+        // Net profit = Paid Amount - Operations Cost - Expenses
+        const orderNetProfit = receivedAmount - totalOperationsCost - orderExpenses;
+        
+        expectedNetProfit += orderNetProfit;
+      }
     });
 
     return {
@@ -186,6 +199,7 @@ export const ExternalJobOrdersList = () => {
       totalCommission,
       expectedNetProfit,
       totalGstAmount,
+      paymentShortfall,
     };
   }, [filteredOrders]);
 
@@ -324,14 +338,25 @@ export const ExternalJobOrdersList = () => {
         <Card className="p-4 bg-gradient-to-br from-teal-500 to-teal-600 text-white border-0 shadow-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-teal-100 text-sm font-medium">Expected Net Profit</p>
+              <p className="text-teal-100 text-sm font-medium">Net Profit (Received)</p>
               <p className="text-3xl font-bold mt-1">{formatAmount(stats.expectedNetProfit, amountsVisible)}</p>
-              <p className="text-teal-100 text-xs mt-1">
-                {stats.totalAmount > 0 ? Math.round((stats.expectedNetProfit / stats.totalAmount) * 100) : 0}% margin
-              </p>
+              <p className="text-teal-100 text-xs mt-1">Based on paid orders</p>
             </div>
             <div className="h-12 w-12 bg-white/20 rounded-xl flex items-center justify-center">
               <Wallet className="h-6 w-6" />
+            </div>
+          </div>
+        </Card>
+
+        <Card className="p-4 bg-gradient-to-br from-red-500 to-red-600 text-white border-0 shadow-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-red-100 text-sm font-medium">Payment Shortfall</p>
+              <p className="text-3xl font-bold mt-1">{formatAmount(stats.paymentShortfall, amountsVisible)}</p>
+              <p className="text-red-100 text-xs mt-1">Billed vs received gap</p>
+            </div>
+            <div className="h-12 w-12 bg-white/20 rounded-xl flex items-center justify-center">
+              <TrendingDown className="h-6 w-6" />
             </div>
           </div>
         </Card>
