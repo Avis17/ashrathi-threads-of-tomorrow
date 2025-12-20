@@ -77,26 +77,16 @@ const LetterheadPreview = forwardRef<HTMLDivElement, LetterheadPreviewProps>(({
           <p className="salutation mb-3" style={{ fontSize: '12px' }}>{salutation}</p>
         )}
 
-        {/* Body Content */}
+        {/* Body Content - renders HTML from TipTap editor */}
         {page.content && (
           <div 
-            className="letter-body whitespace-pre-wrap text-justify"
+            className="letter-body text-justify"
             style={{ 
               fontSize: '12px',
               lineHeight: '1.5',
-              pageBreakInside: 'avoid'
             }}
-          >
-            {page.content.split('\n\n').map((para, idx) => (
-              <p 
-                key={idx} 
-                className="mb-3"
-                style={{ pageBreakInside: 'avoid' }}
-              >
-                {para}
-              </p>
-            ))}
-          </div>
+            dangerouslySetInnerHTML={{ __html: page.content }}
+          />
         )}
 
         {/* Closing - Only on last page */}

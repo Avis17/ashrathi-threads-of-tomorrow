@@ -34,6 +34,7 @@ import { supabase } from '@/integrations/supabase/client';
 import LetterheadPreview from '@/components/letterhead/LetterheadPreview';
 import LetterheadHeader from '@/components/letterhead/LetterheadHeader';
 import LetterheadFooter from '@/components/letterhead/LetterheadFooter';
+import LetterheadEditor from '@/components/letterhead/LetterheadEditor';
 import { useLetterheadPagination } from '@/components/letterhead/useLetterheadPagination';
 import {
   AlertDialog,
@@ -807,52 +808,12 @@ const CompanyLetterhead = () => {
               />
             </div>
 
-            {/* Letter Body */}
+            {/* Letter Body - TipTap Rich Text Editor */}
             <div className="space-y-2">
               <Label>Letter Body</Label>
-              <div className="flex gap-1 mb-2 p-2 bg-muted rounded-md">
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-8 w-8"
-                  onClick={() => applyFormat('bold')}
-                >
-                  <Bold className="h-4 w-4" />
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-8 w-8"
-                  onClick={() => applyFormat('italic')}
-                >
-                  <Italic className="h-4 w-4" />
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-8 w-8"
-                  onClick={() => applyFormat('underline')}
-                >
-                  <Underline className="h-4 w-4" />
-                </Button>
-                <Separator orientation="vertical" className="mx-1 h-8" />
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <AlignLeft className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <AlignCenter className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <AlignRight className="h-4 w-4" />
-                </Button>
-              </div>
-              <Textarea 
-                ref={textareaRef}
-                placeholder="Write your letter content here..."
-                rows={10}
-                className="font-normal"
+              <LetterheadEditor 
                 value={letterBody}
-                onChange={(e) => setLetterBody(e.target.value)}
+                onChange={setLetterBody}
               />
             </div>
 
