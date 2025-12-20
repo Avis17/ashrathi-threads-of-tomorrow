@@ -31,7 +31,10 @@ import {
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import letterheadLogo from '@/assets/feather-letterhead-logo.png';
+import LetterheadPreview from '@/components/letterhead/LetterheadPreview';
+import LetterheadHeader from '@/components/letterhead/LetterheadHeader';
+import LetterheadFooter from '@/components/letterhead/LetterheadFooter';
+import { useLetterheadPagination } from '@/components/letterhead/useLetterheadPagination';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -94,6 +97,23 @@ const CompanyLetterhead = () => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const sealInputRef = useRef<HTMLInputElement>(null);
   const signatureInputRef = useRef<HTMLInputElement>(null);
+
+  const paginationInput = {
+    letterDate,
+    referenceNo,
+    recipientName,
+    recipientAddress,
+    subject,
+    salutation,
+    letterBody,
+    closing,
+    showSignature,
+    signatureImage,
+    showSeal,
+    sealImage
+  };
+
+  const pages = useLetterheadPagination(paginationInput);
 
   useEffect(() => {
     if (view === 'list') {
@@ -247,14 +267,93 @@ const CompanyLetterhead = () => {
   };
 
   const handlePrint = () => {
-    const printContent = letterRef.current;
-    if (!printContent) return;
-
-    const printWindow = window.open('', '', 'width=800,height=600');
+    const printWindow = window.open('', '', 'width=900,height=700');
     if (!printWindow) {
       toast.error('Unable to open print window');
       return;
     }
+
+    // Generate HTML for all pages
+    const generatePageHTML = (page: typeof pages[0]) => {
+      const metaSection = page.showMeta ? `
+        <div class="letter-meta">
+          ${referenceNo ? `<p><strong>Ref:</strong> ${referenceNo}</p>` : ''}
+          <p><strong>Date:</strong> ${letterDate ? format(new Date(letterDate), 'dd MMMM yyyy') : ''}</p>
+        </div>
+      ` : '';
+
+      const recipientSection = page.showRecipient && (recipientName || recipientAddress) ? `
+        <div class="recipient">
+          <p><strong>To,</strong></p>
+          ${recipientName ? `<p class="font-medium">${recipientName}</p>` : ''}
+          ${recipientAddress ? `<p class="whitespace-pre-line">${recipientAddress.replace(/\n/g, '<br>')}</p>` : ''}
+        </div>
+      ` : '';
+
+      const subjectSection = page.showSubject && subject ? `
+        <div class="subject">
+          <p><strong>Subject:</strong> <span class="underline">${subject}</span></p>
+        </div>
+      ` : '';
+
+      const salutationSection = page.showSalutation && salutation ? `
+        <p class="salutation">${salutation}</p>
+      ` : '';
+
+      const bodySection = page.content ? `
+        <div class="letter-body">
+          ${page.content.split('\n\n').map(para => `<p>${para.replace(/\n/g, '<br>')}</p>`).join('')}
+        </div>
+      ` : '';
+
+      const closingSection = page.showClosing && closing ? `
+        <div class="closing">
+          <p>${closing}</p>
+          <div class="signature-section">
+            <div class="signature-info">
+              ${showSignature && signatureImage ? `<img src="${signatureImage}" alt="Signature" class="signature-img" />` : ''}
+              <p class="signature-name">Sivasubramanian Vadivel</p>
+              <p class="signature-title">Proprietor</p>
+              <p class="signature-auth">Authorized Signatory</p>
+            </div>
+            ${showSeal && sealImage ? `<div class="seal-section"><img src="${sealImage}" alt="Company Seal" class="seal-img" /></div>` : ''}
+          </div>
+        </div>
+      ` : '';
+
+      return `
+        <div class="letterhead-page">
+          <div class="header">
+            <div class="logo-section">
+              <img src="${(document.querySelector('.logo-section img') as HTMLImageElement)?.src || ''}" alt="Feather Fashions" class="logo" />
+            </div>
+            <div class="company-info">
+              <p class="brand">Feather Fashions</p>
+              <p>538-C, Vadivel Nagar, Boyampalayam, PO</p>
+              <p>Pooluvapatti, Tiruppur, Tamil Nadu 641602</p>
+              <p class="gold-accent">+91 9789225510 | hello@featherfashions.in</p>
+            </div>
+          </div>
+          
+          <div class="body-content">
+            ${metaSection}
+            ${recipientSection}
+            ${subjectSection}
+            ${salutationSection}
+            ${bodySection}
+            ${closingSection}
+          </div>
+          
+          <div class="footer">
+            <p>538-C, Vadivel Nagar, Boyampalayam, PO, Pooluvapatti, Tiruppur, Tamil Nadu 641602</p>
+            <p class="gold-accent">featherfashions.in | hello@featherfashions.in | +91 9789225510</p>
+            ${pages.length > 1 ? `<p class="page-number">Page ${page.pageNumber} of ${pages.length}</p>` : ''}
+          </div>
+        </div>
+      `;
+    };
+
+    const allPagesHTML = pages.map(page => generatePageHTML(page)).join('');
 
     printWindow.document.write(`
       <!DOCTYPE html>
@@ -262,7 +361,7 @@ const CompanyLetterhead = () => {
         <head>
           <title>Company Letterhead - Feather Fashions</title>
           <style>
-            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@500;600&display=swap');
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
             
             * { margin: 0; padding: 0; box-sizing: border-box; }
             
@@ -271,138 +370,191 @@ const CompanyLetterhead = () => {
               margin: 0;
             }
             
+            @media print {
+              html, body {
+                width: 210mm;
+                height: 297mm;
+              }
+              
+              .letterhead-page {
+                page-break-after: always;
+              }
+              
+              .letterhead-page:last-child {
+                page-break-after: auto;
+              }
+              
+              .letter-body p {
+                page-break-inside: avoid;
+              }
+            }
+            
             body {
-              font-family: 'Inter', sans-serif;
-              font-size: 12pt;
-              line-height: 1.6;
+              font-family: 'Inter', 'Roboto', 'Source Sans Pro', Arial, Helvetica, sans-serif;
+              font-size: 12px;
+              line-height: 1.5;
               color: #1a1a1a;
+              background: #fff;
             }
             
             .letterhead-page {
               width: 210mm;
               min-height: 297mm;
-              padding: 20mm 25mm;
+              height: 297mm;
+              padding: 25mm 20mm 20mm 20mm;
               background: #fff;
               position: relative;
+              display: flex;
+              flex-direction: column;
             }
             
             .header {
               display: flex;
               justify-content: space-between;
               align-items: flex-start;
-              margin-bottom: 20px;
-              padding-bottom: 15px;
+              padding-bottom: 16px;
+              margin-bottom: 24px;
               border-bottom: 2px solid #2D4057;
             }
             
-            .logo-section img {
-              height: 150px;
-              width: auto;
+            .logo {
+              width: 110px;
+              height: auto;
             }
             
             .company-info {
               text-align: right;
-              font-size: 9pt;
+              font-size: 11px;
               color: #4a5568;
+              line-height: 1.3;
             }
             
             .company-info .brand {
-              font-family: 'Playfair Display', serif;
-              font-size: 14pt;
+              font-size: 15px;
               font-weight: 600;
               color: #2D4057;
               margin-bottom: 4px;
             }
             
+            .gold-accent {
+              color: #B8860B;
+            }
+            
+            .body-content {
+              flex: 1;
+            }
+            
             .letter-meta {
-              margin: 25px 0;
+              margin-bottom: 16px;
+              font-size: 11px;
             }
             
             .letter-meta p {
-              margin-bottom: 3px;
-              font-size: 11pt;
+              margin-bottom: 2px;
             }
             
             .recipient {
-              margin: 20px 0;
+              margin-bottom: 16px;
+              font-size: 12px;
             }
             
             .recipient p {
               margin-bottom: 2px;
-              white-space: pre-line;
+            }
+            
+            .recipient .font-medium {
+              font-weight: 500;
             }
             
             .subject {
-              margin: 20px 0;
-              font-weight: 600;
+              margin-bottom: 16px;
+              font-size: 12px;
             }
             
-            .subject span {
+            .subject .underline {
               text-decoration: underline;
             }
             
             .salutation {
-              margin: 20px 0 15px 0;
+              margin-bottom: 12px;
+              font-size: 12px;
             }
             
             .letter-body {
-              margin: 15px 0;
               text-align: justify;
-              white-space: pre-wrap;
+              font-size: 12px;
+              line-height: 1.5;
+            }
+            
+            .letter-body p {
+              margin-bottom: 12px;
+              page-break-inside: avoid;
             }
             
             .closing {
-              margin-top: 40px;
+              margin-top: 32px;
+              font-size: 12px;
             }
             
             .signature-section {
-              margin-top: 20px;
+              margin-top: 24px;
               display: flex;
               align-items: flex-end;
               gap: 24px;
             }
             
-            .signature-section img {
-              height: auto;
-              max-height: 50px;
-              width: auto;
+            .signature-info {
+              flex: 1;
             }
             
-            .seal-section img {
-              height: 70px;
+            .signature-img {
+              height: 40px;
               width: auto;
-              opacity: 0.9;
+              margin-bottom: 4px;
             }
             
             .signature-name {
               font-weight: 600;
               color: #2D4057;
+              font-size: 12px;
             }
             
             .signature-title {
-              font-size: 10pt;
               color: #4a5568;
+              font-size: 11px;
+            }
+            
+            .signature-auth {
+              color: #718096;
+              font-size: 10px;
+              margin-top: 4px;
+            }
+            
+            .seal-img {
+              height: 64px;
+              width: auto;
+              opacity: 0.9;
             }
             
             .footer {
-              position: absolute;
-              bottom: 15mm;
-              left: 25mm;
-              right: 25mm;
+              margin-top: auto;
               text-align: center;
-              font-size: 8pt;
+              font-size: 10px;
               color: #718096;
               border-top: 1px solid #e2e8f0;
-              padding-top: 10px;
+              padding-top: 8px;
+              line-height: 1.3;
             }
             
-            .gold-accent {
-              color: #B8860B;
+            .page-number {
+              margin-top: 4px;
+              font-size: 9px;
+              color: #a0aec0;
             }
           </style>
         </head>
         <body>
-          ${printContent.innerHTML}
+          ${allPagesHTML}
         </body>
       </html>
     `);
@@ -413,7 +565,7 @@ const CompanyLetterhead = () => {
     setTimeout(() => {
       printWindow.print();
       printWindow.close();
-    }, 250);
+    }, 500);
   };
 
   const clearForm = () => {
@@ -820,103 +972,22 @@ const CompanyLetterhead = () => {
                 <Type className="h-5 w-5 text-primary" />
                 Live Preview
               </div>
-              <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">A4 Format</span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">A4 Format</span>
+                {pages.length > 1 && (
+                  <span className="text-xs text-primary bg-primary/10 px-2 py-1 rounded font-medium">
+                    {pages.length} Pages
+                  </span>
+                )}
+              </div>
             </div>
             
-            {/* Letterhead Preview */}
-            <div 
-              ref={letterRef}
-              className="bg-white shadow-xl rounded-lg overflow-hidden"
-              style={{ 
-                aspectRatio: '210/297',
-                maxHeight: '800px'
-              }}
-            >
-              <div className="letterhead-page p-8 h-full flex flex-col text-sm" style={{ fontFamily: "'Inter', sans-serif" }}>
-                {/* Header */}
-                <div className="header flex justify-between items-start pb-4 border-b-2" style={{ borderColor: '#2D4057' }}>
-                  <div className="logo-section">
-                    <img src={letterheadLogo} alt="Feather Fashions" className="h-20" />
-                  </div>
-                  <div className="company-info text-right text-xs" style={{ color: '#4a5568' }}>
-                    <p className="font-semibold text-base mb-1" style={{ color: '#2D4057', fontFamily: "'Playfair Display', serif" }}>
-                      Feather Fashions
-                    </p>
-                    <p>538-C, Vadivel Nagar, Boyampalayam, PO</p>
-                    <p>Pooluvapatti, Tiruppur, Tamil Nadu 641602</p>
-                    <p className="mt-1" style={{ color: '#B8860B' }}>+91 9789225510 | hello@featherfashions.in</p>
-                  </div>
-                </div>
-
-                {/* Letter Content */}
-                <div className="flex-1 py-6 text-xs leading-relaxed">
-                  {/* Date & Reference */}
-                  <div className="letter-meta mb-4">
-                    {referenceNo && <p><strong>Ref:</strong> {referenceNo}</p>}
-                    <p><strong>Date:</strong> {letterDate ? format(new Date(letterDate), 'dd MMMM yyyy') : ''}</p>
-                  </div>
-
-                  {/* Recipient */}
-                  {(recipientName || recipientAddress) && (
-                    <div className="recipient mb-4">
-                      <p><strong>To,</strong></p>
-                      {recipientName && <p className="font-medium">{recipientName}</p>}
-                      {recipientAddress && (
-                        <p className="whitespace-pre-line">{recipientAddress}</p>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Subject */}
-                  {subject && (
-                    <div className="subject mb-4">
-                      <p><strong>Subject:</strong> <span className="underline">{subject}</span></p>
-                    </div>
-                  )}
-
-                  {/* Salutation */}
-                  {salutation && (
-                    <p className="salutation mb-3">{salutation}</p>
-                  )}
-
-                  {/* Body */}
-                  {letterBody && (
-                    <div className="letter-body whitespace-pre-wrap text-justify">
-                      {letterBody}
-                    </div>
-                  )}
-
-                  {/* Closing */}
-                  {closing && (
-                    <div className="closing mt-8">
-                      <p>{closing}</p>
-                      
-                      {/* Signature & Seal Section */}
-                      <div className="signature-section mt-6 flex items-end gap-6">
-                        <div className="flex-1">
-                          {showSignature && signatureImage && (
-                            <img src={signatureImage} alt="Signature" className="h-10 w-auto mb-1" />
-                          )}
-                          <p className="font-semibold" style={{ color: '#2D4057' }}>Sivasubramanian Vadivel</p>
-                          <p className="text-xs" style={{ color: '#4a5568' }}>Proprietor</p>
-                          <p className="text-xs mt-1" style={{ color: '#718096' }}>Authorized Signatory</p>
-                        </div>
-                        {showSeal && sealImage && (
-                          <div className="seal-section">
-                            <img src={sealImage} alt="Company Seal" className="h-16 w-auto opacity-90" />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Footer */}
-                <div className="footer text-center text-xs border-t pt-3" style={{ color: '#718096', borderColor: '#e2e8f0' }}>
-                  <p>538-C, Vadivel Nagar, Boyampalayam, PO, Pooluvapatti, Tiruppur, Tamil Nadu 641602</p>
-                  <p style={{ color: '#B8860B' }}>featherfashions.in | hello@featherfashions.in | +91 9789225510</p>
-                </div>
-              </div>
+            {/* Multi-page Letterhead Preview */}
+            <div className="bg-muted/50 rounded-lg p-4 overflow-hidden" style={{ minHeight: '500px' }}>
+              <LetterheadPreview
+                ref={letterRef}
+                {...paginationInput}
+              />
             </div>
           </CardContent>
         </Card>
