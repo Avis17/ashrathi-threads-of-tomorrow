@@ -30,13 +30,13 @@ const Navbar = () => {
 
   return (
     <nav 
-      className="fixed top-0 left-0 right-0 z-50 bg-[#0F1113]/95 backdrop-blur-md border-b border-white/[0.06] shadow-[0_2px_10px_rgba(0,0,0,0.3)]"
+      className="fixed top-0 left-0 right-0 z-50 bg-[#F7F7F6] backdrop-blur-md border-b border-black/[0.06] shadow-[0_2px_10px_rgba(0,0,0,0.08)]"
     >
       <div className="container mx-auto px-6">
         <div className="flex items-center justify-between h-[76px]">
           {/* Left - Logo */}
           <Link to="/" className="flex-shrink-0">
-            <h1 className="text-2xl font-athletic font-bold tracking-[0.25em] text-white">
+            <h1 className="text-2xl font-athletic font-bold tracking-[0.25em] text-[#111111]">
               FEATHER
             </h1>
           </Link>
@@ -50,7 +50,7 @@ const Navbar = () => {
                 className={`text-sm font-medium tracking-wide transition-all duration-300 relative ${
                   isActive(link.path) 
                     ? "text-[#1EC9FF]" 
-                    : "text-white/90 hover:text-[#1EC9FF]"
+                    : "text-[#111111]/80 hover:text-[#1EC9FF]"
                 }`}
               >
                 {link.name.toUpperCase()}
@@ -63,7 +63,7 @@ const Navbar = () => {
 
           {/* Right - Actions */}
           <div className="hidden lg:flex items-center space-x-6 flex-shrink-0">
-            <button className="text-white/90 transition-colors duration-300 hover:text-[#1EC9FF]">
+            <button className="text-[#111111]/80 transition-colors duration-300 hover:text-[#1EC9FF]">
               <Search className="h-5 w-5" />
             </button>
             
@@ -72,7 +72,7 @@ const Navbar = () => {
                 <CartButton />
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <button className="text-white/90 transition-colors duration-300 hover:text-[#1EC9FF]">
+                    <button className="text-[#111111]/80 transition-colors duration-300 hover:text-[#1EC9FF]">
                       <User className="h-5 w-5" />
                     </button>
                   </DropdownMenuTrigger>
@@ -117,7 +117,7 @@ const Navbar = () => {
             ) : (
               <Link 
                 to="/auth"
-                className="text-sm font-medium tracking-wide text-white/90 transition-colors duration-300 hover:text-[#1EC9FF]"
+                className="text-sm font-medium tracking-wide text-[#111111]/80 transition-colors duration-300 hover:text-[#1EC9FF]"
               >
                 SIGN IN
               </Link>
@@ -129,7 +129,7 @@ const Navbar = () => {
             {user && <CartButton />}
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="p-2 text-white"
+              className="p-2 text-[#111111]"
             >
               {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
@@ -138,7 +138,7 @@ const Navbar = () => {
 
         {/* Mobile Navigation */}
         {isOpen && (
-          <div className="lg:hidden fixed inset-0 top-[76px] bg-[#0F1113] z-50 animate-fade-in">
+          <div className="lg:hidden fixed inset-0 top-[76px] bg-[#F7F7F6] z-50 animate-fade-in">
             <div className="flex flex-col p-8 space-y-6">
               {navLinks.map((link) => (
                 <Link
@@ -146,27 +146,27 @@ const Navbar = () => {
                   to={link.path}
                   onClick={() => setIsOpen(false)}
                   className={`text-2xl font-medium tracking-wide transition-colors ${
-                    isActive(link.path) ? "text-[#1EC9FF]" : "text-white/90 hover:text-[#1EC9FF]"
+                    isActive(link.path) ? "text-[#1EC9FF]" : "text-[#111111]/80 hover:text-[#1EC9FF]"
                   }`}
                 >
                   {link.name}
                 </Link>
               ))}
               
-              <div className="pt-6 border-t border-white/10 space-y-4">
+              <div className="pt-6 border-t border-black/10 space-y-4">
                 {user ? (
                   <>
                     <Link
                       to="/my-orders"
                       onClick={() => setIsOpen(false)}
-                      className="block text-lg text-white/70 hover:text-white transition-colors"
+                      className="block text-lg text-[#111111]/70 hover:text-[#111111] transition-colors"
                     >
                       My Orders
                     </Link>
                     <Link
                       to="/profile"
                       onClick={() => setIsOpen(false)}
-                      className="block text-lg text-white/70 hover:text-white transition-colors"
+                      className="block text-lg text-[#111111]/70 hover:text-[#111111] transition-colors"
                     >
                       My Profile
                     </Link>
@@ -174,14 +174,14 @@ const Navbar = () => {
                       <Link
                         to="/admin"
                         onClick={() => setIsOpen(false)}
-                        className="block text-lg text-white/70 hover:text-white transition-colors"
+                        className="block text-lg text-[#111111]/70 hover:text-[#111111] transition-colors"
                       >
                         Admin Dashboard
                       </Link>
                     )}
                     <button
                       onClick={() => { signOut(); setIsOpen(false); }}
-                      className="block text-lg text-white/70 hover:text-white transition-colors"
+                      className="block text-lg text-[#111111]/70 hover:text-[#111111] transition-colors"
                     >
                       Sign Out
                     </button>
@@ -190,7 +190,7 @@ const Navbar = () => {
                   <Link
                     to="/auth"
                     onClick={() => setIsOpen(false)}
-                    className="block text-lg font-medium text-white"
+                    className="block text-lg font-medium text-[#111111]"
                   >
                     Sign In
                   </Link>
