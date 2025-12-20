@@ -83,7 +83,7 @@ const App = () => (
               element={
                 <div className="flex flex-col min-h-screen">
                   <Navbar />
-                  <main className="flex-1">
+                  <main className="flex-1 pt-[76px]">
                     <Routes>
                       <Route path="/" element={<Home />} />
                       <Route path="/shop" element={<Products />} />

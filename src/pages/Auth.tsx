@@ -66,7 +66,7 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex -mt-[76px] pt-[76px]">
       {/* Left Side - Premium Image */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
         <div 
