@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, DollarSign, FileText, TrendingUp, Clock, Package, Percent, Calculator, Users, Eye, EyeOff, Wallet, BadgeIndianRupee } from "lucide-react";
+import { ArrowLeft, DollarSign, FileText, TrendingUp, Clock, Package, Percent, Calculator, Users, Eye, EyeOff, Wallet, BadgeIndianRupee, AlertTriangle, TrendingDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -52,6 +52,8 @@ const Dashboard = () => {
     totalCommission: stats.totalCommission || 0,
     totalOperationsCost: stats.totalOperationsCost || 0,
     grossProfit: stats.grossProfit || 0,
+    netProfit: stats.netProfit || 0,
+    paymentAdjustments: stats.paymentAdjustments || 0,
     statusCounts: stats.statusCounts || {},
     jobStatusCounts: stats.jobStatusCounts || {},
     weeklyData: stats.weeklyData || [],
@@ -181,7 +183,7 @@ const Dashboard = () => {
       </div>
 
       {/* Stats Cards - Row 2 */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
         <Card className="p-6 bg-gradient-to-br from-teal-50 to-teal-100 dark:from-teal-950 dark:to-teal-900 border-teal-200 dark:border-teal-800">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-teal-500/20 rounded-lg">
@@ -190,6 +192,7 @@ const Dashboard = () => {
             <div>
               <p className="text-sm text-teal-700 dark:text-teal-300">Gross Profit</p>
               <p className="text-2xl font-bold text-teal-900 dark:text-teal-100">{formatAmount(safeStats.grossProfit, amountsVisible)}</p>
+              <p className="text-xs text-teal-600 dark:text-teal-400">Based on billed</p>
             </div>
           </div>
         </Card>
@@ -200,8 +203,22 @@ const Dashboard = () => {
               <Wallet className="h-6 w-6 text-cyan-600 dark:text-cyan-400" />
             </div>
             <div>
-              <p className="text-sm text-cyan-700 dark:text-cyan-300">Company Profit</p>
-              <p className="text-2xl font-bold text-cyan-900 dark:text-cyan-100">{formatAmount(safeStats.grossProfit, amountsVisible)}</p>
+              <p className="text-sm text-cyan-700 dark:text-cyan-300">Net Profit</p>
+              <p className="text-2xl font-bold text-cyan-900 dark:text-cyan-100">{formatAmount(safeStats.netProfit, amountsVisible)}</p>
+              <p className="text-xs text-cyan-600 dark:text-cyan-400">Based on received</p>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="p-6 bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-950 dark:to-amber-900 border-amber-200 dark:border-amber-800">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-amber-500/20 rounded-lg">
+              <TrendingDown className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+            </div>
+            <div>
+              <p className="text-sm text-amber-700 dark:text-amber-300">Payment Shortfall</p>
+              <p className="text-2xl font-bold text-amber-900 dark:text-amber-100">{formatAmount(safeStats.paymentAdjustments, amountsVisible)}</p>
+              <p className="text-xs text-amber-600 dark:text-amber-400">Billed vs Received</p>
             </div>
           </div>
         </Card>

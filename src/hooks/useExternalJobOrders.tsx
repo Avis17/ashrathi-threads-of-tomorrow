@@ -327,7 +327,20 @@ export const useExternalJobOrderStats = () => {
       // Calculate total commission and profit using commission_percent field
       let totalCommission = 0;
       let totalOperationsCost = 0;
+      let totalOperationsCostForPaid = 0; // Operations cost only for paid orders
+      
+      // Calculate payment adjustments (difference between billed and paid for paid orders)
+      let paymentAdjustments = 0;
       orders.forEach(order => {
+        const isPaid = order.payment_status === 'paid';
+        const billedAmount = order.total_with_gst || order.total_amount || 0;
+        const paidAmt = order.paid_amount || 0;
+        
+        // If order is paid, calculate the adjustment (billed - paid)
+        if (isPaid && billedAmount > paidAmt) {
+          paymentAdjustments += (billedAmount - paidAmt);
+        }
+        
         order.external_job_operations?.forEach((op: any) => {
           const categoriesTotal = op.external_job_operation_categories
             ?.reduce((sum: number, cat: any) => sum + cat.rate, 0) || 0;
@@ -345,11 +358,23 @@ export const useExternalJobOrderStats = () => {
           // Calculate operations cost (using round_off if set, otherwise calculate)
           const operationTotal = roundOff > 0 ? roundOff : (categoriesTotal + (categoriesTotal * commissionPercent / 100) + adjustment);
           totalOperationsCost += operationTotal * order.number_of_pieces;
+          
+          // Track operations cost for paid orders only
+          if (isPaid) {
+            totalOperationsCostForPaid += operationTotal * order.number_of_pieces;
+          }
         });
       });
 
-      // Calculate gross profit (total amount - operations cost)
+      // Calculate gross profit (total amount - operations cost) - this is expected/projected
       const grossProfit = totalAmount - totalOperationsCost;
+      
+      // Calculate net profit based on actual paid amounts for paid orders
+      // Net Profit = Paid Amount - Operations Cost (for paid orders only)
+      const paidOrdersAmount = orders
+        .filter(o => o.payment_status === 'paid')
+        .reduce((sum, o) => sum + (o.paid_amount || 0), 0);
+      const netProfit = paidOrdersAmount - totalOperationsCostForPaid;
 
       // Time-based analytics
       const now = new Date();
@@ -435,6 +460,8 @@ export const useExternalJobOrderStats = () => {
         totalCommission,
         totalOperationsCost,
         grossProfit,
+        netProfit,
+        paymentAdjustments,
         weeklyData,
         monthlyData,
         yearlyData,
