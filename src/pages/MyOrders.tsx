@@ -103,8 +103,11 @@ export default function MyOrders() {
                   <TabsTrigger value="all" className="rounded-full text-xs md:text-sm px-3 md:px-4 data-[state=active]:bg-black data-[state=active]:text-white">
                     All
                   </TabsTrigger>
+                  <TabsTrigger value="payment_pending" className="rounded-full text-xs md:text-sm px-3 md:px-4 data-[state=active]:bg-black data-[state=active]:text-white">
+                    Payment Pending
+                  </TabsTrigger>
                   <TabsTrigger value="pending" className="rounded-full text-xs md:text-sm px-3 md:px-4 data-[state=active]:bg-black data-[state=active]:text-white">
-                    Pending
+                    Confirmation Pending
                   </TabsTrigger>
                   <TabsTrigger value="confirmed" className="rounded-full text-xs md:text-sm px-3 md:px-4 data-[state=active]:bg-black data-[state=active]:text-white">
                     Confirmed
