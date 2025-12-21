@@ -376,7 +376,7 @@ export const useExternalJobOrderStats = () => {
         .reduce((sum, o) => sum + (o.paid_amount || 0), 0);
       const netProfit = paidOrdersAmount - totalOperationsCostForPaid;
 
-      // Calculate expected net profit: Sum of all jobs' (company_profit_value × number_of_pieces - job expenses)
+      // Calculate Net Profit (Receivable): Sum of PAID orders' (company_profit_value × number_of_pieces - job expenses)
       // Fetch expenses for all orders
       const orderIds = orders.map(o => o.id);
       const { data: expenses } = await supabase
@@ -390,18 +390,22 @@ export const useExternalJobOrderStats = () => {
         return acc;
       }, {} as Record<string, number>) || {};
       
-      // Calculate expected net profit for each job: (company_profit_value × number_of_pieces) - job expenses
-      const expectedNetProfit = orders.reduce((sum, order) => {
+      // Calculate Net Profit (Receivable) for PAID orders only: (company_profit_value × number_of_pieces) - job expenses
+      const paidOrders = orders.filter(o => o.payment_status === 'paid');
+      const netProfitReceivable = paidOrders.reduce((sum, order) => {
         const grossCompanyProfit = (order.company_profit_value || 0) * (order.number_of_pieces || 0);
         const jobExpenses = expensesByJob[order.id] || 0;
         return sum + (grossCompanyProfit - jobExpenses);
       }, 0);
       
-      // Calculate total gross company profit for margin calculation
-      const totalGrossCompanyProfit = orders.reduce((sum, order) => 
+      // Net Profit (Received) = Net Profit (Receivable) - Payment Shortfall
+      const netProfitReceived = netProfitReceivable - paymentAdjustments;
+      
+      // Calculate total gross company profit for margin calculation (for paid orders)
+      const totalGrossCompanyProfit = paidOrders.reduce((sum, order) => 
         sum + (order.company_profit_value || 0) * (order.number_of_pieces || 0), 0);
-      const expectedNetProfitMargin = totalGrossCompanyProfit > 0 
-        ? (expectedNetProfit / totalGrossCompanyProfit) * 100 
+      const netProfitMargin = totalGrossCompanyProfit > 0 
+        ? (netProfitReceived / totalGrossCompanyProfit) * 100 
         : 0;
 
       // Time-based analytics
@@ -488,10 +492,10 @@ export const useExternalJobOrderStats = () => {
         totalCommission,
         totalOperationsCost,
         grossProfit,
-        netProfit,
+        netProfitReceivable,
+        netProfitReceived,
         paymentAdjustments,
-        expectedNetProfit,
-        expectedNetProfitMargin,
+        netProfitMargin,
         weeklyData,
         monthlyData,
         yearlyData,

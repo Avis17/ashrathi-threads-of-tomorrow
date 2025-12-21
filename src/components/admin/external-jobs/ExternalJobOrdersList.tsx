@@ -129,8 +129,8 @@ export const ExternalJobOrdersList = () => {
         pendingAmount: 0,
         totalPieces: 0,
         totalCommission: 0,
-        expectedNetProfit: 0,
         netProfitReceivable: 0,
+        netProfitReceived: 0,
         totalGstAmount: 0,
         paymentShortfall: 0,
       };
@@ -158,7 +158,6 @@ export const ExternalJobOrdersList = () => {
 
     // Calculate commission and net profit based on PAID orders only
     let totalCommission = 0;
-    let expectedNetProfit = 0;
     let netProfitReceivable = 0;
     let paymentShortfall = 0;
     
@@ -175,44 +174,30 @@ export const ExternalJobOrdersList = () => {
       }
       
       // Calculate operations cost per piece (sum of total_rate from each operation)
-      let operationsCostPerPiece = 0;
-      
       order.external_job_operations?.forEach((op: any) => {
         const categoriesTotal = op.external_job_operation_categories
           ?.reduce((sum: number, cat: any) => sum + cat.rate, 0) || 0;
         
         const commissionPercent = op.commission_percent || 0;
-        const roundOff = op.round_off || 0;
-        const adjustment = op.adjustment || 0;
         
         // Calculate commission for this operation
         if (commissionPercent > 0) {
           const commissionAmount = (categoriesTotal * commissionPercent) / 100;
           totalCommission += commissionAmount * order.number_of_pieces;
         }
-        
-        // Use total_rate if available, otherwise calculate
-        const operationTotal = op.total_rate || (roundOff > 0 ? roundOff : (categoriesTotal + (categoriesTotal * commissionPercent / 100) + adjustment));
-        operationsCostPerPiece += operationTotal;
       });
       
-      // Only calculate net profit for PAID orders
+      // Only calculate net profit receivable for PAID orders
       if (isPaid) {
-        // Total operations cost for this order
-        const totalOperationsCost = operationsCostPerPiece * (order.number_of_pieces || 0);
-        
-        // Net profit = Paid Amount - Operations Cost
-        // Note: Operations cost already includes all labor/material costs
-        const orderNetProfit = receivedAmount - totalOperationsCost;
-        
-        expectedNetProfit += orderNetProfit;
-        
         // Net Profit Receivable = (company_profit_value × number_of_pieces) - job expenses
         const grossCompanyProfit = (order.company_profit_value || 0) * (order.number_of_pieces || 0);
         const jobExpenses = expensesByJob[order.id] || 0;
         netProfitReceivable += (grossCompanyProfit - jobExpenses);
       }
     });
+
+    // Net Profit (Received) = Net Profit (Receivable) - Payment Shortfall
+    const netProfitReceived = netProfitReceivable - paymentShortfall;
 
     return {
       totalOrders,
@@ -221,8 +206,8 @@ export const ExternalJobOrdersList = () => {
       pendingAmount,
       totalPieces,
       totalCommission,
-      expectedNetProfit,
       netProfitReceivable,
+      netProfitReceived,
       totalGstAmount,
       paymentShortfall,
     };
@@ -364,8 +349,8 @@ export const ExternalJobOrdersList = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-teal-100 text-sm font-medium">Net Profit (Received)</p>
-              <p className="text-3xl font-bold mt-1">{formatAmount(stats.expectedNetProfit, amountsVisible)}</p>
-              <p className="text-teal-100 text-xs mt-1">Based on paid orders</p>
+              <p className="text-3xl font-bold mt-1">{formatAmount(stats.netProfitReceived, amountsVisible)}</p>
+              <p className="text-teal-100 text-xs mt-1">Receivable - Shortfall</p>
             </div>
             <div className="h-12 w-12 bg-white/20 rounded-xl flex items-center justify-center">
               <Wallet className="h-6 w-6" />
