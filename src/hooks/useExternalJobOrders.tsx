@@ -408,6 +408,25 @@ export const useExternalJobOrderStats = () => {
         ? (netProfitReceived / totalGrossCompanyProfit) * 100 
         : 0;
 
+      // Calculate Profit Margin card values (for ALL orders)
+      // Total expenses for all orders
+      const totalJobExpenses = orders.reduce((sum, order) => sum + (expensesByJob[order.id] || 0), 0);
+      
+      // Ops Cost: (rate_per_piece - company_profit_value) × number_of_pieces for ALL orders
+      const totalOpsCost = orders.reduce((sum, order) => {
+        const ratePP = order.rate_per_piece || 0;
+        const companyProfit = order.company_profit_value || 0;
+        const pieces = order.number_of_pieces || 0;
+        return sum + ((ratePP - companyProfit) * pieces);
+      }, 0);
+      
+      // Gross Profit for Profit Margin card: company_profit_value × number_of_pieces - job expenses (ALL orders)
+      const grossProfitForMargin = orders.reduce((sum, order) => {
+        const companyProfit = (order.company_profit_value || 0) * (order.number_of_pieces || 0);
+        const jobExpenses = expensesByJob[order.id] || 0;
+        return sum + (companyProfit - jobExpenses);
+      }, 0);
+
       // Time-based analytics
       const now = new Date();
       const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -496,6 +515,9 @@ export const useExternalJobOrderStats = () => {
         netProfitReceived,
         paymentAdjustments,
         netProfitMargin,
+        totalJobExpenses,
+        totalOpsCost,
+        grossProfitForMargin,
         weeklyData,
         monthlyData,
         yearlyData,
