@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Eye, EyeOff, Calendar, Trash2, IndianRupee, Package, TrendingUp, CreditCard, Wallet, BadgeIndianRupee, Receipt, TrendingDown } from "lucide-react";
+import { Search, Eye, EyeOff, Calendar, Trash2, IndianRupee, Package, TrendingUp, CreditCard, Wallet, BadgeIndianRupee, Receipt, TrendingDown, CircleDollarSign } from "lucide-react";
 import { useDeleteExternalJobOrder } from "@/hooks/useExternalJobOrders";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -105,6 +105,21 @@ export const ExternalJobOrdersList = () => {
   }, [orders, search, statusFilter, jobStatusFilter, gstFilter]);
 
   // Calculate stats based on filtered orders
+  // Fetch expenses for all orders for net profit calculation
+  const { data: allExpenses } = useQuery({
+    queryKey: ['external-job-expenses-all', filteredOrders?.map(o => o.id)],
+    queryFn: async () => {
+      if (!filteredOrders || filteredOrders.length === 0) return [];
+      const { data } = await supabase
+        .from('external_job_expenses')
+        .select('*')
+        .in('job_order_id', filteredOrders.map(o => o.id));
+      return data || [];
+    },
+    enabled: filteredOrders && filteredOrders.length > 0,
+  });
+
+  // Calculate stats based on filtered orders
   const stats = useMemo(() => {
     if (!filteredOrders || filteredOrders.length === 0) {
       return {
@@ -115,6 +130,7 @@ export const ExternalJobOrdersList = () => {
         totalPieces: 0,
         totalCommission: 0,
         expectedNetProfit: 0,
+        netProfitReceivable: 0,
         totalGstAmount: 0,
         paymentShortfall: 0,
       };
@@ -134,9 +150,16 @@ export const ExternalJobOrdersList = () => {
     // Calculate total GST amount
     const totalGstAmount = filteredOrders.reduce((sum, order) => sum + (order.gst_amount || 0), 0);
 
+    // Group expenses by job_order_id
+    const expensesByJob = allExpenses?.reduce((acc, exp) => {
+      acc[exp.job_order_id] = (acc[exp.job_order_id] || 0) + (exp.amount || 0);
+      return acc;
+    }, {} as Record<string, number>) || {};
+
     // Calculate commission and net profit based on PAID orders only
     let totalCommission = 0;
     let expectedNetProfit = 0;
+    let netProfitReceivable = 0;
     let paymentShortfall = 0;
     
     filteredOrders.forEach((order: any) => {
@@ -183,6 +206,11 @@ export const ExternalJobOrdersList = () => {
         const orderNetProfit = receivedAmount - totalOperationsCost;
         
         expectedNetProfit += orderNetProfit;
+        
+        // Net Profit Receivable = (company_profit_value × number_of_pieces) - job expenses
+        const grossCompanyProfit = (order.company_profit_value || 0) * (order.number_of_pieces || 0);
+        const jobExpenses = expensesByJob[order.id] || 0;
+        netProfitReceivable += (grossCompanyProfit - jobExpenses);
       }
     });
 
@@ -194,10 +222,11 @@ export const ExternalJobOrdersList = () => {
       totalPieces,
       totalCommission,
       expectedNetProfit,
+      netProfitReceivable,
       totalGstAmount,
       paymentShortfall,
     };
-  }, [filteredOrders]);
+  }, [filteredOrders, allExpenses]);
 
   const getPaymentStatusBadge = (status: string) => {
     const colorClasses: Record<string, string> = {
@@ -340,6 +369,19 @@ export const ExternalJobOrdersList = () => {
             </div>
             <div className="h-12 w-12 bg-white/20 rounded-xl flex items-center justify-center">
               <Wallet className="h-6 w-6" />
+            </div>
+          </div>
+        </Card>
+
+        <Card className="p-4 bg-gradient-to-br from-cyan-500 to-cyan-600 text-white border-0 shadow-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-cyan-100 text-sm font-medium">Net Profit (Receivable)</p>
+              <p className="text-3xl font-bold mt-1">{formatAmount(stats.netProfitReceivable, amountsVisible)}</p>
+              <p className="text-cyan-100 text-xs mt-1">Company profit - expenses (paid)</p>
+            </div>
+            <div className="h-12 w-12 bg-white/20 rounded-xl flex items-center justify-center">
+              <CircleDollarSign className="h-6 w-6" />
             </div>
           </div>
         </Card>
