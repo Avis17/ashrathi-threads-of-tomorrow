@@ -178,13 +178,9 @@ export const ExternalJobOrdersList = () => {
         // Total operations cost for this order
         const totalOperationsCost = operationsCostPerPiece * (order.number_of_pieces || 0);
         
-        // Subtract expenses for this order
-        const orderExpenses = order.external_job_expenses?.reduce(
-          (sum: number, exp: any) => sum + (exp.amount || 0), 0
-        ) || 0;
-        
-        // Net profit = Paid Amount - Operations Cost - Expenses
-        const orderNetProfit = receivedAmount - totalOperationsCost - orderExpenses;
+        // Net profit = Paid Amount - Operations Cost
+        // Note: Operations cost already includes all labor/material costs
+        const orderNetProfit = receivedAmount - totalOperationsCost;
         
         expectedNetProfit += orderNetProfit;
       }
