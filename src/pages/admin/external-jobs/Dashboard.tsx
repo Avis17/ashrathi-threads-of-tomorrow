@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, DollarSign, FileText, TrendingUp, Clock, Package, Percent, Calculator, Users, Eye, EyeOff, Wallet, BadgeIndianRupee, AlertTriangle, TrendingDown } from "lucide-react";
+import { ArrowLeft, DollarSign, FileText, TrendingUp, Clock, Package, Percent, Calculator, Users, Eye, EyeOff, Wallet, BadgeIndianRupee, AlertTriangle, TrendingDown, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -54,6 +54,8 @@ const Dashboard = () => {
     grossProfit: stats.grossProfit || 0,
     netProfit: stats.netProfit || 0,
     paymentAdjustments: stats.paymentAdjustments || 0,
+    expectedNetProfit: stats.expectedNetProfit || 0,
+    expectedNetProfitMargin: stats.expectedNetProfitMargin || 0,
     statusCounts: stats.statusCounts || {},
     jobStatusCounts: stats.jobStatusCounts || {},
     weeklyData: stats.weeklyData || [],
@@ -259,6 +261,31 @@ const Dashboard = () => {
           </div>
         </Card>
       </div>
+
+      {/* Expected Net Profit - Highlighted Card */}
+      <Card className="p-6 bg-gradient-to-br from-lime-50 via-green-50 to-emerald-50 dark:from-lime-950 dark:via-green-950 dark:to-emerald-950 border-2 border-lime-300 dark:border-lime-700 shadow-lg">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="p-4 bg-gradient-to-br from-lime-500 to-green-600 rounded-xl shadow-md">
+              <Target className="h-8 w-8 text-white" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-lime-700 dark:text-lime-300">Expected Net Profit</p>
+              <p className="text-3xl font-bold text-lime-900 dark:text-lime-100">{formatAmount(safeStats.expectedNetProfit, amountsVisible)}</p>
+              <p className="text-xs text-lime-600 dark:text-lime-400 mt-1">From pending payments after deducting costs</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="flex items-center gap-2 justify-end">
+              <Percent className="h-5 w-5 text-lime-600 dark:text-lime-400" />
+              <span className="text-2xl font-bold text-lime-700 dark:text-lime-300">
+                {safeStats.expectedNetProfitMargin.toFixed(1)}%
+              </span>
+            </div>
+            <p className="text-xs text-lime-600 dark:text-lime-400 mt-1">Expected Margin</p>
+          </div>
+        </div>
+      </Card>
 
       {/* Collection Rate & Profit Margin */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

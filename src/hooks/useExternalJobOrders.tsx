@@ -376,6 +376,12 @@ export const useExternalJobOrderStats = () => {
         .reduce((sum, o) => sum + (o.paid_amount || 0), 0);
       const netProfit = paidOrdersAmount - totalOperationsCostForPaid;
 
+      // Calculate expected net profit (pending amount - pending operations cost)
+      // This is the profit we expect to make once all pending payments are collected
+      const pendingOperationsCost = totalOperationsCost - totalOperationsCostForPaid;
+      const expectedNetProfit = pendingAmount - pendingOperationsCost;
+      const expectedNetProfitMargin = pendingAmount > 0 ? (expectedNetProfit / pendingAmount) * 100 : 0;
+
       // Time-based analytics
       const now = new Date();
       const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -462,6 +468,8 @@ export const useExternalJobOrderStats = () => {
         grossProfit,
         netProfit,
         paymentAdjustments,
+        expectedNetProfit,
+        expectedNetProfitMargin,
         weeklyData,
         monthlyData,
         yearlyData,
