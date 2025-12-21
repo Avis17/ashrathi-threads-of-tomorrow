@@ -50,7 +50,7 @@ const Dashboard = () => {
     totalOrders: stats.totalOrders || 0,
     totalPieces: stats.totalPieces || 0,
     totalCommission: stats.totalCommission || 0,
-    totalOperationsCost: stats.totalOperationsCost || 0,
+    totalOperationsCost: stats.totalOpsCost || 0,
     grossProfit: stats.grossProfit || 0,
     netProfitReceivable: stats.netProfitReceivable || 0,
     netProfitReceived: stats.netProfitReceived || 0,
