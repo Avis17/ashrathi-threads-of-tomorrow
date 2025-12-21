@@ -122,7 +122,7 @@ const Dashboard = () => {
       </div>
 
       {/* Stats Cards - Row 1 */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="p-4 sm:p-6 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 border-blue-200 dark:border-blue-800 min-w-0">
           <div className="flex items-center gap-3">
             <div className="p-2 sm:p-3 bg-blue-500/20 rounded-lg shrink-0">
@@ -185,7 +185,7 @@ const Dashboard = () => {
       </div>
 
       {/* Stats Cards - Row 2 */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="p-4 sm:p-6 bg-gradient-to-br from-teal-50 to-teal-100 dark:from-teal-950 dark:to-teal-900 border-teal-200 dark:border-teal-800 min-w-0">
           <div className="flex items-center gap-3">
             <div className="p-2 sm:p-3 bg-teal-500/20 rounded-lg shrink-0">
