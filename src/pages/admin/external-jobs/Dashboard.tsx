@@ -56,6 +56,9 @@ const Dashboard = () => {
     netProfitReceived: stats.netProfitReceived || 0,
     paymentAdjustments: stats.paymentAdjustments || 0,
     netProfitMargin: stats.netProfitMargin || 0,
+    totalJobExpenses: stats.totalJobExpenses || 0,
+    totalOpsCost: stats.totalOpsCost || 0,
+    grossProfitForMargin: stats.grossProfitForMargin || 0,
     statusCounts: stats.statusCounts || {},
     jobStatusCounts: stats.jobStatusCounts || {},
     weeklyData: stats.weeklyData || [],
@@ -264,25 +267,14 @@ const Dashboard = () => {
 
       {/* Net Profit (Receivable) - Highlighted Card */}
       <Card className="p-6 bg-gradient-to-br from-lime-50 via-green-50 to-emerald-50 dark:from-lime-950 dark:via-green-950 dark:to-emerald-950 border-2 border-lime-300 dark:border-lime-700 shadow-lg">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="p-4 bg-gradient-to-br from-lime-500 to-green-600 rounded-xl shadow-md">
-              <Target className="h-8 w-8 text-white" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-lime-700 dark:text-lime-300">Net Profit (Receivable)</p>
-              <p className="text-3xl font-bold text-lime-900 dark:text-lime-100">{formatAmount(safeStats.netProfitReceivable, amountsVisible)}</p>
-              <p className="text-xs text-lime-600 dark:text-lime-400 mt-1">Company profit - expenses (for paid orders)</p>
-            </div>
+        <div className="flex items-center gap-4">
+          <div className="p-4 bg-gradient-to-br from-lime-500 to-green-600 rounded-xl shadow-md">
+            <Target className="h-8 w-8 text-white" />
           </div>
-          <div className="text-right">
-            <div className="flex items-center gap-2 justify-end">
-              <Percent className="h-5 w-5 text-lime-600 dark:text-lime-400" />
-              <span className="text-2xl font-bold text-lime-700 dark:text-lime-300">
-                {safeStats.netProfitMargin.toFixed(1)}%
-              </span>
-            </div>
-            <p className="text-xs text-lime-600 dark:text-lime-400 mt-1">Profit Margin</p>
+          <div>
+            <p className="text-sm font-medium text-lime-700 dark:text-lime-300">Expected Net Profit</p>
+            <p className="text-3xl font-bold text-lime-900 dark:text-lime-100">{formatAmount(safeStats.netProfitReceivable, amountsVisible)}</p>
+            <p className="text-xs text-lime-600 dark:text-lime-400 mt-1">From pending payments after deducting costs</p>
           </div>
         </div>
       </Card>
@@ -332,18 +324,22 @@ const Dashboard = () => {
                 style={{ width: `${Math.min(Math.max(parseFloat(profitMargin), 0), 100)}%` }}
               />
             </div>
-            <div className="grid grid-cols-3 gap-4 pt-4">
+            <div className="grid grid-cols-4 gap-4 pt-4">
               <div>
                 <p className="text-sm text-muted-foreground">Revenue</p>
                 <p className="text-lg font-semibold">₹{safeStats.totalAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Ops Cost</p>
-                <p className="text-lg font-semibold text-red-600">₹{safeStats.totalOperationsCost.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
+                <p className="text-lg font-semibold text-red-600">₹{safeStats.totalOpsCost.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Expenses</p>
+                <p className="text-lg font-semibold text-orange-600">₹{safeStats.totalJobExpenses.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Gross Profit</p>
-                <p className="text-lg font-semibold text-teal-600">₹{safeStats.grossProfit.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
+                <p className="text-lg font-semibold text-teal-600">₹{safeStats.grossProfitForMargin.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
               </div>
             </div>
           </div>
