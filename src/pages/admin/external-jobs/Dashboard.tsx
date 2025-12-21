@@ -325,7 +325,7 @@ const Dashboard = () => {
                 style={{ width: `${Math.min(Math.max(parseFloat(profitMargin), 0), 100)}%` }}
               />
             </div>
-            <div className="grid grid-cols-5 gap-4 pt-4">
+            <div className="grid grid-cols-3 gap-4 pt-4">
               <div>
                 <p className="text-sm text-muted-foreground">Revenue</p>
                 <p className="text-lg font-semibold">₹{safeStats.totalAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
@@ -338,6 +338,8 @@ const Dashboard = () => {
                 <p className="text-sm text-muted-foreground">Expenses</p>
                 <p className="text-lg font-semibold text-orange-600">₹{safeStats.totalJobExpenses.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
               </div>
+            </div>
+            <div className="grid grid-cols-3 gap-4 pt-2">
               <div>
                 <p className="text-sm text-muted-foreground">GST Collected</p>
                 <p className="text-lg font-semibold text-purple-600">₹{safeStats.totalGstCollected.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
