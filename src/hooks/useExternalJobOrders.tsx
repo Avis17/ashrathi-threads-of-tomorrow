@@ -376,10 +376,7 @@ export const useExternalJobOrderStats = () => {
         .reduce((sum, o) => sum + (o.paid_amount || 0), 0);
       const netProfit = paidOrdersAmount - totalOperationsCostForPaid;
 
-      // Calculate expected net profit: Sum of all jobs' (Gross Company Profit - Expenses)
-      // For each job: Expected Net Profit = (Total Revenue - Operations Cost) - Job Expenses
-      // This equals grossProfit (totalAmount - totalOperationsCost) minus all expenses
-      
+      // Calculate expected net profit: Sum of all jobs' (company_profit_value × number_of_pieces - job expenses)
       // Fetch expenses for all orders
       const orderIds = orders.map(o => o.id);
       const { data: expenses } = await supabase
@@ -387,12 +384,25 @@ export const useExternalJobOrderStats = () => {
         .select('*')
         .in('job_order_id', orderIds);
       
-      const totalExpenses = expenses?.reduce((sum, exp) => sum + (exp.amount || 0), 0) || 0;
+      // Group expenses by job_order_id
+      const expensesByJob = expenses?.reduce((acc, exp) => {
+        acc[exp.job_order_id] = (acc[exp.job_order_id] || 0) + (exp.amount || 0);
+        return acc;
+      }, {} as Record<string, number>) || {};
       
-      // Expected Net Profit = Gross Profit - Total Expenses
-      // Where Gross Profit = Total Revenue - Operations Cost
-      const expectedNetProfit = grossProfit - totalExpenses;
-      const expectedNetProfitMargin = totalAmount > 0 ? (expectedNetProfit / totalAmount) * 100 : 0;
+      // Calculate expected net profit for each job: (company_profit_value × number_of_pieces) - job expenses
+      const expectedNetProfit = orders.reduce((sum, order) => {
+        const grossCompanyProfit = (order.company_profit_value || 0) * (order.number_of_pieces || 0);
+        const jobExpenses = expensesByJob[order.id] || 0;
+        return sum + (grossCompanyProfit - jobExpenses);
+      }, 0);
+      
+      // Calculate total gross company profit for margin calculation
+      const totalGrossCompanyProfit = orders.reduce((sum, order) => 
+        sum + (order.company_profit_value || 0) * (order.number_of_pieces || 0), 0);
+      const expectedNetProfitMargin = totalGrossCompanyProfit > 0 
+        ? (expectedNetProfit / totalGrossCompanyProfit) * 100 
+        : 0;
 
       // Time-based analytics
       const now = new Date();
