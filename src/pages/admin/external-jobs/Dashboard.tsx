@@ -52,10 +52,10 @@ const Dashboard = () => {
     totalCommission: stats.totalCommission || 0,
     totalOperationsCost: stats.totalOperationsCost || 0,
     grossProfit: stats.grossProfit || 0,
-    netProfit: stats.netProfit || 0,
+    netProfitReceivable: stats.netProfitReceivable || 0,
+    netProfitReceived: stats.netProfitReceived || 0,
     paymentAdjustments: stats.paymentAdjustments || 0,
-    expectedNetProfit: stats.expectedNetProfit || 0,
-    expectedNetProfitMargin: stats.expectedNetProfitMargin || 0,
+    netProfitMargin: stats.netProfitMargin || 0,
     statusCounts: stats.statusCounts || {},
     jobStatusCounts: stats.jobStatusCounts || {},
     weeklyData: stats.weeklyData || [],
@@ -205,9 +205,9 @@ const Dashboard = () => {
               <Wallet className="h-5 w-5 sm:h-6 sm:w-6 text-cyan-600 dark:text-cyan-400" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs sm:text-sm text-cyan-700 dark:text-cyan-300 truncate">Net Profit</p>
-              <p className="text-lg sm:text-2xl font-bold text-cyan-900 dark:text-cyan-100 truncate">{formatAmount(safeStats.netProfit, amountsVisible)}</p>
-              <p className="text-xs text-cyan-600 dark:text-cyan-400 truncate">Based on received</p>
+              <p className="text-xs sm:text-sm text-cyan-700 dark:text-cyan-300 truncate">Net Profit (Received)</p>
+              <p className="text-lg sm:text-2xl font-bold text-cyan-900 dark:text-cyan-100 truncate">{formatAmount(safeStats.netProfitReceived, amountsVisible)}</p>
+              <p className="text-xs text-cyan-600 dark:text-cyan-400 truncate">Receivable - Shortfall</p>
             </div>
           </div>
         </Card>
@@ -262,7 +262,7 @@ const Dashboard = () => {
         </Card>
       </div>
 
-      {/* Expected Net Profit - Highlighted Card */}
+      {/* Net Profit (Receivable) - Highlighted Card */}
       <Card className="p-6 bg-gradient-to-br from-lime-50 via-green-50 to-emerald-50 dark:from-lime-950 dark:via-green-950 dark:to-emerald-950 border-2 border-lime-300 dark:border-lime-700 shadow-lg">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -270,19 +270,19 @@ const Dashboard = () => {
               <Target className="h-8 w-8 text-white" />
             </div>
             <div>
-              <p className="text-sm font-medium text-lime-700 dark:text-lime-300">Expected Net Profit</p>
-              <p className="text-3xl font-bold text-lime-900 dark:text-lime-100">{formatAmount(safeStats.expectedNetProfit, amountsVisible)}</p>
-              <p className="text-xs text-lime-600 dark:text-lime-400 mt-1">From pending payments after deducting costs</p>
+              <p className="text-sm font-medium text-lime-700 dark:text-lime-300">Net Profit (Receivable)</p>
+              <p className="text-3xl font-bold text-lime-900 dark:text-lime-100">{formatAmount(safeStats.netProfitReceivable, amountsVisible)}</p>
+              <p className="text-xs text-lime-600 dark:text-lime-400 mt-1">Company profit - expenses (for paid orders)</p>
             </div>
           </div>
           <div className="text-right">
             <div className="flex items-center gap-2 justify-end">
               <Percent className="h-5 w-5 text-lime-600 dark:text-lime-400" />
               <span className="text-2xl font-bold text-lime-700 dark:text-lime-300">
-                {safeStats.expectedNetProfitMargin.toFixed(1)}%
+                {safeStats.netProfitMargin.toFixed(1)}%
               </span>
             </div>
-            <p className="text-xs text-lime-600 dark:text-lime-400 mt-1">Expected Margin</p>
+            <p className="text-xs text-lime-600 dark:text-lime-400 mt-1">Profit Margin</p>
           </div>
         </div>
       </Card>
