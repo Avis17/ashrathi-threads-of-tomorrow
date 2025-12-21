@@ -420,12 +420,20 @@ export const useExternalJobOrderStats = () => {
         return sum + ((ratePP - companyProfit) * pieces);
       }, 0);
       
+      // Total GST Collected for all orders
+      const totalGstCollected = orders.reduce((sum, order) => sum + (order.gst_amount || 0), 0);
+      
       // Gross Profit for Profit Margin card: company_profit_value × number_of_pieces - job expenses (ALL orders)
       const grossProfitForMargin = orders.reduce((sum, order) => {
         const companyProfit = (order.company_profit_value || 0) * (order.number_of_pieces || 0);
         const jobExpenses = expensesByJob[order.id] || 0;
         return sum + (companyProfit - jobExpenses);
       }, 0);
+      
+      // Profit Margin calculation: Profit = Revenue − (Ops Cost + Expenses + GST Collected)
+      const profitMarginValue = totalAmount - (totalOpsCost + totalJobExpenses + totalGstCollected);
+      // Profit Margin (%) = (Profit ÷ Revenue) × 100
+      const profitMarginPercent = totalAmount > 0 ? (profitMarginValue / totalAmount) * 100 : 0;
 
       // Time-based analytics
       const now = new Date();
@@ -517,7 +525,10 @@ export const useExternalJobOrderStats = () => {
         netProfitMargin,
         totalJobExpenses,
         totalOpsCost,
+        totalGstCollected,
         grossProfitForMargin,
+        profitMarginValue,
+        profitMarginPercent,
         weeklyData,
         monthlyData,
         yearlyData,

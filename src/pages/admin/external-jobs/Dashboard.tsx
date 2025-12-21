@@ -58,7 +58,10 @@ const Dashboard = () => {
     netProfitMargin: stats.netProfitMargin || 0,
     totalJobExpenses: stats.totalJobExpenses || 0,
     totalOpsCost: stats.totalOpsCost || 0,
+    totalGstCollected: stats.totalGstCollected || 0,
     grossProfitForMargin: stats.grossProfitForMargin || 0,
+    profitMarginValue: stats.profitMarginValue || 0,
+    profitMarginPercent: stats.profitMarginPercent || 0,
     statusCounts: stats.statusCounts || {},
     jobStatusCounts: stats.jobStatusCounts || {},
     weeklyData: stats.weeklyData || [],
@@ -85,9 +88,7 @@ const Dashboard = () => {
     ? ((safeStats.paidAmount / safeStats.totalAmount) * 100).toFixed(1)
     : "0.0";
 
-  const profitMargin = safeStats.totalAmount > 0 
-    ? ((safeStats.grossProfit / safeStats.totalAmount) * 100).toFixed(1)
-    : "0.0";
+  const profitMargin = safeStats.profitMarginPercent.toFixed(1);
 
   const avgOrderValue = safeStats.totalOrders > 0 
     ? (safeStats.totalAmount / safeStats.totalOrders).toFixed(2)
@@ -315,7 +316,7 @@ const Dashboard = () => {
           <h3 className="text-lg font-semibold mb-4">Profit Margin</h3>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Gross Profit Margin</span>
+              <span className="text-muted-foreground">Profit Margin</span>
               <span className="text-2xl font-bold text-teal-600">{profitMargin}%</span>
             </div>
             <div className="w-full bg-secondary rounded-full h-4">
@@ -324,7 +325,7 @@ const Dashboard = () => {
                 style={{ width: `${Math.min(Math.max(parseFloat(profitMargin), 0), 100)}%` }}
               />
             </div>
-            <div className="grid grid-cols-4 gap-4 pt-4">
+            <div className="grid grid-cols-5 gap-4 pt-4">
               <div>
                 <p className="text-sm text-muted-foreground">Revenue</p>
                 <p className="text-lg font-semibold">₹{safeStats.totalAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
@@ -338,8 +339,12 @@ const Dashboard = () => {
                 <p className="text-lg font-semibold text-orange-600">₹{safeStats.totalJobExpenses.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
               </div>
               <div>
+                <p className="text-sm text-muted-foreground">GST Collected</p>
+                <p className="text-lg font-semibold text-purple-600">₹{safeStats.totalGstCollected.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
+              </div>
+              <div>
                 <p className="text-sm text-muted-foreground">Gross Profit</p>
-                <p className="text-lg font-semibold text-teal-600">₹{safeStats.grossProfitForMargin.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
+                <p className="text-lg font-semibold text-teal-600">₹{safeStats.profitMarginValue.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
               </div>
             </div>
           </div>
