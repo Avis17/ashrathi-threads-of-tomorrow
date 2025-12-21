@@ -376,11 +376,23 @@ export const useExternalJobOrderStats = () => {
         .reduce((sum, o) => sum + (o.paid_amount || 0), 0);
       const netProfit = paidOrdersAmount - totalOperationsCostForPaid;
 
-      // Calculate expected net profit (pending amount - pending operations cost)
-      // This is the profit we expect to make once all pending payments are collected
-      const pendingOperationsCost = totalOperationsCost - totalOperationsCostForPaid;
-      const expectedNetProfit = pendingAmount - pendingOperationsCost;
-      const expectedNetProfitMargin = pendingAmount > 0 ? (expectedNetProfit / pendingAmount) * 100 : 0;
+      // Calculate expected net profit: Sum of all jobs' (Gross Company Profit - Expenses)
+      // For each job: Expected Net Profit = (Total Revenue - Operations Cost) - Job Expenses
+      // This equals grossProfit (totalAmount - totalOperationsCost) minus all expenses
+      
+      // Fetch expenses for all orders
+      const orderIds = orders.map(o => o.id);
+      const { data: expenses } = await supabase
+        .from('external_job_expenses')
+        .select('*')
+        .in('job_order_id', orderIds);
+      
+      const totalExpenses = expenses?.reduce((sum, exp) => sum + (exp.amount || 0), 0) || 0;
+      
+      // Expected Net Profit = Gross Profit - Total Expenses
+      // Where Gross Profit = Total Revenue - Operations Cost
+      const expectedNetProfit = grossProfit - totalExpenses;
+      const expectedNetProfitMargin = totalAmount > 0 ? (expectedNetProfit / totalAmount) * 100 : 0;
 
       // Time-based analytics
       const now = new Date();
