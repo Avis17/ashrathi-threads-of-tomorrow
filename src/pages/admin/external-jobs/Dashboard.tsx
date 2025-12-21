@@ -123,62 +123,62 @@ const Dashboard = () => {
 
       {/* Stats Cards - Row 1 */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        <Card className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 border-blue-200 dark:border-blue-800">
+        <Card className="p-4 sm:p-6 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 border-blue-200 dark:border-blue-800 min-w-0">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-blue-500/20 rounded-lg">
-              <FileText className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+            <div className="p-2 sm:p-3 bg-blue-500/20 rounded-lg shrink-0">
+              <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 dark:text-blue-400" />
             </div>
-            <div>
-              <p className="text-sm text-blue-700 dark:text-blue-300">Total Orders</p>
-              <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">{safeStats.totalOrders}</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm text-blue-700 dark:text-blue-300 truncate">Total Orders</p>
+              <p className="text-xl sm:text-2xl font-bold text-blue-900 dark:text-blue-100">{safeStats.totalOrders}</p>
             </div>
           </div>
         </Card>
 
-        <Card className="p-6 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900 border-purple-200 dark:border-purple-800">
+        <Card className="p-4 sm:p-6 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900 border-purple-200 dark:border-purple-800 min-w-0">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-purple-500/20 rounded-lg">
-              <Package className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+            <div className="p-2 sm:p-3 bg-purple-500/20 rounded-lg shrink-0">
+              <Package className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600 dark:text-purple-400" />
             </div>
-            <div>
-              <p className="text-sm text-purple-700 dark:text-purple-300">Total Pieces</p>
-              <p className="text-2xl font-bold text-purple-900 dark:text-purple-100">{safeStats.totalPieces.toLocaleString()}</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm text-purple-700 dark:text-purple-300 truncate">Total Pieces</p>
+              <p className="text-xl sm:text-2xl font-bold text-purple-900 dark:text-purple-100 truncate">{safeStats.totalPieces.toLocaleString()}</p>
             </div>
           </div>
         </Card>
 
-        <Card className="p-6 bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950 dark:to-emerald-900 border-emerald-200 dark:border-emerald-800">
+        <Card className="p-4 sm:p-6 bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950 dark:to-emerald-900 border-emerald-200 dark:border-emerald-800 min-w-0">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-emerald-500/20 rounded-lg">
-              <DollarSign className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+            <div className="p-2 sm:p-3 bg-emerald-500/20 rounded-lg shrink-0">
+              <DollarSign className="h-5 w-5 sm:h-6 sm:w-6 text-emerald-600 dark:text-emerald-400" />
             </div>
-            <div>
-              <p className="text-sm text-emerald-700 dark:text-emerald-300">Total Amount</p>
-              <p className="text-2xl font-bold text-emerald-900 dark:text-emerald-100">{formatAmount(safeStats.totalAmount, amountsVisible)}</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm text-emerald-700 dark:text-emerald-300 truncate">Total Amount</p>
+              <p className="text-xl sm:text-2xl font-bold text-emerald-900 dark:text-emerald-100 truncate">{formatAmount(safeStats.totalAmount, amountsVisible)}</p>
             </div>
           </div>
         </Card>
 
-        <Card className="p-6 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 border-green-200 dark:border-green-800">
+        <Card className="p-4 sm:p-6 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 border-green-200 dark:border-green-800 min-w-0">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-green-500/20 rounded-lg">
-              <TrendingUp className="h-6 w-6 text-green-600 dark:text-green-400" />
+            <div className="p-2 sm:p-3 bg-green-500/20 rounded-lg shrink-0">
+              <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-green-600 dark:text-green-400" />
             </div>
-            <div>
-              <p className="text-sm text-green-700 dark:text-green-300">Amount Received</p>
-              <p className="text-2xl font-bold text-green-900 dark:text-green-100">{formatAmount(safeStats.paidAmount, amountsVisible)}</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm text-green-700 dark:text-green-300 truncate">Amount Received</p>
+              <p className="text-xl sm:text-2xl font-bold text-green-900 dark:text-green-100 truncate">{formatAmount(safeStats.paidAmount, amountsVisible)}</p>
             </div>
           </div>
         </Card>
 
-        <Card className="p-6 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950 dark:to-orange-900 border-orange-200 dark:border-orange-800">
+        <Card className="p-4 sm:p-6 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950 dark:to-orange-900 border-orange-200 dark:border-orange-800 min-w-0">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-orange-500/20 rounded-lg">
-              <Clock className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+            <div className="p-2 sm:p-3 bg-orange-500/20 rounded-lg shrink-0">
+              <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-orange-600 dark:text-orange-400" />
             </div>
-            <div>
-              <p className="text-sm text-orange-700 dark:text-orange-300">Pending Amount</p>
-              <p className="text-2xl font-bold text-orange-900 dark:text-orange-100">{formatAmount(safeStats.pendingAmount, amountsVisible)}</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm text-orange-700 dark:text-orange-300 truncate">Pending Amount</p>
+              <p className="text-xl sm:text-2xl font-bold text-orange-900 dark:text-orange-100 truncate">{formatAmount(safeStats.pendingAmount, amountsVisible)}</p>
             </div>
           </div>
         </Card>
@@ -186,77 +186,77 @@ const Dashboard = () => {
 
       {/* Stats Cards - Row 2 */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
-        <Card className="p-6 bg-gradient-to-br from-teal-50 to-teal-100 dark:from-teal-950 dark:to-teal-900 border-teal-200 dark:border-teal-800">
+        <Card className="p-4 sm:p-6 bg-gradient-to-br from-teal-50 to-teal-100 dark:from-teal-950 dark:to-teal-900 border-teal-200 dark:border-teal-800 min-w-0">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-teal-500/20 rounded-lg">
-              <Calculator className="h-6 w-6 text-teal-600 dark:text-teal-400" />
+            <div className="p-2 sm:p-3 bg-teal-500/20 rounded-lg shrink-0">
+              <Calculator className="h-5 w-5 sm:h-6 sm:w-6 text-teal-600 dark:text-teal-400" />
             </div>
-            <div>
-              <p className="text-sm text-teal-700 dark:text-teal-300">Gross Profit</p>
-              <p className="text-2xl font-bold text-teal-900 dark:text-teal-100">{formatAmount(safeStats.grossProfit, amountsVisible)}</p>
-              <p className="text-xs text-teal-600 dark:text-teal-400">Based on billed</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm text-teal-700 dark:text-teal-300 truncate">Gross Profit</p>
+              <p className="text-lg sm:text-2xl font-bold text-teal-900 dark:text-teal-100 truncate">{formatAmount(safeStats.grossProfit, amountsVisible)}</p>
+              <p className="text-xs text-teal-600 dark:text-teal-400 truncate">Based on billed</p>
             </div>
           </div>
         </Card>
 
-        <Card className="p-6 bg-gradient-to-br from-cyan-50 to-cyan-100 dark:from-cyan-950 dark:to-cyan-900 border-cyan-200 dark:border-cyan-800">
+        <Card className="p-4 sm:p-6 bg-gradient-to-br from-cyan-50 to-cyan-100 dark:from-cyan-950 dark:to-cyan-900 border-cyan-200 dark:border-cyan-800 min-w-0">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-cyan-500/20 rounded-lg">
-              <Wallet className="h-6 w-6 text-cyan-600 dark:text-cyan-400" />
+            <div className="p-2 sm:p-3 bg-cyan-500/20 rounded-lg shrink-0">
+              <Wallet className="h-5 w-5 sm:h-6 sm:w-6 text-cyan-600 dark:text-cyan-400" />
             </div>
-            <div>
-              <p className="text-sm text-cyan-700 dark:text-cyan-300">Net Profit</p>
-              <p className="text-2xl font-bold text-cyan-900 dark:text-cyan-100">{formatAmount(safeStats.netProfit, amountsVisible)}</p>
-              <p className="text-xs text-cyan-600 dark:text-cyan-400">Based on received</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm text-cyan-700 dark:text-cyan-300 truncate">Net Profit</p>
+              <p className="text-lg sm:text-2xl font-bold text-cyan-900 dark:text-cyan-100 truncate">{formatAmount(safeStats.netProfit, amountsVisible)}</p>
+              <p className="text-xs text-cyan-600 dark:text-cyan-400 truncate">Based on received</p>
             </div>
           </div>
         </Card>
 
-        <Card className="p-6 bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-950 dark:to-amber-900 border-amber-200 dark:border-amber-800">
+        <Card className="p-4 sm:p-6 bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-950 dark:to-amber-900 border-amber-200 dark:border-amber-800 min-w-0">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-amber-500/20 rounded-lg">
-              <TrendingDown className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+            <div className="p-2 sm:p-3 bg-amber-500/20 rounded-lg shrink-0">
+              <TrendingDown className="h-5 w-5 sm:h-6 sm:w-6 text-amber-600 dark:text-amber-400" />
             </div>
-            <div>
-              <p className="text-sm text-amber-700 dark:text-amber-300">Payment Shortfall</p>
-              <p className="text-2xl font-bold text-amber-900 dark:text-amber-100">{formatAmount(safeStats.paymentAdjustments, amountsVisible)}</p>
-              <p className="text-xs text-amber-600 dark:text-amber-400">Billed vs Received</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm text-amber-700 dark:text-amber-300 truncate">Payment Shortfall</p>
+              <p className="text-lg sm:text-2xl font-bold text-amber-900 dark:text-amber-100 truncate">{formatAmount(safeStats.paymentAdjustments, amountsVisible)}</p>
+              <p className="text-xs text-amber-600 dark:text-amber-400 truncate">Billed vs Received</p>
             </div>
           </div>
         </Card>
 
-        <Card className="p-6 bg-gradient-to-br from-pink-50 to-pink-100 dark:from-pink-950 dark:to-pink-900 border-pink-200 dark:border-pink-800">
+        <Card className="p-4 sm:p-6 bg-gradient-to-br from-pink-50 to-pink-100 dark:from-pink-950 dark:to-pink-900 border-pink-200 dark:border-pink-800 min-w-0">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-pink-500/20 rounded-lg">
-              <BadgeIndianRupee className="h-6 w-6 text-pink-600 dark:text-pink-400" />
+            <div className="p-2 sm:p-3 bg-pink-500/20 rounded-lg shrink-0">
+              <BadgeIndianRupee className="h-5 w-5 sm:h-6 sm:w-6 text-pink-600 dark:text-pink-400" />
             </div>
-            <div>
-              <p className="text-sm text-pink-700 dark:text-pink-300">Commission Paid</p>
-              <p className="text-2xl font-bold text-pink-900 dark:text-pink-100">{formatAmount(safeStats.totalCommission, amountsVisible)}</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm text-pink-700 dark:text-pink-300 truncate">Commission Paid</p>
+              <p className="text-lg sm:text-2xl font-bold text-pink-900 dark:text-pink-100 truncate">{formatAmount(safeStats.totalCommission, amountsVisible)}</p>
             </div>
           </div>
         </Card>
 
-        <Card className="p-6 bg-gradient-to-br from-rose-50 to-rose-100 dark:from-rose-950 dark:to-rose-900 border-rose-200 dark:border-rose-800">
+        <Card className="p-4 sm:p-6 bg-gradient-to-br from-rose-50 to-rose-100 dark:from-rose-950 dark:to-rose-900 border-rose-200 dark:border-rose-800 min-w-0">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-rose-500/20 rounded-lg">
-              <Users className="h-6 w-6 text-rose-600 dark:text-rose-400" />
+            <div className="p-2 sm:p-3 bg-rose-500/20 rounded-lg shrink-0">
+              <Users className="h-5 w-5 sm:h-6 sm:w-6 text-rose-600 dark:text-rose-400" />
             </div>
-            <div>
-              <p className="text-sm text-rose-700 dark:text-rose-300">Operations Cost</p>
-              <p className="text-2xl font-bold text-rose-900 dark:text-rose-100">{formatAmount(safeStats.totalOperationsCost, amountsVisible)}</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm text-rose-700 dark:text-rose-300 truncate">Operations Cost</p>
+              <p className="text-lg sm:text-2xl font-bold text-rose-900 dark:text-rose-100 truncate">{formatAmount(safeStats.totalOperationsCost, amountsVisible)}</p>
             </div>
           </div>
         </Card>
 
-        <Card className="p-6 bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-950 dark:to-indigo-900 border-indigo-200 dark:border-indigo-800">
+        <Card className="p-4 sm:p-6 bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-950 dark:to-indigo-900 border-indigo-200 dark:border-indigo-800 min-w-0">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-indigo-500/20 rounded-lg">
-              <Percent className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
+            <div className="p-2 sm:p-3 bg-indigo-500/20 rounded-lg shrink-0">
+              <Percent className="h-5 w-5 sm:h-6 sm:w-6 text-indigo-600 dark:text-indigo-400" />
             </div>
-            <div>
-              <p className="text-sm text-indigo-700 dark:text-indigo-300">Avg Order Value</p>
-              <p className="text-2xl font-bold text-indigo-900 dark:text-indigo-100">{formatAmount(parseFloat(avgOrderValue), amountsVisible)}</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm text-indigo-700 dark:text-indigo-300 truncate">Avg Order Value</p>
+              <p className="text-lg sm:text-2xl font-bold text-indigo-900 dark:text-indigo-100 truncate">{formatAmount(parseFloat(avgOrderValue), amountsVisible)}</p>
             </div>
           </div>
         </Card>
