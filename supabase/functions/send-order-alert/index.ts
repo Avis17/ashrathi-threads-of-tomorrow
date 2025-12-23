@@ -96,7 +96,7 @@ const handler = async (req: Request): Promise<Response> => {
     `;
 
     const emailResponse = await resend.emails.send({
-      from: "Feather Fashions <hello@featherfashions.in>",
+      from: "Feather Fashions <onboarding@resend.dev>",
       to: emails,
       subject: `🛍️ New Order #${alert.order_number} - ₹${alert.total_amount.toFixed(2)}`,
       html: emailHtml,
