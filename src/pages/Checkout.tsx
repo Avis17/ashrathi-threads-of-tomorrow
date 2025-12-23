@@ -266,6 +266,22 @@ export default function Checkout() {
       // COD flow - Clear cart and navigate
       await clearSelectedItems();
 
+      // Send order alert email
+      try {
+        await supabase.functions.invoke('send-order-alert', {
+          body: {
+            order_id: order.id,
+            order_number: order.order_number,
+            customer_name: selectedAddress.full_name,
+            customer_email: user!.email || '',
+            total_amount: selectedCartTotal + deliveryCharge.charge,
+            items_count: selectedCartItems.reduce((sum, item) => sum + item.quantity, 0),
+          },
+        });
+      } catch (alertError) {
+        console.error('Failed to send order alert:', alertError);
+      }
+
       const remainingItems = cartItems.length - selectedCartItems.length;
       toast({
         title: 'Order Placed Successfully!',

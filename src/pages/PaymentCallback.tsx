@@ -111,6 +111,13 @@ export default function PaymentCallback() {
   // Finalize order after successful payment
   const finalizeOrder = async (order: any) => {
     try {
+      // Get order full details for email
+      const { data: fullOrder } = await supabase
+        .from('orders')
+        .select('total_amount, delivery_name')
+        .eq('id', order.id)
+        .single();
+
       // 1. Update order status to confirmed
       await supabase
         .from('orders')
@@ -122,6 +129,7 @@ export default function PaymentCallback() {
         .eq('id', order.id);
 
       // 2. Convert reserved inventory to ordered for each item
+      const totalItems = (order.order_items || []).reduce((sum: number, item: any) => sum + item.quantity, 0);
       for (const item of order.order_items || []) {
         if (item.selected_size && item.selected_color) {
           await supabase.rpc('convert_reserved_to_ordered', {
@@ -139,6 +147,23 @@ export default function PaymentCallback() {
         .delete()
         .eq('user_id', order.user_id)
         .eq('selected_for_checkout', true);
+
+      // 4. Send order alert email
+      try {
+        const { data: userData } = await supabase.auth.getUser();
+        await supabase.functions.invoke('send-order-alert', {
+          body: {
+            order_id: order.id,
+            order_number: order.order_number,
+            customer_name: fullOrder?.delivery_name || 'Customer',
+            customer_email: userData?.user?.email || '',
+            total_amount: fullOrder?.total_amount || 0,
+            items_count: totalItems,
+          },
+        });
+      } catch (alertError) {
+        console.error('Failed to send order alert:', alertError);
+      }
 
       console.log('Order finalized successfully:', order.order_number);
     } catch (error) {
