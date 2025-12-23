@@ -157,6 +157,184 @@ const WhiteLabelActivewear = () => {
           </div>
         </section>
 
+        {/* Comparison Table Section */}
+        <section className="py-16 md:py-20">
+          <div className="container mx-auto px-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 text-center">
+              White Label vs Private Label vs Custom Activewear Manufacturing
+            </h2>
+            <p className="text-muted-foreground text-center mb-12 max-w-2xl mx-auto">
+              Compare manufacturing approaches to find the right fit for your brand
+            </p>
+            
+            {/* Desktop Table */}
+            <div className="hidden md:block overflow-x-auto max-w-5xl mx-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="text-left p-4 text-foreground font-bold bg-muted/30">Feature</th>
+                    <th className="text-left p-4 text-foreground font-bold bg-neon/10">White Label</th>
+                    <th className="text-left p-4 text-foreground font-bold bg-primary/10">Private Label</th>
+                    <th className="text-left p-4 text-foreground font-bold bg-accent/10">Custom Manufacturing</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b border-border/50">
+                    <td className="p-4 text-muted-foreground font-medium">Product Development</td>
+                    <td className="p-4 text-foreground">Pre-developed styles</td>
+                    <td className="p-4 text-foreground">Semi-custom</td>
+                    <td className="p-4 text-foreground">Fully custom design</td>
+                  </tr>
+                  <tr className="border-b border-border/50 bg-muted/10">
+                    <td className="p-4 text-muted-foreground font-medium">Design Control</td>
+                    <td className="p-4 text-foreground">Very limited</td>
+                    <td className="p-4 text-foreground">Moderate</td>
+                    <td className="p-4 text-foreground">Full control</td>
+                  </tr>
+                  <tr className="border-b border-border/50">
+                    <td className="p-4 text-muted-foreground font-medium">Branding Options</td>
+                    <td className="p-4 text-foreground">Logo & label only</td>
+                    <td className="p-4 text-foreground">Logo, label, tags</td>
+                    <td className="p-4 text-foreground">Complete branding freedom</td>
+                  </tr>
+                  <tr className="border-b border-border/50 bg-muted/10">
+                    <td className="p-4 text-muted-foreground font-medium">Time to Market</td>
+                    <td className="p-4 text-neon font-semibold">Fastest</td>
+                    <td className="p-4 text-foreground">Medium</td>
+                    <td className="p-4 text-foreground">Longer</td>
+                  </tr>
+                  <tr className="border-b border-border/50">
+                    <td className="p-4 text-muted-foreground font-medium">MOQ Requirement</td>
+                    <td className="p-4 text-neon font-semibold">Lowest</td>
+                    <td className="p-4 text-foreground">Medium</td>
+                    <td className="p-4 text-foreground">Higher</td>
+                  </tr>
+                  <tr className="border-b border-border/50 bg-muted/10">
+                    <td className="p-4 text-muted-foreground font-medium">Cost</td>
+                    <td className="p-4 text-neon font-semibold">Lowest</td>
+                    <td className="p-4 text-foreground">Moderate</td>
+                    <td className="p-4 text-foreground">Premium</td>
+                  </tr>
+                  <tr>
+                    <td className="p-4 text-muted-foreground font-medium">Ideal For</td>
+                    <td className="p-4 text-foreground">Startups, gyms</td>
+                    <td className="p-4 text-foreground">Growing brands</td>
+                    <td className="p-4 text-foreground">Premium & export brands</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            
+            {/* Mobile Cards */}
+            <div className="md:hidden space-y-6">
+              {/* White Label Card */}
+              <div className="bg-muted/30 border border-neon/30 rounded-xl p-5">
+                <h3 className="text-xl font-bold text-neon mb-4">White Label</h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between py-2 border-b border-border/30">
+                    <span className="text-muted-foreground text-sm">Product Development</span>
+                    <span className="text-foreground text-sm font-medium">Pre-developed styles</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b border-border/30">
+                    <span className="text-muted-foreground text-sm">Design Control</span>
+                    <span className="text-foreground text-sm font-medium">Very limited</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b border-border/30">
+                    <span className="text-muted-foreground text-sm">Branding Options</span>
+                    <span className="text-foreground text-sm font-medium">Logo & label only</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b border-border/30">
+                    <span className="text-muted-foreground text-sm">Time to Market</span>
+                    <span className="text-neon text-sm font-bold">Fastest</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b border-border/30">
+                    <span className="text-muted-foreground text-sm">MOQ Requirement</span>
+                    <span className="text-neon text-sm font-bold">Lowest</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b border-border/30">
+                    <span className="text-muted-foreground text-sm">Cost</span>
+                    <span className="text-neon text-sm font-bold">Lowest</span>
+                  </div>
+                  <div className="flex justify-between py-2">
+                    <span className="text-muted-foreground text-sm">Ideal For</span>
+                    <span className="text-foreground text-sm font-medium">Startups, gyms</span>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Private Label Card */}
+              <div className="bg-muted/30 border border-primary/30 rounded-xl p-5">
+                <h3 className="text-xl font-bold text-primary mb-4">Private Label</h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between py-2 border-b border-border/30">
+                    <span className="text-muted-foreground text-sm">Product Development</span>
+                    <span className="text-foreground text-sm font-medium">Semi-custom</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b border-border/30">
+                    <span className="text-muted-foreground text-sm">Design Control</span>
+                    <span className="text-foreground text-sm font-medium">Moderate</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b border-border/30">
+                    <span className="text-muted-foreground text-sm">Branding Options</span>
+                    <span className="text-foreground text-sm font-medium">Logo, label, tags</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b border-border/30">
+                    <span className="text-muted-foreground text-sm">Time to Market</span>
+                    <span className="text-foreground text-sm font-medium">Medium</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b border-border/30">
+                    <span className="text-muted-foreground text-sm">MOQ Requirement</span>
+                    <span className="text-foreground text-sm font-medium">Medium</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b border-border/30">
+                    <span className="text-muted-foreground text-sm">Cost</span>
+                    <span className="text-foreground text-sm font-medium">Moderate</span>
+                  </div>
+                  <div className="flex justify-between py-2">
+                    <span className="text-muted-foreground text-sm">Ideal For</span>
+                    <span className="text-foreground text-sm font-medium">Growing brands</span>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Custom Manufacturing Card */}
+              <div className="bg-muted/30 border border-accent/30 rounded-xl p-5">
+                <h3 className="text-xl font-bold text-accent-foreground mb-4">Custom Manufacturing</h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between py-2 border-b border-border/30">
+                    <span className="text-muted-foreground text-sm">Product Development</span>
+                    <span className="text-foreground text-sm font-medium">Fully custom design</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b border-border/30">
+                    <span className="text-muted-foreground text-sm">Design Control</span>
+                    <span className="text-foreground text-sm font-medium">Full control</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b border-border/30">
+                    <span className="text-muted-foreground text-sm">Branding Options</span>
+                    <span className="text-foreground text-sm font-medium text-right">Complete freedom</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b border-border/30">
+                    <span className="text-muted-foreground text-sm">Time to Market</span>
+                    <span className="text-foreground text-sm font-medium">Longer</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b border-border/30">
+                    <span className="text-muted-foreground text-sm">MOQ Requirement</span>
+                    <span className="text-foreground text-sm font-medium">Higher</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b border-border/30">
+                    <span className="text-muted-foreground text-sm">Cost</span>
+                    <span className="text-foreground text-sm font-medium">Premium</span>
+                  </div>
+                  <div className="flex justify-between py-2">
+                    <span className="text-muted-foreground text-sm">Ideal For</span>
+                    <span className="text-foreground text-sm font-medium text-right">Premium & export brands</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Product Range Section */}
         <section className="py-16 md:py-20">
           <div className="container mx-auto px-4">
