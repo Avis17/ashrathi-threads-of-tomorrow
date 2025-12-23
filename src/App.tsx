@@ -70,6 +70,7 @@ import WomensLeggingsSEO from "./pages/seo/WomensLeggings";
 import Womens78Leggings from "./pages/seo/Womens78Leggings";
 import WomensSportsBra from "./pages/seo/WomensSportsBra";
 import WhiteLabelActivewear from "./pages/seo/WhiteLabelActivewear";
+import LowMOQManufacturer from "./pages/seo/LowMOQManufacturer";
 
 const queryClient = new QueryClient();
 
@@ -165,6 +166,7 @@ const App = () => (
                       <Route path="/womens-7-8-leggings" element={<Womens78Leggings />} />
                       <Route path="/womens-sports-bra" element={<WomensSportsBra />} />
                       <Route path="/white-label-activewear-india" element={<WhiteLabelActivewear />} />
+                      <Route path="/low-moq-garment-manufacturer-india" element={<LowMOQManufacturer />} />
                       
                       <Route path="*" element={<NotFound />} />
                     </Routes>
