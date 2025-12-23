@@ -59,6 +59,16 @@ import ShippingReturnRefund from "./pages/ShippingReturnRefund";
 import PaymentCallback from "./pages/PaymentCallback";
 import MarketIntelApp from "./pages/market-intel/MarketIntelApp";
 import B2BEnquiry from "./pages/B2BEnquiry";
+import PrivateLabelActivewear from "./pages/seo/PrivateLabelActivewear";
+import MensSportswear from "./pages/seo/MensSportswear";
+import MensTrackPants from "./pages/seo/MensTrackPants";
+import MensJoggers from "./pages/seo/MensJoggers";
+import MensInnerwear from "./pages/seo/MensInnerwear";
+import MensTshirts from "./pages/seo/MensTshirts";
+import MensShorts from "./pages/seo/MensShorts";
+import WomensLeggingsSEO from "./pages/seo/WomensLeggings";
+import Womens78Leggings from "./pages/seo/Womens78Leggings";
+import WomensSportsBra from "./pages/seo/WomensSportsBra";
 
 const queryClient = new QueryClient();
 
@@ -141,6 +151,18 @@ const App = () => (
                       <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                       <Route path="/shipping-return-refund" element={<ShippingReturnRefund />} />
                       <Route path="/b2b-enquiry" element={<B2BEnquiry />} />
+                      
+                      {/* SEO Landing Pages */}
+                      <Route path="/private-label-activewear-india" element={<PrivateLabelActivewear />} />
+                      <Route path="/mens-sportswear" element={<MensSportswear />} />
+                      <Route path="/mens-track-pants" element={<MensTrackPants />} />
+                      <Route path="/mens-joggers" element={<MensJoggers />} />
+                      <Route path="/mens-innerwear" element={<MensInnerwear />} />
+                      <Route path="/mens-tshirts" element={<MensTshirts />} />
+                      <Route path="/mens-shorts" element={<MensShorts />} />
+                      <Route path="/womens-leggings" element={<WomensLeggingsSEO />} />
+                      <Route path="/womens-7-8-leggings" element={<Womens78Leggings />} />
+                      <Route path="/womens-sports-bra" element={<WomensSportsBra />} />
                       
                       <Route path="*" element={<NotFound />} />
                     </Routes>
