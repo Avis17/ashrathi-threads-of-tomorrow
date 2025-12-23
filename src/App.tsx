@@ -72,6 +72,7 @@ import WomensSportsBra from "./pages/seo/WomensSportsBra";
 import WhiteLabelActivewear from "./pages/seo/WhiteLabelActivewear";
 import LowMOQManufacturer from "./pages/seo/LowMOQManufacturer";
 import ActivewearManufacturerTirupur from "./pages/seo/ActivewearManufacturerTirupur";
+import ExportGarmentManufacturer from "./pages/seo/ExportGarmentManufacturer";
 
 const queryClient = new QueryClient();
 
@@ -169,6 +170,7 @@ const App = () => (
                       <Route path="/white-label-activewear-india" element={<WhiteLabelActivewear />} />
                       <Route path="/low-moq-garment-manufacturer-india" element={<LowMOQManufacturer />} />
                       <Route path="/activewear-manufacturer-tirupur" element={<ActivewearManufacturerTirupur />} />
+                      <Route path="/export-garment-manufacturer-india" element={<ExportGarmentManufacturer />} />
                       
                       <Route path="*" element={<NotFound />} />
                     </Routes>
