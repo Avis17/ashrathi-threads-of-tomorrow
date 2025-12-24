@@ -138,15 +138,15 @@ const Navbar = () => {
 
         {/* Mobile Navigation */}
         {isOpen && (
-          <div className="lg:hidden fixed inset-0 top-[76px] bg-[#F7F7F6] z-50 animate-fade-in">
-            <div className="flex flex-col p-8 space-y-6">
+          <div className="lg:hidden fixed inset-x-0 top-[76px] bottom-0 z-[9999] animate-fade-in overflow-y-auto" style={{ backgroundColor: '#F7F7F6' }}>
+            <div className="flex flex-col p-8 space-y-6 bg-[#F7F7F6] min-h-full">
               {navLinks.map((link) => (
                 <Link
                   key={link.path}
                   to={link.path}
                   onClick={() => setIsOpen(false)}
                   className={`text-2xl font-medium tracking-wide transition-colors ${
-                    isActive(link.path) ? "text-[#1EC9FF]" : "text-[#111111]/80 hover:text-[#1EC9FF]"
+                    isActive(link.path) ? "text-[#1EC9FF]" : "text-[#111111] hover:text-[#1EC9FF]"
                   }`}
                 >
                   {link.name}
@@ -159,14 +159,14 @@ const Navbar = () => {
                     <Link
                       to="/my-orders"
                       onClick={() => setIsOpen(false)}
-                      className="block text-lg text-[#111111]/70 hover:text-[#111111] transition-colors"
+                      className="block text-lg text-[#111111] hover:text-[#1EC9FF] transition-colors"
                     >
                       My Orders
                     </Link>
                     <Link
                       to="/profile"
                       onClick={() => setIsOpen(false)}
-                      className="block text-lg text-[#111111]/70 hover:text-[#111111] transition-colors"
+                      className="block text-lg text-[#111111] hover:text-[#1EC9FF] transition-colors"
                     >
                       My Profile
                     </Link>
@@ -174,14 +174,14 @@ const Navbar = () => {
                       <Link
                         to="/admin"
                         onClick={() => setIsOpen(false)}
-                        className="block text-lg text-[#111111]/70 hover:text-[#111111] transition-colors"
+                        className="block text-lg text-[#111111] hover:text-[#1EC9FF] transition-colors"
                       >
                         Admin Dashboard
                       </Link>
                     )}
                     <button
                       onClick={() => { signOut(); setIsOpen(false); }}
-                      className="block text-lg text-[#111111]/70 hover:text-[#111111] transition-colors"
+                      className="block text-lg text-[#111111] hover:text-[#1EC9FF] transition-colors"
                     >
                       Sign Out
                     </button>
