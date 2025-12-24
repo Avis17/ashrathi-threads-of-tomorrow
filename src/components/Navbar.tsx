@@ -138,51 +138,70 @@ const Navbar = () => {
 
         {/* Mobile Navigation */}
         {isOpen && (
-          <div className="lg:hidden fixed inset-x-0 top-[76px] bottom-0 z-[9999] animate-fade-in overflow-y-auto" style={{ backgroundColor: '#F7F7F6' }}>
-            <div className="flex flex-col p-8 space-y-6 bg-[#F7F7F6] min-h-full">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.path}
-                  to={link.path}
-                  onClick={() => setIsOpen(false)}
-                  className={`text-2xl font-medium tracking-wide transition-colors ${
-                    isActive(link.path) ? "text-[#1EC9FF]" : "text-[#111111] hover:text-[#1EC9FF]"
-                  }`}
-                >
-                  {link.name}
-                </Link>
-              ))}
+          <div className="lg:hidden fixed inset-x-0 top-[76px] bottom-0 z-[9999] animate-fade-in overflow-y-auto bg-[#F7F7F6] backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.1)]">
+            <div className="flex flex-col p-8 space-y-8 min-h-full">
+              {/* Premium navigation links */}
+              <div className="space-y-6">
+                {navLinks.map((link, index) => (
+                  <Link
+                    key={link.path}
+                    to={link.path}
+                    onClick={() => setIsOpen(false)}
+                    className={`block text-xl font-athletic tracking-[0.15em] transition-all duration-300 ${
+                      isActive(link.path) 
+                        ? "text-[#1EC9FF]" 
+                        : "text-[#111111] hover:text-[#1EC9FF] hover:translate-x-2"
+                    }`}
+                    style={{ animationDelay: `${index * 50}ms` }}
+                  >
+                    {link.name.toUpperCase()}
+                    {isActive(link.path) && (
+                      <span className="inline-block ml-3 w-8 h-0.5 bg-[#1EC9FF] align-middle" />
+                    )}
+                  </Link>
+                ))}
+              </div>
               
-              <div className="pt-6 border-t border-black/10 space-y-4">
+              {/* Divider with branding */}
+              <div className="flex items-center gap-4">
+                <div className="flex-1 h-px bg-gradient-to-r from-transparent via-black/10 to-transparent" />
+              </div>
+
+              {/* User actions */}
+              <div className="space-y-5">
                 {user ? (
                   <>
                     <Link
                       to="/my-orders"
                       onClick={() => setIsOpen(false)}
-                      className="block text-lg text-[#111111] hover:text-[#1EC9FF] transition-colors"
+                      className="flex items-center gap-3 text-base font-medium text-[#111111]/80 hover:text-[#1EC9FF] transition-all duration-300 hover:translate-x-2"
                     >
+                      <ShoppingBag className="h-5 w-5" />
                       My Orders
                     </Link>
                     <Link
                       to="/profile"
                       onClick={() => setIsOpen(false)}
-                      className="block text-lg text-[#111111] hover:text-[#1EC9FF] transition-colors"
+                      className="flex items-center gap-3 text-base font-medium text-[#111111]/80 hover:text-[#1EC9FF] transition-all duration-300 hover:translate-x-2"
                     >
+                      <User className="h-5 w-5" />
                       My Profile
                     </Link>
                     {isAdmin && (
                       <Link
                         to="/admin"
                         onClick={() => setIsOpen(false)}
-                        className="block text-lg text-[#111111] hover:text-[#1EC9FF] transition-colors"
+                        className="flex items-center gap-3 text-base font-medium text-[#111111]/80 hover:text-[#1EC9FF] transition-all duration-300 hover:translate-x-2"
                       >
+                        <Shield className="h-5 w-5 text-amber-500" />
                         Admin Dashboard
                       </Link>
                     )}
                     <button
                       onClick={() => { signOut(); setIsOpen(false); }}
-                      className="block text-lg text-[#111111] hover:text-[#1EC9FF] transition-colors"
+                      className="flex items-center gap-3 text-base font-medium text-[#111111]/80 hover:text-red-500 transition-all duration-300 hover:translate-x-2"
                     >
+                      <LogOut className="h-5 w-5" />
                       Sign Out
                     </button>
                   </>
@@ -190,11 +209,19 @@ const Navbar = () => {
                   <Link
                     to="/auth"
                     onClick={() => setIsOpen(false)}
-                    className="block text-lg font-medium text-[#111111]"
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-[#111111] text-white font-athletic tracking-[0.1em] text-sm hover:bg-[#1EC9FF] transition-all duration-300"
                   >
-                    Sign In
+                    <User className="h-4 w-4" />
+                    SIGN IN
                   </Link>
                 )}
+              </div>
+
+              {/* Brand footer */}
+              <div className="mt-auto pt-8">
+                <p className="text-xs font-athletic tracking-[0.2em] text-[#111111]/40">
+                  FEATHER FASHIONS
+                </p>
               </div>
             </div>
           </div>
