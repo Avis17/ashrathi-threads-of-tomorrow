@@ -15,7 +15,7 @@ import { INDIAN_STATES } from '@/lib/constants';
 
 const customerSchema = z.object({
   company_name: z.string().min(1, 'Company name is required').max(200),
-  email: z.string().email('Invalid email address').max(255),
+  email: z.string().email('Invalid email address').max(255).optional().or(z.literal('')),
   phone: z.string().min(10, 'Phone must be at least 10 digits').max(15),
   alt_phone: z.string().max(15).optional(),
   gst_number: z.string()
@@ -61,7 +61,7 @@ export function CustomerForm({ onSubmit, initialData, isLoading }: CustomerFormP
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="email">Email *</Label>
+          <Label htmlFor="email">Email</Label>
           <Input id="email" type="email" {...register('email')} />
           {errors.email && (
             <p className="text-sm text-destructive">{errors.email.message}</p>
