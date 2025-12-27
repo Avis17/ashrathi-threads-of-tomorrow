@@ -477,6 +477,7 @@ export default function InvoiceGenerator() {
         overflow: 'linebreak',
         cellWidth: 'wrap'
       },
+      rowPageBreak: 'avoid',
       alternateRowStyles: { fillColor: [255, 253, 247] }, // Warm cream
       margin: { left: 15, right: 15, top: 57, bottom: 25 },
       showHead: 'everyPage',
