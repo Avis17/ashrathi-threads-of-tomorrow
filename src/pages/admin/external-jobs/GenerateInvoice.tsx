@@ -172,7 +172,44 @@ const GenerateInvoice = () => {
 
     // Table
     const tableStartY = 95 + (addressLines.length * 5);
-    const subtotal = jobOrder.rate_per_piece * jobOrder.number_of_pieces;
+    
+    // Check if this is a custom job with multiple products
+    const isCustomJob = (jobOrder as any).is_custom_job;
+    const customProducts = (jobOrder as any).custom_products_data as Array<{
+      name: string;
+      rate: number;
+      quantity: number;
+      total: number;
+    }> | null;
+    
+    let subtotal = 0;
+    const tableData: string[][] = [];
+    
+    if (isCustomJob && customProducts && customProducts.length > 0) {
+      // Custom job with multiple products - show individual line items
+      customProducts.forEach((product, index) => {
+        const lineTotal = product.rate * product.quantity;
+        subtotal += lineTotal;
+        tableData.push([
+          (index + 1).toString(),
+          sanitizePdfText(product.name),
+          product.quantity.toString(),
+          formatCurrencyAscii(product.rate),
+          formatCurrencyAscii(lineTotal),
+        ]);
+      });
+    } else {
+      // Regular job - single line item
+      subtotal = jobOrder.rate_per_piece * jobOrder.number_of_pieces;
+      tableData.push([
+        "1",
+        sanitizePdfText(jobOrder.style_name),
+        jobOrder.number_of_pieces.toString(),
+        formatCurrencyAscii(jobOrder.rate_per_piece),
+        formatCurrencyAscii(subtotal),
+      ]);
+    }
+    
     let cgstAmount = 0;
     let sgstAmount = 0;
     let total = subtotal;
@@ -186,16 +223,6 @@ const GenerateInvoice = () => {
 
     if (jobOrder.accessories_cost) total += jobOrder.accessories_cost;
     if (jobOrder.delivery_charge) total += jobOrder.delivery_charge;
-
-    const tableData = [
-      [
-        "1",
-        sanitizePdfText(jobOrder.style_name),
-        jobOrder.number_of_pieces.toString(),
-        formatCurrencyAscii(jobOrder.rate_per_piece),
-        formatCurrencyAscii(subtotal),
-      ],
-    ];
 
     if (jobOrder.accessories_cost && jobOrder.accessories_cost > 0) {
       tableData.push([

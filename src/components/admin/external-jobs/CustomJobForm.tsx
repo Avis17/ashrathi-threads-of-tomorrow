@@ -168,12 +168,22 @@ export const CustomJobForm = ({ onBack }: CustomJobFormProps) => {
         }]
       }));
 
+    // Prepare custom products data for storage
+    const customProductsData = products
+      .filter(p => p.productName.trim())
+      .map(p => ({
+        name: p.productName,
+        rate: p.rate,
+        quantity: p.quantity,
+        total: p.rate * p.quantity
+      }));
+
     try {
       await createJob.mutateAsync({
         jobOrder: {
           job_id: generateJobId(),
           company_id: companyId,
-          style_name: styleName || "Custom Multi-Product Job",
+          style_name: "Custom",
           number_of_pieces: totalQuantity,
           order_date: orderDate,
           delivery_date: deliveryDate,
@@ -184,6 +194,8 @@ export const CustomJobForm = ({ onBack }: CustomJobFormProps) => {
           rate_per_piece: ratePerPiece,
           total_amount: productsTotal,
           notes: notes || null,
+          is_custom_job: true,
+          custom_products_data: customProductsData,
         },
         operations,
       });

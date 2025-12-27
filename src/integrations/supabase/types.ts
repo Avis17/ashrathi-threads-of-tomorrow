@@ -908,11 +908,13 @@ export type Database = {
           company_profit_type: string | null
           company_profit_value: number | null
           created_at: string | null
+          custom_products_data: Json | null
           delivery_charge: number | null
           delivery_date: string
           gst_amount: number | null
           gst_percentage: number | null
           id: string
+          is_custom_job: boolean | null
           job_id: string
           job_status: string | null
           notes: string | null
@@ -933,11 +935,13 @@ export type Database = {
           company_profit_type?: string | null
           company_profit_value?: number | null
           created_at?: string | null
+          custom_products_data?: Json | null
           delivery_charge?: number | null
           delivery_date: string
           gst_amount?: number | null
           gst_percentage?: number | null
           id?: string
+          is_custom_job?: boolean | null
           job_id: string
           job_status?: string | null
           notes?: string | null
@@ -958,11 +962,13 @@ export type Database = {
           company_profit_type?: string | null
           company_profit_value?: number | null
           created_at?: string | null
+          custom_products_data?: Json | null
           delivery_charge?: number | null
           delivery_date?: string
           gst_amount?: number | null
           gst_percentage?: number | null
           id?: string
+          is_custom_job?: boolean | null
           job_id?: string
           job_status?: string | null
           notes?: string | null
