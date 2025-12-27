@@ -209,7 +209,7 @@ export default function InvoiceHistory() {
       body: invoice.invoice_items.map((item: any, index: number) => [
         index + 1,
         item.products.name,
-        item.hsn_code || 'N/A',
+        item.hsn_code || '-',
         item.quantity,
         `Rs ${item.price.toFixed(2)}`,
         `Rs ${item.amount.toFixed(2)}`,
