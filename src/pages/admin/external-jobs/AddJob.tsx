@@ -10,6 +10,8 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import {
   Form,
   FormControl,
@@ -36,6 +38,7 @@ import {
 import { format } from "date-fns";
 import { OPERATIONS } from "@/lib/jobOrderCategories";
 import { useCustomCategories } from "@/hooks/useCustomCategories";
+import { CustomJobForm } from "@/components/admin/external-jobs/CustomJobForm";
 
 type CategoryItem = { 
   name: string; 
@@ -70,6 +73,9 @@ const AddJob = () => {
   const createProduct = useCreateExternalJobProduct();
   const createTask = useCreateExternalJobTask();
   const { getCategories, addCustomCategory } = useCustomCategories();
+
+  // Custom Job Mode toggle
+  const [customJobMode, setCustomJobMode] = useState(false);
 
   const [selectedProduct, setSelectedProduct] = useState<string>("");
   const [customProductName, setCustomProductName] = useState("");
@@ -457,22 +463,41 @@ const AddJob = () => {
 
   return (
     <div className="space-y-6 max-w-6xl">
-      <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => navigate("/admin/external-jobs")}
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold">Add New Job Order</h1>
-          <p className="text-muted-foreground mt-1">
-            Create a new job order with operations and pricing
-          </p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate("/admin/external-jobs")}
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold">Add New Job Order</h1>
+            <p className="text-muted-foreground mt-1">
+              {customJobMode 
+                ? "Create a quick custom job with multiple products" 
+                : "Create a new job order with operations and pricing"}
+            </p>
+          </div>
+        </div>
+        
+        {/* Custom Job Mode Toggle */}
+        <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+          <Switch
+            id="customJobMode"
+            checked={customJobMode}
+            onCheckedChange={setCustomJobMode}
+          />
+          <Label htmlFor="customJobMode" className="font-medium cursor-pointer">
+            Custom Job Mode
+          </Label>
         </div>
       </div>
 
+      {customJobMode ? (
+        <CustomJobForm onBack={() => setCustomJobMode(false)} />
+      ) : (
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <Card className="p-6">
@@ -1147,6 +1172,7 @@ const AddJob = () => {
           </div>
         </form>
       </Form>
+      )}
     </div>
   );
 };
