@@ -449,7 +449,7 @@ export default function InvoiceGenerator() {
         return [
           index + 1,
           wrappedName.join('\n'),
-          item.hsn_code || 'N/A',
+          item.hsn_code || '-',
           item.quantity,
           formatCurrencyAscii(item.price),
           formatCurrencyAscii(item.amount),
@@ -511,7 +511,7 @@ export default function InvoiceGenerator() {
     if (hasValidHSN) {
       ensureSpace(40);
       const hsnGroups = groupByHSN(items.filter(item => item.hsn_code && item.hsn_code.trim() !== '').map(item => ({
-        hsn_code: item.hsn_code || 'N/A',
+        hsn_code: item.hsn_code || '-',
         quantity: item.quantity,
         amount: item.amount
       })));
