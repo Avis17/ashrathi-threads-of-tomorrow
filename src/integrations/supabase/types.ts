@@ -1185,32 +1185,35 @@ export type Database = {
       invoice_items: {
         Row: {
           amount: number
+          custom_product_name: string | null
           hsn_code: string
           id: string
           invoice_id: string
           price: number
           product_code: string
-          product_id: string
+          product_id: string | null
           quantity: number
         }
         Insert: {
           amount: number
+          custom_product_name?: string | null
           hsn_code: string
           id?: string
           invoice_id: string
           price: number
           product_code: string
-          product_id: string
+          product_id?: string | null
           quantity: number
         }
         Update: {
           amount?: number
+          custom_product_name?: string | null
           hsn_code?: string
           id?: string
           invoice_id?: string
           price?: number
           product_code?: string
-          product_id?: string
+          product_id?: string | null
           quantity?: number
         }
         Relationships: [

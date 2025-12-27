@@ -28,6 +28,7 @@ import { getHSNCodeByCategory } from '@/lib/hsnCodes';
 
 interface InvoiceItem {
   product_id: string;
+  custom_product_name: string;
   hsn_code: string;
   product_code: string;
   price: number;
@@ -56,6 +57,7 @@ export default function InvoiceGenerator() {
   ]);
   const [items, setItems] = useState<InvoiceItem[]>([{
     product_id: '',
+    custom_product_name: '',
     hsn_code: '',
     product_code: '',
     price: 0,
@@ -122,6 +124,7 @@ export default function InvoiceGenerator() {
       newItems[index] = {
         ...newItems[index],
         product_id: productId,
+        custom_product_name: '', // Clear custom name when selecting a product
         hsn_code: hsnCode,
         product_code: product.product_code || '',
         price: Number(product.price) || 0,
@@ -160,12 +163,23 @@ export default function InvoiceGenerator() {
   const addItem = () => {
     setItems([...items, {
       product_id: '',
+      custom_product_name: '',
       hsn_code: '',
       product_code: '',
       price: 0,
       quantity: 1,
       amount: 0,
     }]);
+  };
+
+  const handleCustomProductNameChange = (index: number, name: string) => {
+    const newItems = [...items];
+    newItems[index] = {
+      ...newItems[index],
+      custom_product_name: name,
+      product_id: '', // Clear product_id when using custom name
+    };
+    setItems(newItems);
   };
 
   const removeItem = (index: number) => {
@@ -183,7 +197,7 @@ export default function InvoiceGenerator() {
 
   const createInvoiceMutation = useMutation({
     mutationFn: async () => {
-      if (!customerId || items.some(i => !i.product_id)) {
+      if (!customerId || items.some(i => !i.product_id && !i.custom_product_name)) {
         throw new Error('Please fill all required fields');
       }
 
@@ -219,7 +233,13 @@ export default function InvoiceGenerator() {
         .from('invoice_items')
         .insert(items.map(item => ({
           invoice_id: invoice.id,
-          ...item,
+          product_id: item.product_id || null,
+          custom_product_name: item.custom_product_name || null,
+          hsn_code: item.hsn_code,
+          product_code: item.product_code,
+          price: item.price,
+          quantity: item.quantity,
+          amount: item.amount,
         })));
 
       if (itemsError) throw itemsError;
@@ -424,7 +444,7 @@ export default function InvoiceGenerator() {
       head: [['S.No', 'Product Description', 'HSN Code', 'Qty', 'Unit Price', 'Amount']],
       body: items.map((item, index) => {
         const product = products?.find(p => p.id === item.product_id);
-        const productName = product?.name || '';
+        const productName = item.custom_product_name || product?.name || '';
         const wrappedName = doc.splitTextToSize(`${productName}\n${item.product_code}`, 58);
         return [
           index + 1,
@@ -812,8 +832,8 @@ export default function InvoiceGenerator() {
         <CardContent className="space-y-4">
           {items.map((item, index) => (
             <div key={index} className="grid grid-cols-12 gap-2 items-end">
-              <div className="col-span-3 space-y-2">
-                <Label>Product *</Label>
+              <div className="col-span-2 space-y-2">
+                <Label>Select Product</Label>
                 <Select
                   value={item.product_id}
                   onValueChange={(value) => handleProductChange(index, value)}
@@ -829,6 +849,15 @@ export default function InvoiceGenerator() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="col-span-2 space-y-2">
+                <Label>Or Custom Name *</Label>
+                <Input
+                  value={item.custom_product_name}
+                  onChange={(e) => handleCustomProductNameChange(index, e.target.value)}
+                  placeholder="Enter product name"
+                />
               </div>
 
               <div className="col-span-2 space-y-2">
