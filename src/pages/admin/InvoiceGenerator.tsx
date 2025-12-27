@@ -478,12 +478,19 @@ export default function InvoiceGenerator() {
         cellWidth: 'wrap'
       },
       alternateRowStyles: { fillColor: [255, 253, 247] }, // Warm cream
-      margin: { left: 15, right: 15 },
+      margin: { left: 15, right: 15, top: 57, bottom: 25 },
+      showHead: 'everyPage',
       didDrawPage: (data) => {
         const pageW = (doc as any).internal.pageSize.getWidth();
         const pageH = (doc as any).internal.pageSize.getHeight();
-        // Header on every page
-        addHeader();
+        const currentPage = (doc as any).internal.getCurrentPageInfo().pageNumber;
+        
+        // Header on pages after the first (first page already has header)
+        if (currentPage > 1) {
+          addHeader();
+          addWatermark();
+        }
+        
         // Premium footer bar with brand message
         doc.setFillColor(45, 64, 87); // Feather Navy
         doc.rect(0, pageH - 18, pageW, 18, 'F');
@@ -497,7 +504,6 @@ export default function InvoiceGenerator() {
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(7);
         const pageCount = (doc as any).internal.getNumberOfPages();
-        const currentPage = (doc as any).internal.getCurrentPageInfo().pageNumber;
         doc.text(`Page ${currentPage} of ${pageCount}`, pageW / 2, pageH - 2.5, { align: 'center' });
         doc.setTextColor(0, 0, 0);
       }
