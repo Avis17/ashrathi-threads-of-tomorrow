@@ -505,49 +505,53 @@ export default function InvoiceGenerator() {
 
     currentY = (doc as any).lastAutoTable.finalY + 10;
     
-    // HSN Summary Table
-    ensureSpace(40);
-    const hsnGroups = groupByHSN(items.map(item => ({
-      hsn_code: item.hsn_code || 'N/A',
-      quantity: item.quantity,
-      amount: item.amount
-    })));
+    // HSN Summary Table - only show if any item has a valid HSN code
+    const hasValidHSN = items.some(item => item.hsn_code && item.hsn_code.trim() !== '');
+    
+    if (hasValidHSN) {
+      ensureSpace(40);
+      const hsnGroups = groupByHSN(items.filter(item => item.hsn_code && item.hsn_code.trim() !== '').map(item => ({
+        hsn_code: item.hsn_code || 'N/A',
+        quantity: item.quantity,
+        amount: item.amount
+      })));
 
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'bold');
-    doc.text('HSN Summary', 15, currentY);
-    currentY += 5;
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.text('HSN Summary', 15, currentY);
+      currentY += 5;
 
-    autoTable(doc, {
-      startY: currentY,
-      head: [['HSN Code', 'Total Qty', 'Taxable Amount']],
-      body: Object.entries(hsnGroups).map(([hsn, data]) => [
-        hsn,
-        data.qty.toString(),
-        formatCurrencyAscii(data.amount)
-      ]),
-      theme: 'plain',
-      headStyles: {
-        fillColor: [248, 250, 252],
-        textColor: [0, 0, 0],
-        fontStyle: 'bold',
-        fontSize: 9,
-        halign: 'left'
-      },
-      bodyStyles: {
-        fontSize: 8,
-        textColor: [0, 0, 0]
-      },
-      columnStyles: {
-        0: { cellWidth: 40, halign: 'left' },
-        1: { halign: 'left', cellWidth: 30 },
-        2: { halign: 'left', cellWidth: 40 }
-      },
-      margin: { left: 15, right: 15 },
-      tableWidth: 110
-    });
+      autoTable(doc, {
+        startY: currentY,
+        head: [['HSN Code', 'Total Qty', 'Taxable Amount']],
+        body: Object.entries(hsnGroups).map(([hsn, data]) => [
+          hsn,
+          data.qty.toString(),
+          formatCurrencyAscii(data.amount)
+        ]),
+        theme: 'plain',
+        headStyles: {
+          fillColor: [248, 250, 252],
+          textColor: [0, 0, 0],
+          fontStyle: 'bold',
+          fontSize: 9,
+          halign: 'left'
+        },
+        bodyStyles: {
+          fontSize: 8,
+          textColor: [0, 0, 0]
+        },
+        columnStyles: {
+          0: { cellWidth: 40, halign: 'left' },
+          1: { halign: 'left', cellWidth: 30 },
+          2: { halign: 'left', cellWidth: 40 }
+        },
+        margin: { left: 15, right: 15 },
+        tableWidth: 110
+      });
 
-    currentY = (doc as any).lastAutoTable.finalY + 10;
+      currentY = (doc as any).lastAutoTable.finalY + 10;
+    }
     ensureSpace(80);
 
     // ========== TOTALS SECTION ==========
