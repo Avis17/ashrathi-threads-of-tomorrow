@@ -473,7 +473,7 @@ export const ExternalJobOrdersList = () => {
                       <TableRow key={order.id}>
                         <TableCell className="font-medium">{order.job_id}</TableCell>
                         <TableCell>{order.external_job_companies?.company_name}</TableCell>
-                        <TableCell>{order.style_name}</TableCell>
+                        <TableCell>{(order as any).is_custom_job ? "Custom" : order.style_name}</TableCell>
                         <TableCell>{order.number_of_pieces}</TableCell>
                         <TableCell>{amountsVisible ? `₹${order.rate_per_piece.toFixed(2)}` : '₹****'}</TableCell>
                         <TableCell className="font-semibold">{amountsVisible ? `₹${displayTotal.toFixed(2)}` : '₹****'}</TableCell>

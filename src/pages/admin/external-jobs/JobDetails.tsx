@@ -405,7 +405,7 @@ const JobDetails = () => {
           </div>
           <div>
             <p className="text-sm text-muted-foreground">Style Name</p>
-            <p className="font-medium">{jobOrder.style_name}</p>
+            <p className="font-medium">{(jobOrder as any).is_custom_job ? "Custom" : jobOrder.style_name}</p>
           </div>
           <div>
             <p className="text-sm text-muted-foreground">Number of Pieces</p>
