@@ -685,7 +685,7 @@ export default function InvoiceGenerator() {
   };
 
   const handlePreviewInvoice = () => {
-    if (!customerId || items.some(i => !i.product_id)) {
+    if (!customerId || items.some(i => !i.product_id && !i.custom_product_name)) {
       toast({ title: 'Please fill all required fields', variant: 'destructive' });
       return;
     }
