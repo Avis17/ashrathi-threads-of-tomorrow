@@ -14,7 +14,22 @@ export default function PrintDeliveryChallan() {
   const { data: items = [], isLoading: itemsLoading } = useDeliveryChallanItems(id || '');
 
   const handlePrint = () => {
-    window.print();
+    if (dc) {
+      // Set document title for the PDF filename
+      const dcDate = format(new Date(dc.dc_date), 'dd-MM-yyyy');
+      const dcType = dc.dc_type.toUpperCase().replace(/_/g, '-');
+      const originalTitle = document.title;
+      document.title = `Delivery-Challan_${dcType}_FF_${dc.dc_number}_${dcDate}`;
+      
+      window.print();
+      
+      // Restore original title after print dialog
+      setTimeout(() => {
+        document.title = originalTitle;
+      }, 100);
+    } else {
+      window.print();
+    }
   };
 
   if (dcLoading || itemsLoading) {
