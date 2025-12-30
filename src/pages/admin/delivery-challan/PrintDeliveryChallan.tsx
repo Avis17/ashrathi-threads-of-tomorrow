@@ -163,14 +163,15 @@ export default function PrintDeliveryChallan() {
                 </tr>
               ))}
             </tbody>
-            <tfoot>
-              <tr className="bg-muted/30 print:bg-gray-50 font-semibold">
-                <td colSpan={5} className="border p-2 text-right">Total Quantity:</td>
-                <td className="border p-2 text-right text-lg">{dc.total_quantity}</td>
-                <td colSpan={2} className="border p-2"></td>
-              </tr>
-            </tfoot>
           </table>
+
+          {/* Total Quantity - Only shown once at the end, not on every page */}
+          <div className="total-quantity-section mb-6 flex justify-end">
+            <div className="border-2 border-gray-300 px-6 py-2 bg-gray-50 print:bg-gray-100">
+              <span className="font-semibold text-gray-600">Total Quantity: </span>
+              <span className="font-bold text-lg">{dc.total_quantity}</span>
+            </div>
+          </div>
 
           {/* Notes */}
           {dc.notes && (
@@ -212,22 +213,21 @@ export default function PrintDeliveryChallan() {
           </div>
         </div>
 
-        {/* Premium Branded Footer - Fixed at bottom of each printed page */}
+        {/* Clean Branded Footer - Fixed at bottom of each printed page */}
         <div className="print-branded-footer hidden print:block">
           <div className="branded-footer-content">
-            <div className="footer-gradient"></div>
+            <div className="footer-line"></div>
             <div className="footer-main">
-              <div className="footer-brand">
-                <span className="brand-name">FEATHER FASHIONS</span>
-                <span className="brand-tagline">Effortless Comfort. Perfect Form.</span>
-              </div>
-              <div className="footer-contact">
-                <span>featherfashions.in</span>
-                <span className="footer-divider">•</span>
-                <span>hello@featherfashions.in</span>
-                <span className="footer-divider">•</span>
-                <span>+91 9789225510</span>
-              </div>
+              <span className="brand-name">FEATHER FASHIONS</span>
+              <span className="brand-separator">|</span>
+              <span className="brand-tagline">Effortless Comfort. Perfect Form.</span>
+            </div>
+            <div className="footer-contact">
+              <span>www.featherfashions.in</span>
+              <span className="footer-dot">•</span>
+              <span>hello@featherfashions.in</span>
+              <span className="footer-dot">•</span>
+              <span>+91 9789225510</span>
             </div>
           </div>
         </div>
@@ -236,10 +236,10 @@ export default function PrintDeliveryChallan() {
       {/* Print Styles */}
       <style>{`
         @media print {
-          /* Remove browser headers and footers */
+          /* Remove browser headers/footers and URL */
           @page {
             size: A4 portrait;
-            margin: 8mm 10mm 25mm 10mm;
+            margin: 10mm 10mm 22mm 10mm;
           }
           
           /* Hide admin dashboard and screen elements */
@@ -288,8 +288,10 @@ export default function PrintDeliveryChallan() {
             break-inside: avoid;
           }
           
-          .print-table tfoot {
-            display: table-footer-group;
+          /* Total quantity section - keep with content, not on every page */
+          .total-quantity-section {
+            page-break-inside: avoid;
+            break-inside: avoid;
           }
           
           /* Declaration section */
@@ -305,68 +307,72 @@ export default function PrintDeliveryChallan() {
             margin-top: 20px;
           }
           
-          /* Premium Branded Footer - appears at bottom of every page */
+          /* Clean Branded Footer - appears at bottom of every page */
           .print-branded-footer {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
-            height: 20mm;
+            height: 18mm;
             display: block !important;
             visibility: visible !important;
+            background: white;
           }
           
           .branded-footer-content {
             height: 100%;
             display: flex;
             flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 4px 16px;
           }
           
-          .footer-gradient {
-            height: 4px;
-            background: linear-gradient(90deg, #7c3aed 0%, #2563eb 50%, #0891b2 100%);
+          .footer-line {
+            width: 100%;
+            height: 1px;
+            background: #e5e7eb;
+            margin-bottom: 6px;
           }
           
           .footer-main {
-            flex: 1;
-            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 8px 16px;
-          }
-          
-          .footer-brand {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 4px;
+            gap: 8px;
+            margin-bottom: 2px;
           }
           
           .brand-name {
-            font-size: 14px;
+            font-size: 12px;
             font-weight: 700;
-            color: white;
-            letter-spacing: 2px;
+            color: #1f2937;
+            letter-spacing: 1.5px;
+          }
+          
+          .brand-separator {
+            color: #d1d5db;
+            font-size: 12px;
           }
           
           .brand-tagline {
             font-size: 10px;
-            color: #c4b5fd;
+            color: #6b7280;
             font-style: italic;
           }
           
           .footer-contact {
             display: flex;
             align-items: center;
-            gap: 8px;
+            justify-content: center;
+            gap: 10px;
             font-size: 9px;
-            color: #a5b4fc;
+            color: #9ca3af;
           }
           
-          .footer-divider {
-            color: #6366f1;
+          .footer-dot {
+            color: #d1d5db;
           }
         }
         
