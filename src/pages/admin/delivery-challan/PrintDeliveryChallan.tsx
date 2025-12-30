@@ -181,7 +181,7 @@ export default function PrintDeliveryChallan() {
           )}
 
           {/* Declaration */}
-          <div className="border rounded-lg p-3 bg-amber-50 mb-8">
+          <div className="border rounded-lg p-3 bg-amber-50 mb-8 print-declaration">
             <p className="text-sm">
               <strong>Declaration:</strong> Goods sent for job work only. Not for sale. 
               Ownership remains with M/s Feather Fashions. These goods are being sent for 
@@ -189,8 +189,8 @@ export default function PrintDeliveryChallan() {
             </p>
           </div>
 
-          {/* Signatures */}
-          <div className="grid grid-cols-4 gap-4 pt-8 border-t">
+          {/* Signatures - Keep together on print */}
+          <div className="print-signatures grid grid-cols-4 gap-4 pt-8 border-t">
             <div className="text-center">
               <div className="border-b border-dashed mb-2 pb-12"></div>
               <p className="text-sm font-medium">Prepared By</p>
@@ -210,8 +210,8 @@ export default function PrintDeliveryChallan() {
           </div>
 
           {/* Footer */}
-          <div className="mt-8 pt-4 border-t text-center text-xs text-muted-foreground">
-            <p>This is a computer-generated document. Page 1 of 1</p>
+          <div className="print-footer mt-8 pt-4 border-t text-center text-xs text-muted-foreground">
+            <p>This is a computer-generated document.</p>
             <p className="mt-1">Printed on: {format(new Date(), 'dd/MM/yyyy hh:mm a')}</p>
           </div>
         </div>
@@ -230,6 +230,40 @@ export default function PrintDeliveryChallan() {
           }
           .print\\:hidden {
             display: none !important;
+          }
+          
+          /* Prevent page breaks inside these sections */
+          .print-declaration {
+            page-break-inside: avoid;
+            break-inside: avoid;
+          }
+          
+          /* Keep signatures together and ensure they appear */
+          .print-signatures {
+            page-break-inside: avoid;
+            break-inside: avoid;
+            page-break-before: auto;
+          }
+          
+          /* Keep footer visible */
+          .print-footer {
+            page-break-inside: avoid;
+            break-inside: avoid;
+          }
+          
+          /* Ensure table rows don't break awkwardly */
+          table {
+            page-break-inside: auto;
+          }
+          tr {
+            page-break-inside: avoid;
+            break-inside: avoid;
+          }
+          thead {
+            display: table-header-group;
+          }
+          tfoot {
+            display: table-footer-group;
           }
         }
       `}</style>
