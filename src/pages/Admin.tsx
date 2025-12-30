@@ -46,6 +46,10 @@ import AppAccessManagement from './admin/AppAccessManagement';
 import ReturnsRejections from './admin/ReturnsRejections';
 import ActivityLogs from './admin/ActivityLogs';
 import Enquiries from './admin/Enquiries';
+import DeliveryChallanList from './admin/delivery-challan/DeliveryChallanList';
+import CreateDeliveryChallan from './admin/delivery-challan/CreateDeliveryChallan';
+import DeliveryChallanView from './admin/delivery-challan/DeliveryChallanView';
+import PrintDeliveryChallan from './admin/delivery-challan/PrintDeliveryChallan';
 
 const Admin = () => {
   const { isAdmin, loading } = useAuth();
@@ -121,6 +125,11 @@ const Admin = () => {
               <Route path="/external-jobs/add-rate-card" element={<AddRateCard />} />
               <Route path="/external-jobs/edit-rate-card/:id" element={<AddRateCard />} />
               <Route path="/external-jobs/companies" element={<CompaniesList />} />
+              <Route path="/delivery-challan" element={<DeliveryChallanList />} />
+              <Route path="/delivery-challan/create" element={<CreateDeliveryChallan />} />
+              <Route path="/delivery-challan/:id" element={<DeliveryChallanView />} />
+              <Route path="/delivery-challan/edit/:id" element={<CreateDeliveryChallan />} />
+              <Route path="/delivery-challan/print/:id" element={<PrintDeliveryChallan />} />
             </Routes>
           </main>
         </div>

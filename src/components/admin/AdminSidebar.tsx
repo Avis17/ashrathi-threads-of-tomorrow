@@ -20,7 +20,8 @@ import {
   ShoppingBag,
   Boxes,
   ShieldCheck,
-  Activity
+  Activity,
+  Truck
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import {
@@ -40,6 +41,7 @@ const menuItems = [
   { title: 'App Access', url: '/admin/app-access', icon: ShieldCheck },
   { title: 'Orders', url: '/admin/orders', icon: ClipboardList },
   { title: 'External Job Orders', url: '/admin/external-jobs', icon: Briefcase },
+  { title: 'Delivery Challan', url: '/admin/delivery-challan', icon: Truck },
   { title: 'Job Management', url: '/admin/job-management', icon: Shirt },
   { title: 'Returns & Quality', url: '/admin/returns', icon: RotateCcw },
   { title: 'Branches', url: '/admin/branches', icon: Building2 },
