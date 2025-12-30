@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { format } from 'date-fns';
 import { ArrowLeft, Plus, Trash2, Save, Printer, User, Truck, Package, Calendar, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -30,7 +30,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { useJobWorkers, useCreateDeliveryChallan, useCreateJobWorker } from '@/hooks/useDeliveryChallans';
+import { useJobWorkers, useCreateDeliveryChallan, useCreateJobWorker, useDeliveryChallan, useDeliveryChallanItems, useUpdateDeliveryChallan } from '@/hooks/useDeliveryChallans';
 import { DC_TYPE_LABELS, PURPOSE_LABELS } from '@/types/deliveryChallan';
 import type { CreateDeliveryChallanInput, DeliveryChallanItem, JobWorker } from '@/types/deliveryChallan';
 
@@ -58,14 +58,32 @@ const emptyItem = (): ItemRow => ({
 
 export default function CreateDeliveryChallan() {
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const isEditMode = !!id;
+  
   const { data: jobWorkers = [] } = useJobWorkers();
+  const { data: existingDC, isLoading: dcLoading } = useDeliveryChallan(id || '');
+  const { data: existingItems = [], isLoading: itemsLoading } = useDeliveryChallanItems(id || '');
   const createDC = useCreateDeliveryChallan();
+  const updateDC = useUpdateDeliveryChallan();
   const createJobWorker = useCreateJobWorker();
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    dc_date: string;
+    dc_type: 'job_work' | 'return' | 'rework';
+    purpose: 'stitching' | 'ironing' | 'packing' | 'embroidery' | 'printing';
+    job_worker_name: string;
+    job_worker_address: string;
+    job_worker_gstin: string;
+    vehicle_number: string;
+    driver_name: string;
+    driver_mobile: string;
+    expected_return_date: string;
+    notes: string;
+  }>({
     dc_date: format(new Date(), 'yyyy-MM-dd'),
-    dc_type: 'job_work' as const,
-    purpose: 'stitching' as const,
+    dc_type: 'job_work',
+    purpose: 'stitching',
     job_worker_name: '',
     job_worker_address: '',
     job_worker_gstin: '',
@@ -86,6 +104,41 @@ export default function CreateDeliveryChallan() {
     phone: '',
     is_active: true,
   });
+
+  // Prefill form data when editing
+  useEffect(() => {
+    if (isEditMode && existingDC) {
+      setFormData({
+        dc_date: existingDC.dc_date,
+        dc_type: existingDC.dc_type,
+        purpose: existingDC.purpose,
+        job_worker_name: existingDC.job_worker_name,
+        job_worker_address: existingDC.job_worker_address || '',
+        job_worker_gstin: existingDC.job_worker_gstin || '',
+        vehicle_number: existingDC.vehicle_number,
+        driver_name: existingDC.driver_name,
+        driver_mobile: existingDC.driver_mobile,
+        expected_return_date: existingDC.expected_return_date || '',
+        notes: existingDC.notes || '',
+      });
+    }
+  }, [isEditMode, existingDC]);
+
+  // Prefill items when editing
+  useEffect(() => {
+    if (isEditMode && existingItems.length > 0) {
+      setItems(existingItems.map(item => ({
+        id: item.id,
+        product_name: item.product_name,
+        sku: item.sku || '',
+        size: item.size || '',
+        color: item.color || '',
+        quantity: item.quantity,
+        uom: item.uom as 'pcs' | 'kg',
+        remarks: item.remarks || '',
+      })));
+    }
+  }, [isEditMode, existingItems]);
 
   const handleWorkerSelect = (workerId: string) => {
     setSelectedWorkerId(workerId);
@@ -136,26 +189,50 @@ export default function CreateDeliveryChallan() {
       return;
     }
 
-    const input: CreateDeliveryChallanInput = {
-      ...formData,
-      expected_return_date: formData.expected_return_date || undefined,
-      items: validItems.map(({ id, ...item }) => ({
-        ...item,
-        sku: item.sku || undefined,
-        size: item.size || undefined,
-        color: item.color || undefined,
-        remarks: item.remarks || undefined,
-      })),
-    };
-
-    const result = await createDC.mutateAsync(input);
-    
-    if (andPrint) {
-      navigate(`/admin/delivery-challan/print/${result.id}`);
+    if (isEditMode && id) {
+      // Update existing DC
+      await updateDC.mutateAsync({
+        id,
+        ...formData,
+        expected_return_date: formData.expected_return_date || null,
+      });
+      
+      if (andPrint) {
+        navigate(`/admin/delivery-challan/print/${id}`);
+      } else {
+        navigate('/admin/delivery-challan');
+      }
     } else {
-      navigate('/admin/delivery-challan');
+      // Create new DC
+      const input: CreateDeliveryChallanInput = {
+        ...formData,
+        expected_return_date: formData.expected_return_date || undefined,
+        items: validItems.map(({ id, ...item }) => ({
+          ...item,
+          sku: item.sku || undefined,
+          size: item.size || undefined,
+          color: item.color || undefined,
+          remarks: item.remarks || undefined,
+        })),
+      };
+
+      const result = await createDC.mutateAsync(input);
+      
+      if (andPrint) {
+        navigate(`/admin/delivery-challan/print/${result.id}`);
+      } else {
+        navigate('/admin/delivery-challan');
+      }
     }
   };
+
+  if (isEditMode && (dcLoading || itemsLoading)) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto animate-fade-in">
@@ -166,8 +243,8 @@ export default function CreateDeliveryChallan() {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold">Create Delivery Challan</h1>
-            <p className="text-muted-foreground text-sm">Fill in the details to create a new DC</p>
+            <h1 className="text-2xl font-bold">{isEditMode ? 'Edit Delivery Challan' : 'Create Delivery Challan'}</h1>
+            <p className="text-muted-foreground text-sm">{isEditMode ? 'Update the DC details' : 'Fill in the details to create a new DC'}</p>
           </div>
         </div>
       </div>
@@ -538,20 +615,20 @@ export default function CreateDeliveryChallan() {
         </Button>
         <Button
           onClick={() => handleSubmit(false)}
-          disabled={createDC.isPending}
+          disabled={createDC.isPending || updateDC.isPending}
           className="gap-2"
         >
           <Save className="h-4 w-4" />
-          Save DC
+          {isEditMode ? 'Update DC' : 'Save DC'}
         </Button>
         <Button
           onClick={() => handleSubmit(true)}
-          disabled={createDC.isPending}
+          disabled={createDC.isPending || updateDC.isPending}
           variant="secondary"
           className="gap-2"
         >
           <Printer className="h-4 w-4" />
-          Save & Print
+          {isEditMode ? 'Update & Print' : 'Save & Print'}
         </Button>
       </div>
     </div>
