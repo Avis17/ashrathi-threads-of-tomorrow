@@ -1,5 +1,5 @@
 import { MeasurementChart } from "@/components/women/MeasurementChart";
-import productImage from "@/assets/women-vneck-collection.jpg";
+// import productImage from "@/assets/women-vneck-collection.jpg";
 
 export default function WomenVNeckTShirt() {
   const measurements = [
@@ -45,13 +45,13 @@ export default function WomenVNeckTShirt() {
           </div>
 
           {/* Product Image */}
-          <div className="mt-16 max-w-6xl mx-auto">
+          {/* <div className="mt-16 max-w-6xl mx-auto">
             <img 
               src={productImage} 
               alt="Women's V Neck T-Shirt Collection" 
               className="w-full rounded-2xl shadow-2xl"
             />
-          </div>
+          </div> */}
         </div>
       </section>
 

@@ -4,7 +4,7 @@ import { ArrowRight, Dumbbell, Wind, Shield } from "lucide-react";
 
 // Import images
 import menHeroModel from "@/assets/men-hero-model.jpg";
-import menGymTees from "@/assets/men-gym-tees.jpg";
+import menGymTees from "@/assets/collections-men-sportswear.jpg";
 import menJoggers from "@/assets/men-joggers.jpg";
 import menTrainingShorts from "@/assets/men-training-shorts.jpg";
 import menTankTops from "@/assets/men-tank-tops.jpg";

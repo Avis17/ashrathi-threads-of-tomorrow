@@ -46,6 +46,10 @@ export default function PrintDeliveryChallan() {
           </Button>
           <h1 className="text-xl font-semibold">Print Preview</h1>
         </div>
+        <p className="text-sm text-muted-foreground print:hidden">
+          Tip: Disable <b>Headers & Footers</b> in print settings for a clean Delivery Challan.
+        </p>
+
         <Button onClick={handlePrint} className="gap-2">
           <Printer className="h-4 w-4" />
           Print DC
@@ -53,7 +57,7 @@ export default function PrintDeliveryChallan() {
       </div>
 
       {/* Printable Content */}
-      <div 
+      <div
         ref={printRef}
         className="print-container bg-white mx-auto max-w-[210mm] print:max-w-none print:m-0 shadow-lg print:shadow-none"
       >
@@ -184,8 +188,8 @@ export default function PrintDeliveryChallan() {
           {/* Declaration */}
           <div className="border rounded-lg p-3 mb-8 print-declaration" style={{ backgroundColor: '#fef3c7' }}>
             <p className="text-sm">
-              <strong>Declaration:</strong> Goods sent for job work only. Not for sale. 
-              Ownership remains with M/s Feather Fashions. These goods are being sent for 
+              <strong>Declaration:</strong> Goods sent for job work only. Not for sale.
+              Ownership remains with M/s Feather Fashions. These goods are being sent for
               processing/job work and will be returned after completion of work.
             </p>
           </div>
@@ -214,7 +218,7 @@ export default function PrintDeliveryChallan() {
         </div>
 
         {/* Clean Branded Footer - Fixed at bottom of each printed page */}
-        <div className="print-branded-footer hidden print:block">
+        {/* <div className="print-branded-footer hidden print:block">
           <div className="branded-footer-content">
             <div className="footer-line"></div>
             <div className="footer-main">
@@ -230,7 +234,7 @@ export default function PrintDeliveryChallan() {
               <span>+91 9789225510</span>
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
 
       {/* Print Styles */}
@@ -239,8 +243,19 @@ export default function PrintDeliveryChallan() {
           /* Remove browser headers/footers and URL */
           @page {
             size: A4 portrait;
-            margin: 10mm 10mm 22mm 10mm;
+            margin: 12mm 12mm 32mm 12mm;
           }
+
+          .print-table tbody tr td {
+            padding: 6px 8px;
+            vertical-align: top;
+          }
+
+          .print-table tbody tr:last-child {
+            page-break-inside: avoid;
+          }
+
+
           
           /* Hide admin dashboard and screen elements */
           body * {
