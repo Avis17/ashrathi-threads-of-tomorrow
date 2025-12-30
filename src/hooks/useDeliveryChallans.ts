@@ -125,7 +125,8 @@ export const useUpdateDeliveryChallan = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async ({ id, ...data }: Partial<DeliveryChallan> & { id: string }) => {
+    mutationFn: async ({ id, items, ...data }: Partial<DeliveryChallan> & { id: string; items?: Omit<DeliveryChallanItem, 'id' | 'delivery_challan_id' | 'created_at'>[] }) => {
+      // Update the DC header
       const { data: dc, error } = await supabase
         .from('delivery_challans')
         .update(data)
@@ -134,11 +135,36 @@ export const useUpdateDeliveryChallan = () => {
         .single();
       
       if (error) throw error;
+      
+      // If items provided, delete old items and insert new ones
+      if (items && items.length > 0) {
+        // Delete existing items
+        const { error: deleteError } = await supabase
+          .from('delivery_challan_items')
+          .delete()
+          .eq('delivery_challan_id', id);
+        
+        if (deleteError) throw deleteError;
+        
+        // Insert new items
+        const itemsWithDcId = items.map(item => ({
+          ...item,
+          delivery_challan_id: id,
+        }));
+        
+        const { error: itemsError } = await supabase
+          .from('delivery_challan_items')
+          .insert(itemsWithDcId as any);
+        
+        if (itemsError) throw itemsError;
+      }
+      
       return dc as DeliveryChallan;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['delivery-challans'] });
       queryClient.invalidateQueries({ queryKey: ['delivery-challan', data.id] });
+      queryClient.invalidateQueries({ queryKey: ['delivery-challan-items', data.id] });
       toast.success('Delivery Challan updated successfully');
     },
     onError: (error: Error) => {

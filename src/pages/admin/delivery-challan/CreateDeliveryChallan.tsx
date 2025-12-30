@@ -190,12 +190,19 @@ export default function CreateDeliveryChallan() {
     }
 
     if (isEditMode && id) {
-      // Update existing DC
+      // Update existing DC with items
       await updateDC.mutateAsync({
         id,
         ...formData,
         expected_return_date: formData.expected_return_date || null,
-      });
+        items: validItems.map(({ id: itemId, ...item }) => ({
+          ...item,
+          sku: item.sku || undefined,
+          size: item.size || undefined,
+          color: item.color || undefined,
+          remarks: item.remarks || undefined,
+        })),
+      } as any);
       
       if (andPrint) {
         navigate(`/admin/delivery-challan/print/${id}`);
