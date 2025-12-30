@@ -66,9 +66,9 @@ export default function PrintDeliveryChallan() {
                 <h1 className="text-2xl font-bold text-primary">FEATHER FASHIONS</h1>
                 <p className="text-sm text-muted-foreground mt-1">Premium Sportswear Manufacturing</p>
                 <p className="text-xs text-muted-foreground mt-2">
-                  123 Industrial Area, Bangalore - 560001<br />
-                  Phone: +91 98765 43210 | Email: info@featherfashions.com<br />
-                  GSTIN: 29XXXXX1234X1ZX
+                  251/1, Vadivel Nagar, Thottipalayam, Pooluvapatti, Tiruppur, Tamil Nadu 641602<br />
+                  Phone: +91 9789225510 | Email: hello@featherfashions.in<br />
+                  Website: featherfashions.in
                 </p>
               </div>
               <div className="text-right">
@@ -160,19 +160,6 @@ export default function PrintDeliveryChallan() {
                   <td className="border p-2 text-right font-semibold">{item.quantity}</td>
                   <td className="border p-2 text-center uppercase">{item.uom}</td>
                   <td className="border p-2 text-sm">{item.remarks || '-'}</td>
-                </tr>
-              ))}
-              {/* Empty rows for padding */}
-              {items.length < 5 && Array.from({ length: 5 - items.length }).map((_, i) => (
-                <tr key={`empty-${i}`}>
-                  <td className="border p-2 text-center text-muted-foreground">{items.length + i + 1}</td>
-                  <td className="border p-2"></td>
-                  <td className="border p-2"></td>
-                  <td className="border p-2"></td>
-                  <td className="border p-2"></td>
-                  <td className="border p-2"></td>
-                  <td className="border p-2"></td>
-                  <td className="border p-2"></td>
                 </tr>
               ))}
             </tbody>
