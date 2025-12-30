@@ -1,10 +1,10 @@
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { format } from 'date-fns';
 import { ArrowLeft, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useDeliveryChallan, useDeliveryChallanItems } from '@/hooks/useDeliveryChallans';
-import { DC_TYPE_LABELS, PURPOSE_LABELS } from '@/types/deliveryChallan';
+import { DC_TYPE_LABELS } from '@/types/deliveryChallan';
 
 export default function PrintDeliveryChallan() {
   const { id } = useParams<{ id: string }>();
@@ -55,10 +55,10 @@ export default function PrintDeliveryChallan() {
       {/* Printable Content */}
       <div 
         ref={printRef}
-        className="bg-white mx-auto max-w-[210mm] print:max-w-none print:m-0 shadow-lg print:shadow-none"
-        style={{ minHeight: '297mm' }}
+        className="print-container bg-white mx-auto max-w-[210mm] print:max-w-none print:m-0 shadow-lg print:shadow-none"
       >
-        <div className="p-8 print:p-6">
+        {/* Main Content Area */}
+        <div className="print-content p-8 print:p-6">
           {/* Header */}
           <div className="border-b-2 border-primary pb-4 mb-6">
             <div className="flex justify-between items-start">
@@ -121,7 +121,7 @@ export default function PrintDeliveryChallan() {
           </div>
 
           {/* Job Worker Details */}
-          <div className="border rounded-lg p-4 mb-6 bg-muted/20">
+          <div className="border rounded-lg p-4 mb-6 bg-muted/20 print:bg-gray-50">
             <h3 className="font-semibold mb-2">Consignee (Job Worker):</h3>
             <p className="font-bold text-lg">{dc.job_worker_name}</p>
             {dc.job_worker_address && (
@@ -136,9 +136,9 @@ export default function PrintDeliveryChallan() {
           </div>
 
           {/* Items Table */}
-          <table className="w-full border-collapse border mb-6">
+          <table className="w-full border-collapse border mb-6 print-table">
             <thead>
-              <tr className="bg-muted/50">
+              <tr className="bg-muted/50 print:bg-gray-100">
                 <th className="border p-2 text-left w-12">S.No</th>
                 <th className="border p-2 text-left">Product / Fabric Name</th>
                 <th className="border p-2 text-left w-24">SKU</th>
@@ -164,7 +164,7 @@ export default function PrintDeliveryChallan() {
               ))}
             </tbody>
             <tfoot>
-              <tr className="bg-muted/30 font-semibold">
+              <tr className="bg-muted/30 print:bg-gray-50 font-semibold">
                 <td colSpan={5} className="border p-2 text-right">Total Quantity:</td>
                 <td className="border p-2 text-right text-lg">{dc.total_quantity}</td>
                 <td colSpan={2} className="border p-2"></td>
@@ -181,7 +181,7 @@ export default function PrintDeliveryChallan() {
           )}
 
           {/* Declaration */}
-          <div className="border rounded-lg p-3 bg-amber-50 mb-8 print-declaration">
+          <div className="border rounded-lg p-3 mb-8 print-declaration" style={{ backgroundColor: '#fef3c7' }}>
             <p className="text-sm">
               <strong>Declaration:</strong> Goods sent for job work only. Not for sale. 
               Ownership remains with M/s Feather Fashions. These goods are being sent for 
@@ -189,30 +189,46 @@ export default function PrintDeliveryChallan() {
             </p>
           </div>
 
-          {/* Signatures - Keep together on print */}
-          <div className="print-signatures grid grid-cols-4 gap-4 pt-8 border-t">
-            <div className="text-center">
-              <div className="border-b border-dashed mb-2 pb-12"></div>
-              <p className="text-sm font-medium">Prepared By</p>
-            </div>
-            <div className="text-center">
-              <div className="border-b border-dashed mb-2 pb-12"></div>
-              <p className="text-sm font-medium">Checked By</p>
-            </div>
-            <div className="text-center">
-              <div className="border-b border-dashed mb-2 pb-12"></div>
-              <p className="text-sm font-medium">Driver Signature</p>
-            </div>
-            <div className="text-center">
-              <div className="border-b border-dashed mb-2 pb-12"></div>
-              <p className="text-sm font-medium">Received By</p>
+          {/* Signatures Section */}
+          <div className="print-signatures">
+            <div className="grid grid-cols-4 gap-4 pt-6 border-t-2 border-gray-300">
+              <div className="text-center">
+                <div className="h-16 border-b-2 border-dashed border-gray-400 mb-2"></div>
+                <p className="text-sm font-semibold text-gray-700">Prepared By</p>
+              </div>
+              <div className="text-center">
+                <div className="h-16 border-b-2 border-dashed border-gray-400 mb-2"></div>
+                <p className="text-sm font-semibold text-gray-700">Checked By</p>
+              </div>
+              <div className="text-center">
+                <div className="h-16 border-b-2 border-dashed border-gray-400 mb-2"></div>
+                <p className="text-sm font-semibold text-gray-700">Driver Signature</p>
+              </div>
+              <div className="text-center">
+                <div className="h-16 border-b-2 border-dashed border-gray-400 mb-2"></div>
+                <p className="text-sm font-semibold text-gray-700">Received By</p>
+              </div>
             </div>
           </div>
+        </div>
 
-          {/* Footer */}
-          <div className="print-footer mt-8 pt-4 border-t text-center text-xs text-muted-foreground">
-            <p>This is a computer-generated document.</p>
-            <p className="mt-1">Printed on: {format(new Date(), 'dd/MM/yyyy hh:mm a')}</p>
+        {/* Premium Branded Footer - Fixed at bottom of each printed page */}
+        <div className="print-branded-footer hidden print:block">
+          <div className="branded-footer-content">
+            <div className="footer-gradient"></div>
+            <div className="footer-main">
+              <div className="footer-brand">
+                <span className="brand-name">FEATHER FASHIONS</span>
+                <span className="brand-tagline">Effortless Comfort. Perfect Form.</span>
+              </div>
+              <div className="footer-contact">
+                <span>featherfashions.in</span>
+                <span className="footer-divider">•</span>
+                <span>hello@featherfashions.in</span>
+                <span className="footer-divider">•</span>
+                <span>+91 9789225510</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -220,50 +236,144 @@ export default function PrintDeliveryChallan() {
       {/* Print Styles */}
       <style>{`
         @media print {
+          /* Remove browser headers and footers */
           @page {
             size: A4 portrait;
-            margin: 10mm;
+            margin: 8mm 10mm 25mm 10mm;
           }
+          
+          /* Hide admin dashboard and screen elements */
+          body * {
+            visibility: hidden;
+          }
+          
+          .print-container,
+          .print-container * {
+            visibility: visible;
+          }
+          
+          .print-container {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+          }
+          
           body {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
+            background: white !important;
           }
+          
+          html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+          
           .print\\:hidden {
             display: none !important;
           }
           
-          /* Prevent page breaks inside these sections */
+          /* Table styling */
+          .print-table {
+            page-break-inside: auto;
+          }
+          
+          .print-table thead {
+            display: table-header-group;
+          }
+          
+          .print-table tbody tr {
+            page-break-inside: avoid;
+            break-inside: avoid;
+          }
+          
+          .print-table tfoot {
+            display: table-footer-group;
+          }
+          
+          /* Declaration section */
           .print-declaration {
             page-break-inside: avoid;
             break-inside: avoid;
           }
           
-          /* Keep signatures together and ensure they appear */
+          /* Signatures - ensure they appear at the end and stay together */
           .print-signatures {
             page-break-inside: avoid;
             break-inside: avoid;
-            page-break-before: auto;
+            margin-top: 20px;
           }
           
-          /* Keep footer visible */
-          .print-footer {
-            page-break-inside: avoid;
-            break-inside: avoid;
+          /* Premium Branded Footer - appears at bottom of every page */
+          .print-branded-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 20mm;
+            display: block !important;
+            visibility: visible !important;
           }
           
-          /* Ensure table rows don't break awkwardly */
-          table {
-            page-break-inside: auto;
+          .branded-footer-content {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
           }
-          tr {
-            page-break-inside: avoid;
-            break-inside: avoid;
+          
+          .footer-gradient {
+            height: 4px;
+            background: linear-gradient(90deg, #7c3aed 0%, #2563eb 50%, #0891b2 100%);
           }
-          thead {
-            display: table-header-group;
+          
+          .footer-main {
+            flex: 1;
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 16px;
           }
-          tfoot {
-            display: table-footer-group;
+          
+          .footer-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 4px;
+          }
+          
+          .brand-name {
+            font-size: 14px;
+            font-weight: 700;
+            color: white;
+            letter-spacing: 2px;
+          }
+          
+          .brand-tagline {
+            font-size: 10px;
+            color: #c4b5fd;
+            font-style: italic;
+          }
+          
+          .footer-contact {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 9px;
+            color: #a5b4fc;
+          }
+          
+          .footer-divider {
+            color: #6366f1;
+          }
+        }
+        
+        /* Screen preview of footer */
+        @media screen {
+          .print-branded-footer {
+            display: none;
           }
         }
       `}</style>
