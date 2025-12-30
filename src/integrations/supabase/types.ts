@@ -569,6 +569,116 @@ export type Database = {
         }
         Relationships: []
       }
+      delivery_challan_items: {
+        Row: {
+          color: string | null
+          created_at: string
+          delivery_challan_id: string
+          id: string
+          product_name: string
+          quantity: number
+          remarks: string | null
+          size: string | null
+          sku: string | null
+          uom: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          delivery_challan_id: string
+          id?: string
+          product_name: string
+          quantity: number
+          remarks?: string | null
+          size?: string | null
+          sku?: string | null
+          uom?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          delivery_challan_id?: string
+          id?: string
+          product_name?: string
+          quantity?: number
+          remarks?: string | null
+          size?: string | null
+          sku?: string | null
+          uom?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_challan_items_delivery_challan_id_fkey"
+            columns: ["delivery_challan_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_challans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_challans: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          dc_date: string
+          dc_number: string
+          dc_type: string
+          driver_mobile: string
+          driver_name: string
+          expected_return_date: string | null
+          id: string
+          job_worker_address: string | null
+          job_worker_gstin: string | null
+          job_worker_name: string
+          notes: string | null
+          purpose: string
+          status: string
+          total_quantity: number
+          updated_at: string
+          vehicle_number: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          dc_date?: string
+          dc_number: string
+          dc_type: string
+          driver_mobile: string
+          driver_name: string
+          expected_return_date?: string | null
+          id?: string
+          job_worker_address?: string | null
+          job_worker_gstin?: string | null
+          job_worker_name: string
+          notes?: string | null
+          purpose: string
+          status?: string
+          total_quantity?: number
+          updated_at?: string
+          vehicle_number: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          dc_date?: string
+          dc_number?: string
+          dc_type?: string
+          driver_mobile?: string
+          driver_name?: string
+          expected_return_date?: string | null
+          id?: string
+          job_worker_address?: string | null
+          job_worker_gstin?: string | null
+          job_worker_name?: string
+          notes?: string | null
+          purpose?: string
+          status?: string
+          total_quantity?: number
+          updated_at?: string
+          vehicle_number?: string
+        }
+        Relationships: []
+      }
       employee_contacts: {
         Row: {
           address: string
@@ -2232,6 +2342,45 @@ export type Database = {
           },
         ]
       }
+      job_workers: {
+        Row: {
+          address: string | null
+          contact_person: string | null
+          created_at: string
+          email: string | null
+          gstin: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          contact_person?: string | null
+          created_at?: string
+          email?: string | null
+          gstin?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          contact_person?: string | null
+          created_at?: string
+          email?: string | null
+          gstin?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       label_templates: {
         Row: {
           canvas_data: Json
@@ -3564,6 +3713,7 @@ export type Database = {
         Args: { product_code: string; production_date?: string }
         Returns: string
       }
+      generate_dc_number: { Args: never; Returns: string }
       generate_fy_invoice_number: {
         Args: { invoice_date: string; invoice_num: number }
         Returns: string
