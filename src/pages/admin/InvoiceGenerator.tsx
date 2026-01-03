@@ -66,6 +66,7 @@ export default function InvoiceGenerator() {
   }]);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewPdfUrl, setPreviewPdfUrl] = useState<string | null>(null);
+  const [customInvoiceNumber, setCustomInvoiceNumber] = useState<string>('');
 
   const { data: customers } = useQuery({
     queryKey: ['customers'],
@@ -201,7 +202,7 @@ export default function InvoiceGenerator() {
         throw new Error('Please fill all required fields');
       }
 
-      const invoiceNumber = invoiceSettings?.current_invoice_number || 1;
+      const invoiceNumber = customInvoiceNumber ? parseInt(customInvoiceNumber) : (invoiceSettings?.current_invoice_number || 1);
 
       const { data: invoice, error: invoiceError } = await supabase
         .from('invoices')
@@ -276,7 +277,7 @@ export default function InvoiceGenerator() {
     }
 
     const doc = new jsPDF();
-    const invoiceNumber = invoiceSettings.current_invoice_number || 1;
+    const invoiceNumber = customInvoiceNumber ? parseInt(customInvoiceNumber) : (invoiceSettings.current_invoice_number || 1);
     const formattedInvoiceNumber = formatInvoiceNumber(invoiceNumber, new Date(invoiceDate));
     const pageHeight = doc.internal.pageSize.height;
     const pageWidth = doc.internal.pageSize.width;
@@ -764,7 +765,12 @@ export default function InvoiceGenerator() {
 
             <div className="space-y-2">
               <Label>Invoice Number</Label>
-              <Input value={invoiceSettings?.current_invoice_number || ''} disabled />
+              <Input 
+                type="number"
+                value={customInvoiceNumber || invoiceSettings?.current_invoice_number || ''} 
+                onChange={(e) => setCustomInvoiceNumber(e.target.value)}
+                placeholder={String(invoiceSettings?.current_invoice_number || '')}
+              />
             </div>
           </div>
 
