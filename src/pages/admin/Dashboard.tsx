@@ -50,7 +50,8 @@ export default function Dashboard() {
 
       const orders = ordersData.data || [];
       const invoices = invoicesData.data || [];
-      const jobOrders = jobOrdersData.data || [];
+      // Filter out disabled job orders from stats
+      const jobOrders = (jobOrdersData.data || []).filter((j: any) => !j.is_disabled);
 
       // === ONLINE ORDERS STATS ===
       const totalOnlineOrders = ordersRes.count || 0;

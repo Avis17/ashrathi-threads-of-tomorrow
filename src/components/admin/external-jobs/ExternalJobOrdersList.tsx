@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Eye, EyeOff, Calendar, Trash2, IndianRupee, Package, TrendingUp, CreditCard, Wallet, BadgeIndianRupee, Receipt, TrendingDown, CircleDollarSign } from "lucide-react";
+import { Search, Eye, EyeOff, Calendar, Trash2, IndianRupee, Package, TrendingUp, CreditCard, Wallet, BadgeIndianRupee, Receipt, TrendingDown, CircleDollarSign, Ban } from "lucide-react";
 import { useDeleteExternalJobOrder } from "@/hooks/useExternalJobOrders";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -66,6 +66,7 @@ export const ExternalJobOrdersList = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [jobStatusFilter, setJobStatusFilter] = useState<string>("all");
   const [gstFilter, setGstFilter] = useState<string>("all");
+  const [disabledFilter, setDisabledFilter] = useState<string>("active"); // Default to showing only active
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [orderToDelete, setOrderToDelete] = useState<string | null>(null);
   const [amountsVisible, setAmountsVisible] = useState(false);
@@ -100,28 +101,39 @@ export const ExternalJobOrdersList = () => {
         (gstFilter === "with_gst" && hasGst) || 
         (gstFilter === "without_gst" && !hasGst);
 
-      return matchesSearch && matchesPaymentStatus && matchesJobStatus && matchesGstFilter;
+      // Disabled filter
+      const isDisabled = (order as any).is_disabled || false;
+      const matchesDisabledFilter = disabledFilter === "all" || 
+        (disabledFilter === "active" && !isDisabled) || 
+        (disabledFilter === "disabled" && isDisabled);
+
+      return matchesSearch && matchesPaymentStatus && matchesJobStatus && matchesGstFilter && matchesDisabledFilter;
     });
-  }, [orders, search, statusFilter, jobStatusFilter, gstFilter]);
+  }, [orders, search, statusFilter, jobStatusFilter, gstFilter, disabledFilter]);
+
+  // Calculate stats based on filtered orders (exclude disabled jobs from stats)
+  const activeFilteredOrders = useMemo(() => {
+    return filteredOrders?.filter(order => !(order as any).is_disabled);
+  }, [filteredOrders]);
 
   // Calculate stats based on filtered orders
   // Fetch expenses for all orders for net profit calculation
   const { data: allExpenses } = useQuery({
-    queryKey: ['external-job-expenses-all', filteredOrders?.map(o => o.id)],
+    queryKey: ['external-job-expenses-all', activeFilteredOrders?.map(o => o.id)],
     queryFn: async () => {
-      if (!filteredOrders || filteredOrders.length === 0) return [];
+      if (!activeFilteredOrders || activeFilteredOrders.length === 0) return [];
       const { data } = await supabase
         .from('external_job_expenses')
         .select('*')
-        .in('job_order_id', filteredOrders.map(o => o.id));
+        .in('job_order_id', activeFilteredOrders.map(o => o.id));
       return data || [];
     },
-    enabled: filteredOrders && filteredOrders.length > 0,
+    enabled: activeFilteredOrders && activeFilteredOrders.length > 0,
   });
 
-  // Calculate stats based on filtered orders
+  // Calculate stats based on active (non-disabled) filtered orders only
   const stats = useMemo(() => {
-    if (!filteredOrders || filteredOrders.length === 0) {
+    if (!activeFilteredOrders || activeFilteredOrders.length === 0) {
       return {
         totalOrders: 0,
         totalAmount: 0,
@@ -136,19 +148,19 @@ export const ExternalJobOrdersList = () => {
       };
     }
 
-    const totalOrders = filteredOrders.length;
-    const totalAmount = filteredOrders.reduce((sum, order) => {
+    const totalOrders = activeFilteredOrders.length;
+    const totalAmount = activeFilteredOrders.reduce((sum, order) => {
       const amount = order.gst_amount && order.gst_amount > 0 
         ? (order.total_with_gst || order.total_amount) 
         : order.total_amount;
       return sum + (amount || 0);
     }, 0);
-    const paidAmount = filteredOrders.reduce((sum, order) => sum + (order.paid_amount || 0), 0);
+    const paidAmount = activeFilteredOrders.reduce((sum, order) => sum + (order.paid_amount || 0), 0);
     const pendingAmount = totalAmount - paidAmount;
-    const totalPieces = filteredOrders.reduce((sum, order) => sum + (order.number_of_pieces || 0), 0);
+    const totalPieces = activeFilteredOrders.reduce((sum, order) => sum + (order.number_of_pieces || 0), 0);
     
     // Calculate total GST amount
-    const totalGstAmount = filteredOrders.reduce((sum, order) => sum + (order.gst_amount || 0), 0);
+    const totalGstAmount = activeFilteredOrders.reduce((sum, order) => sum + (order.gst_amount || 0), 0);
 
     // Group expenses by job_order_id
     const expensesByJob = allExpenses?.reduce((acc, exp) => {
@@ -161,7 +173,7 @@ export const ExternalJobOrdersList = () => {
     let netProfitReceivable = 0;
     let paymentShortfall = 0;
     
-    filteredOrders.forEach((order: any) => {
+    activeFilteredOrders.forEach((order: any) => {
       const isPaid = order.payment_status === 'paid';
       const billedAmount = order.gst_amount && order.gst_amount > 0 
         ? (order.total_with_gst || order.total_amount) 
@@ -211,7 +223,7 @@ export const ExternalJobOrdersList = () => {
       totalGstAmount,
       paymentShortfall,
     };
-  }, [filteredOrders, allExpenses]);
+  }, [activeFilteredOrders, allExpenses]);
 
   const getPaymentStatusBadge = (status: string) => {
     const colorClasses: Record<string, string> = {
@@ -443,6 +455,16 @@ export const ExternalJobOrdersList = () => {
                 <SelectItem value="cancelled">Cancelled</SelectItem>
               </SelectContent>
             </Select>
+            <Select value={disabledFilter} onValueChange={setDisabledFilter}>
+              <SelectTrigger className="w-full sm:w-[140px]">
+                <SelectValue placeholder="Active Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Orders</SelectItem>
+                <SelectItem value="active">Active Only</SelectItem>
+                <SelectItem value="disabled">Disabled Only</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="rounded-md border">
@@ -468,10 +490,21 @@ export const ExternalJobOrdersList = () => {
                   filteredOrders.map((order) => {
                     const hasGst = (order.gst_percentage && order.gst_percentage > 0) || (order.gst_amount && order.gst_amount > 0);
                     const displayTotal = hasGst ? (order.total_with_gst || order.total_amount) : order.total_amount;
+                    const isDisabled = (order as any).is_disabled || false;
                     
                     return (
-                      <TableRow key={order.id}>
-                        <TableCell className="font-medium">{order.job_id}</TableCell>
+                      <TableRow key={order.id} className={isDisabled ? 'opacity-50 bg-muted/30' : ''}>
+                        <TableCell className="font-medium">
+                          <div className="flex items-center gap-2">
+                            {order.job_id}
+                            {isDisabled && (
+                              <Badge variant="destructive" className="text-xs px-1 py-0">
+                                <Ban className="h-3 w-3 mr-1" />
+                                Disabled
+                              </Badge>
+                            )}
+                          </div>
+                        </TableCell>
                         <TableCell>{order.external_job_companies?.company_name}</TableCell>
                         <TableCell>{(order as any).is_custom_job ? "Custom" : order.style_name}</TableCell>
                         <TableCell>{order.number_of_pieces}</TableCell>
