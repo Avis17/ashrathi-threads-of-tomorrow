@@ -290,12 +290,12 @@ export const useDeleteExternalJobPayment = () => {
   });
 };
 
-// Stats for dashboard
+// Stats for dashboard (excludes disabled jobs)
 export const useExternalJobOrderStats = () => {
   return useQuery({
     queryKey: ['external-job-order-stats'],
     queryFn: async () => {
-      const { data: orders, error } = await supabase
+      const { data: allOrders, error } = await supabase
         .from('external_job_orders')
         .select(`
           *,
@@ -305,6 +305,9 @@ export const useExternalJobOrderStats = () => {
           )
         `);
       if (error) throw error;
+
+      // Filter out disabled jobs for stats calculations
+      const orders = allOrders.filter(order => !(order as any).is_disabled);
 
       const totalAmount = orders.reduce((sum, order) => sum + (order.total_with_gst || order.total_amount || 0), 0);
       const paidAmount = orders.reduce((sum, order) => sum + (order.paid_amount || 0), 0);

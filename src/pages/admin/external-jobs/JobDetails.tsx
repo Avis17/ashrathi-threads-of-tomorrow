@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Calendar, DollarSign, Package, Clock, FileText, Building2, Trash2, Pencil, Receipt, TrendingUp, Wallet, Plus } from "lucide-react";
+import { ArrowLeft, Calendar, DollarSign, Package, Clock, FileText, Building2, Trash2, Pencil, Receipt, TrendingUp, Wallet, Plus, Ban } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
@@ -73,6 +74,7 @@ const JobDetails = () => {
   // Local state for payment status to ensure UI updates
   const [localPaymentStatus, setLocalPaymentStatus] = useState<string>("");
   const [localJobStatus, setLocalJobStatus] = useState<string>("");
+  const [isDisabled, setIsDisabled] = useState<boolean>(false);
 
   // Edit mode for job information
   const [isEditingJob, setIsEditingJob] = useState(false);
@@ -88,6 +90,7 @@ const JobDetails = () => {
       setGstPercentage(jobOrder.gst_percentage || 0);
       setLocalPaymentStatus(jobOrder.payment_status || "unpaid");
       setLocalJobStatus(jobOrder.job_status || "pending");
+      setIsDisabled((jobOrder as any).is_disabled || false);
       // Initialize edit fields
       setEditNumberOfPieces(jobOrder.number_of_pieces);
       setEditOrderDate(jobOrder.order_date || (jobOrder.created_at ? format(new Date(jobOrder.created_at), 'yyyy-MM-dd') : ''));
@@ -193,6 +196,22 @@ const JobDetails = () => {
     }
   };
 
+  const handleDisabledToggle = async (disabled: boolean) => {
+    const previousValue = isDisabled;
+    setIsDisabled(disabled);
+    try {
+      await updateStatus.mutateAsync({
+        id: jobOrder.id,
+        data: { is_disabled: disabled } as any,
+      });
+      toast.success(disabled ? 'Job disabled - excluded from stats' : 'Job enabled - included in stats');
+      refetch();
+    } catch (error: any) {
+      setIsDisabled(previousValue);
+      toast.error(error.message || 'Failed to update job status');
+    }
+  };
+
   // Calculate totals - include GST in balance
   const baseTotal = jobOrder?.total_amount || 0;
   const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
@@ -276,11 +295,26 @@ const JobDetails = () => {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-3xl font-bold">{jobOrder.job_id}</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-3xl font-bold">{jobOrder.job_id}</h1>
+              {isDisabled && (
+                <Badge variant="destructive" className="text-xs">
+                  DISABLED
+                </Badge>
+              )}
+            </div>
             <p className="text-muted-foreground mt-1">Job Order Details</p>
           </div>
         </div>
-        <div className="flex gap-3">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 border rounded-lg px-3 py-2">
+            <Ban className={`h-4 w-4 ${isDisabled ? 'text-destructive' : 'text-muted-foreground'}`} />
+            <span className="text-sm font-medium">Disabled</span>
+            <Switch
+              checked={isDisabled}
+              onCheckedChange={handleDisabledToggle}
+            />
+          </div>
           <Button
             variant="outline"
             size="sm"

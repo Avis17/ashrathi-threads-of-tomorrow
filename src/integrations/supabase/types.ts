@@ -1025,6 +1025,7 @@ export type Database = {
           gst_percentage: number | null
           id: string
           is_custom_job: boolean | null
+          is_disabled: boolean | null
           job_id: string
           job_status: string | null
           notes: string | null
@@ -1052,6 +1053,7 @@ export type Database = {
           gst_percentage?: number | null
           id?: string
           is_custom_job?: boolean | null
+          is_disabled?: boolean | null
           job_id: string
           job_status?: string | null
           notes?: string | null
@@ -1079,6 +1081,7 @@ export type Database = {
           gst_percentage?: number | null
           id?: string
           is_custom_job?: boolean | null
+          is_disabled?: boolean | null
           job_id?: string
           job_status?: string | null
           notes?: string | null
