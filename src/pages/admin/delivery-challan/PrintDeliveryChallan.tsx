@@ -97,27 +97,26 @@ export default function PrintDeliveryChallan() {
         className="print-container bg-white mx-auto max-w-[210mm] print:max-w-none print:m-0 shadow-lg print:shadow-none"
       >
         {/* Main Content Area */}
-        <div className="print-content p-8 print:p-6">
-          {/* Header */}
-          <div className="border-b-2 border-primary pb-4 mb-6">
+        <div className="print-content p-6 print:p-4">
+          {/* Header - Compact */}
+          <div className="border-b-2 border-primary pb-3 mb-4">
             <div className="flex justify-between items-start">
               <div>
-                <h1 className="text-2xl font-bold text-primary">FEATHER FASHIONS</h1>
-                <p className="text-sm text-muted-foreground mt-1">Premium Sportswear Manufacturing</p>
-                <p className="text-xs text-muted-foreground mt-2">
+                <h1 className="text-xl font-bold text-primary">FEATHER FASHIONS</h1>
+                <p className="text-xs text-muted-foreground">Premium Sportswear Manufacturing</p>
+                <p className="text-[10px] text-muted-foreground mt-1 leading-tight">
                   251/1, Vadivel Nagar, Thottipalayam, Pooluvapatti, Tiruppur, Tamil Nadu 641602<br />
-                  Phone: +91 9789225510 | Email: hello@featherfashions.in<br />
-                  Website: featherfashions.in
+                  Phone: +91 9789225510 | Email: hello@featherfashions.in | Web: featherfashions.in
                 </p>
               </div>
               <div className="text-right">
-                <h2 className="text-lg font-bold border-2 border-primary px-4 py-2">
+                <h2 className="text-sm font-bold border-2 border-primary px-3 py-1.5">
                   {headerTitle}
                 </h2>
-                <p className="text-sm text-muted-foreground mt-2">
+                <p className="text-xs text-muted-foreground mt-1">
                   {DC_TYPE_LABELS[dc.dc_type]}
                 </p>
-                <p className={`text-xs font-semibold mt-1 px-2 py-1 rounded ${
+                <p className={`text-[10px] font-semibold mt-1 px-2 py-0.5 rounded inline-block ${
                   isJobWorkTaken ? 'bg-teal-100 text-teal-700' : 'bg-indigo-100 text-indigo-700'
                 }`}>
                   {JOB_WORK_DIRECTION_LABELS[direction]}
@@ -126,130 +125,132 @@ export default function PrintDeliveryChallan() {
             </div>
           </div>
 
-          {/* DC Info Grid */}
-          <div className="grid grid-cols-2 gap-6 mb-6">
-            <div className="space-y-2">
+          {/* DC Info Grid - Compact */}
+          <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
+            <div className="space-y-1">
               <div className="flex">
-                <span className="w-32 text-muted-foreground">DC Number:</span>
-                <span className="font-bold">{dc.dc_number}</span>
+                <span className="w-28 text-muted-foreground text-xs">DC Number:</span>
+                <span className="font-bold text-xs">{dc.dc_number}</span>
               </div>
               <div className="flex">
-                <span className="w-32 text-muted-foreground">DC Date:</span>
-                <span className="font-medium">{format(new Date(dc.dc_date), 'dd/MM/yyyy')}</span>
+                <span className="w-28 text-muted-foreground text-xs">DC Date:</span>
+                <span className="font-medium text-xs">{format(new Date(dc.dc_date), 'dd/MM/yyyy')}</span>
               </div>
               <div className="flex">
-                <span className="w-32 text-muted-foreground">Purpose:</span>
-                <span className="font-medium capitalize">{displayPurposes}</span>
+                <span className="w-28 text-muted-foreground text-xs">Purpose:</span>
+                <span className="font-medium capitalize text-xs">{displayPurposes}</span>
               </div>
               {dc.expected_return_date && (
                 <div className="flex">
-                  <span className="w-32 text-muted-foreground">Expected Return:</span>
-                  <span className="font-medium">{format(new Date(dc.expected_return_date), 'dd/MM/yyyy')}</span>
+                  <span className="w-28 text-muted-foreground text-xs">Expected Return:</span>
+                  <span className="font-medium text-xs">{format(new Date(dc.expected_return_date), 'dd/MM/yyyy')}</span>
                 </div>
               )}
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1">
               <div className="flex">
-                <span className="w-32 text-muted-foreground">Vehicle No:</span>
-                <span className="font-bold font-mono">{dc.vehicle_number}</span>
+                <span className="w-28 text-muted-foreground text-xs">Vehicle No:</span>
+                <span className="font-bold font-mono text-xs">{dc.vehicle_number}</span>
               </div>
               <div className="flex">
-                <span className="w-32 text-muted-foreground">Driver Name:</span>
-                <span className="font-medium">{dc.driver_name}</span>
+                <span className="w-28 text-muted-foreground text-xs">Driver Name:</span>
+                <span className="font-medium text-xs">{dc.driver_name}</span>
               </div>
               <div className="flex">
-                <span className="w-32 text-muted-foreground">Driver Mobile:</span>
-                <span className="font-mono">{dc.driver_mobile}</span>
+                <span className="w-28 text-muted-foreground text-xs">Driver Mobile:</span>
+                <span className="font-mono text-xs">{dc.driver_mobile}</span>
               </div>
             </div>
           </div>
 
-          {/* Job Worker / Principal Company Details */}
-          <div className="border rounded-lg p-4 mb-6 bg-muted/20 print:bg-gray-50">
-            <h3 className="font-semibold mb-2">{consigneeLabel}</h3>
-            <p className="font-bold text-lg">{dc.job_worker_name}</p>
+          {/* Job Worker / Principal Company Details - Compact */}
+          <div className="border rounded p-3 mb-4 bg-muted/20 print:bg-gray-50">
+            <h3 className="font-semibold text-xs mb-1">{consigneeLabel}</h3>
+            <p className="font-bold text-sm">{dc.job_worker_name}</p>
             {dc.job_worker_address && (
-              <p className="text-sm text-muted-foreground mt-1">{dc.job_worker_address}</p>
+              <p className="text-xs text-muted-foreground">{dc.job_worker_address}</p>
             )}
             {dc.job_worker_gstin && (
-              <p className="text-sm mt-1">
+              <p className="text-xs">
                 <span className="text-muted-foreground">GSTIN: </span>
                 <span className="font-mono">{dc.job_worker_gstin}</span>
               </p>
             )}
           </div>
 
-          {/* Items Table */}
-          <table className="w-full border-collapse border mb-6 print-table">
+          {/* Items Table - Compact */}
+          <table className="w-full border-collapse border mb-4 print-table text-xs">
             <thead>
               <tr className="bg-muted/50 print:bg-gray-100">
-                <th className="border p-2 text-left w-12">S.No</th>
-                <th className="border p-2 text-left">Product / Fabric Name</th>
-                <th className="border p-2 text-left w-24">SKU</th>
-                <th className="border p-2 text-left w-16">Size</th>
-                <th className="border p-2 text-left w-20">Color</th>
-                <th className="border p-2 text-right w-20">Qty</th>
-                <th className="border p-2 text-center w-16">UOM</th>
-                <th className="border p-2 text-left">Remarks</th>
+                <th className="border px-2 py-1.5 text-left w-10">S.No</th>
+                <th className="border px-2 py-1.5 text-left">Product / Fabric Name</th>
+                <th className="border px-2 py-1.5 text-left w-20">SKU</th>
+                <th className="border px-2 py-1.5 text-left w-14">Size</th>
+                <th className="border px-2 py-1.5 text-left w-16">Color</th>
+                <th className="border px-2 py-1.5 text-right w-16">Qty</th>
+                <th className="border px-2 py-1.5 text-center w-14">UOM</th>
+                <th className="border px-2 py-1.5 text-left">Remarks</th>
               </tr>
             </thead>
             <tbody>
               {items.map((item, index) => (
                 <tr key={item.id}>
-                  <td className="border p-2 text-center">{index + 1}</td>
-                  <td className="border p-2 font-medium">{item.product_name}</td>
-                  <td className="border p-2 font-mono text-sm">{item.sku || '-'}</td>
-                  <td className="border p-2">{item.size || '-'}</td>
-                  <td className="border p-2">{item.color || '-'}</td>
-                  <td className="border p-2 text-right font-semibold">{item.quantity}</td>
-                  <td className="border p-2 text-center uppercase">{item.uom}</td>
-                  <td className="border p-2 text-sm">{item.remarks || '-'}</td>
+                  <td className="border px-2 py-1.5 text-center">{index + 1}</td>
+                  <td className="border px-2 py-1.5 font-medium">{item.product_name}</td>
+                  <td className="border px-2 py-1.5 font-mono">{item.sku || '-'}</td>
+                  <td className="border px-2 py-1.5">{item.size || '-'}</td>
+                  <td className="border px-2 py-1.5">{item.color || '-'}</td>
+                  <td className="border px-2 py-1.5 text-right font-semibold">{item.quantity}</td>
+                  <td className="border px-2 py-1.5 text-center uppercase">{item.uom}</td>
+                  <td className="border px-2 py-1.5">{item.remarks || '-'}</td>
                 </tr>
               ))}
             </tbody>
           </table>
 
-          {/* Total Quantity - Only shown once at the end, not on every page */}
-          <div className="total-quantity-section mb-6 flex justify-end">
-            <div className="border-2 border-gray-300 px-6 py-2 bg-gray-50 print:bg-gray-100">
-              <span className="font-semibold text-gray-600">Total Quantity: </span>
-              <span className="font-bold text-lg">{dc.total_quantity}</span>
+          {/* Total Quantity - Compact */}
+          <div className="total-quantity-section mb-4 flex justify-end">
+            <div className="border-2 border-gray-300 px-4 py-1.5 bg-gray-50 print:bg-gray-100">
+              <span className="font-semibold text-gray-600 text-xs">Total Quantity: </span>
+              <span className="font-bold text-sm">{dc.total_quantity}</span>
             </div>
           </div>
 
-          {/* Notes */}
+          {/* Notes - Compact */}
           {dc.notes && (
-            <div className="mb-6">
-              <h4 className="font-semibold mb-1">Notes:</h4>
-              <p className="text-sm border rounded p-2 bg-muted/10">{dc.notes}</p>
+            <div className="mb-4">
+              <h4 className="font-semibold text-xs mb-1">Notes:</h4>
+              <p className="text-xs border rounded p-2 bg-muted/10">{dc.notes}</p>
             </div>
           )}
 
-          {/* Declaration */}
-          <div className="border rounded-lg p-3 mb-8 print-declaration" style={{ backgroundColor: '#fef3c7' }}>
-            <p className="text-sm">
+          {/* Declaration - Compact */}
+          <div className="border rounded p-2 mb-6 print-declaration" style={{ backgroundColor: '#fef3c7' }}>
+            <p className="text-xs">
               <strong>Declaration:</strong> {declarationText}
             </p>
           </div>
 
-          {/* Signatures Section */}
+          {/* Signatures Section - Professional */}
           <div className="print-signatures">
-            <div className="grid grid-cols-4 gap-4 pt-6 border-t-2 border-gray-300">
+            <div className="grid grid-cols-4 gap-3 pt-4 border-t-2 border-gray-300">
               <div className="text-center">
-                <div className="h-16 border-b-2 border-dashed border-gray-400 mb-2"></div>
-                <p className="text-sm font-semibold text-gray-700">Prepared By</p>
+                <div className="h-12 border-b-2 border-dashed border-gray-400 mb-1 flex items-end justify-center pb-1">
+                  <span className="text-xs font-bold tracking-wide">SIVASUBRAMANIAN VADIVEL</span>
+                </div>
+                <p className="text-xs font-semibold text-gray-700">Prepared By</p>
               </div>
               <div className="text-center">
-                <div className="h-16 border-b-2 border-dashed border-gray-400 mb-2"></div>
-                <p className="text-sm font-semibold text-gray-700">Checked By</p>
+                <div className="h-12 border-b-2 border-dashed border-gray-400 mb-1"></div>
+                <p className="text-xs font-semibold text-gray-700">Checked By</p>
               </div>
               <div className="text-center">
-                <div className="h-16 border-b-2 border-dashed border-gray-400 mb-2"></div>
-                <p className="text-sm font-semibold text-gray-700">Driver Signature</p>
+                <div className="h-12 border-b-2 border-dashed border-gray-400 mb-1"></div>
+                <p className="text-xs font-semibold text-gray-700">Driver Signature</p>
               </div>
               <div className="text-center">
-                <div className="h-16 border-b-2 border-dashed border-gray-400 mb-2"></div>
-                <p className="text-sm font-semibold text-gray-700">{isJobWorkTaken ? 'Received By (Company)' : 'Received By'}</p>
+                <div className="h-12 border-b-2 border-dashed border-gray-400 mb-1"></div>
+                <p className="text-xs font-semibold text-gray-700">{isJobWorkTaken ? 'Received By (Company)' : 'Received By'}</p>
               </div>
             </div>
           </div>
@@ -262,11 +263,11 @@ export default function PrintDeliveryChallan() {
           /* Remove browser headers/footers and URL */
           @page {
             size: A4 portrait;
-            margin: 12mm 12mm 32mm 12mm;
+            margin: 8mm 10mm 20mm 10mm;
           }
 
           .print-table tbody tr td {
-            padding: 6px 8px;
+            padding: 4px 6px;
             vertical-align: top;
           }
 
