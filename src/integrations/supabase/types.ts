@@ -1310,6 +1310,51 @@ export type Database = {
           },
         ]
       }
+      generic_job_expenses: {
+        Row: {
+          amount: number
+          bill_number: string | null
+          category: string
+          created_at: string | null
+          date: string
+          description: string
+          id: string
+          notes: string | null
+          payment_method: string | null
+          subcategory: string | null
+          supplier_name: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          bill_number?: string | null
+          category: string
+          created_at?: string | null
+          date?: string
+          description: string
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          subcategory?: string | null
+          supplier_name?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          bill_number?: string | null
+          category?: string
+          created_at?: string | null
+          date?: string
+          description?: string
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          subcategory?: string | null
+          supplier_name?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       internal_app_access: {
         Row: {
           app_name: Database["public"]["Enums"]["internal_app"]

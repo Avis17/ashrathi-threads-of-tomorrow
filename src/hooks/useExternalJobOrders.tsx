@@ -306,6 +306,14 @@ export const useExternalJobOrderStats = () => {
         `);
       if (error) throw error;
 
+      // Fetch generic job expenses
+      const { data: genericExpenses, error: genericExpError } = await supabase
+        .from('generic_job_expenses')
+        .select('amount');
+      if (genericExpError) throw genericExpError;
+      
+      const totalGenericExpenses = genericExpenses?.reduce((sum, exp) => sum + (exp.amount || 0), 0) || 0;
+
       // Filter out disabled jobs for stats calculations
       const orders = allOrders.filter(order => !(order as any).is_disabled);
 
@@ -393,13 +401,16 @@ export const useExternalJobOrderStats = () => {
         return acc;
       }, {} as Record<string, number>) || {};
       
-      // Calculate Net Profit (Receivable) for PAID orders only: (company_profit_value × number_of_pieces) - job expenses
+      // Calculate Net Profit (Receivable) for PAID orders only: (company_profit_value × number_of_pieces) - job expenses - generic expenses
       const paidOrders = orders.filter(o => o.payment_status === 'paid');
-      const netProfitReceivable = paidOrders.reduce((sum, order) => {
+      const netProfitReceivableBeforeGeneric = paidOrders.reduce((sum, order) => {
         const grossCompanyProfit = (order.company_profit_value || 0) * (order.number_of_pieces || 0);
         const jobExpenses = expensesByJob[order.id] || 0;
         return sum + (grossCompanyProfit - jobExpenses);
       }, 0);
+      
+      // Deduct generic expenses from net profit receivable
+      const netProfitReceivable = netProfitReceivableBeforeGeneric - totalGenericExpenses;
       
       // Net Profit (Received) = Net Profit (Receivable) - Payment Shortfall
       const netProfitReceived = netProfitReceivable - paymentAdjustments;
@@ -426,15 +437,16 @@ export const useExternalJobOrderStats = () => {
       // Total GST Collected for all orders
       const totalGstCollected = orders.reduce((sum, order) => sum + (order.gst_amount || 0), 0);
       
-      // Gross Profit for Profit Margin card: company_profit_value × number_of_pieces - job expenses (ALL orders)
-      const grossProfitForMargin = orders.reduce((sum, order) => {
+      // Gross Profit for Profit Margin card: company_profit_value × number_of_pieces - job expenses - generic expenses (ALL orders)
+      const grossProfitForMarginBeforeGeneric = orders.reduce((sum, order) => {
         const companyProfit = (order.company_profit_value || 0) * (order.number_of_pieces || 0);
         const jobExpenses = expensesByJob[order.id] || 0;
         return sum + (companyProfit - jobExpenses);
       }, 0);
+      const grossProfitForMargin = grossProfitForMarginBeforeGeneric - totalGenericExpenses;
       
-      // Profit Margin calculation: Profit = Revenue − (Ops Cost + Expenses + GST Collected)
-      const profitMarginValue = totalAmount - (totalOpsCost + totalJobExpenses + totalGstCollected);
+      // Profit Margin calculation: Profit = Revenue − (Ops Cost + Expenses + GST Collected + Generic Expenses)
+      const profitMarginValue = totalAmount - (totalOpsCost + totalJobExpenses + totalGstCollected + totalGenericExpenses);
       // Profit Margin (%) = (Profit ÷ Revenue) × 100
       const profitMarginPercent = totalAmount > 0 ? (profitMarginValue / totalAmount) * 100 : 0;
 
@@ -527,6 +539,7 @@ export const useExternalJobOrderStats = () => {
         paymentAdjustments,
         netProfitMargin,
         totalJobExpenses,
+        totalGenericExpenses,
         totalOpsCost,
         totalGstCollected,
         grossProfitForMargin,
