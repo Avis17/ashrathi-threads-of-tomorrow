@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useShippingSettings } from '@/hooks/useShippingSettings';
 import { ShippingZone } from '@/lib/shippingConstants';
+import CompanyVehiclesSettings from '@/components/admin/settings/CompanyVehiclesSettings';
 
 export default function Settings() {
   const { toast } = useToast();
@@ -494,6 +495,9 @@ export default function Settings() {
             )}
           </CardContent>
         </Card>
+
+        {/* Company Vehicles */}
+        <CompanyVehiclesSettings />
       </div>
     </div>
   );

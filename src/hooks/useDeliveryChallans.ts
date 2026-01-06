@@ -224,3 +224,34 @@ export const useCreateJobWorker = () => {
     },
   });
 };
+
+export const useDeleteDeliveryChallan = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (id: string) => {
+      // Delete items first (due to foreign key)
+      const { error: itemsError } = await supabase
+        .from('delivery_challan_items')
+        .delete()
+        .eq('delivery_challan_id', id);
+      
+      if (itemsError) throw itemsError;
+      
+      // Then delete the DC
+      const { error } = await supabase
+        .from('delivery_challans')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['delivery-challans'] });
+      toast.success('Delivery Challan deleted successfully');
+    },
+    onError: (error: Error) => {
+      toast.error('Failed to delete Delivery Challan: ' + error.message);
+    },
+  });
+};

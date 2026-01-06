@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
-import { Plus, Search, Eye, Printer, Edit, Filter, Truck, Package, FileText, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
+import { Plus, Search, Eye, Printer, Edit, Filter, Truck, Package, FileText, ArrowUpRight, ArrowDownLeft, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,7 +21,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useDeliveryChallans } from '@/hooks/useDeliveryChallans';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { useDeliveryChallans, useDeleteDeliveryChallan } from '@/hooks/useDeliveryChallans';
 import { DC_TYPE_LABELS, PURPOSE_LABELS, STATUS_LABELS, JOB_WORK_DIRECTION_LABELS } from '@/types/deliveryChallan';
 import type { DeliveryChallan } from '@/types/deliveryChallan';
 
@@ -45,10 +55,12 @@ const directionColors: Record<'given' | 'taken', string> = {
 export default function DeliveryChallanList() {
   const navigate = useNavigate();
   const { data: challans = [], isLoading } = useDeliveryChallans();
+  const deleteDC = useDeleteDeliveryChallan();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [directionFilter, setDirectionFilter] = useState<string>('all');
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const filteredChallans = challans.filter((dc) => {
     const matchesSearch =
@@ -346,6 +358,14 @@ export default function DeliveryChallanList() {
                                 <Edit className="h-4 w-4" />
                               </Button>
                             )}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => setDeleteId(dc.id)}
+                              className="h-8 w-8 text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -357,6 +377,32 @@ export default function DeliveryChallanList() {
           )}
         </CardContent>
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Delivery Challan</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this Delivery Challan? This action cannot be undone and will also delete all associated items.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={async () => {
+                if (deleteId) {
+                  await deleteDC.mutateAsync(deleteId);
+                  setDeleteId(null);
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

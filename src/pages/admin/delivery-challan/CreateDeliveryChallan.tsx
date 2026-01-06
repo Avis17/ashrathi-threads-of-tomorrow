@@ -35,6 +35,7 @@ import { useJobWorkers, useCreateDeliveryChallan, useCreateJobWorker, useDeliver
 import { useExternalJobOrder } from '@/hooks/useExternalJobOrders';
 import { DC_TYPE_LABELS, PURPOSE_LABELS, JOB_WORK_DIRECTION_LABELS, JOB_WORK_DIRECTION_DESCRIPTIONS } from '@/types/deliveryChallan';
 import type { CreateDeliveryChallanInput, DeliveryChallanItem, JobWorker } from '@/types/deliveryChallan';
+import VehicleSelector from '@/components/admin/delivery-challan/VehicleSelector';
 
 interface ItemRow {
   id: string;
@@ -617,10 +618,22 @@ export default function CreateDeliveryChallan() {
       {/* Transport Details */}
       <Card className="border-0 shadow-md overflow-hidden">
         <CardHeader className="bg-gradient-to-r from-emerald-500/5 to-emerald-500/10 border-b">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Truck className="h-5 w-5 text-emerald-600" />
-            Transport Details
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Truck className="h-5 w-5 text-emerald-600" />
+              Transport Details
+            </CardTitle>
+            <VehicleSelector 
+              onSelect={(vehicle) => {
+                setFormData(prev => ({
+                  ...prev,
+                  vehicle_number: vehicle.vehicle_number,
+                  driver_name: vehicle.driver_name,
+                  driver_mobile: vehicle.driver_mobile,
+                }));
+              }}
+            />
+          </div>
         </CardHeader>
         <CardContent className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
