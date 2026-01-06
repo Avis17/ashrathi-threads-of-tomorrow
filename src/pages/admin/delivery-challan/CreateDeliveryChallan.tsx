@@ -58,7 +58,7 @@ const emptyItem = (): ItemRow => ({
   remarks: '',
 });
 
-const ALL_PURPOSES = ['stitching', 'ironing', 'packing', 'embroidery', 'printing'] as const;
+const ALL_PURPOSES = ['cutting', 'stitching', 'checking', 'ironing', 'packing', 'embroidery', 'printing'] as const;
 
 // Map job operations to DC purposes
 const mapOperationsToPurposes = (operations: any[]): string[] => {
@@ -283,7 +283,7 @@ export default function CreateDeliveryChallan() {
       return;
     }
 
-    const primaryPurpose = selectedPurposes[0] as 'stitching' | 'ironing' | 'packing' | 'embroidery' | 'printing';
+    const primaryPurpose = selectedPurposes[0] as 'cutting' | 'stitching' | 'checking' | 'ironing' | 'packing' | 'embroidery' | 'printing';
 
     if (isEditMode && id) {
       // Update existing DC with items
