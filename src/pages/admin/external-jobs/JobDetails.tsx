@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Calendar, DollarSign, Package, Clock, FileText, Building2, Trash2, Pencil, Receipt, TrendingUp, Wallet, Plus, Ban } from "lucide-react";
+import { ArrowLeft, Calendar, DollarSign, Package, Clock, FileText, Building2, Trash2, Pencil, Receipt, TrendingUp, Wallet, Plus, Ban, FileOutput } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -322,6 +322,14 @@ const JobDetails = () => {
           >
             <Building2 className="h-4 w-4 mr-2" />
             View Company
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate(`/admin/delivery-challan/create?from=job&jobId=${jobOrder.id}`)}
+          >
+            <FileOutput className="h-4 w-4 mr-2" />
+            Create DC
           </Button>
           <Button
             variant="outline"

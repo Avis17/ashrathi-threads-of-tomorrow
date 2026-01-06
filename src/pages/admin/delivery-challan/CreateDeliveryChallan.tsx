@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { format } from 'date-fns';
-import { ArrowLeft, Plus, Trash2, Save, Printer, User, Truck, Package, Calendar, FileText, Building2, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Save, Printer, User, Truck, Package, Calendar, FileText, Building2, ArrowUpRight, ArrowDownLeft, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -32,6 +32,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { useJobWorkers, useCreateDeliveryChallan, useCreateJobWorker, useDeliveryChallan, useDeliveryChallanItems, useUpdateDeliveryChallan } from '@/hooks/useDeliveryChallans';
+import { useExternalJobOrder } from '@/hooks/useExternalJobOrders';
 import { DC_TYPE_LABELS, PURPOSE_LABELS, JOB_WORK_DIRECTION_LABELS, JOB_WORK_DIRECTION_DESCRIPTIONS } from '@/types/deliveryChallan';
 import type { CreateDeliveryChallanInput, DeliveryChallanItem, JobWorker } from '@/types/deliveryChallan';
 
@@ -59,17 +60,49 @@ const emptyItem = (): ItemRow => ({
 
 const ALL_PURPOSES = ['stitching', 'ironing', 'packing', 'embroidery', 'printing'] as const;
 
+// Map job operations to DC purposes
+const mapOperationsToPurposes = (operations: any[]): string[] => {
+  const purposes: string[] = [];
+  operations.forEach(op => {
+    const opName = op.operation_name?.toLowerCase() || '';
+    if (opName.includes('stitch') || opName.includes('singer') || opName.includes('overlock') || opName.includes('flatlock')) {
+      if (!purposes.includes('stitching')) purposes.push('stitching');
+    }
+    if (opName.includes('iron')) {
+      if (!purposes.includes('ironing')) purposes.push('ironing');
+    }
+    if (opName.includes('pack')) {
+      if (!purposes.includes('packing')) purposes.push('packing');
+    }
+    if (opName.includes('embroid')) {
+      if (!purposes.includes('embroidery')) purposes.push('embroidery');
+    }
+    if (opName.includes('print')) {
+      if (!purposes.includes('printing')) purposes.push('printing');
+    }
+  });
+  return purposes.length > 0 ? purposes : ['stitching'];
+};
+
 export default function CreateDeliveryChallan() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
   const isEditMode = !!id;
+  
+  // Check if coming from job order
+  const fromJob = searchParams.get('from') === 'job';
+  const jobId = searchParams.get('jobId');
   
   const { data: jobWorkers = [] } = useJobWorkers();
   const { data: existingDC, isLoading: dcLoading } = useDeliveryChallan(id || '');
   const { data: existingItems = [], isLoading: itemsLoading } = useDeliveryChallanItems(id || '');
+  const { data: jobOrderData, isLoading: jobOrderLoading } = useExternalJobOrder(jobId || '');
   const createDC = useCreateDeliveryChallan();
   const updateDC = useUpdateDeliveryChallan();
   const createJobWorker = useCreateJobWorker();
+  
+  const [isPrefilledFromJob, setIsPrefilledFromJob] = useState(false);
 
   const [jobWorkDirection, setJobWorkDirection] = useState<'given' | 'taken'>('given');
   const [selectedPurposes, setSelectedPurposes] = useState<string[]>(['stitching']);
@@ -149,6 +182,42 @@ export default function CreateDeliveryChallan() {
       })));
     }
   }, [isEditMode, existingItems]);
+
+  // Auto-populate from job order data
+  useEffect(() => {
+    if (fromJob && jobOrderData && !isEditMode && !isPrefilledFromJob) {
+      // Set direction to 'taken' for job work taken
+      setJobWorkDirection('taken');
+      
+      // Map purposes from operations
+      const purposes = mapOperationsToPurposes(jobOrderData.external_job_operations || []);
+      setSelectedPurposes(purposes);
+      
+      // Set company details
+      setFormData(prev => ({
+        ...prev,
+        dc_type: 'return',
+        job_worker_name: jobOrderData.external_job_companies?.company_name || '',
+        job_worker_address: jobOrderData.external_job_companies?.address || '',
+        job_worker_gstin: jobOrderData.external_job_companies?.gst_number || '',
+        notes: `Job Order: ${jobOrderData.job_id}${jobOrderData.notes ? '\n' + jobOrderData.notes : ''}`,
+      }));
+      
+      // Pre-fill first item with style and quantity
+      setItems([{
+        id: crypto.randomUUID(),
+        product_name: jobOrderData.style_name || '',
+        sku: '',
+        size: '',
+        color: '',
+        quantity: jobOrderData.number_of_pieces || 0,
+        uom: 'pcs',
+        remarks: '',
+      }]);
+      
+      setIsPrefilledFromJob(true);
+    }
+  }, [fromJob, jobOrderData, isEditMode, isPrefilledFromJob]);
 
   const handleWorkerSelect = (workerId: string) => {
     setSelectedWorkerId(workerId);
@@ -273,6 +342,14 @@ export default function CreateDeliveryChallan() {
       </div>
     );
   }
+  
+  if (fromJob && jobOrderLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   // Dynamic labels based on direction
   const partyLabel = jobWorkDirection === 'given' ? 'Job Worker Details' : 'Principal Company Details';
@@ -293,6 +370,19 @@ export default function CreateDeliveryChallan() {
           </div>
         </div>
       </div>
+
+      {/* Pre-filled from Job Order Banner */}
+      {isPrefilledFromJob && jobOrderData && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center gap-3">
+          <Info className="h-5 w-5 text-blue-600 flex-shrink-0" />
+          <div>
+            <p className="font-medium text-blue-800">Pre-filled from Job Order</p>
+            <p className="text-sm text-blue-600">
+              Data loaded from {jobOrderData.job_id} - {jobOrderData.external_job_companies?.company_name}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Job Work Direction Toggle */}
       <Card className="border-0 shadow-md overflow-hidden">
