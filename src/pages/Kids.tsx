@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, Star, Heart, Sparkles, Zap, Shield, Leaf } from "lucide-react";
-import { motion } from "framer-motion";
 
 // Import images
 import heroKids from "@/assets/kids/hero-kids.jpg";
