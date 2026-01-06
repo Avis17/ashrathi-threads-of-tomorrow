@@ -437,6 +437,45 @@ export type Database = {
         }
         Relationships: []
       }
+      company_vehicles: {
+        Row: {
+          created_at: string
+          driver_name: string | null
+          driver_phone: string | null
+          id: string
+          is_active: boolean | null
+          notes: string | null
+          ownership_type: string
+          updated_at: string
+          vehicle_number: string
+          vehicle_type: string
+        }
+        Insert: {
+          created_at?: string
+          driver_name?: string | null
+          driver_phone?: string | null
+          id?: string
+          is_active?: boolean | null
+          notes?: string | null
+          ownership_type: string
+          updated_at?: string
+          vehicle_number: string
+          vehicle_type: string
+        }
+        Update: {
+          created_at?: string
+          driver_name?: string | null
+          driver_phone?: string | null
+          id?: string
+          is_active?: boolean | null
+          notes?: string | null
+          ownership_type?: string
+          updated_at?: string
+          vehicle_number?: string
+          vehicle_type?: string
+        }
+        Relationships: []
+      }
       contact_inquiries: {
         Row: {
           admin_notes: string | null
