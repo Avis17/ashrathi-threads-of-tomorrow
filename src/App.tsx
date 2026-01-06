@@ -24,6 +24,7 @@ import ProductDetail from "./pages/ProductDetail";
 import CustomerProfile from "./pages/CustomerProfile";
 import Women from "./pages/Women";
 import Men from "./pages/Men";
+import Kids from "./pages/Kids";
 import Collections from "./pages/Collections";
 import NotFound from "./pages/NotFound";
 import WomenHalfSleeveTShirt from "./pages/women/WomenHalfSleeveTShirt";
@@ -104,8 +105,9 @@ const App = () => (
                       <Route path="/products" element={<Products />} />
                       <Route path="/women" element={<Women />} />
                       <Route path="/men" element={<Men />} />
+                      <Route path="/kids" element={<Kids />} />
                       <Route path="/collections" element={<Collections />} />
-          <Route path="/product/:id" element={<ProductDetail />} />
+                      <Route path="/product/:id" element={<ProductDetail />} />
                       <Route path="/services" element={<Services />} />
                       <Route path="/about" element={<About />} />
                       <Route path="/contact" element={<Contact />} />
