@@ -36,6 +36,12 @@ import { ArrowLeft, Download, Plus, CheckCircle2, Clock, AlertCircle, Edit2, Tra
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { formatCurrencyAscii, sanitizePdfText, numberToWords, formatInvoiceNumber, groupByHSN } from '@/lib/invoiceUtils';
+
+import logo from '@/assets/logo.png';
+import signature from '@/assets/signature.png';
 
 export default function InvoiceDetails() {
   const { id } = useParams();
@@ -60,9 +66,22 @@ export default function InvoiceDetails() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('invoices')
-        .select('*, customers(*), invoice_items(*, products!left(name))')
+        .select('*, customers(*), invoice_items(*, products!left(name, product_code))')
         .eq('id', id)
         .single();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: settings } = useQuery({
+    queryKey: ['invoice-settings'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('invoice_settings')
+        .select('*')
+        .limit(1)
+        .maybeSingle();
       if (error) throw error;
       return data;
     },
@@ -80,6 +99,349 @@ export default function InvoiceDetails() {
       return data;
     },
   });
+
+  const downloadInvoice = async () => {
+    if (!invoice || !settings) {
+      toast({ title: 'Invoice data not available', variant: 'destructive' });
+      return;
+    }
+
+    const doc = new jsPDF();
+    const pageHeight = doc.internal.pageSize.height;
+    const pageWidth = doc.internal.pageSize.width;
+    let currentY = 50;
+    const formattedInvoiceNum = formatInvoiceNumber(invoice.invoice_number, new Date(invoice.invoice_date));
+
+    const addHeader = () => {
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(45, 64, 87);
+      doc.text('Feather Fashions', 15, 18);
+      
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'italic');
+      doc.setTextColor(100, 100, 100);
+      doc.text('Crafted with Precision, Designed for Comfort', 15, 23);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.5);
+      doc.setTextColor(60, 60, 60);
+      const companyAddress = settings.company_address || 'Vadivel Nagar, 251/1, Thottipalayam, Pooluvapatti, Tiruppur, Tamil Nadu 641602';
+      const addressLines = doc.splitTextToSize(companyAddress, 90);
+      let yPos = 28;
+      addressLines.forEach((line: string) => {
+        doc.text(line, 15, yPos);
+        yPos += 4;
+      });
+      doc.text(`GST: ${settings.company_gst_number || 'N/A'}`, 15, yPos);
+      doc.text(`Email: ${settings.company_email || 'hello@featherfashions.in'}`, 15, yPos + 4);
+      doc.text(`Website: ${settings.company_website || 'featherfashions.in'}`, 15, yPos + 8);
+
+      try {
+        doc.addImage(logo, 'PNG', pageWidth - 45, 12, 30, 30);
+      } catch (error) {
+        console.error('Failed to add logo:', error);
+      }
+
+      doc.setDrawColor(184, 134, 11);
+      doc.setLineWidth(1);
+      doc.line(15, 48, pageWidth - 15, 48);
+    };
+
+    const addWatermark = () => {
+      const logoWidth = 150;
+      const logoHeight = 150;
+      const centerX = pageWidth / 2;
+      const centerY = pageHeight / 2;
+      
+      try {
+        doc.saveGraphicsState();
+        doc.setGState({ opacity: 0.15 });
+        doc.addImage(logo, 'PNG', centerX - (logoWidth / 2), centerY - (logoHeight / 2), logoWidth, logoHeight, undefined, 'NONE', -45);
+        doc.restoreGraphicsState();
+      } catch (error) {
+        console.error('Failed to add watermark logo:', error);
+      }
+    };
+
+    const ensureSpace = (height: number) => {
+      const bottomMargin = 25;
+      if (currentY + height > pageHeight - bottomMargin) {
+        doc.addPage();
+        addHeader();
+        addWatermark();
+        currentY = 57;
+      }
+    };
+
+    addHeader();
+    addWatermark();
+
+    currentY = 55;
+    doc.setFillColor(45, 64, 87);
+    doc.roundedRect(15, currentY, pageWidth - 30, 10, 1, 1, 'F');
+    
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(255, 255, 255);
+    doc.text(`TAX INVOICE — ${formattedInvoiceNum}`, pageWidth / 2, currentY + 7, { align: 'center' });
+
+    currentY = 70;
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(60, 60, 60);
+    doc.text(`Date: ${format(new Date(invoice.invoice_date), 'dd/MM/yyyy')}`, 15, currentY);
+    
+    currentY = 75;
+    if (invoice.purchase_order_no) {
+      doc.text(`PO No: ${invoice.purchase_order_no}`, 15, currentY);
+    }
+    doc.text(`Packages: ${invoice.number_of_packages}`, 140, currentY);
+
+    currentY = 80;
+    doc.setDrawColor(220, 220, 220);
+    doc.setFillColor(255, 253, 247);
+    doc.roundedRect(15, currentY, 85, 28, 2, 2, 'FD');
+    doc.roundedRect(110, currentY, 85, 28, 2, 2, 'FD');
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0, 0, 0);
+    doc.text('Bill To:', 18, currentY + 6);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.text(invoice.customers?.company_name || '', 18, currentY + 12);
+    doc.text(invoice.customers?.email || '', 18, currentY + 17);
+    doc.text(invoice.customers?.phone || '', 18, currentY + 22);
+    if (invoice.customers?.gst_number) {
+      doc.text(`GST: ${invoice.customers.gst_number}`, 18, currentY + 27);
+    }
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Delivery Address:', 113, currentY + 6);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    const addressLines = doc.splitTextToSize(invoice.delivery_address || '', 78);
+    doc.text(addressLines, 113, currentY + 12);
+
+    currentY += 34;
+
+    autoTable(doc, {
+      startY: currentY,
+      head: [['S.No', 'Product Description', 'HSN Code', 'Qty', 'Unit Price', 'Amount']],
+      body: invoice.invoice_items.map((item: any, index: number) => {
+        const productName = item.custom_product_name || item.products?.name || 'Unknown Product';
+        const productCode = item.product_code || item.products?.product_code || '';
+        const wrappedName = doc.splitTextToSize(`${productName}\n${productCode}`, 58);
+        return [
+          index + 1,
+          wrappedName.join('\n'),
+          item.hsn_code || '-',
+          item.quantity,
+          formatCurrencyAscii(item.price),
+          formatCurrencyAscii(item.amount),
+        ];
+      }),
+      theme: 'grid',
+      headStyles: { 
+        fillColor: [45, 64, 87],
+        textColor: 255,
+        fontStyle: 'bold',
+        fontSize: 9,
+        halign: 'center'
+      },
+      columnStyles: {
+        0: { halign: 'center', cellWidth: 15 },
+        1: { halign: 'left', cellWidth: 'auto', minCellWidth: 50 },
+        2: { halign: 'center', cellWidth: 25 },
+        3: { halign: 'center', cellWidth: 15 },
+        4: { halign: 'right', cellWidth: 34, overflow: 'hidden' },
+        5: { halign: 'right', cellWidth: 34, overflow: 'hidden' }
+      },
+      styles: { fontSize: 9, cellPadding: 3, overflow: 'linebreak', cellWidth: 'wrap' },
+      rowPageBreak: 'avoid',
+      alternateRowStyles: { fillColor: [255, 253, 247] },
+      margin: { left: 15, right: 15, top: 57, bottom: 25 },
+      showHead: 'everyPage',
+      didDrawPage: () => {
+        const pageW = (doc as any).internal.pageSize.getWidth();
+        const pageH = (doc as any).internal.pageSize.getHeight();
+        const currentPage = (doc as any).internal.getCurrentPageInfo().pageNumber;
+        
+        if (currentPage > 1) {
+          addHeader();
+          addWatermark();
+        }
+        
+        doc.setFillColor(45, 64, 87);
+        doc.rect(0, pageH - 18, pageW, 18, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Thank you for supporting Feather Fashions', pageW / 2, pageH - 11, { align: 'center' });
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(7);
+        doc.text('Crafted with precision, designed for comfort', pageW / 2, pageH - 6.5, { align: 'center' });
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7);
+        const pageCount = (doc as any).internal.getNumberOfPages();
+        doc.text(`Page ${currentPage} of ${pageCount}`, pageW / 2, pageH - 2.5, { align: 'center' });
+        doc.setTextColor(0, 0, 0);
+      }
+    });
+
+    currentY = (doc as any).lastAutoTable.finalY + 10;
+
+    const hasValidHSN = invoice.invoice_items.some((item: any) => item.hsn_code && item.hsn_code.trim() !== '');
+    
+    if (hasValidHSN) {
+      ensureSpace(40);
+      const hsnGroups = groupByHSN(invoice.invoice_items.filter((item: any) => item.hsn_code && item.hsn_code.trim() !== '').map((item: any) => ({
+        hsn_code: item.hsn_code || '-',
+        quantity: item.quantity,
+        amount: item.amount
+      })));
+
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.text('HSN Summary', 15, currentY);
+      currentY += 5;
+
+      autoTable(doc, {
+        startY: currentY,
+        head: [['HSN Code', 'Total Qty', 'Taxable Amount']],
+        body: Object.entries(hsnGroups).map(([hsn, data]) => [hsn, data.qty.toString(), formatCurrencyAscii(data.amount)]),
+        theme: 'plain',
+        headStyles: { fillColor: [248, 250, 252], textColor: [0, 0, 0], fontStyle: 'bold', fontSize: 9, halign: 'left' },
+        bodyStyles: { fontSize: 8, textColor: [0, 0, 0] },
+        columnStyles: { 0: { cellWidth: 40, halign: 'left' }, 1: { halign: 'left', cellWidth: 30 }, 2: { halign: 'left', cellWidth: 40 } },
+        margin: { left: 15, right: 15 },
+        tableWidth: 110
+      });
+
+      currentY = (doc as any).lastAutoTable.finalY + 10;
+    }
+
+    ensureSpace(80);
+
+    doc.setDrawColor(220, 220, 220);
+    doc.setFillColor(250, 250, 250);
+    const discount = invoice.discount || 0;
+    const hasIGST = invoice.igst_amount > 0;
+    const totalsHeight = hasIGST ? (discount > 0 ? 27 : 22) : (discount > 0 ? 35 : 30);
+    doc.roundedRect(130, currentY, 65, totalsHeight, 2, 2, 'FD');
+
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(0, 0, 0);
+    let yOffset = currentY + 6;
+    
+    doc.text('Subtotal:', 133, yOffset);
+    doc.text(sanitizePdfText(formatCurrencyAscii(invoice.subtotal)), 192, yOffset, { align: 'right' });
+    yOffset += 5;
+
+    if (hasIGST) {
+      doc.text(`IGST (${invoice.igst_rate}%):`, 133, yOffset);
+      doc.text(sanitizePdfText(formatCurrencyAscii(invoice.igst_amount)), 192, yOffset, { align: 'right' });
+      yOffset += 5;
+    } else {
+      doc.text(`CGST (${invoice.cgst_rate}%):`, 133, yOffset);
+      doc.text(sanitizePdfText(formatCurrencyAscii(invoice.cgst_amount)), 192, yOffset, { align: 'right' });
+      yOffset += 5;
+      doc.text(`SGST (${invoice.sgst_rate}%):`, 133, yOffset);
+      doc.text(sanitizePdfText(formatCurrencyAscii(invoice.sgst_amount)), 192, yOffset, { align: 'right' });
+      yOffset += 5;
+    }
+
+    if (discount > 0) {
+      doc.setFont('helvetica', 'normal');
+      doc.text('Discount:', 133, yOffset);
+      doc.text(`- ${sanitizePdfText(formatCurrencyAscii(discount))}`, 192, yOffset, { align: 'right' });
+      yOffset += 5;
+    }
+
+    doc.setFillColor(52, 180, 148);
+    doc.roundedRect(130, yOffset - 2, 65, 7, 1, 1, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(255, 255, 255);
+    doc.text('Grand Total:', 133, yOffset + 2);
+    doc.text(sanitizePdfText(formatCurrencyAscii(invoice.total_amount)), 192, yOffset + 2, { align: 'right' });
+    doc.setTextColor(0, 0, 0);
+
+    const amountInWords = numberToWords(Math.floor(invoice.total_amount));
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.text('Amount in Words:', 15, currentY + 6);
+    doc.setFont('helvetica', 'normal');
+    const wordsText = `Rupees ${amountInWords} Only`;
+    const wrappedWords = doc.splitTextToSize(wordsText, 105);
+    doc.text(wrappedWords, 15, currentY + 12);
+    
+    currentY += totalsHeight + 10;
+
+    ensureSpace(26);
+    doc.setDrawColor(220, 220, 220);
+    doc.setFillColor(255, 253, 247);
+    doc.roundedRect(15, currentY, 180, 20, 2, 2, 'FD');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.text('Payment Mode:', 18, currentY + 6);
+    doc.setFont('helvetica', 'normal');
+    doc.text(settings.payment_modes || 'Cash / Bank Transfer / UPI', 50, currentY + 6);
+
+    doc.setFont('helvetica', 'bold');
+    doc.text('Bank Details:', 18, currentY + 11);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    const bankDetails = `Bank: ${settings.bank_name || 'N/A'} | A/C No: ${settings.bank_account_number || 'N/A'} | IFSC: ${settings.bank_ifsc_code || 'N/A'} | Branch: ${settings.bank_branch || 'N/A'}`;
+    doc.text(bankDetails, 18, currentY + 15);
+    
+    currentY += 26;
+
+    const terms = invoice.terms_and_conditions && invoice.terms_and_conditions.length > 0 && invoice.terms_and_conditions.some((t: string) => t.trim() !== '')
+      ? invoice.terms_and_conditions.filter((t: string) => t.trim() !== '')
+      : (Array.isArray(settings.default_terms) ? settings.default_terms : []);
+    
+    if (terms.length > 0) {
+      const termsHeight = 5 + (terms.length * 4) + 5;
+      ensureSpace(termsHeight);
+      
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.text('Terms & Conditions:', 15, currentY);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      terms.forEach((term: string, index: number) => {
+        if (term.trim()) {
+          doc.text(`${index + 1}. ${term}`, 15, currentY + 5 + (index * 4));
+        }
+      });
+      
+      currentY += termsHeight;
+    }
+
+    ensureSpace(25);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.text('Authorized Signatory', 155, currentY);
+    
+    try {
+      doc.addImage(signature, 'PNG', 150, currentY + 3, 40, 15);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7);
+      doc.text('(Company Seal)', 165, currentY + 20, { align: 'center' });
+    } catch (error) {
+      console.error('Failed to add signature:', error);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7);
+      doc.text('(Signature & Company Seal)', 165, currentY + 10, { align: 'center' });
+    }
+
+    doc.save(`Invoice_${formattedInvoiceNum.replace(/\//g, '_')}_${(invoice.customers?.company_name || 'Customer').replace(/\s+/g, '_')}.pdf`);
+  };
 
   const addPaymentMutation = useMutation({
     mutationFn: async () => {
@@ -305,7 +667,7 @@ export default function InvoiceDetails() {
           <Button variant="outline" onClick={() => navigate(`/admin/invoices/edit/${id}`)}>
             Edit Invoice
           </Button>
-          <Button>
+          <Button onClick={downloadInvoice}>
             <Download className="w-4 h-4 mr-2" />
             Download PDF
           </Button>
@@ -426,7 +788,7 @@ export default function InvoiceDetails() {
             <TableBody>
               {invoice.invoice_items.map((item: any) => (
                 <TableRow key={item.id}>
-                  <TableCell className="font-medium">{item.products?.name || 'Product Unavailable'}</TableCell>
+                  <TableCell className="font-medium">{item.custom_product_name || item.products?.name || 'Product Unavailable'}</TableCell>
                   <TableCell>{item.hsn_code}</TableCell>
                   <TableCell>{item.quantity}</TableCell>
                   <TableCell>₹{item.price.toFixed(2)}</TableCell>
