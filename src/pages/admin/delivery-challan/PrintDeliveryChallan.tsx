@@ -4,7 +4,7 @@ import { format } from 'date-fns';
 import { ArrowLeft, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useDeliveryChallan, useDeliveryChallanItems } from '@/hooks/useDeliveryChallans';
-import { DC_TYPE_LABELS } from '@/types/deliveryChallan';
+import { DC_TYPE_LABELS, PURPOSE_LABELS, JOB_WORK_DIRECTION_LABELS } from '@/types/deliveryChallan';
 
 export default function PrintDeliveryChallan() {
   const { id } = useParams<{ id: string }>();
@@ -18,8 +18,9 @@ export default function PrintDeliveryChallan() {
       // Set document title for the PDF filename
       const dcDate = format(new Date(dc.dc_date), 'dd-MM-yyyy');
       const dcType = dc.dc_type.toUpperCase().replace(/_/g, '-');
+      const direction = (dc.job_work_direction || 'given').toUpperCase();
       const originalTitle = document.title;
-      document.title = `Delivery-Challan_${dcType}_FF_${dc.dc_number}_${dcDate}`;
+      document.title = `Delivery-Challan_${direction}_${dcType}_FF_${dc.dc_number}_${dcDate}`;
       
       window.print();
       
@@ -50,6 +51,25 @@ export default function PrintDeliveryChallan() {
       </div>
     );
   }
+
+  const direction = dc.job_work_direction || 'given';
+  const isJobWorkTaken = direction === 'taken';
+  
+  // Get purposes to display
+  const displayPurposes = dc.purposes && dc.purposes.length > 0 
+    ? dc.purposes.map(p => PURPOSE_LABELS[p as keyof typeof PURPOSE_LABELS] || p).join(', ')
+    : PURPOSE_LABELS[dc.purpose] || dc.purpose;
+
+  // Dynamic labels based on direction
+  const headerTitle = isJobWorkTaken 
+    ? 'DELIVERY CHALLAN - JOB WORK RETURN'
+    : 'DELIVERY CHALLAN - JOB WORK OUTWARD';
+  
+  const consigneeLabel = isJobWorkTaken ? 'Principal Company (Return To):' : 'Consignee (Job Worker):';
+  
+  const declarationText = isJobWorkTaken
+    ? 'Goods returned after job work completion. These goods were received from the Principal Company for processing and are being returned after completion of work.'
+    : 'Goods sent for job work only. Not for sale. Ownership remains with M/s Feather Fashions. These goods are being sent for processing/job work and will be returned after completion of work.';
 
   return (
     <>
@@ -91,11 +111,16 @@ export default function PrintDeliveryChallan() {
                 </p>
               </div>
               <div className="text-right">
-                <h2 className="text-xl font-bold border-2 border-primary px-4 py-2">
-                  DELIVERY CHALLAN
+                <h2 className="text-lg font-bold border-2 border-primary px-4 py-2">
+                  {headerTitle}
                 </h2>
                 <p className="text-sm text-muted-foreground mt-2">
                   {DC_TYPE_LABELS[dc.dc_type]}
+                </p>
+                <p className={`text-xs font-semibold mt-1 px-2 py-1 rounded ${
+                  isJobWorkTaken ? 'bg-teal-100 text-teal-700' : 'bg-indigo-100 text-indigo-700'
+                }`}>
+                  {JOB_WORK_DIRECTION_LABELS[direction]}
                 </p>
               </div>
             </div>
@@ -114,7 +139,7 @@ export default function PrintDeliveryChallan() {
               </div>
               <div className="flex">
                 <span className="w-32 text-muted-foreground">Purpose:</span>
-                <span className="font-medium capitalize">{dc.purpose}</span>
+                <span className="font-medium capitalize">{displayPurposes}</span>
               </div>
               {dc.expected_return_date && (
                 <div className="flex">
@@ -139,9 +164,9 @@ export default function PrintDeliveryChallan() {
             </div>
           </div>
 
-          {/* Job Worker Details */}
+          {/* Job Worker / Principal Company Details */}
           <div className="border rounded-lg p-4 mb-6 bg-muted/20 print:bg-gray-50">
-            <h3 className="font-semibold mb-2">Consignee (Job Worker):</h3>
+            <h3 className="font-semibold mb-2">{consigneeLabel}</h3>
             <p className="font-bold text-lg">{dc.job_worker_name}</p>
             {dc.job_worker_address && (
               <p className="text-sm text-muted-foreground mt-1">{dc.job_worker_address}</p>
@@ -203,9 +228,7 @@ export default function PrintDeliveryChallan() {
           {/* Declaration */}
           <div className="border rounded-lg p-3 mb-8 print-declaration" style={{ backgroundColor: '#fef3c7' }}>
             <p className="text-sm">
-              <strong>Declaration:</strong> Goods sent for job work only. Not for sale.
-              Ownership remains with M/s Feather Fashions. These goods are being sent for
-              processing/job work and will be returned after completion of work.
+              <strong>Declaration:</strong> {declarationText}
             </p>
           </div>
 
@@ -226,30 +249,11 @@ export default function PrintDeliveryChallan() {
               </div>
               <div className="text-center">
                 <div className="h-16 border-b-2 border-dashed border-gray-400 mb-2"></div>
-                <p className="text-sm font-semibold text-gray-700">Received By</p>
+                <p className="text-sm font-semibold text-gray-700">{isJobWorkTaken ? 'Received By (Company)' : 'Received By'}</p>
               </div>
             </div>
           </div>
         </div>
-
-        {/* Clean Branded Footer - Fixed at bottom of each printed page */}
-        {/* <div className="print-branded-footer hidden print:block">
-          <div className="branded-footer-content">
-            <div className="footer-line"></div>
-            <div className="footer-main">
-              <span className="brand-name">FEATHER FASHIONS</span>
-              <span className="brand-separator">|</span>
-              <span className="brand-tagline">Effortless Comfort. Perfect Form.</span>
-            </div>
-            <div className="footer-contact">
-              <span>www.featherfashions.in</span>
-              <span className="footer-dot">•</span>
-              <span>hello@featherfashions.in</span>
-              <span className="footer-dot">•</span>
-              <span>+91 9789225510</span>
-            </div>
-          </div>
-        </div> */}
       </div>
 
       {/* Print Styles */}

@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { format } from 'date-fns';
-import { ArrowLeft, Plus, Trash2, Save, Printer, User, Truck, Package, Calendar, FileText } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Save, Printer, User, Truck, Package, Calendar, FileText, Building2, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
@@ -31,7 +32,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { useJobWorkers, useCreateDeliveryChallan, useCreateJobWorker, useDeliveryChallan, useDeliveryChallanItems, useUpdateDeliveryChallan } from '@/hooks/useDeliveryChallans';
-import { DC_TYPE_LABELS, PURPOSE_LABELS } from '@/types/deliveryChallan';
+import { DC_TYPE_LABELS, PURPOSE_LABELS, JOB_WORK_DIRECTION_LABELS, JOB_WORK_DIRECTION_DESCRIPTIONS } from '@/types/deliveryChallan';
 import type { CreateDeliveryChallanInput, DeliveryChallanItem, JobWorker } from '@/types/deliveryChallan';
 
 interface ItemRow {
@@ -56,6 +57,8 @@ const emptyItem = (): ItemRow => ({
   remarks: '',
 });
 
+const ALL_PURPOSES = ['stitching', 'ironing', 'packing', 'embroidery', 'printing'] as const;
+
 export default function CreateDeliveryChallan() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
@@ -68,10 +71,12 @@ export default function CreateDeliveryChallan() {
   const updateDC = useUpdateDeliveryChallan();
   const createJobWorker = useCreateJobWorker();
 
+  const [jobWorkDirection, setJobWorkDirection] = useState<'given' | 'taken'>('given');
+  const [selectedPurposes, setSelectedPurposes] = useState<string[]>(['stitching']);
+  
   const [formData, setFormData] = useState<{
     dc_date: string;
     dc_type: 'job_work' | 'return' | 'rework';
-    purpose: 'stitching' | 'ironing' | 'packing' | 'embroidery' | 'printing';
     job_worker_name: string;
     job_worker_address: string;
     job_worker_gstin: string;
@@ -83,7 +88,6 @@ export default function CreateDeliveryChallan() {
   }>({
     dc_date: format(new Date(), 'yyyy-MM-dd'),
     dc_type: 'job_work',
-    purpose: 'stitching',
     job_worker_name: '',
     job_worker_address: '',
     job_worker_gstin: '',
@@ -111,7 +115,6 @@ export default function CreateDeliveryChallan() {
       setFormData({
         dc_date: existingDC.dc_date,
         dc_type: existingDC.dc_type,
-        purpose: existingDC.purpose,
         job_worker_name: existingDC.job_worker_name,
         job_worker_address: existingDC.job_worker_address || '',
         job_worker_gstin: existingDC.job_worker_gstin || '',
@@ -121,6 +124,13 @@ export default function CreateDeliveryChallan() {
         expected_return_date: existingDC.expected_return_date || '',
         notes: existingDC.notes || '',
       });
+      setJobWorkDirection(existingDC.job_work_direction || 'given');
+      // Use purposes array if available, otherwise fall back to single purpose
+      if (existingDC.purposes && existingDC.purposes.length > 0) {
+        setSelectedPurposes(existingDC.purposes);
+      } else if (existingDC.purpose) {
+        setSelectedPurposes([existingDC.purpose]);
+      }
     }
   }, [isEditMode, existingDC]);
 
@@ -151,6 +161,17 @@ export default function CreateDeliveryChallan() {
         job_worker_gstin: worker.gstin || '',
       }));
     }
+  };
+
+  const handlePurposeToggle = (purpose: string) => {
+    setSelectedPurposes(prev => {
+      if (prev.includes(purpose)) {
+        // Don't allow removing if it's the only one selected
+        if (prev.length === 1) return prev;
+        return prev.filter(p => p !== purpose);
+      }
+      return [...prev, purpose];
+    });
   };
 
   const handleAddItem = () => {
@@ -189,11 +210,20 @@ export default function CreateDeliveryChallan() {
       return;
     }
 
+    if (selectedPurposes.length === 0) {
+      return;
+    }
+
+    const primaryPurpose = selectedPurposes[0] as 'stitching' | 'ironing' | 'packing' | 'embroidery' | 'printing';
+
     if (isEditMode && id) {
       // Update existing DC with items
       await updateDC.mutateAsync({
         id,
         ...formData,
+        purpose: primaryPurpose,
+        purposes: selectedPurposes,
+        job_work_direction: jobWorkDirection,
         expected_return_date: formData.expected_return_date || null,
         items: validItems.map(({ id: itemId, ...item }) => ({
           ...item,
@@ -213,6 +243,9 @@ export default function CreateDeliveryChallan() {
       // Create new DC
       const input: CreateDeliveryChallanInput = {
         ...formData,
+        purpose: primaryPurpose,
+        purposes: selectedPurposes,
+        job_work_direction: jobWorkDirection,
         expected_return_date: formData.expected_return_date || undefined,
         items: validItems.map(({ id, ...item }) => ({
           ...item,
@@ -241,6 +274,11 @@ export default function CreateDeliveryChallan() {
     );
   }
 
+  // Dynamic labels based on direction
+  const partyLabel = jobWorkDirection === 'given' ? 'Job Worker Details' : 'Principal Company Details';
+  const partyIcon = jobWorkDirection === 'given' ? User : Building2;
+  const PartyIcon = partyIcon;
+
   return (
     <div className="space-y-6 max-w-6xl mx-auto animate-fade-in">
       {/* Header */}
@@ -255,6 +293,58 @@ export default function CreateDeliveryChallan() {
           </div>
         </div>
       </div>
+
+      {/* Job Work Direction Toggle */}
+      <Card className="border-0 shadow-md overflow-hidden">
+        <CardHeader className="bg-gradient-to-r from-indigo-500/5 to-indigo-500/10 border-b">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <ArrowUpRight className="h-5 w-5 text-indigo-600" />
+            Job Work Direction
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <button
+              type="button"
+              onClick={() => setJobWorkDirection('given')}
+              className={`flex items-start gap-4 p-4 rounded-lg border-2 transition-all ${
+                jobWorkDirection === 'given'
+                  ? 'border-primary bg-primary/5'
+                  : 'border-muted hover:border-muted-foreground/30'
+              }`}
+            >
+              <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
+                jobWorkDirection === 'given' ? 'bg-primary text-primary-foreground' : 'bg-muted'
+              }`}>
+                <ArrowUpRight className="h-5 w-5" />
+              </div>
+              <div className="text-left">
+                <p className="font-semibold">{JOB_WORK_DIRECTION_LABELS.given}</p>
+                <p className="text-sm text-muted-foreground">{JOB_WORK_DIRECTION_DESCRIPTIONS.given}</p>
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={() => setJobWorkDirection('taken')}
+              className={`flex items-start gap-4 p-4 rounded-lg border-2 transition-all ${
+                jobWorkDirection === 'taken'
+                  ? 'border-primary bg-primary/5'
+                  : 'border-muted hover:border-muted-foreground/30'
+              }`}
+            >
+              <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
+                jobWorkDirection === 'taken' ? 'bg-primary text-primary-foreground' : 'bg-muted'
+              }`}>
+                <ArrowDownLeft className="h-5 w-5" />
+              </div>
+              <div className="text-left">
+                <p className="font-semibold">{JOB_WORK_DIRECTION_LABELS.taken}</p>
+                <p className="text-sm text-muted-foreground">{JOB_WORK_DIRECTION_DESCRIPTIONS.taken}</p>
+              </div>
+            </button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* DC Header Section */}
       <Card className="border-0 shadow-md overflow-hidden">
@@ -295,22 +385,6 @@ export default function CreateDeliveryChallan() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Purpose *</Label>
-              <Select
-                value={formData.purpose}
-                onValueChange={(v) => setFormData({ ...formData, purpose: v as any })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(PURPOSE_LABELS).map(([value, label]) => (
-                    <SelectItem key={value} value={value}>{label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
               <Label>Expected Return Date</Label>
               <Input
                 type="date"
@@ -319,27 +393,49 @@ export default function CreateDeliveryChallan() {
               />
             </div>
           </div>
+
+          {/* Purpose Multi-Select */}
+          <div className="mt-6 space-y-3">
+            <Label>Purpose * (Select one or more)</Label>
+            <div className="flex flex-wrap gap-4">
+              {ALL_PURPOSES.map((purpose) => (
+                <div key={purpose} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`purpose-${purpose}`}
+                    checked={selectedPurposes.includes(purpose)}
+                    onCheckedChange={() => handlePurposeToggle(purpose)}
+                  />
+                  <label
+                    htmlFor={`purpose-${purpose}`}
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                  >
+                    {PURPOSE_LABELS[purpose]}
+                  </label>
+                </div>
+              ))}
+            </div>
+          </div>
         </CardContent>
       </Card>
 
-      {/* Job Worker Section */}
+      {/* Job Worker / Principal Company Section */}
       <Card className="border-0 shadow-md overflow-hidden">
         <CardHeader className="bg-gradient-to-r from-blue-500/5 to-blue-500/10 border-b">
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2 text-lg">
-              <User className="h-5 w-5 text-blue-600" />
-              Job Worker Details
+              <PartyIcon className="h-5 w-5 text-blue-600" />
+              {partyLabel}
             </CardTitle>
             <Dialog open={showAddWorker} onOpenChange={setShowAddWorker}>
               <DialogTrigger asChild>
                 <Button variant="outline" size="sm" className="gap-2">
                   <Plus className="h-4 w-4" />
-                  Add New Worker
+                  Add New {jobWorkDirection === 'given' ? 'Worker' : 'Company'}
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Add New Job Worker</DialogTitle>
+                  <DialogTitle>Add New {jobWorkDirection === 'given' ? 'Job Worker' : 'Company'}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4 pt-4">
                   <div className="space-y-2">
@@ -347,7 +443,7 @@ export default function CreateDeliveryChallan() {
                     <Input
                       value={newWorker.name}
                       onChange={(e) => setNewWorker({ ...newWorker, name: e.target.value })}
-                      placeholder="Worker name"
+                      placeholder={jobWorkDirection === 'given' ? 'Worker name' : 'Company name'}
                     />
                   </div>
                   <div className="space-y-2">
@@ -375,7 +471,7 @@ export default function CreateDeliveryChallan() {
                     />
                   </div>
                   <Button onClick={handleAddJobWorker} className="w-full" disabled={!newWorker.name}>
-                    Add Job Worker
+                    Add {jobWorkDirection === 'given' ? 'Job Worker' : 'Company'}
                   </Button>
                 </div>
               </DialogContent>
@@ -385,10 +481,10 @@ export default function CreateDeliveryChallan() {
         <CardContent className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label>Select Job Worker *</Label>
+              <Label>Select {jobWorkDirection === 'given' ? 'Job Worker' : 'Company'} *</Label>
               <Select value={selectedWorkerId} onValueChange={handleWorkerSelect}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a job worker" />
+                  <SelectValue placeholder={`Select a ${jobWorkDirection === 'given' ? 'job worker' : 'company'}`} />
                 </SelectTrigger>
                 <SelectContent>
                   {jobWorkers.map((worker) => (
@@ -404,7 +500,7 @@ export default function CreateDeliveryChallan() {
               <Input
                 value={formData.job_worker_name}
                 onChange={(e) => setFormData({ ...formData, job_worker_name: e.target.value })}
-                placeholder="Job worker name"
+                placeholder={jobWorkDirection === 'given' ? 'Job worker name' : 'Company name'}
               />
             </div>
             <div className="space-y-2 md:col-span-2">
@@ -594,8 +690,9 @@ export default function CreateDeliveryChallan() {
       <Card className="border-0 shadow-md bg-amber-50/50 dark:bg-amber-900/10">
         <CardContent className="p-6">
           <p className="text-sm text-muted-foreground italic">
-            <strong>Declaration:</strong> Goods sent for job work only. Not for sale. 
-            Ownership remains with M/s Feather Fashions.
+            <strong>Declaration:</strong> {jobWorkDirection === 'given' 
+              ? 'Goods sent for job work only. Not for sale. Ownership remains with M/s Feather Fashions.'
+              : 'Goods returned after job work completion. These goods were received from the Principal Company for processing.'}
           </p>
         </CardContent>
       </Card>

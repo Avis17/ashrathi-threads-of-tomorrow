@@ -4,6 +4,8 @@ export interface DeliveryChallan {
   dc_date: string;
   dc_type: 'job_work' | 'return' | 'rework';
   purpose: 'stitching' | 'ironing' | 'packing' | 'embroidery' | 'printing';
+  purposes?: string[];
+  job_work_direction: 'given' | 'taken';
   job_worker_name: string;
   job_worker_address?: string;
   job_worker_gstin?: string;
@@ -49,6 +51,8 @@ export interface CreateDeliveryChallanInput {
   dc_date: string;
   dc_type: 'job_work' | 'return' | 'rework';
   purpose: 'stitching' | 'ironing' | 'packing' | 'embroidery' | 'printing';
+  purposes: string[];
+  job_work_direction: 'given' | 'taken';
   job_worker_name: string;
   job_worker_address?: string;
   job_worker_gstin?: string;
@@ -78,4 +82,14 @@ export const STATUS_LABELS: Record<DeliveryChallan['status'], string> = {
   created: 'Created',
   dispatched: 'Dispatched',
   closed: 'Closed',
+};
+
+export const JOB_WORK_DIRECTION_LABELS: Record<DeliveryChallan['job_work_direction'], string> = {
+  given: 'Job Work Given',
+  taken: 'Job Work Taken',
+};
+
+export const JOB_WORK_DIRECTION_DESCRIPTIONS: Record<DeliveryChallan['job_work_direction'], string> = {
+  given: 'We send work to job workers',
+  taken: 'We receive work from companies',
 };
