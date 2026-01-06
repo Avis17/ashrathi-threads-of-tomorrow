@@ -272,7 +272,7 @@ export default function CreateDeliveryChallan() {
   const handleSubmit = async (andPrint = false) => {
     const validItems = items.filter(item => item.product_name && item.quantity > 0);
     
-    if (!formData.job_worker_name || !formData.vehicle_number || !formData.driver_name || !formData.driver_mobile) {
+    if (!formData.job_worker_name || !formData.vehicle_number) {
       return;
     }
 
@@ -646,19 +646,19 @@ export default function CreateDeliveryChallan() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Driver Name *</Label>
+              <Label>Driver Name</Label>
               <Input
                 value={formData.driver_name}
                 onChange={(e) => setFormData({ ...formData, driver_name: e.target.value })}
-                placeholder="Driver's name"
+                placeholder="Driver's name (optional)"
               />
             </div>
             <div className="space-y-2">
-              <Label>Driver Mobile *</Label>
+              <Label>Driver Mobile</Label>
               <Input
                 value={formData.driver_mobile}
                 onChange={(e) => setFormData({ ...formData, driver_mobile: e.target.value })}
-                placeholder="10-digit mobile"
+                placeholder="10-digit mobile (optional)"
                 maxLength={10}
               />
             </div>
