@@ -57,6 +57,7 @@ const Dashboard = () => {
     paymentAdjustments: stats.paymentAdjustments || 0,
     netProfitMargin: stats.netProfitMargin || 0,
     totalJobExpenses: stats.totalJobExpenses || 0,
+    totalGenericExpenses: stats.totalGenericExpenses || 0,
     totalOpsCost: stats.totalOpsCost || 0,
     totalGstCollected: stats.totalGstCollected || 0,
     grossProfitForMargin: stats.grossProfitForMargin || 0,
@@ -253,6 +254,19 @@ const Dashboard = () => {
           </div>
         </Card>
 
+        <Card className="p-4 sm:p-6 bg-gradient-to-br from-red-50 to-red-100 dark:from-red-950 dark:to-red-900 border-red-200 dark:border-red-800 min-w-0">
+          <div className="flex items-center gap-3">
+            <div className="p-2 sm:p-3 bg-red-500/20 rounded-lg shrink-0">
+              <AlertTriangle className="h-5 w-5 sm:h-6 sm:w-6 text-red-600 dark:text-red-400" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm text-red-700 dark:text-red-300 truncate">Generic Expenses</p>
+              <p className="text-lg sm:text-2xl font-bold text-red-900 dark:text-red-100 truncate">{formatAmount(safeStats.totalGenericExpenses, amountsVisible)}</p>
+              <p className="text-xs text-red-600 dark:text-red-400 truncate">Deducted from profit</p>
+            </div>
+          </div>
+        </Card>
+
         <Card className="p-4 sm:p-6 bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-950 dark:to-indigo-900 border-indigo-200 dark:border-indigo-800 min-w-0">
           <div className="flex items-center gap-3">
             <div className="p-2 sm:p-3 bg-indigo-500/20 rounded-lg shrink-0">
@@ -339,10 +353,14 @@ const Dashboard = () => {
                 <p className="text-lg font-semibold text-orange-600">₹{safeStats.totalJobExpenses.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-4 pt-2">
+            <div className="grid grid-cols-4 gap-4 pt-2">
               <div>
                 <p className="text-sm text-muted-foreground">GST Collected</p>
                 <p className="text-lg font-semibold text-purple-600">₹{safeStats.totalGstCollected.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Generic Exp</p>
+                <p className="text-lg font-semibold text-red-600">₹{safeStats.totalGenericExpenses.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Gross Profit</p>
