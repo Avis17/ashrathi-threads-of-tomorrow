@@ -81,6 +81,8 @@ export const useCreateDeliveryChallan = () => {
           dc_date: dcData.dc_date,
           dc_type: dcData.dc_type,
           purpose: dcData.purpose,
+          purposes: dcData.purposes,
+          job_work_direction: dcData.job_work_direction,
           job_worker_name: dcData.job_worker_name,
           job_worker_address: dcData.job_worker_address,
           job_worker_gstin: dcData.job_worker_gstin,

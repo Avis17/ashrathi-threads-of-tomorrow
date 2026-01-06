@@ -627,11 +627,13 @@ export type Database = {
           driver_name: string
           expected_return_date: string | null
           id: string
+          job_work_direction: string
           job_worker_address: string | null
           job_worker_gstin: string | null
           job_worker_name: string
           notes: string | null
           purpose: string
+          purposes: string[] | null
           status: string
           total_quantity: number
           updated_at: string
@@ -647,11 +649,13 @@ export type Database = {
           driver_name: string
           expected_return_date?: string | null
           id?: string
+          job_work_direction?: string
           job_worker_address?: string | null
           job_worker_gstin?: string | null
           job_worker_name: string
           notes?: string | null
           purpose: string
+          purposes?: string[] | null
           status?: string
           total_quantity?: number
           updated_at?: string
@@ -667,11 +671,13 @@ export type Database = {
           driver_name?: string
           expected_return_date?: string | null
           id?: string
+          job_work_direction?: string
           job_worker_address?: string | null
           job_worker_gstin?: string | null
           job_worker_name?: string
           notes?: string | null
           purpose?: string
+          purposes?: string[] | null
           status?: string
           total_quantity?: number
           updated_at?: string

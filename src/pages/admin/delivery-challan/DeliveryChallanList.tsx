@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
-import { Plus, Search, Eye, Printer, Edit, Filter, Truck, Package, FileText } from 'lucide-react';
+import { Plus, Search, Eye, Printer, Edit, Filter, Truck, Package, FileText, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useDeliveryChallans } from '@/hooks/useDeliveryChallans';
-import { DC_TYPE_LABELS, PURPOSE_LABELS, STATUS_LABELS } from '@/types/deliveryChallan';
+import { DC_TYPE_LABELS, PURPOSE_LABELS, STATUS_LABELS, JOB_WORK_DIRECTION_LABELS } from '@/types/deliveryChallan';
 import type { DeliveryChallan } from '@/types/deliveryChallan';
 
 const statusColors: Record<DeliveryChallan['status'], string> = {
@@ -37,12 +37,18 @@ const dcTypeColors: Record<DeliveryChallan['dc_type'], string> = {
   rework: 'bg-orange-500/10 text-orange-600 border-orange-500/20',
 };
 
+const directionColors: Record<'given' | 'taken', string> = {
+  given: 'bg-indigo-500/10 text-indigo-600 border-indigo-500/20',
+  taken: 'bg-teal-500/10 text-teal-600 border-teal-500/20',
+};
+
 export default function DeliveryChallanList() {
   const navigate = useNavigate();
   const { data: challans = [], isLoading } = useDeliveryChallans();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [directionFilter, setDirectionFilter] = useState<string>('all');
 
   const filteredChallans = challans.filter((dc) => {
     const matchesSearch =
@@ -52,15 +58,25 @@ export default function DeliveryChallanList() {
     
     const matchesStatus = statusFilter === 'all' || dc.status === statusFilter;
     const matchesType = typeFilter === 'all' || dc.dc_type === typeFilter;
+    const matchesDirection = directionFilter === 'all' || (dc.job_work_direction || 'given') === directionFilter;
     
-    return matchesSearch && matchesStatus && matchesType;
+    return matchesSearch && matchesStatus && matchesType && matchesDirection;
   });
 
   const stats = {
     total: challans.length,
+    given: challans.filter(d => (d.job_work_direction || 'given') === 'given').length,
+    taken: challans.filter(d => d.job_work_direction === 'taken').length,
     created: challans.filter(d => d.status === 'created').length,
     dispatched: challans.filter(d => d.status === 'dispatched').length,
     closed: challans.filter(d => d.status === 'closed').length,
+  };
+
+  const getDisplayPurposes = (dc: DeliveryChallan) => {
+    if (dc.purposes && dc.purposes.length > 0) {
+      return dc.purposes.map(p => PURPOSE_LABELS[p as keyof typeof PURPOSE_LABELS] || p).join(', ');
+    }
+    return PURPOSE_LABELS[dc.purpose] || dc.purpose;
   };
 
   return (
@@ -90,7 +106,7 @@ export default function DeliveryChallanList() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <Card className="border-0 shadow-sm bg-gradient-to-br from-slate-50 to-white">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
@@ -100,6 +116,32 @@ export default function DeliveryChallanList() {
               </div>
               <div className="h-12 w-12 rounded-xl bg-slate-100 flex items-center justify-center">
                 <FileText className="h-6 w-6 text-slate-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-0 shadow-sm bg-gradient-to-br from-indigo-50 to-white">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground font-medium">Given</p>
+                <p className="text-3xl font-bold mt-1 text-indigo-600">{stats.given}</p>
+              </div>
+              <div className="h-12 w-12 rounded-xl bg-indigo-100 flex items-center justify-center">
+                <ArrowUpRight className="h-6 w-6 text-indigo-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-0 shadow-sm bg-gradient-to-br from-teal-50 to-white">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground font-medium">Taken</p>
+                <p className="text-3xl font-bold mt-1 text-teal-600">{stats.taken}</p>
+              </div>
+              <div className="h-12 w-12 rounded-xl bg-teal-100 flex items-center justify-center">
+                <ArrowDownLeft className="h-6 w-6 text-teal-600" />
               </div>
             </div>
           </CardContent>
@@ -158,9 +200,20 @@ export default function DeliveryChallanList() {
                 className="pl-10 h-11"
               />
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-3 flex-wrap">
+              <Select value={directionFilter} onValueChange={setDirectionFilter}>
+                <SelectTrigger className="w-[160px] h-11">
+                  <Filter className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Direction" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Direction</SelectItem>
+                  <SelectItem value="given">Job Work Given</SelectItem>
+                  <SelectItem value="taken">Job Work Taken</SelectItem>
+                </SelectContent>
+              </Select>
               <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger className="w-[180px] h-11">
+                <SelectTrigger className="w-[160px] h-11">
                   <Filter className="h-4 w-4 mr-2" />
                   <SelectValue placeholder="DC Type" />
                 </SelectTrigger>
@@ -172,7 +225,7 @@ export default function DeliveryChallanList() {
                 </SelectContent>
               </Select>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[180px] h-11">
+                <SelectTrigger className="w-[160px] h-11">
                   <Filter className="h-4 w-4 mr-2" />
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
@@ -205,7 +258,7 @@ export default function DeliveryChallanList() {
               </div>
               <h3 className="text-lg font-medium">No Delivery Challans Found</h3>
               <p className="text-muted-foreground mt-1">
-                {search || statusFilter !== 'all' || typeFilter !== 'all'
+                {search || statusFilter !== 'all' || typeFilter !== 'all' || directionFilter !== 'all'
                   ? 'Try adjusting your filters'
                   : 'Create your first Delivery Challan to get started'}
               </p>
@@ -217,7 +270,8 @@ export default function DeliveryChallanList() {
                   <TableRow className="bg-muted/20 hover:bg-muted/20">
                     <TableHead className="font-semibold">DC No</TableHead>
                     <TableHead className="font-semibold">Date</TableHead>
-                    <TableHead className="font-semibold">Job Worker</TableHead>
+                    <TableHead className="font-semibold">Direction</TableHead>
+                    <TableHead className="font-semibold">Job Worker / Company</TableHead>
                     <TableHead className="font-semibold">Type</TableHead>
                     <TableHead className="font-semibold">Purpose</TableHead>
                     <TableHead className="font-semibold">Vehicle No</TableHead>
@@ -227,62 +281,76 @@ export default function DeliveryChallanList() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredChallans.map((dc) => (
-                    <TableRow key={dc.id} className="group hover:bg-muted/50 transition-colors">
-                      <TableCell className="font-mono font-semibold text-primary">
-                        {dc.dc_number}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {format(new Date(dc.dc_date), 'dd MMM yyyy')}
-                      </TableCell>
-                      <TableCell className="font-medium max-w-[200px] truncate">
-                        {dc.job_worker_name}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className={dcTypeColors[dc.dc_type]}>
-                          {DC_TYPE_LABELS[dc.dc_type].split(' ')[0]}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="capitalize">{dc.purpose}</TableCell>
-                      <TableCell className="font-mono text-sm">{dc.vehicle_number}</TableCell>
-                      <TableCell className="text-right font-semibold">{dc.total_quantity}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className={statusColors[dc.status]}>
-                          {STATUS_LABELS[dc.status]}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => navigate(`/admin/delivery-challan/${dc.id}`)}
-                            className="h-8 w-8"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => navigate(`/admin/delivery-challan/print/${dc.id}`)}
-                            className="h-8 w-8"
-                          >
-                            <Printer className="h-4 w-4" />
-                          </Button>
-                          {dc.status === 'created' && (
+                  {filteredChallans.map((dc) => {
+                    const direction = dc.job_work_direction || 'given';
+                    return (
+                      <TableRow key={dc.id} className="group hover:bg-muted/50 transition-colors">
+                        <TableCell className="font-mono font-semibold text-primary">
+                          {dc.dc_number}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {format(new Date(dc.dc_date), 'dd MMM yyyy')}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className={directionColors[direction]}>
+                            {direction === 'given' ? (
+                              <><ArrowUpRight className="h-3 w-3 mr-1" /> Given</>
+                            ) : (
+                              <><ArrowDownLeft className="h-3 w-3 mr-1" /> Taken</>
+                            )}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="font-medium max-w-[200px] truncate">
+                          {dc.job_worker_name}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className={dcTypeColors[dc.dc_type]}>
+                            {DC_TYPE_LABELS[dc.dc_type].split(' ')[0]}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="capitalize max-w-[150px] truncate" title={getDisplayPurposes(dc)}>
+                          {getDisplayPurposes(dc)}
+                        </TableCell>
+                        <TableCell className="font-mono text-sm">{dc.vehicle_number}</TableCell>
+                        <TableCell className="text-right font-semibold">{dc.total_quantity}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className={statusColors[dc.status]}>
+                            {STATUS_LABELS[dc.status]}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => navigate(`/admin/delivery-challan/edit/${dc.id}`)}
+                              onClick={() => navigate(`/admin/delivery-challan/${dc.id}`)}
                               className="h-8 w-8"
                             >
-                              <Edit className="h-4 w-4" />
+                              <Eye className="h-4 w-4" />
                             </Button>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => navigate(`/admin/delivery-challan/print/${dc.id}`)}
+                              className="h-8 w-8"
+                            >
+                              <Printer className="h-4 w-4" />
+                            </Button>
+                            {dc.status === 'created' && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => navigate(`/admin/delivery-challan/edit/${dc.id}`)}
+                                className="h-8 w-8"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
