@@ -24,6 +24,7 @@ import { getHSNCodeByCategory } from '@/lib/hsnCodes';
 interface InvoiceItem {
   id?: string;
   product_id: string;
+  custom_product_name: string;
   hsn_code: string;
   product_code: string;
   price: number;
@@ -113,7 +114,8 @@ export default function InvoiceEdit() {
 
       setItems(invoice.invoice_items.map((item: any) => ({
         id: item.id,
-        product_id: item.product_id,
+        product_id: item.product_id || '',
+        custom_product_name: item.custom_product_name || '',
         hsn_code: item.hsn_code,
         product_code: item.product_code,
         price: item.price,
@@ -131,6 +133,7 @@ export default function InvoiceEdit() {
       newItems[index] = {
         ...newItems[index],
         product_id: productId,
+        custom_product_name: '', // Clear custom name when selecting product
         hsn_code: hsnCode,
         product_code: product.product_code || '',
         price: Number(product.price) || 0,
@@ -138,6 +141,16 @@ export default function InvoiceEdit() {
       };
       setItems(newItems);
     }
+  };
+
+  const handleCustomProductNameChange = (index: number, name: string) => {
+    const newItems = [...items];
+    newItems[index] = {
+      ...newItems[index],
+      custom_product_name: name,
+      product_id: '', // Clear product_id when using custom name
+    };
+    setItems(newItems);
   };
 
   const handleQuantityChange = (index: number, quantity: number) => {
@@ -150,6 +163,7 @@ export default function InvoiceEdit() {
   const addItem = () => {
     setItems([...items, {
       product_id: '',
+      custom_product_name: '',
       hsn_code: '',
       product_code: '',
       price: 0,
@@ -173,7 +187,8 @@ export default function InvoiceEdit() {
 
   const updateInvoiceMutation = useMutation({
     mutationFn: async () => {
-      if (!customerId || items.some(i => !i.product_id)) {
+      // Allow either product_id OR custom_product_name
+      if (!customerId || items.some(i => !i.product_id && !i.custom_product_name)) {
         throw new Error('Please fill all required fields');
       }
 
@@ -210,12 +225,13 @@ export default function InvoiceEdit() {
 
       if (deleteError) throw deleteError;
 
-      // Insert new items
+      // Insert new items with custom_product_name support
       const { error: itemsError } = await supabase
         .from('invoice_items')
         .insert(items.map(item => ({
           invoice_id: id,
-          product_id: item.product_id,
+          product_id: item.product_id || null,
+          custom_product_name: item.custom_product_name || null,
           hsn_code: item.hsn_code,
           product_code: item.product_code,
           price: item.price,
@@ -368,8 +384,8 @@ export default function InvoiceEdit() {
         <CardContent className="space-y-4">
           {items.map((item, index) => (
             <div key={index} className="grid grid-cols-12 gap-4 items-end p-4 border rounded-lg">
-              <div className="col-span-4">
-                <Label>Product *</Label>
+              <div className="col-span-2">
+                <Label>Select Product</Label>
                 <Select
                   value={item.product_id}
                   onValueChange={(value) => handleProductChange(index, value)}
@@ -387,8 +403,24 @@ export default function InvoiceEdit() {
                 </Select>
               </div>
               <div className="col-span-2">
+                <Label>Or Custom Name</Label>
+                <Input
+                  value={item.custom_product_name}
+                  onChange={(e) => handleCustomProductNameChange(index, e.target.value)}
+                  placeholder="Enter product name"
+                />
+              </div>
+              <div className="col-span-2">
                 <Label>HSN Code</Label>
-                <Input value={item.hsn_code} readOnly />
+                <Input 
+                  value={item.hsn_code} 
+                  onChange={(e) => {
+                    const newItems = [...items];
+                    newItems[index].hsn_code = e.target.value;
+                    setItems(newItems);
+                  }}
+                  placeholder="HSN Code"
+                />
               </div>
               <div className="col-span-2">
                 <Label>Quantity *</Label>
@@ -401,9 +433,19 @@ export default function InvoiceEdit() {
               </div>
               <div className="col-span-2">
                 <Label>Price</Label>
-                <Input value={`₹${item.price.toFixed(2)}`} readOnly />
+                <Input 
+                  type="number"
+                  value={item.price}
+                  onChange={(e) => {
+                    const newItems = [...items];
+                    const price = parseFloat(e.target.value) || 0;
+                    newItems[index].price = price;
+                    newItems[index].amount = price * newItems[index].quantity;
+                    setItems(newItems);
+                  }}
+                />
               </div>
-              <div className="col-span-2">
+              <div className="col-span-1">
                 <Label>Amount</Label>
                 <Input value={`₹${item.amount.toFixed(2)}`} readOnly />
               </div>
@@ -412,7 +454,7 @@ export default function InvoiceEdit() {
                   variant="ghost"
                   size="icon"
                   onClick={() => removeItem(index)}
-                  className="col-span-12 md:col-span-1"
+                  className="col-span-1"
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>
