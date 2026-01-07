@@ -99,12 +99,10 @@ export default function DeliveryChallanView() {
               <SelectItem value="closed">Closed</SelectItem>
             </SelectContent>
           </Select>
-          {dc.status === 'created' && (
-            <Button variant="outline" onClick={() => navigate(`/admin/delivery-challan/edit/${dc.id}`)}>
-              <Edit className="h-4 w-4 mr-2" />
-              Edit
-            </Button>
-          )}
+          <Button variant="outline" onClick={() => navigate(`/admin/delivery-challan/edit/${dc.id}`)}>
+            <Edit className="h-4 w-4 mr-2" />
+            Edit
+          </Button>
           <Button onClick={() => navigate(`/admin/delivery-challan/print/${dc.id}`)}>
             <Printer className="h-4 w-4 mr-2" />
             Print
