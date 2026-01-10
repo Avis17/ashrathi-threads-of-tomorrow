@@ -1274,8 +1274,12 @@ export type Database = {
       }
       external_job_salaries: {
         Row: {
+          advance_deductions: Json | null
+          calculation_details: string | null
           created_at: string | null
+          deduction_amount: number | null
           employee_id: string
+          gross_amount: number | null
           id: string
           job_order_id: string
           notes: string | null
@@ -1289,8 +1293,12 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          advance_deductions?: Json | null
+          calculation_details?: string | null
           created_at?: string | null
+          deduction_amount?: number | null
           employee_id: string
+          gross_amount?: number | null
           id?: string
           job_order_id: string
           notes?: string | null
@@ -1304,8 +1312,12 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          advance_deductions?: Json | null
+          calculation_details?: string | null
           created_at?: string | null
+          deduction_amount?: number | null
           employee_id?: string
+          gross_amount?: number | null
           id?: string
           job_order_id?: string
           notes?: string | null
@@ -3721,6 +3733,63 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      salary_advance_entries: {
+        Row: {
+          advance_date: string
+          amount: number
+          closed_at: string | null
+          created_at: string | null
+          employee_id: string
+          id: string
+          notes: string | null
+          operation: string
+          salary_id: string | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          advance_date?: string
+          amount?: number
+          closed_at?: string | null
+          created_at?: string | null
+          employee_id: string
+          id?: string
+          notes?: string | null
+          operation: string
+          salary_id?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          advance_date?: string
+          amount?: number
+          closed_at?: string | null
+          created_at?: string | null
+          employee_id?: string
+          id?: string
+          notes?: string | null
+          operation?: string
+          salary_id?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "salary_advance_entries_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "job_employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "salary_advance_entries_salary_id_fkey"
+            columns: ["salary_id"]
+            isOneToOne: false
+            referencedRelation: "external_job_salaries"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       shipping_config: {
         Row: {

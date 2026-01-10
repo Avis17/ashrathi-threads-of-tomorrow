@@ -11,7 +11,8 @@ import {
   Users,
   Edit,
   Trash2,
-  Eye
+  Eye,
+  Banknote
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -58,6 +59,7 @@ import {
 } from "@/hooks/useExternalJobSalaries";
 import { SalaryEntryForm } from "@/components/admin/external-jobs/SalaryEntryForm";
 import { SalaryDetailView } from "@/components/admin/external-jobs/SalaryDetailView";
+import { TrackAdvances } from "@/components/admin/external-jobs/TrackAdvances";
 
 const ExternalJobSalaries = () => {
   const navigate = useNavigate();
@@ -68,6 +70,7 @@ const ExternalJobSalaries = () => {
   const [editingSalary, setEditingSalary] = useState<ExternalJobSalary | null>(null);
   const [viewingSalary, setViewingSalary] = useState<ExternalJobSalary | null>(null);
   const [deletingSalaryId, setDeletingSalaryId] = useState<string | null>(null);
+  const [showAdvances, setShowAdvances] = useState(false);
   
   const { data: salaries, isLoading } = useExternalJobSalaries();
   const { data: stats } = useExternalJobSalaryStats();
@@ -119,6 +122,31 @@ const ExternalJobSalaries = () => {
     }
   };
   
+  if (showAdvances) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={() => setShowAdvances(false)}
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold">Track Advances</h1>
+              <p className="text-muted-foreground mt-1">
+                Manage advance payments given to tailors
+              </p>
+            </div>
+          </div>
+        </div>
+        <TrackAdvances />
+      </div>
+    );
+  }
+  
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -138,10 +166,16 @@ const ExternalJobSalaries = () => {
             </p>
           </div>
         </div>
-        <Button onClick={() => setIsFormOpen(true)} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Add Salary Entry
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => setShowAdvances(true)} className="gap-2">
+            <Banknote className="h-4 w-4" />
+            Track Advance
+          </Button>
+          <Button onClick={() => setIsFormOpen(true)} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Add Salary Entry
+          </Button>
+        </div>
       </div>
       
       {/* Stats Cards */}
@@ -277,8 +311,14 @@ const ExternalJobSalaries = () => {
                   <TableCell>
                     {format(new Date(salary.payment_date), 'dd MMM yyyy')}
                   </TableCell>
-                  <TableCell className="font-mono text-sm">
-                    {salary.job_order?.job_id || '-'}
+                  <TableCell>
+                    <div>
+                      <p className="font-mono text-sm">{salary.job_order?.job_id || '-'}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {salary.job_order?.company?.company_name || '-'}
+                      </p>
+                      {getStatusBadge(salary.payment_status)}
+                    </div>
                   </TableCell>
                   <TableCell>
                     <div className="max-w-[150px] truncate" title={salary.job_order?.style_name}>
