@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Plus, Building2, TrendingUp, CreditCard, List, Receipt } from "lucide-react";
+import { Plus, Building2, TrendingUp, CreditCard, List, Receipt, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ExternalJobOrdersList } from "@/components/admin/external-jobs/ExternalJobOrdersList";
 
@@ -23,6 +23,14 @@ const ExternalJobOrders = () => {
           >
             <TrendingUp className="h-4 w-4" />
             Dashboard
+          </Button>
+          <Button
+            onClick={() => navigate("/admin/external-jobs/salaries")}
+            variant="outline"
+            className="gap-2"
+          >
+            <Wallet className="h-4 w-4" />
+            Salary
           </Button>
           <Button
             onClick={() => navigate("/admin/external-jobs/generic-expenses")}
