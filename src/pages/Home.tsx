@@ -33,6 +33,7 @@ import {
   Play
 } from "lucide-react";
 import { useState, useEffect } from "react";
+import SEO from "@/components/seo/SEO";
 
 // Hero slides
 import heroSlide1 from "@/assets/hero-slide-1.jpg";
@@ -216,6 +217,14 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-background font-sans">
+      {/* Dynamic SEO */}
+      <SEO 
+        title="Feather Fashions | Activewear Manufacturer in Tirupur, India"
+        description="India's leading activewear manufacturer. Premium quality leggings, sports bras, track pants & athleisure at wholesale prices. Private label & bulk orders welcome. Low MOQ."
+        canonicalUrl="/"
+        ogType="website"
+      />
+      
       {/* Hero Section with Full-Width Slider */}
       <section data-navbar-dark="true" className="relative h-screen overflow-hidden -mt-[76px]">
         {/* Slides */}
