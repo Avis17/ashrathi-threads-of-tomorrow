@@ -1272,6 +1272,69 @@ export type Database = {
         }
         Relationships: []
       }
+      external_job_salaries: {
+        Row: {
+          created_at: string | null
+          employee_id: string
+          id: string
+          job_order_id: string
+          notes: string | null
+          number_of_pieces: number
+          operation: string
+          payment_date: string
+          payment_mode: string | null
+          payment_status: string | null
+          rate_per_piece: number
+          total_amount: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          employee_id: string
+          id?: string
+          job_order_id: string
+          notes?: string | null
+          number_of_pieces: number
+          operation: string
+          payment_date?: string
+          payment_mode?: string | null
+          payment_status?: string | null
+          rate_per_piece: number
+          total_amount: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          employee_id?: string
+          id?: string
+          job_order_id?: string
+          notes?: string | null
+          number_of_pieces?: number
+          operation?: string
+          payment_date?: string
+          payment_mode?: string | null
+          payment_status?: string | null
+          rate_per_piece?: number
+          total_amount?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "external_job_salaries_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "job_employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "external_job_salaries_job_order_id_fkey"
+            columns: ["job_order_id"]
+            isOneToOne: false
+            referencedRelation: "external_job_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       external_job_tasks: {
         Row: {
           created_at: string | null

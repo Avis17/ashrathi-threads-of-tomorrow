@@ -40,6 +40,7 @@ import RateCardsDashboard from './admin/external-jobs/RateCardsDashboard';
 import CompanyLetterhead from './admin/CompanyLetterhead';
 import CompaniesList from './admin/external-jobs/CompaniesList';
 import GenericJobExpenses from './admin/external-jobs/GenericJobExpenses';
+import ExternalJobSalaries from './admin/external-jobs/ExternalJobSalaries';
 import LabelGenerator from './admin/LabelGenerator';
 import PurchasesExpenses from './admin/PurchasesExpenses';
 import FeatherApps from './admin/FeatherApps';
@@ -127,6 +128,7 @@ const Admin = () => {
               <Route path="/external-jobs/edit-rate-card/:id" element={<AddRateCard />} />
               <Route path="/external-jobs/companies" element={<CompaniesList />} />
               <Route path="/external-jobs/generic-expenses" element={<GenericJobExpenses />} />
+              <Route path="/external-jobs/salaries" element={<ExternalJobSalaries />} />
               <Route path="/delivery-challan" element={<DeliveryChallanList />} />
               <Route path="/delivery-challan/create" element={<CreateDeliveryChallan />} />
               <Route path="/delivery-challan/:id" element={<DeliveryChallanView />} />
