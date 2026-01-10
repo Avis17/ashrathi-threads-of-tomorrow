@@ -21,6 +21,8 @@ export interface ExternalJobSalary {
     job_id: string;
     style_name: string;
     number_of_pieces: number;
+    is_custom_job: boolean | null;
+    custom_products_data: Array<{ name?: string; quantity?: number; rate?: number; total?: number }> | null;
     company?: {
       company_name: string;
     };
@@ -70,6 +72,8 @@ export const useExternalJobSalaries = () => {
             job_id,
             style_name,
             number_of_pieces,
+            is_custom_job,
+            custom_products_data,
             company:external_job_companies(company_name)
           ),
           employee:job_employees(
@@ -99,6 +103,8 @@ export const useExternalJobSalary = (id: string) => {
             job_id,
             style_name,
             number_of_pieces,
+            is_custom_job,
+            custom_products_data,
             company:external_job_companies(company_name)
           ),
           employee:job_employees(

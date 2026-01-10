@@ -111,6 +111,20 @@ const ExternalJobSalaries = () => {
     setEditingSalary(null);
   };
   
+  const getCustomJobProductName = (jobOrder: any) => {
+    if (!jobOrder?.custom_products_data || !Array.isArray(jobOrder.custom_products_data)) {
+      return 'N/A';
+    }
+    const products = jobOrder.custom_products_data as Array<{ name?: string }>;
+    if (products.length === 0) return 'N/A';
+    
+    // Get first product name, or combine if multiple
+    const productNames = products.map(p => p.name?.trim()).filter(Boolean);
+    if (productNames.length === 0) return 'N/A';
+    if (productNames.length === 1) return productNames[0];
+    return `${productNames[0]} +${productNames.length - 1} more`;
+  };
+  
   const getStatusBadge = (status: string | null) => {
     switch (status) {
       case 'paid':
@@ -321,8 +335,21 @@ const ExternalJobSalaries = () => {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="max-w-[150px] truncate" title={salary.job_order?.style_name}>
-                      {salary.job_order?.style_name || '-'}
+                    <div className="max-w-[200px]">
+                      {salary.job_order?.is_custom_job ? (
+                        <div className="flex flex-col gap-1">
+                          <span className="truncate" title={getCustomJobProductName(salary.job_order)}>
+                            {getCustomJobProductName(salary.job_order)}
+                          </span>
+                          <Badge variant="outline" className="w-fit text-xs bg-orange-100 text-orange-800 border-orange-300">
+                            Custom
+                          </Badge>
+                        </div>
+                      ) : (
+                        <span className="truncate" title={salary.job_order?.style_name}>
+                          {salary.job_order?.style_name || '-'}
+                        </span>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell>

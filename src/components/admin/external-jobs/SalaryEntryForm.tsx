@@ -55,14 +55,28 @@ interface SalaryEntryFormProps {
 }
 
 // Map salary operations to operation names in the database
+// Includes both standard format (with spaces) and custom job format (without spaces)
 const OPERATION_MAP: Record<string, string[]> = {
   'CUTTING': ['Cutting'],
-  'STITCHING(SINGER)': ['Stitching (Singer)'],
-  'STITCHING(POWERTABLE)': ['Stitching (Power Table) - Overlock', 'Stitching (Power Table) - Flatlock'],
-  'STITCHING(OTHER)': ['Stitching (Other)'],
+  'STITCHING(SINGER)': ['Stitching (Singer)', 'Stitching(Singer)'],
+  'STITCHING(POWERTABLE)': ['Stitching (Power Table) - Overlock', 'Stitching (Power Table) - Flatlock', 'Stitching(Powertable)'],
+  'STITCHING(OTHER)': ['Stitching (Other)', 'Stitching(Other)'],
   'CHECKING': ['Checking'],
   'IRONING': ['Ironing'],
   'IRONING AND PACKING': ['Ironing', 'Packing', 'Ironing and Packing'],
+};
+
+const getCustomJobProductName = (jobOrder: any) => {
+  if (!jobOrder?.custom_products_data || !Array.isArray(jobOrder.custom_products_data)) {
+    return 'N/A';
+  }
+  const products = jobOrder.custom_products_data as Array<{ name?: string }>;
+  if (products.length === 0) return 'N/A';
+  
+  const productNames = products.map(p => p.name?.trim()).filter(Boolean);
+  if (productNames.length === 0) return 'N/A';
+  if (productNames.length === 1) return productNames[0];
+  return `${productNames[0]} +${productNames.length - 1} more`;
 };
 
 export const SalaryEntryForm = ({ salary, onSuccess, onCancel }: SalaryEntryFormProps) => {
@@ -121,14 +135,23 @@ export const SalaryEntryForm = ({ salary, onSuccess, onCancel }: SalaryEntryForm
       const operations = jobOrderDetails.external_job_operations || [];
       const operationNames = OPERATION_MAP[selectedOperation] || [];
       
-      // Find matching operations and sum their rates (for POWERTABLE which has Overlock + Flatlock)
+      // Find matching operations and sum their rates
       let totalRate = 0;
+      
       operationNames.forEach(opName => {
-        const matchingOp = operations.find((op: any) => 
-          op.operation_name.toLowerCase().includes(opName.toLowerCase()) ||
-          opName.toLowerCase().includes(op.operation_name.toLowerCase())
-        );
-        if (matchingOp) {
+        const matchingOp = operations.find((op: any) => {
+          const opNameLower = op.operation_name?.toLowerCase() || '';
+          const searchNameLower = opName.toLowerCase();
+          // Exact match or contains match
+          return opNameLower === searchNameLower ||
+                 opNameLower.includes(searchNameLower) ||
+                 searchNameLower.includes(opNameLower);
+        });
+        if (matchingOp && !totalRate) {
+          // For custom jobs, operation names are like "Stitching(Powertable)" - take the rate directly
+          totalRate = matchingOp.total_rate || 0;
+        } else if (matchingOp && selectedOperation === 'STITCHING(POWERTABLE)' && !jobOrderDetails.is_custom_job) {
+          // For regular jobs with POWERTABLE, sum Overlock + Flatlock
           totalRate += matchingOp.total_rate || 0;
         }
       });
@@ -252,7 +275,10 @@ export const SalaryEntryForm = ({ salary, onSuccess, onCancel }: SalaryEntryForm
                         <div className="flex items-center gap-2">
                           <span className="font-mono text-sm">{job.job_id}</span>
                           <span className="text-muted-foreground">-</span>
-                          <span>{job.style_name}</span>
+                          <span>{job.is_custom_job ? getCustomJobProductName(job) : job.style_name}</span>
+                          {job.is_custom_job && (
+                            <span className="text-xs bg-orange-100 text-orange-800 px-1 rounded">Custom</span>
+                          )}
                           <span className="text-muted-foreground">
                             ({job.number_of_pieces} pcs)
                           </span>
