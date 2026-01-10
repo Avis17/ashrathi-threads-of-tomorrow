@@ -14,6 +14,7 @@ import { Heart, Minus, Plus, ShoppingCart, ZoomIn, ArrowLeft } from 'lucide-reac
 import { useToast } from '@/hooks/use-toast';
 import ImageZoomDialog from '@/components/ImageZoomDialog';
 import { Skeleton } from '@/components/ui/skeleton';
+import SEO from '@/components/seo/SEO';
 
 const OfferMessageCycle = ({ messages }: { messages: string[] }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -257,6 +258,24 @@ export default function ProductDetail() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-accent/5">
+      {/* Dynamic Product SEO */}
+      <SEO
+        title={`${product.name} | Buy Online at Feather Fashions`}
+        description={product.description || `Shop ${product.name} from Feather Fashions. Premium quality activewear made in Tirupur, India. Available for wholesale and bulk orders.`}
+        canonicalUrl={`/product/${product.id}`}
+        ogType="product"
+        ogImage={product.image_url}
+        productData={{
+          name: product.name,
+          description: product.description || `Premium ${product.name} by Feather Fashions`,
+          image: product.image_url,
+          price: discountedPrice || product.price || 0,
+          currency: "INR",
+          sku: product.id,
+          availability: "InStock"
+        }}
+      />
+      
       <div className="container mx-auto px-4 py-8">
         <Button variant="ghost" onClick={() => navigate(-1)} className="mb-6">
           <ArrowLeft className="mr-2 h-4 w-4" />
