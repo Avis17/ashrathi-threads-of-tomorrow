@@ -14,8 +14,14 @@ import { Calendar } from "@/components/ui/calendar";
 import { useExternalJobOrder } from "@/hooks/useExternalJobOrders";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+// Dynamic import for jsPDF - reduces bundle size
+const loadPdfLibs = async () => {
+  const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+    import('jspdf'),
+    import('jspdf-autotable')
+  ]);
+  return { jsPDF, autoTable };
+};
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { formatCurrencyAscii, numberToWords, sanitizePdfText, formatInvoiceNumberWithTemplate } from "@/lib/invoiceUtils";
@@ -155,7 +161,8 @@ const GenerateInvoice = () => {
 
   const totalAdvancePayments = payments.reduce((sum, p) => sum + p.payment_amount, 0);
 
-  const createPDF = (returnBlob: boolean = false): jsPDF | string => {
+  const createPDF = async (returnBlob: boolean = false): Promise<InstanceType<typeof import('jspdf').default> | string> => {
+    const { jsPDF, autoTable } = await loadPdfLibs();
     if (!jobOrder) return new jsPDF();
 
     const doc = new jsPDF();
@@ -389,8 +396,8 @@ const GenerateInvoice = () => {
     return doc;
   };
 
-  const handlePreview = () => {
-    const blobUrl = createPDF(true) as string;
+  const handlePreview = async () => {
+    const blobUrl = await createPDF(true) as string;
     setPreviewUrl(blobUrl);
     setShowPreview(true);
   };
@@ -403,12 +410,14 @@ const GenerateInvoice = () => {
     setShowPreview(false);
   };
 
-  const handleConfirmAndDownload = () => {
+  const handleConfirmAndDownload = async () => {
     if (!jobOrder) return;
     
-    const doc = createPDF(false) as jsPDF;
-    const invoiceSuffix = invoiceNumber ? `-${invoiceNumber.slice(-4).padStart(4, '0')}` : '';
-    doc.save(`Job-Invoice-${jobOrder.job_id}${invoiceSuffix}.pdf`);
+    const doc = await createPDF(false);
+    if (doc && typeof doc !== 'string') {
+      const invoiceSuffix = invoiceNumber ? `-${invoiceNumber.slice(-4).padStart(4, '0')}` : '';
+      doc.save(`Job-Invoice-${jobOrder.job_id}${invoiceSuffix}.pdf`);
+    }
     
     // Save invoice to history
     saveInvoiceToHistoryMutation.mutate();

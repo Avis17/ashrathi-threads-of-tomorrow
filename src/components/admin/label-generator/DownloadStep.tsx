@@ -5,8 +5,13 @@ import { ArrowLeft, Download, Image, FileImage, FileText, Eye, Save, Check, Prin
 import { LabelConfig, ProductData } from '@/pages/admin/LabelGenerator';
 import { LabelCanvas } from './LabelCanvas';
 import { saveAs } from 'file-saver';
-import jsPDF from 'jspdf';
 import { toast } from 'sonner';
+
+// Dynamic import for jsPDF - reduces bundle size
+const loadJsPDF = async () => {
+  const { default: jsPDF } = await import('jspdf');
+  return jsPDF;
+};
 import { useLabelTemplates } from '@/hooks/useLabelTemplates';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -164,7 +169,8 @@ export const DownloadStep = ({
         const mmWidth = labelConfig.orientation === 'landscape' ? labelConfig.height : labelConfig.width;
         const mmHeight = labelConfig.orientation === 'landscape' ? labelConfig.width : labelConfig.height;
         
-        const pdf = new jsPDF({
+        const JsPDF = await loadJsPDF();
+        const pdf = new JsPDF({
           orientation: mmWidth > mmHeight ? 'landscape' : 'portrait',
           unit: 'mm',
           format: [mmWidth, mmHeight],

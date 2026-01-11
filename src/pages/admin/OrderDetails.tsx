@@ -13,8 +13,14 @@ import { format } from 'date-fns';
 import { ArrowLeft, Package, MapPin, Phone, User, Save, Printer, CreditCard, Banknote } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState } from 'react';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+// Dynamic import for jsPDF - reduces bundle size
+const loadPdfLibs = async () => {
+  const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+    import('jspdf'),
+    import('jspdf-autotable')
+  ]);
+  return { jsPDF, autoTable };
+};
 import { calculateComboPrice } from '@/lib/calculateComboPrice';
 import logo from '@/assets/logo.png';
 import { numberToWords, formatCurrencyAscii, sanitizePdfText } from '@/lib/invoiceUtils';
@@ -105,9 +111,10 @@ export default function AdminOrderDetails() {
     },
   });
 
-  const handlePrintInvoice = () => {
+  const handlePrintInvoice = async () => {
     if (!order) return;
 
+    const { jsPDF, autoTable } = await loadPdfLibs();
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.width;
     const pageHeight = doc.internal.pageSize.height;
