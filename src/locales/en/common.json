@@ -328,7 +328,17 @@
     "privacy": "Privacy",
     "disclaimer": "Disclaimer",
     "shipping": "Shipping",
-    "refunds": "Refunds"
+    "refunds": "Refunds",
+    "sizeGuide": "Global Size Guide"
+  },
+  "currency": {
+    "exportTools": "Export Tools",
+    "amount": "Amount",
+    "from": "From",
+    "to": "To",
+    "convert": "Convert",
+    "invalidAmount": "Please enter a valid amount",
+    "disclaimer": "Currency values are for reference only. Final pricing is subject to quotation and invoice confirmation."
   },
   "contact": {
     "title": "Let's Connect",
@@ -364,5 +374,36 @@
     "error": "Error",
     "success": "Thank you for reaching out! We'll get back to you soon.",
     "whatsapp": "WhatsApp"
+  },
+  "sizeGuide": {
+    "pageTitle": "Global Size Guide",
+    "pageDescription": "International size chart for women's nightwear and kidswear. Measurements in CM and inches for export buyers.",
+    "badge": "Buyer Reference",
+    "title": "Global Size Guide",
+    "subtitle": "International sizing reference for our women's nightwear and kidswear collections. All measurements in CM and inches.",
+    "womensTitle": "Women's Nightwear & Loungewear",
+    "womensSubtitle": "Standard sizing for women's apparel (XS-XXL)",
+    "kidsTitle": "Kidswear Sizing",
+    "kidsSubtitle": "Age-based sizing for children's apparel (2-12 years)",
+    "size": "Size",
+    "age": "Age",
+    "chestCm": "Chest (cm)",
+    "waistCm": "Waist (cm)",
+    "hipCm": "Hip (cm)",
+    "heightCm": "Height (cm)",
+    "chestIn": "Chest (in)",
+    "waistIn": "Waist (in)",
+    "hipIn": "Hip (in)",
+    "heightIn": "Height (in)",
+    "howToMeasure": "How to Measure",
+    "howToMeasureSubtitle": "Accurate measurement guidelines",
+    "chestMeasure": "Chest",
+    "chestMeasureDesc": "Measure around the fullest part of the chest, keeping the tape horizontal.",
+    "waistMeasure": "Waist",
+    "waistMeasureDesc": "Measure around the natural waistline, at the narrowest point.",
+    "hipMeasure": "Hip",
+    "hipMeasureDesc": "Measure around the fullest part of the hips, about 20cm below the waist.",
+    "note": "Note",
+    "noteText": "Size specifications can be customized for bulk orders. Contact us for custom size grading based on your market requirements."
   }
 }
