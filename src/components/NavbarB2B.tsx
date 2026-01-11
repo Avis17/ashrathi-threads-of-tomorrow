@@ -67,7 +67,7 @@ const NavbarB2B = () => {
                           : "text-foreground/70 hover:text-foreground hover:bg-muted/50"
                       }`}
                     >
-                      PRODUCTS
+                      PRODUCT CATEGORIES
                       <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${productsOpen ? 'rotate-180' : ''}`} />
                     </button>
                   </DropdownMenuTrigger>
