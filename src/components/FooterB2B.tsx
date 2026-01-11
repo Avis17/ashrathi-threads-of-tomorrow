@@ -1,86 +1,56 @@
 import { Link } from "react-router-dom";
 import { Mail, Phone, MapPin, MessageCircle, Download } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const FooterB2B = () => {
+  const { t } = useTranslation();
+
   const handleWhatsApp = () => {
     window.open("https://wa.me/919988322555?text=Hello, I'm interested in bulk orders from Feather Fashions.", "_blank");
   };
 
   return (
     <footer className="bg-primary text-primary-foreground">
-      {/* Main Footer */}
       <div className="container mx-auto px-6 py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
-          {/* Brand & Description */}
           <div className="lg:col-span-1">
             <h2 className="text-xl font-athletic font-bold tracking-[0.2em] mb-4">FEATHER FASHIONS</h2>
             <p className="text-sm text-primary-foreground/70 leading-relaxed mb-6">
-              Export-oriented apparel manufacturer from Tiruppur, India, specializing in premium nightwear, kidswear, and casual garments. Trusted by global buyers for consistent quality, compliance, and scalable production.
+              {t('footer.brandDescription')}
             </p>
             <button
               onClick={handleWhatsApp}
               className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded transition-colors"
             >
               <MessageCircle className="h-4 w-4" />
-              WhatsApp Us
+              {t('footer.whatsappUs')}
             </button>
           </div>
 
-          {/* Quick Links */}
           <div>
             <h4 className="text-xs font-semibold tracking-[0.2em] text-primary-foreground/50 mb-6 uppercase">
-              Quick Links
+              {t('footer.quickLinks')}
             </h4>
             <ul className="space-y-3">
-              <li>
-                <Link to="/products" className="text-sm text-primary-foreground/80 hover:text-accent transition-colors">
-                  Product Categories
-                </Link>
-              </li>
-              <li>
-                <Link to="/manufacturing" className="text-sm text-primary-foreground/80 hover:text-accent transition-colors">
-                  Manufacturing
-                </Link>
-              </li>
-              <li>
-                <Link to="/compliance" className="text-sm text-primary-foreground/80 hover:text-accent transition-colors">
-                  Compliance & Certifications
-                </Link>
-              </li>
-              <li>
-                <Link to="/about" className="text-sm text-primary-foreground/80 hover:text-accent transition-colors">
-                  About Us
-                </Link>
-              </li>
-              <li>
-                <Link to="/contact" className="text-sm text-primary-foreground/80 hover:text-accent transition-colors">
-                  Contact / Enquiry
-                </Link>
-              </li>
-              <li>
-                <Link to="/export-brochure" className="text-sm text-primary-foreground/80 hover:text-accent transition-colors flex items-center gap-2">
-                  <Download className="h-3 w-3" />
-                  Export Brochure
-                </Link>
-              </li>
+              <li><Link to="/products" className="text-sm text-primary-foreground/80 hover:text-accent transition-colors">{t('footer.productCategories')}</Link></li>
+              <li><Link to="/manufacturing" className="text-sm text-primary-foreground/80 hover:text-accent transition-colors">{t('footer.manufacturing')}</Link></li>
+              <li><Link to="/compliance" className="text-sm text-primary-foreground/80 hover:text-accent transition-colors">{t('footer.complianceCertifications')}</Link></li>
+              <li><Link to="/about" className="text-sm text-primary-foreground/80 hover:text-accent transition-colors">{t('footer.aboutUs')}</Link></li>
+              <li><Link to="/contact" className="text-sm text-primary-foreground/80 hover:text-accent transition-colors">{t('footer.contactEnquiry')}</Link></li>
+              <li><Link to="/export-brochure" className="text-sm text-primary-foreground/80 hover:text-accent transition-colors flex items-center gap-2"><Download className="h-3 w-3" />{t('footer.exportBrochure')}</Link></li>
             </ul>
           </div>
 
-          {/* Contact Info */}
           <div>
             <h4 className="text-xs font-semibold tracking-[0.2em] text-primary-foreground/50 mb-6 uppercase">
-              Contact
+              {t('footer.contact')}
             </h4>
             <ul className="space-y-4">
               <li className="flex items-start gap-3 text-sm text-primary-foreground/80">
                 <Mail className="h-4 w-4 mt-1 text-accent flex-shrink-0" />
                 <div className="flex flex-col">
-                  <a href="mailto:hello@featherfashions.in" className="hover:text-accent transition-colors">
-                    hello@featherfashions.in
-                  </a>
-                  <a href="mailto:info@featherfashions.in" className="hover:text-accent transition-colors">
-                    info@featherfashions.in
-                  </a>
+                  <a href="mailto:hello@featherfashions.in" className="hover:text-accent transition-colors">hello@featherfashions.in</a>
+                  <a href="mailto:info@featherfashions.in" className="hover:text-accent transition-colors">info@featherfashions.in</a>
                 </div>
               </li>
               <li className="flex items-start gap-3 text-sm text-primary-foreground/80">
@@ -93,83 +63,48 @@ const FooterB2B = () => {
               </li>
               <li className="flex items-start gap-3 text-sm text-primary-foreground/80">
                 <MapPin className="h-4 w-4 mt-1 text-accent flex-shrink-0" />
-                <span>
-                  251/1, Vadivel Nagar,<br />
-                  Thottipalayam, Pooluvapatti,<br />
-                  Tiruppur, Tamil Nadu 641602<br />
-                  India
-                </span>
+                <span>251/1, Vadivel Nagar,<br />Thottipalayam, Pooluvapatti,<br />Tiruppur, Tamil Nadu 641602<br />India</span>
               </li>
             </ul>
           </div>
 
-          {/* Export Markets */}
           <div>
             <h4 className="text-xs font-semibold tracking-[0.2em] text-primary-foreground/50 mb-6 uppercase">
-              Export Markets
+              {t('footer.exportMarkets')}
             </h4>
             <ul className="space-y-3">
-              <li>
-                <Link to="/export-garments-to-uae" className="text-sm text-primary-foreground/80 hover:text-accent transition-colors">
-                  Export to UAE
-                </Link>
-              </li>
-              <li>
-                <Link to="/export-garments-to-saudi-arabia" className="text-sm text-primary-foreground/80 hover:text-accent transition-colors">
-                  Export to Saudi Arabia
-                </Link>
-              </li>
-              <li>
-                <Link to="/export-garments-to-south-africa" className="text-sm text-primary-foreground/80 hover:text-accent transition-colors">
-                  Export to South Africa
-                </Link>
-              </li>
+              <li><Link to="/export-garments-to-uae" className="text-sm text-primary-foreground/80 hover:text-accent transition-colors">{t('footer.exportToUAE')}</Link></li>
+              <li><Link to="/export-garments-to-saudi-arabia" className="text-sm text-primary-foreground/80 hover:text-accent transition-colors">{t('footer.exportToSaudiArabia')}</Link></li>
+              <li><Link to="/export-garments-to-south-africa" className="text-sm text-primary-foreground/80 hover:text-accent transition-colors">{t('footer.exportToSouthAfrica')}</Link></li>
             </ul>
             
             <h4 className="text-xs font-semibold tracking-[0.2em] text-primary-foreground/50 mt-6 mb-4 uppercase">
-              Registrations
+              {t('footer.registrations')}
             </h4>
             <ul className="space-y-2 text-sm text-primary-foreground/70">
-              <li>
-                <span className="text-primary-foreground/50">GSTIN:</span>{" "}
-                <span className="font-mono text-xs">33FWTPS1281P1ZJ</span>
-              </li>
-              <li>
-                <span className="text-primary-foreground/50">IEC:</span>{" "}
-                <span className="font-mono text-xs">FWTPS1281P</span>
-              </li>
+              <li><span className="text-primary-foreground/50">GSTIN:</span> <span className="font-mono text-xs">33FWTPS1281P1ZJ</span></li>
+              <li><span className="text-primary-foreground/50">IEC:</span> <span className="font-mono text-xs">FWTPS1281P</span></li>
             </ul>
           </div>
         </div>
       </div>
 
-      {/* Bottom Bar */}
       <div className="border-t border-primary-foreground/10">
         <div className="container mx-auto px-6 py-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-xs text-primary-foreground/50 text-center md:text-left">
-              © {new Date().getFullYear()} Feather Fashions. Export-oriented apparel manufacturer from India.
+            <p className="text-xs text-primary-foreground/50 text-center md:text-start">
+              © {new Date().getFullYear()} {t('footer.copyright')}
             </p>
             <div className="flex items-center gap-2 flex-wrap justify-center md:justify-end">
-              <Link to="/terms-and-conditions" className="text-xs text-primary-foreground/50 hover:text-accent transition-colors">
-                Terms
-              </Link>
+              <Link to="/terms-and-conditions" className="text-xs text-primary-foreground/50 hover:text-accent transition-colors">{t('footer.terms')}</Link>
               <span className="text-primary-foreground/30">•</span>
-              <Link to="/privacy-policy" className="text-xs text-primary-foreground/50 hover:text-accent transition-colors">
-                Privacy
-              </Link>
+              <Link to="/privacy-policy" className="text-xs text-primary-foreground/50 hover:text-accent transition-colors">{t('footer.privacy')}</Link>
               <span className="text-primary-foreground/30">•</span>
-              <Link to="/disclaimer" className="text-xs text-primary-foreground/50 hover:text-accent transition-colors">
-                Disclaimer
-              </Link>
+              <Link to="/disclaimer" className="text-xs text-primary-foreground/50 hover:text-accent transition-colors">{t('footer.disclaimer')}</Link>
               <span className="text-primary-foreground/30">•</span>
-              <Link to="/shipping-export-policy" className="text-xs text-primary-foreground/50 hover:text-accent transition-colors">
-                Shipping
-              </Link>
+              <Link to="/shipping-export-policy" className="text-xs text-primary-foreground/50 hover:text-accent transition-colors">{t('footer.shipping')}</Link>
               <span className="text-primary-foreground/30">•</span>
-              <Link to="/refund-cancellation-policy" className="text-xs text-primary-foreground/50 hover:text-accent transition-colors">
-                Refunds
-              </Link>
+              <Link to="/refund-cancellation-policy" className="text-xs text-primary-foreground/50 hover:text-accent transition-colors">{t('footer.refunds')}</Link>
             </div>
           </div>
         </div>
