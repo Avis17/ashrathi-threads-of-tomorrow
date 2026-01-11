@@ -157,34 +157,38 @@ const Home = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8" role="list">
             {productCategories.map((category, index) => (
-              <div key={index} className="group relative overflow-hidden rounded-2xl bg-card border border-border hover:border-accent/50 transition-all duration-500">
+              <article key={index} className="group relative overflow-hidden rounded-2xl bg-card border border-border hover:border-accent/50 transition-all duration-500" role="listitem">
                 <div className="aspect-[4/3] overflow-hidden">
                   <img 
                     src={category.image} 
-                    alt={category.name}
+                    alt={`${category.name} - Wholesale garment manufacturing in Tiruppur`}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                    width={400}
+                    height={300}
+                    loading="lazy"
+                    decoding="async"
                   />
                 </div>
                 <div className="p-6">
                   <h3 className="text-xl font-bold text-foreground mb-3">{category.name}</h3>
-                  <ul className="space-y-2 mb-6">
+                  <ul className="space-y-2 mb-6" aria-label={`${category.name} product types`}>
                     {category.items.map((item, idx) => (
                       <li key={idx} className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <CheckCircle className="h-4 w-4 text-accent" />
+                        <CheckCircle className="h-4 w-4 text-accent" aria-hidden="true" />
                         {item}
                       </li>
                     ))}
                   </ul>
                   <Button asChild variant="outline" className="w-full group-hover:bg-accent group-hover:text-accent-foreground group-hover:border-accent transition-all">
-                    <Link to={category.link}>
+                    <Link to={category.link} aria-label={`Enquire for ${category.name} bulk export orders`}>
                       Enquire for Export / Bulk Orders
-                      <ArrowRight className="ml-2 h-4 w-4" />
+                      <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
                     </Link>
                   </Button>
                 </div>
-              </div>
+              </article>
             ))}
           </div>
         </div>
@@ -234,18 +238,30 @@ const Home = () => {
             <div className="grid grid-cols-2 gap-4">
               <img 
                 src={productionLine} 
-                alt="Production Line" 
+                alt="Garment production line in Tiruppur manufacturing unit for export quality apparel"
                 className="rounded-2xl object-cover w-full h-64"
+                width={400}
+                height={256}
+                loading="lazy"
+                decoding="async"
               />
               <img 
                 src={qualityControl} 
-                alt="Quality Control" 
+                alt="Quality control inspection at Feather Fashions garment factory in India"
                 className="rounded-2xl object-cover w-full h-64 mt-8"
+                width={400}
+                height={256}
+                loading="lazy"
+                decoding="async"
               />
               <img 
                 src={exportLogistics} 
-                alt="Export Logistics" 
+                alt="Export logistics and shipping for wholesale garments from Tiruppur to global markets"
                 className="rounded-2xl object-cover w-full h-64 col-span-2"
+                width={800}
+                height={256}
+                loading="lazy"
+                decoding="async"
               />
             </div>
           </div>

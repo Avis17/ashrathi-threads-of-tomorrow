@@ -6,10 +6,15 @@ import heroImage from "@/assets/b2b/hero-nightwear-kidswear.jpg";
 const ExportHeroSection = () => {
   return (
     <section className="relative min-h-[85vh] flex items-center overflow-hidden bg-secondary">
-      {/* Background Image */}
-      <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${heroImage})` }}
+      {/* Preloaded Hero Image - Priority loading */}
+      <img 
+        src={heroImage}
+        alt="Women's nightwear and kids clothing wholesale manufacturer in Tiruppur India for export"
+        className="absolute inset-0 w-full h-full object-cover"
+        width={1920}
+        height={1080}
+        fetchPriority="high"
+        decoding="async"
       />
       
       {/* Premium Gradient Overlay */}
@@ -24,14 +29,14 @@ const ExportHeroSection = () => {
           {/* Badge */}
           <div className="inline-flex items-center gap-3 mb-8 animate-fade-in">
             <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-gold/20 to-gold/10 border border-gold/30">
-              <Sparkles className="w-4 h-4 text-gold" />
+              <Sparkles className="w-4 h-4 text-gold" aria-hidden="true" />
               <span className="text-gold text-sm font-semibold tracking-wide uppercase">
                 Export-Ready Manufacturer
               </span>
             </div>
           </div>
 
-          {/* Main Headline */}
+          {/* Main Headline - Primary H1 for SEO */}
           <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white leading-[1.05] mb-6 animate-fade-in-up">
             Premium Wholesale{" "}
             <span className="text-gradient-gold">Nightwear & Kidswear</span>
@@ -53,10 +58,10 @@ const ExportHeroSection = () => {
               size="lg" 
               className="bg-gradient-to-r from-gold to-gold/80 text-black hover:from-gold/90 hover:to-gold/70 px-8 py-6 text-base font-bold shadow-lg shadow-gold/25"
             >
-              <Link to="/contact">
-                <Globe className="mr-2 h-5 w-5" />
+              <Link to="/contact" aria-label="Request wholesale and export access for bulk orders">
+                <Globe className="mr-2 h-5 w-5" aria-hidden="true" />
                 Request Wholesale / Export Access
-                <ArrowRight className="ml-2 h-5 w-5" />
+                <ArrowRight className="ml-2 h-5 w-5" aria-hidden="true" />
               </Link>
             </Button>
           </div>

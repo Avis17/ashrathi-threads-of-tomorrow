@@ -13,19 +13,23 @@ const WomensNightwearSection = () => {
   ];
 
   return (
-    <section className="py-24 bg-secondary relative overflow-hidden">
+    <section className="py-24 bg-secondary relative overflow-hidden" aria-labelledby="womens-nightwear-heading">
       {/* Gradient Accent */}
-      <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-pink-500/5 via-purple-500/5 to-transparent" />
+      <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-pink-500/5 via-purple-500/5 to-transparent" aria-hidden="true" />
       
       <div className="container mx-auto px-6 relative z-10">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Image Side */}
           <div className="relative group">
-            <div className="absolute -inset-4 bg-gradient-to-br from-pink-500/20 via-purple-500/20 to-teal-500/20 rounded-3xl blur-2xl opacity-50 group-hover:opacity-75 transition-opacity duration-500" />
+            <div className="absolute -inset-4 bg-gradient-to-br from-pink-500/20 via-purple-500/20 to-teal-500/20 rounded-3xl blur-2xl opacity-50 group-hover:opacity-75 transition-opacity duration-500" aria-hidden="true" />
             <img 
               src={nightwearImage} 
-              alt="Women's Nightwear Collection - Export Quality" 
+              alt="Women cotton night pants and night tops manufactured in Tiruppur for wholesale and export"
               className="relative rounded-2xl w-full h-auto shadow-2xl"
+              width={600}
+              height={450}
+              loading="lazy"
+              decoding="async"
             />
             
             {/* Floating Badge */}
@@ -41,7 +45,7 @@ const WomensNightwearSection = () => {
               Women's Collection
             </span>
 
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight">
+            <h2 id="womens-nightwear-heading" className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight">
               Women's Nightwear —{" "}
               <span className="text-gradient-gold">Fast-Moving Export Styles</span>
             </h2>
@@ -53,21 +57,21 @@ const WomensNightwearSection = () => {
             </p>
 
             {/* Highlights */}
-            <div className="space-y-4 mb-8">
+            <ul className="space-y-4 mb-8" aria-label="Product features">
               {highlights.map((item, index) => (
-                <div key={index} className="flex items-center gap-3 group/item">
-                  <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br from-pink-500/20 to-purple-500/20 flex items-center justify-center group-hover/item:from-pink-500/30 group-hover/item:to-purple-500/30 transition-all">
-                    <item.icon className="h-5 w-5 text-pink-400" />
+                <li key={index} className="flex items-center gap-3 group/item">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br from-pink-500/20 to-purple-500/20 flex items-center justify-center group-hover/item:from-pink-500/30 group-hover/item:to-purple-500/30 transition-all" aria-hidden="true">
+                    <item.icon className="h-5 w-5 text-pink-400" aria-hidden="true" />
                   </div>
                   <span className="text-white/80">{item.text}</span>
-                </div>
+                </li>
               ))}
-            </div>
+            </ul>
 
             {/* Price Hint */}
             <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-8">
               <p className="text-gold text-sm font-medium flex items-center gap-2">
-                <CheckCircle className="h-4 w-4" />
+                <CheckCircle className="h-4 w-4" aria-hidden="true" />
                 Wholesale pricing available after verification
               </p>
             </div>
@@ -78,9 +82,9 @@ const WomensNightwearSection = () => {
                 asChild 
                 className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white px-6"
               >
-                <Link to="/products">
+                <Link to="/products" aria-label="View women's nightwear wholesale catalog">
                   View Wholesale Catalog
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                  <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
                 </Link>
               </Button>
               <Button 
@@ -88,7 +92,7 @@ const WomensNightwearSection = () => {
                 variant="outline" 
                 className="border-white/20 text-white hover:bg-white/10"
               >
-                <Link to="/contact">
+                <Link to="/contact" aria-label="Request export pricing for women's nightwear">
                   Request Export Pricing
                 </Link>
               </Button>

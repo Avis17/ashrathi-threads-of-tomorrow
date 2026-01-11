@@ -53,41 +53,42 @@ const WhyChooseFeatherSection = () => {
   ];
 
   return (
-    <section className="py-24 bg-secondary relative overflow-hidden">
+    <section className="py-24 bg-secondary relative overflow-hidden" aria-labelledby="why-choose-heading">
       {/* Background Glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-br from-gold/5 via-transparent to-purple-500/5 rounded-full blur-3xl" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-br from-gold/5 via-transparent to-purple-500/5 rounded-full blur-3xl" aria-hidden="true" />
       
       <div className="container mx-auto px-6 relative z-10">
-        <div className="text-center mb-16">
+        <header className="text-center mb-16">
           <span className="inline-block px-4 py-2 bg-gold/10 border border-gold/20 rounded-full text-gold text-sm font-semibold tracking-wide uppercase mb-6">
             Why Choose Us
           </span>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4">
+          <h2 id="why-choose-heading" className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4">
             Why Exporters & Wholesale Buyers{" "}
             <span className="text-gradient-gold">Choose Feather</span>
           </h2>
           <p className="text-lg text-white/60 max-w-2xl mx-auto">
             Built for scale, designed for trust. We understand what wholesale and export partners need.
           </p>
-        </div>
+        </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" role="list">
           {features.map((feature, index) => (
-            <div 
+            <article 
               key={index}
               className={`group relative bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:border-white/20 transition-all duration-500 hover:shadow-2xl ${feature.glowColor}`}
+              role="listitem"
             >
               {/* Glow Effect */}
-              <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+              <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500`} aria-hidden="true" />
               
               <div className="relative z-10">
-                <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center mb-4`}>
-                  <feature.icon className={`h-7 w-7 ${feature.iconColor}`} />
+                <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center mb-4`} aria-hidden="true">
+                  <feature.icon className={`h-7 w-7 ${feature.iconColor}`} aria-hidden="true" />
                 </div>
                 <h3 className="text-xl font-bold text-white mb-2">{feature.title}</h3>
                 <p className="text-white/60">{feature.description}</p>
               </div>
-            </div>
+            </article>
           ))}
         </div>
       </div>
