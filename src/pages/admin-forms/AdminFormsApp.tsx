@@ -4,7 +4,6 @@ import { useAppAccess } from '@/hooks/useAppAccess';
 import AdminFormsHome from './AdminFormsHome';
 import AddJobForm from './forms/AddJobForm';
 import AddCompanyForm from './forms/AddCompanyForm';
-import AddPurchaseForm from './forms/AddPurchaseForm';
 import AddExpenseForm from './forms/AddExpenseForm';
 import AddCustomerForm from './forms/AddCustomerForm';
 import AddProductForm from './forms/AddProductForm';
@@ -63,7 +62,6 @@ export default function AdminFormsApp() {
       <Route path="/" element={<AdminFormsHome />} />
       <Route path="/add-job" element={<AddJobForm />} />
       <Route path="/add-company" element={<AddCompanyForm />} />
-      <Route path="/add-purchase" element={<AddPurchaseForm />} />
       <Route path="/add-expense" element={<AddExpenseForm />} />
       <Route path="/add-customer" element={<AddCustomerForm />} />
       <Route path="/add-product" element={<AddProductForm />} />
