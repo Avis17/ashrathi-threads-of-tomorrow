@@ -17,9 +17,15 @@ import frontImage from "@/assets/products/cotton-tshirt-front.jpg";
 import backImage from "@/assets/products/cotton-tshirt-back.jpg";
 import fabricImage from "@/assets/products/cotton-tshirt-fabric.jpg";
 import necklineImage from "@/assets/products/cotton-tshirt-neckline.jpg";
+import poloImage from "@/assets/products/cotton-polo-tshirts.jpg";
+import womensRoundneckImage from "@/assets/products/cotton-womens-roundneck.jpg";
+import sweatersImage from "@/assets/products/cotton-fullsleeve-sweaters.jpg";
 
 const CottonTshirts = () => {
   const productImages = [
+    { src: poloImage, alt: "Premium polo t-shirts in vibrant colors" },
+    { src: womensRoundneckImage, alt: "Women's round neck cotton t-shirts" },
+    { src: sweatersImage, alt: "Full sleeve cotton sweaters and sweatshirts" },
     { src: whiteImage, alt: "White cotton T-shirt folded" },
     { src: colorsImage, alt: "T-shirt color variations" },
     { src: frontImage, alt: "Navy T-shirt front view" },
@@ -79,7 +85,7 @@ const CottonTshirts = () => {
       </Helmet>
 
       {/* Hero Section */}
-      <section className="relative min-h-[70vh] flex items-center -mt-[76px] pt-[76px]">
+      <section className="relative min-h-[70vh] flex items-center py-20">
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: `url(${heroImage})` }}
