@@ -1,58 +1,61 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, CheckCircle } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 // Import images
 import cottonTshirtsImg from "@/assets/export-cotton-tshirts.jpg";
 import pyjamasCasualImg from "@/assets/export-pyjamas-casualwear.jpg";
 import innerwearBasicsImg from "@/assets/export-innerwear-basics.jpg";
 
-const categories = [
-  {
-    title: "Cotton T-Shirts",
-    image: cottonTshirtsImg,
-    alt: "Premium cotton T-shirts manufactured in India for wholesale export",
-    description: "High-demand cotton T-shirts designed for bulk export and wholesale supply. Manufactured with consistent sizing, smooth finishes, and long-lasting fabric quality suitable for international retail markets.",
-    highlights: [
-      "100% cotton & cotton blends",
-      "Consistent GSM & sizing",
-      "Ideal for bulk export programs",
-      "Suitable for private label supply"
-    ],
-    cta: "View Wholesale Range",
-    link: "/products"
-  },
-  {
-    title: "Pyjamas & Casual Wear",
-    image: pyjamasCasualImg,
-    alt: "Cotton pyjamas and casual wear exported from Tiruppur India",
-    description: "Comfortable, climate-friendly pyjamas and casual wear collections developed for strong repeat demand in domestic and international markets.",
-    highlights: [
-      "Breathable cotton fabrics",
-      "Comfort-focused fits",
-      "Year-round demand products",
-      "High repeat-order potential"
-    ],
-    cta: "Explore Export Collection",
-    link: "/products"
-  },
-  {
-    title: "Innerwear & Basics",
-    image: innerwearBasicsImg,
-    alt: "Innerwear and basic garments wholesale supplier from India",
-    description: "Essential innerwear and basic garments manufactured with quality consistency, durability, and comfort, suitable for bulk wholesale and export markets.",
-    highlights: [
-      "Soft, skin-friendly fabrics",
-      "Consistent bulk production",
-      "Ideal for distributor supply",
-      "Low return, high turnover category"
-    ],
-    cta: "Request Wholesale Access",
-    link: "/contact"
-  }
-];
-
 const ExportCoreCategories = () => {
+  const { t } = useTranslation();
+
+  const categories = [
+    {
+      titleKey: "exportCategories.cottonTshirts.title",
+      image: cottonTshirtsImg,
+      alt: "Premium cotton T-shirts manufactured in India for wholesale export",
+      descriptionKey: "exportCategories.cottonTshirts.description",
+      highlightKeys: [
+        "exportCategories.cottonTshirts.highlights.0",
+        "exportCategories.cottonTshirts.highlights.1",
+        "exportCategories.cottonTshirts.highlights.2",
+        "exportCategories.cottonTshirts.highlights.3"
+      ],
+      ctaKey: "exportCategories.cottonTshirts.cta",
+      link: "/products"
+    },
+    {
+      titleKey: "exportCategories.pyjamasCasual.title",
+      image: pyjamasCasualImg,
+      alt: "Cotton pyjamas and casual wear exported from Tiruppur India",
+      descriptionKey: "exportCategories.pyjamasCasual.description",
+      highlightKeys: [
+        "exportCategories.pyjamasCasual.highlights.0",
+        "exportCategories.pyjamasCasual.highlights.1",
+        "exportCategories.pyjamasCasual.highlights.2",
+        "exportCategories.pyjamasCasual.highlights.3"
+      ],
+      ctaKey: "exportCategories.pyjamasCasual.cta",
+      link: "/products"
+    },
+    {
+      titleKey: "exportCategories.innerwearBasics.title",
+      image: innerwearBasicsImg,
+      alt: "Innerwear and basic garments wholesale supplier from India",
+      descriptionKey: "exportCategories.innerwearBasics.description",
+      highlightKeys: [
+        "exportCategories.innerwearBasics.highlights.0",
+        "exportCategories.innerwearBasics.highlights.1",
+        "exportCategories.innerwearBasics.highlights.2",
+        "exportCategories.innerwearBasics.highlights.3"
+      ],
+      ctaKey: "exportCategories.innerwearBasics.cta",
+      link: "/contact"
+    }
+  ];
+
   return (
     <section className="py-20 bg-foreground text-background relative overflow-hidden">
       {/* Subtle gradient overlay */}
@@ -62,13 +65,13 @@ const ExportCoreCategories = () => {
         {/* Section Header */}
         <div className="text-center mb-16">
           <span className="inline-block px-4 py-1.5 bg-accent/20 text-accent text-xs font-semibold tracking-[0.2em] uppercase rounded-full mb-4">
-            Core Export Categories
+            {t('exportCategories.badge')}
           </span>
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Export-Ready Core Garment Categories
+            {t('exportCategories.title')}
           </h2>
           <p className="text-background/70 max-w-2xl mx-auto text-lg">
-            High-volume, consistent-quality apparel manufactured in India for global markets.
+            {t('exportCategories.description')}
           </p>
         </div>
 
@@ -97,18 +100,18 @@ const ExportCoreCategories = () => {
               {/* Content */}
               <div className="p-6">
                 <h3 className="text-xl font-bold text-background mb-3 group-hover:text-accent transition-colors">
-                  {category.title}
+                  {t(category.titleKey)}
                 </h3>
                 <p className="text-background/60 text-sm mb-4 leading-relaxed">
-                  {category.description}
+                  {t(category.descriptionKey)}
                 </p>
 
                 {/* Highlights */}
                 <ul className="space-y-2 mb-6">
-                  {category.highlights.map((highlight, idx) => (
+                  {category.highlightKeys.map((highlightKey, idx) => (
                     <li key={idx} className="flex items-center gap-2 text-sm text-background/80">
                       <CheckCircle className="h-4 w-4 text-accent flex-shrink-0" />
-                      <span>{highlight}</span>
+                      <span>{t(highlightKey)}</span>
                     </li>
                   ))}
                 </ul>
@@ -120,8 +123,8 @@ const ExportCoreCategories = () => {
                   className="w-full border-accent/30 text-accent hover:bg-accent hover:text-accent-foreground hover:border-accent transition-all group/btn"
                 >
                   <Link to={category.link}>
-                    {category.cta}
-                    <ArrowRight className="ml-2 h-4 w-4 group-hover/btn:translate-x-1 transition-transform" />
+                    {t(category.ctaKey)}
+                    <ArrowRight className="ml-2 rtl:ml-0 rtl:mr-2 h-4 w-4 group-hover/btn:translate-x-1 rtl:group-hover/btn:-translate-x-1 transition-transform rtl:rotate-180" />
                   </Link>
                 </Button>
               </div>
@@ -132,7 +135,7 @@ const ExportCoreCategories = () => {
         {/* Bottom Trust Badge */}
         <div className="mt-12 text-center">
           <p className="text-background/50 text-sm">
-            All categories manufactured in our Tiruppur facility with consistent quality control for international export standards.
+            {t('exportCategories.trustNote')}
           </p>
         </div>
       </div>
