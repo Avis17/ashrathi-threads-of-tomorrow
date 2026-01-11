@@ -66,8 +66,6 @@ const ExternalJobSalaries = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [operationFilter, setOperationFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingSalary, setEditingSalary] = useState<ExternalJobSalary | null>(null);
   const [viewingSalary, setViewingSalary] = useState<ExternalJobSalary | null>(null);
   const [deletingSalaryId, setDeletingSalaryId] = useState<string | null>(null);
   const [showAdvances, setShowAdvances] = useState(false);
