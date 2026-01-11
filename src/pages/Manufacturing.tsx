@@ -65,8 +65,12 @@ const Manufacturing = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEO 
-        title="Manufacturing Capabilities | Feather Fashions - Apparel Manufacturer India"
-        description="State-of-the-art garment manufacturing facility in Tiruppur, India. 50,000+ monthly capacity, export-ready production, and stringent quality control for international buyers."
+        title="Export-Compliant Garment Manufacturing in Tiruppur, India | Feather Fashions"
+        titleAr="تصنيع ملابس متوافق مع التصدير في تيروبور، الهند | فيذر فاشونز"
+        description="Our manufacturing facility in Tiruppur follows strict quality control, ethical production practices, and export compliance standards. OEM apparel manufacturing for international brands, wholesalers, and importers."
+        descriptionAr="منشأتنا التصنيعية في تيروبور تتبع رقابة جودة صارمة وممارسات إنتاج أخلاقية ومعايير الامتثال للتصدير. تصنيع ملابس OEM للعلامات التجارية الدولية والموزعين والمستوردين."
+        keywords="garment manufacturing India, OEM apparel manufacturing, export garment factory Tiruppur, bulk garment manufacturer, private label clothing production, wholesale apparel manufacturing India"
+        keywordsAr="تصنيع ملابس الهند, تصنيع ملابس OEM, مصنع ملابس للتصدير تيروبور, مصنع ملابس بالجملة"
         canonicalUrl="/manufacturing"
       />
 
@@ -84,11 +88,12 @@ const Manufacturing = () => {
               Manufacturing Excellence
             </p>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-athletic font-black text-white mb-6 leading-tight">
-              PRODUCTION
-              <span className="block text-accent">CAPABILITIES</span>
+              EXPORT-COMPLIANT
+              <span className="block text-accent">GARMENT MANUFACTURING</span>
+              <span className="block text-white/80 text-2xl md:text-3xl mt-2 font-bold">in Tiruppur, India</span>
             </h1>
             <p className="text-lg text-white/80 mb-8 max-w-xl">
-              From concept to container, we deliver export-ready apparel with precision, quality, and scale that meets international standards.
+              Our manufacturing facility in Tiruppur follows strict quality control, ethical production practices, and export compliance standards. From fabric sourcing to finishing and packing, we support bulk garment manufacturing for international brands, wholesalers, and importers.
             </p>
             <Button asChild size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90">
               <Link to="/contact">

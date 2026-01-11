@@ -95,6 +95,15 @@ const FooterB2B = () => {
         </div>
       </div>
 
+      {/* SEO Text Block - Indexable for search engines */}
+      <div className="border-t border-primary-foreground/10">
+        <div className="container mx-auto px-6 py-4">
+          <p className="text-[10px] text-primary-foreground/30 leading-relaxed text-center max-w-4xl mx-auto">
+            {t('footer.seoText')}
+          </p>
+        </div>
+      </div>
+
       <div className="border-t border-primary-foreground/10">
         <div className="container mx-auto px-6 py-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
