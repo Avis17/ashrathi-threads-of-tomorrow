@@ -23,6 +23,9 @@ import Manufacturing from "./pages/Manufacturing";
 import Compliance from "./pages/Compliance";
 import ExportBrochure from "./pages/ExportBrochure";
 import ProductShowcase from "./pages/ProductShowcase";
+import ExportToUAE from "./pages/export/ExportToUAE";
+import ExportToSaudiArabia from "./pages/export/ExportToSaudiArabia";
+import ExportToSouthAfrica from "./pages/export/ExportToSouthAfrica";
 
 const queryClient = new QueryClient();
 
@@ -55,6 +58,9 @@ const App = () => (
                       <Route path="/manufacturing" element={<Manufacturing />} />
                       <Route path="/compliance" element={<Compliance />} />
                       <Route path="/export-brochure" element={<ExportBrochure />} />
+                      <Route path="/export-garments-to-uae" element={<ExportToUAE />} />
+                      <Route path="/export-garments-to-saudi-arabia" element={<ExportToSaudiArabia />} />
+                      <Route path="/export-garments-to-south-africa" element={<ExportToSouthAfrica />} />
                       <Route path="/about" element={<About />} />
                       <Route path="/contact" element={<Contact />} />
                       <Route path="/auth" element={<Auth />} />

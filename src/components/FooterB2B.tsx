@@ -95,23 +95,40 @@ const FooterB2B = () => {
             </ul>
           </div>
 
-          {/* Legal & Registrations */}
+          {/* Export Markets */}
           <div>
             <h4 className="text-xs font-semibold tracking-[0.2em] text-primary-foreground/50 mb-6 uppercase">
+              Export Markets
+            </h4>
+            <ul className="space-y-3">
+              <li>
+                <Link to="/export-garments-to-uae" className="text-sm text-primary-foreground/80 hover:text-accent transition-colors">
+                  Export to UAE
+                </Link>
+              </li>
+              <li>
+                <Link to="/export-garments-to-saudi-arabia" className="text-sm text-primary-foreground/80 hover:text-accent transition-colors">
+                  Export to Saudi Arabia
+                </Link>
+              </li>
+              <li>
+                <Link to="/export-garments-to-south-africa" className="text-sm text-primary-foreground/80 hover:text-accent transition-colors">
+                  Export to South Africa
+                </Link>
+              </li>
+            </ul>
+            
+            <h4 className="text-xs font-semibold tracking-[0.2em] text-primary-foreground/50 mt-6 mb-4 uppercase">
               Registrations
             </h4>
-            <ul className="space-y-3 text-sm text-primary-foreground/70">
+            <ul className="space-y-2 text-sm text-primary-foreground/70">
               <li>
                 <span className="text-primary-foreground/50">GSTIN:</span>{" "}
-                <span className="font-mono">33FWTPS1281P1ZJ</span>
+                <span className="font-mono text-xs">33FWTPS1281P1ZJ</span>
               </li>
               <li>
                 <span className="text-primary-foreground/50">IEC:</span>{" "}
-                <span className="font-mono">FWTPS1281P</span>
-              </li>
-              <li>
-                <span className="text-primary-foreground/50">Udyam:</span>{" "}
-                <span className="font-mono text-xs">UDYAM-TN-28-0191326</span>
+                <span className="font-mono text-xs">FWTPS1281P</span>
               </li>
             </ul>
           </div>
