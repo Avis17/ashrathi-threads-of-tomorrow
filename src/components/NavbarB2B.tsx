@@ -22,7 +22,7 @@ const NavbarB2B = () => {
     { name: "Products", path: "/products" },
     { name: "Manufacturing", path: "/manufacturing" },
     { name: "Compliance", path: "/compliance" },
-    { name: "About", path: "/about" },
+    { name: "Brochure", path: "/export-brochure" },
     { name: "Contact", path: "/contact" },
   ];
 
