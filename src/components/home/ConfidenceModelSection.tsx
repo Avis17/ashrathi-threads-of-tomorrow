@@ -26,35 +26,36 @@ const ConfidenceModelSection = () => {
   ];
 
   return (
-    <section className="py-24 bg-background relative overflow-hidden">
+    <section className="py-24 bg-background relative overflow-hidden" aria-labelledby="confidence-heading">
       {/* Decorative Elements */}
-      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-pink-500 via-gold to-teal-500" />
+      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-pink-500 via-gold to-teal-500" aria-hidden="true" />
       
       <div className="container mx-auto px-6 relative z-10">
-        <div className="text-center mb-16">
+        <header className="text-center mb-16">
           <span className="inline-block px-4 py-2 bg-gradient-to-r from-gold/10 to-gold/5 border border-gold/20 rounded-full text-gold text-sm font-semibold tracking-wide uppercase mb-6">
             Our Promise
           </span>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">
+          <h2 id="confidence-heading" className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">
             Feather{" "}
             <span className="text-gradient-gold">Safe Trade Model</span>
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Designed to reduce dead stock risk for wholesale & export partners
           </p>
-        </div>
+        </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto" role="list">
           {pillars.map((pillar, index) => (
-            <div 
+            <article 
               key={index}
               className="group relative"
+              role="listitem"
             >
               {/* Card */}
               <div className={`relative bg-gradient-to-br ${pillar.bgGradient} border border-border/50 rounded-2xl p-8 text-center hover:border-border transition-all duration-500 h-full`}>
                 {/* Icon */}
-                <div className={`w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br ${pillar.gradient} flex items-center justify-center shadow-lg`}>
-                  <pillar.icon className="h-10 w-10 text-white" />
+                <div className={`w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br ${pillar.gradient} flex items-center justify-center shadow-lg`} aria-hidden="true">
+                  <pillar.icon className="h-10 w-10 text-white" aria-hidden="true" />
                 </div>
                 
                 <h3 className="text-xl font-bold text-foreground mb-3">{pillar.title}</h3>
@@ -63,9 +64,9 @@ const ConfidenceModelSection = () => {
 
               {/* Connector Line (except last) */}
               {index < pillars.length - 1 && (
-                <div className="hidden md:block absolute top-1/2 -right-4 w-8 h-px bg-gradient-to-r from-border to-transparent" />
+                <div className="hidden md:block absolute top-1/2 -right-4 w-8 h-px bg-gradient-to-r from-border to-transparent" aria-hidden="true" />
               )}
-            </div>
+            </article>
           ))}
         </div>
 
