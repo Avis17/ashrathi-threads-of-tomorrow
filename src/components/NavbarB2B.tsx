@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, User, LogOut, Shield, ChevronDown, Globe, FileText, Ship, Download, Shirt, Moon, Baby, Package } from "lucide-react";
+import { Menu, X, User, LogOut, Shield, ChevronDown, Globe, FileText, Ship, Download, ChevronRight } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,16 +15,39 @@ const NavbarB2B = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [productsOpen, setProductsOpen] = useState(false);
   const [resourcesOpen, setResourcesOpen] = useState(false);
+  const [mobileWomensOpen, setMobileWomensOpen] = useState(false);
+  const [mobileKidsOpen, setMobileKidsOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isAdmin, signOut } = useAuth();
 
-  const productCategories = [
-    { name: "Women's Nightwear", path: "/products", icon: Moon },
-    { name: "Kids Cotton Wear", path: "/products", icon: Baby },
-    { name: "Cotton T-Shirts", path: "/products", icon: Shirt },
-    { name: "Pyjamas & Casual Wear", path: "/products", icon: Package },
-    { name: "Innerwear & Basics", path: "/products", icon: Package },
+  // Core Export Products
+  const womensWear = [
+    { name: "Nightwear (Night Pants & Tops)", path: "/products" },
+    { name: "Pyjamas & Loungewear", path: "/products" },
+    { name: "Cotton T-Shirts", path: "/products" },
+    { name: "Innerwear & Basics", path: "/products" },
+  ];
+
+  const kidswear = [
+    { name: "Kids Nightwear Sets", path: "/products" },
+    { name: "Kids Pyjamas", path: "/products" },
+    { name: "Kids Cotton Sets", path: "/products" },
+    { name: "Colorful Printed Sets", path: "/products" },
+  ];
+
+  // By Fabric / Style
+  const fabricStyles = [
+    { name: "100% Cotton Garments", path: "/products" },
+    { name: "Knitted Apparel", path: "/products" },
+    { name: "Printed & Dyed Styles", path: "/products" },
+  ];
+
+  // By Market Use
+  const marketUse = [
+    { name: "Export Collections", path: "/products" },
+    { name: "Bulk & OEM Orders", path: "/contact" },
+    { name: "Private Label Manufacturing", path: "/contact" },
   ];
 
   const resourceLinks = [
@@ -71,31 +94,114 @@ const NavbarB2B = () => {
                       <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${productsOpen ? 'rotate-180' : ''}`} />
                     </button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent 
+                <DropdownMenuContent 
                     align="center" 
-                    className="w-56 bg-white border border-border shadow-xl rounded-xl p-2 mt-2"
+                    className="w-[580px] bg-white border border-border shadow-2xl rounded-xl p-6 mt-2"
                     sideOffset={8}
                   >
-                    <div className="px-3 py-2 mb-1">
-                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Product Categories</p>
+                    <div className="grid grid-cols-2 gap-8">
+                      {/* LEFT COLUMN - Core Export Products */}
+                      <div className="space-y-5">
+                        {/* Women's Wear */}
+                        <div>
+                          <p className="text-xs font-semibold text-foreground uppercase tracking-wider mb-3">Women's Wear</p>
+                          <div className="space-y-1">
+                            {womensWear.map((item) => (
+                              <DropdownMenuItem 
+                                key={item.name}
+                                onClick={() => navigate(item.path)}
+                                className="cursor-pointer rounded-md px-2 py-2 focus:bg-muted text-foreground/80 hover:text-foreground"
+                              >
+                                <span className="text-sm">{item.name}</span>
+                              </DropdownMenuItem>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Kidswear */}
+                        <div>
+                          <p className="text-xs font-semibold text-foreground uppercase tracking-wider mb-3">Kidswear</p>
+                          <div className="space-y-1">
+                            {kidswear.map((item) => (
+                              <DropdownMenuItem 
+                                key={item.name}
+                                onClick={() => navigate(item.path)}
+                                className="cursor-pointer rounded-md px-2 py-2 focus:bg-muted text-foreground/80 hover:text-foreground"
+                              >
+                                <span className="text-sm">{item.name}</span>
+                              </DropdownMenuItem>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* RIGHT COLUMN - Value & Support */}
+                      <div className="space-y-5">
+                        {/* By Fabric / Style */}
+                        <div>
+                          <p className="text-xs font-semibold text-foreground uppercase tracking-wider mb-3">By Fabric / Style</p>
+                          <div className="space-y-1">
+                            {fabricStyles.map((item) => (
+                              <DropdownMenuItem 
+                                key={item.name}
+                                onClick={() => navigate(item.path)}
+                                className="cursor-pointer rounded-md px-2 py-2 focus:bg-muted text-foreground/80 hover:text-foreground"
+                              >
+                                <span className="text-sm">{item.name}</span>
+                              </DropdownMenuItem>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* By Market Use */}
+                        <div>
+                          <p className="text-xs font-semibold text-foreground uppercase tracking-wider mb-3">By Market Use</p>
+                          <div className="space-y-1">
+                            {marketUse.map((item) => (
+                              <DropdownMenuItem 
+                                key={item.name}
+                                onClick={() => navigate(item.path)}
+                                className="cursor-pointer rounded-md px-2 py-2 focus:bg-muted text-foreground/80 hover:text-foreground"
+                              >
+                                <span className="text-sm">{item.name}</span>
+                              </DropdownMenuItem>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Quick Links */}
+                        <div className="pt-2 border-t border-border/50">
+                          <p className="text-xs font-semibold text-foreground uppercase tracking-wider mb-3">Quick Links</p>
+                          <div className="space-y-1">
+                            <DropdownMenuItem 
+                              onClick={() => navigate('/products')}
+                              className="cursor-pointer rounded-md px-2 py-2 focus:bg-muted"
+                            >
+                              <span className="text-sm font-medium text-accent">View All Products →</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => navigate('/export-brochure')}
+                              className="cursor-pointer rounded-md px-2 py-2 focus:bg-muted"
+                            >
+                              <span className="text-sm font-medium text-accent">Download Export Brochure →</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => navigate('/contact')}
+                              className="cursor-pointer rounded-md px-2 py-2 focus:bg-muted"
+                            >
+                              <span className="text-sm font-medium text-accent">Request Quote →</span>
+                            </DropdownMenuItem>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    {productCategories.map((category) => (
-                      <DropdownMenuItem 
-                        key={category.name}
-                        onClick={() => navigate(category.path)}
-                        className="cursor-pointer rounded-lg px-3 py-2.5 focus:bg-muted"
-                      >
-                        <category.icon className="h-4 w-4 mr-3 text-accent" />
-                        <span className="font-medium">{category.name}</span>
-                      </DropdownMenuItem>
-                    ))}
-                    <DropdownMenuSeparator className="my-2" />
-                    <DropdownMenuItem 
-                      onClick={() => navigate('/products')}
-                      className="cursor-pointer rounded-lg px-3 py-2.5 focus:bg-muted"
-                    >
-                      <span className="font-medium text-accent">View All Products →</span>
-                    </DropdownMenuItem>
+
+                    {/* Bottom reassurance line */}
+                    <div className="mt-5 pt-4 border-t border-border/30">
+                      <p className="text-xs text-muted-foreground text-center tracking-wide">
+                        All products available for bulk & export orders
+                      </p>
+                    </div>
                   </DropdownMenuContent>
                 </DropdownMenu>
 
@@ -239,21 +345,76 @@ const NavbarB2B = () => {
         <div className="lg:hidden fixed left-0 right-0 top-[76px] bottom-0 z-[9999] bg-white overflow-y-auto">
           <div className="flex flex-col p-6">
             
-            {/* Products Section */}
+            {/* Products Section - Collapsible */}
             <div className="py-4 border-b border-border/50">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Products</p>
-              <div className="space-y-1">
-                {productCategories.map((category) => (
-                  <Link
-                    key={category.name}
-                    to={category.path}
-                    onClick={() => setIsOpen(false)}
-                    className="flex items-center gap-3 py-2.5 text-foreground/80 hover:text-accent transition-colors"
-                  >
-                    <category.icon className="h-4 w-4 text-accent" />
-                    {category.name}
-                  </Link>
-                ))}
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Product Categories</p>
+              
+              {/* Women's Wear - Collapsible */}
+              <div className="mb-2">
+                <button
+                  onClick={() => setMobileWomensOpen(!mobileWomensOpen)}
+                  className="flex items-center justify-between w-full py-2.5 text-foreground font-medium"
+                >
+                  <span>Women's Wear</span>
+                  <ChevronRight className={`h-4 w-4 transition-transform ${mobileWomensOpen ? 'rotate-90' : ''}`} />
+                </button>
+                {mobileWomensOpen && (
+                  <div className="pl-4 space-y-1 mt-1">
+                    {womensWear.map((item) => (
+                      <Link
+                        key={item.name}
+                        to={item.path}
+                        onClick={() => setIsOpen(false)}
+                        className="block py-2 text-foreground/70 hover:text-accent transition-colors text-sm"
+                      >
+                        {item.name}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Kidswear - Collapsible */}
+              <div className="mb-2">
+                <button
+                  onClick={() => setMobileKidsOpen(!mobileKidsOpen)}
+                  className="flex items-center justify-between w-full py-2.5 text-foreground font-medium"
+                >
+                  <span>Kidswear</span>
+                  <ChevronRight className={`h-4 w-4 transition-transform ${mobileKidsOpen ? 'rotate-90' : ''}`} />
+                </button>
+                {mobileKidsOpen && (
+                  <div className="pl-4 space-y-1 mt-1">
+                    {kidswear.map((item) => (
+                      <Link
+                        key={item.name}
+                        to={item.path}
+                        onClick={() => setIsOpen(false)}
+                        className="block py-2 text-foreground/70 hover:text-accent transition-colors text-sm"
+                      >
+                        {item.name}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Direct links */}
+              <div className="mt-3 pt-3 border-t border-border/30 space-y-1">
+                <Link
+                  to="/products"
+                  onClick={() => setIsOpen(false)}
+                  className="block py-2 text-foreground/80 hover:text-accent transition-colors"
+                >
+                  Export Collections
+                </Link>
+                <Link
+                  to="/contact"
+                  onClick={() => setIsOpen(false)}
+                  className="block py-2 text-foreground/80 hover:text-accent transition-colors"
+                >
+                  Private Label / OEM
+                </Link>
               </div>
             </div>
 
