@@ -23,7 +23,7 @@ const NavbarB2B = () => {
 
   // Core Export Products
   const womensWear = [
-    { name: "Nightwear (Night Pants & Tops)", path: "/products" },
+    { name: "Nightwear (Night Pants & Tops)", path: "/products/womens-nightwear" },
     { name: "Pyjamas & Loungewear", path: "/products" },
     { name: "Cotton T-Shirts", path: "/products" },
     { name: "Innerwear & Basics", path: "/products" },
