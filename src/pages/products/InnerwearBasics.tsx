@@ -18,8 +18,14 @@ import frontView from "@/assets/products/innerwear-front-view.jpg";
 import backView from "@/assets/products/innerwear-back-view.jpg";
 import fabricKnit from "@/assets/products/innerwear-fabric-knit.jpg";
 import seamDetail from "@/assets/products/innerwear-seam-detail.jpg";
+import womensPanties from "@/assets/products/innerwear-womens-panties.jpg";
+import mensStylish from "@/assets/products/innerwear-mens-stylish.jpg";
+import womensBralettes from "@/assets/products/innerwear-womens-bralettes.jpg";
 
 const productImages = [
+  { src: womensPanties, alt: "Stylish women's panties in vibrant colors" },
+  { src: mensStylish, alt: "Men's boxer briefs in bold colors" },
+  { src: womensBralettes, alt: "Women's bralettes with lace details" },
   { src: foldedBasics, alt: "Folded cotton basics - vests and undershirts" },
   { src: colorSet, alt: "Innerwear in mixed neutral colors" },
   { src: frontView, alt: "Front view of cotton vest" },
@@ -83,7 +89,7 @@ const InnerwearBasics = () => {
       </Helmet>
 
       {/* Hero Section */}
-      <section className="relative min-h-[70vh] flex items-center">
+      <section className="relative min-h-[70vh] flex items-center py-20">
         <div className="absolute inset-0 z-0">
           <img
             src={heroImage}
