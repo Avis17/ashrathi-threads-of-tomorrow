@@ -31,24 +31,26 @@ const ExportHeroSection = () => {
             <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-gold/20 to-gold/10 border border-gold/30">
               <Sparkles className="w-4 h-4 text-gold" aria-hidden="true" />
               <span className="text-gold text-sm font-semibold tracking-wide uppercase">
-                Export-Ready Manufacturer
+                Export-Ready Garment Manufacturer
               </span>
             </div>
           </div>
 
-          {/* Main Headline - Primary H1 for SEO */}
+          {/* Main Headline - Split for faster scanning */}
           <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white leading-[1.05] mb-6 animate-fade-in-up">
-            Premium Wholesale{" "}
-            <span className="text-gradient-gold">Nightwear & Kidswear</span>
+            <span className="text-gradient-gold">Export-Ready Nightwear & Kidswear</span>
             <br />
-            <span className="text-white/90">Manufactured for Global Markets</span>
+            <span className="text-white/90">Manufacturer</span>
           </h1>
 
-          {/* Subheadline */}
-          <p className="text-lg md:text-xl text-white/70 max-w-2xl mb-10 leading-relaxed animate-fade-in-delay">
-            Export-ready designs. Color-rich collections. Consistent quality at scale.
-            <br className="hidden md:block" />
-            Trusted by wholesalers & exporters across India and international markets.
+          {/* Support Line */}
+          <p className="text-xl md:text-2xl text-white/80 font-medium mb-4 animate-fade-in-delay">
+            Premium wholesale production for global markets
+          </p>
+
+          {/* Subheadline - Tighter & Professional */}
+          <p className="text-lg text-white/60 max-w-2xl mb-10 leading-relaxed animate-fade-in-delay">
+            Export-ready designs with consistent quality, scalable production, and global supply capability. Trusted by wholesalers and export buyers across international markets.
           </p>
 
           {/* CTA Buttons */}
@@ -58,9 +60,9 @@ const ExportHeroSection = () => {
               size="lg" 
               className="bg-gradient-to-r from-gold to-gold/80 text-black hover:from-gold/90 hover:to-gold/70 px-8 py-6 text-base font-bold shadow-lg shadow-gold/25"
             >
-              <Link to="/contact" aria-label="Request wholesale and export access for bulk orders">
+              <Link to="/contact" aria-label="Request export quote for bulk orders">
                 <Globe className="mr-2 h-5 w-5" aria-hidden="true" />
-                Request Wholesale / Export Access
+                Request Export Quote
                 <ArrowRight className="ml-2 h-5 w-5" aria-hidden="true" />
               </Link>
             </Button>
