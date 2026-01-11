@@ -150,6 +150,10 @@ const FooterB2B = () => {
               <Link to="/privacy-policy" className="text-xs text-primary-foreground/50 hover:text-accent transition-colors">
                 Privacy
               </Link>
+              <span className="text-primary-foreground/20">|</span>
+              <Link to="/disclaimer" className="text-xs text-primary-foreground/50 hover:text-accent transition-colors">
+                Disclaimer
+              </Link>
             </div>
           </div>
         </div>

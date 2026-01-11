@@ -29,6 +29,7 @@ const ProductShowcase = lazy(() => import("./pages/ProductShowcase"));
 const ExportToUAE = lazy(() => import("./pages/export/ExportToUAE"));
 const ExportToSaudiArabia = lazy(() => import("./pages/export/ExportToSaudiArabia"));
 const ExportToSouthAfrica = lazy(() => import("./pages/export/ExportToSouthAfrica"));
+const Disclaimer = lazy(() => import("./pages/Disclaimer"));
 
 // Heavy admin module - lazy loaded (contains jsPDF, fabric, recharts)
 const Admin = lazy(() => import("./pages/Admin"));
@@ -96,6 +97,7 @@ const App = () => (
                         <Route path="/reset-password" element={<ResetPassword />} />
                         <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
                         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                        <Route path="/disclaimer" element={<Disclaimer />} />
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </Suspense>
