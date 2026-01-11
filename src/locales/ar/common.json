@@ -1,0 +1,48 @@
+{
+  "nav": {
+    "productCategories": "فئات المنتجات",
+    "manufacturing": "التصنيع",
+    "resources": "الموارد",
+    "contact": "اتصل بنا",
+    "requestQuote": "طلب عرض سعر",
+    "login": "تسجيل الدخول",
+    "dashboard": "لوحة التحكم",
+    "signOut": "تسجيل الخروج",
+    "region": "المنطقة",
+    "womensWear": "ملابس نسائية",
+    "kidswear": "ملابس أطفال",
+    "primaryExportCategory": "فئة التصدير الرئيسية",
+    "highDemandExport": "قطاع التصدير عالي الطلب",
+    "exportManufacturing": "التصدير والتصنيع",
+    "fabricConstruction": "الأقمشة والتركيب",
+    "quickActions": "إجراءات سريعة",
+    "viewAllProducts": "عرض جميع المنتجات ←",
+    "exportBrochure": "كتيب التصدير ←",
+    "requestQuoteLink": "طلب عرض سعر ←",
+    "exportAssurance": "جميع المنتجات متاحة للطلبات بالجملة والتصدير"
+  },
+  "hero": {
+    "badge": "مصنّع ملابس جاهزة للتصدير",
+    "title": "ملابس نوم وملابس أطفال جاهزة للتصدير",
+    "titleLine2": "مصنّع",
+    "supportLine": "إنتاج جملة عالي الجودة للأسواق العالمية",
+    "subtitle": "تصاميم جاهزة للتصدير بجودة ثابتة وإنتاج قابل للتوسع وقدرة توريد عالمية. موثوق به من قبل تجار الجملة ومشتري التصدير في الأسواق الدولية."
+  },
+  "cta": {
+    "requestExportQuote": "طلب عرض سعر للتصدير",
+    "requestQuote": "طلب عرض سعر"
+  },
+  "trust": {
+    "wholesalePartners": "شركاء جملة",
+    "partnersLine2": "نشطون",
+    "exportCountries": "دول",
+    "countriesLine2": "التصدير",
+    "exportCertified": "شهادة",
+    "certifiedLine2": "تصدير"
+  },
+  "language": {
+    "english": "English",
+    "arabic": "العربية",
+    "selectLanguage": "اختر اللغة"
+  }
+}

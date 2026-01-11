@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, User, LogOut, Shield, ChevronDown, Globe, FileText, Ship, Download, ChevronRight } from "lucide-react";
+import { Menu, X, User, LogOut, Shield, ChevronDown, FileText, Ship, Download, ChevronRight } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,6 +10,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { useLanguage } from "@/hooks/useLanguage";
 
 const NavbarB2B = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -272,13 +275,8 @@ const NavbarB2B = () => {
             {/* Desktop Actions - Right */}
             <div className="hidden lg:flex items-center space-x-3 flex-shrink-0">
               
-              {/* Language/Region Icon */}
-              <button 
-                className="p-2 text-foreground/50 hover:text-foreground transition-colors rounded-full hover:bg-muted/50"
-                title="Region"
-              >
-                <Globe className="h-4 w-4" />
-              </button>
+              {/* Language Switcher */}
+              <LanguageSwitcher />
 
               {/* User Menu */}
               {user ? (
