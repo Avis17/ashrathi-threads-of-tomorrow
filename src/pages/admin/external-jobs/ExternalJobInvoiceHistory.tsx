@@ -136,7 +136,7 @@ const ExternalJobInvoiceHistory = () => {
     doc.text("Vadivel Nagar, 251/1, Thottipalayam", 14, 20);
     doc.text("Pooluvapatti, Tiruppur, TN - 641602", 14, 24);
     doc.text("GST: 33FWTPS1281P1ZJ", 14, 28);
-    doc.text("Ph: +91 97892 25510", 14, 32);
+    doc.text("Ph: +91 9988322555", 14, 32);
 
     // Add logo
     doc.addImage(logo, "PNG", pageWidth - 50, 4, 45, 35);

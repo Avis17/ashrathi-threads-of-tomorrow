@@ -3,7 +3,7 @@ import { Mail, Phone, MapPin, MessageCircle, Download } from "lucide-react";
 
 const FooterB2B = () => {
   const handleWhatsApp = () => {
-    window.open("https://wa.me/919789225510?text=Hello, I'm interested in bulk orders from Feather Fashions.", "_blank");
+    window.open("https://wa.me/919988322555?text=Hello, I'm interested in bulk orders from Feather Fashions.", "_blank");
   };
 
   return (
@@ -74,13 +74,22 @@ const FooterB2B = () => {
             <ul className="space-y-4">
               <li className="flex items-start gap-3 text-sm text-primary-foreground/80">
                 <Mail className="h-4 w-4 mt-1 text-accent flex-shrink-0" />
-                <a href="mailto:hello@featherfashions.in" className="hover:text-accent transition-colors">
-                  hello@featherfashions.in
-                </a>
+                <div className="flex flex-col">
+                  <a href="mailto:hello@featherfashions.in" className="hover:text-accent transition-colors">
+                    hello@featherfashions.in
+                  </a>
+                  <a href="mailto:info@featherfashions.in" className="hover:text-accent transition-colors">
+                    info@featherfashions.in
+                  </a>
+                </div>
               </li>
               <li className="flex items-start gap-3 text-sm text-primary-foreground/80">
                 <Phone className="h-4 w-4 mt-1 text-accent flex-shrink-0" />
-                <span>+91 9789225510</span>
+                <div className="flex flex-col">
+                  <span>+91 9988322555 (WhatsApp)</span>
+                  <span>+91 9789225510</span>
+                  <span>+91 421-6610850</span>
+                </div>
               </li>
               <li className="flex items-start gap-3 text-sm text-primary-foreground/80">
                 <MapPin className="h-4 w-4 mt-1 text-accent flex-shrink-0" />

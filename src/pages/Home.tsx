@@ -342,11 +342,11 @@ const Home = () => {
               <Button 
                 size="lg" 
                 variant="outline"
-                onClick={() => window.open("https://wa.me/919789225510?text=Hello, I'm interested in bulk orders from Feather Fashions.", "_blank")}
+                onClick={() => window.open("https://wa.me/919988322555?text=Hello, I'm interested in bulk orders from Feather Fashions.", "_blank")}
                 className="px-8"
               >
                 <Phone className="mr-2 h-5 w-5" />
-                WhatsApp: +91 97892 25510
+                WhatsApp: +91 9988322555
               </Button>
             </div>
 

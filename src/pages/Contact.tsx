@@ -114,7 +114,9 @@ const Contact = () => {
                   <div>
                     <h3 className="font-semibold text-lg mb-1">Phone</h3>
                     <p className="text-muted-foreground text-sm">
-                      +91 9789225510
+                      +91 9988322555 (WhatsApp)<br />
+                      +91 9789225510<br />
+                      +91 421-6610850
                     </p>
                   </div>
                 </div>
@@ -127,9 +129,15 @@ const Contact = () => {
                     <h3 className="font-semibold text-lg mb-1">Email</h3>
                     <a 
                       href="mailto:hello@featherfashions.in"
-                      className="text-sm font-semibold text-primary hover:text-secondary transition-colors duration-200 underline decoration-primary/30 hover:decoration-secondary break-all"
+                      className="text-sm font-semibold text-primary hover:text-secondary transition-colors duration-200 underline decoration-primary/30 hover:decoration-secondary break-all block"
                     >
                       hello@featherfashions.in
+                    </a>
+                    <a 
+                      href="mailto:info@featherfashions.in"
+                      className="text-sm font-semibold text-primary hover:text-secondary transition-colors duration-200 underline decoration-primary/30 hover:decoration-secondary break-all block"
+                    >
+                      info@featherfashions.in
                     </a>
                   </div>
                 </div>

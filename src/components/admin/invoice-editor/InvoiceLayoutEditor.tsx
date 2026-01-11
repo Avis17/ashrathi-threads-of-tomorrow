@@ -108,7 +108,7 @@ export const InvoiceLayoutEditor = ({
     y += 4;
     initialElements.push({ id: 'company_gst', type: 'text', content: 'GST: 33FWTPS1281P1ZJ', x: leftMargin, y, fontSize: 9, page: 1 });
     y += 4;
-    initialElements.push({ id: 'company_phone', type: 'text', content: 'Ph: +91 97892 25510', x: leftMargin, y, fontSize: 9, page: 1 });
+    initialElements.push({ id: 'company_phone', type: 'text', content: 'Ph: +91 9988322555', x: leftMargin, y, fontSize: 9, page: 1 });
 
     // Invoice Title
     y = 45;
