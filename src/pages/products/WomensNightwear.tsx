@@ -17,9 +17,15 @@ import setImage from "@/assets/products/womens-nightwear-set.jpg";
 import colorsImage from "@/assets/products/womens-nightwear-colors.jpg";
 import fabricImage from "@/assets/products/womens-nightwear-fabric.jpg";
 import stitchingImage from "@/assets/products/womens-nightwear-stitching.jpg";
+import nightiesImage from "@/assets/products/womens-nighties-collection.jpg";
+import colorfulNightdressImage from "@/assets/products/womens-colorful-nightdress.jpg";
+import designerSleepwearImage from "@/assets/products/womens-designer-sleepwear.jpg";
 
 const WomensNightwear = () => {
   const productImages = [
+    { src: nightiesImage, alt: "Elegant women's nighties in vibrant colors" },
+    { src: colorfulNightdressImage, alt: "Colorful printed night dresses" },
+    { src: designerSleepwearImage, alt: "Designer sleepwear with lace details" },
     { src: pantsImage, alt: "Women's cotton night pants" },
     { src: topImage, alt: "Women's cotton night top" },
     { src: setImage, alt: "Women's nightwear coordinated set" },
@@ -76,7 +82,7 @@ const WomensNightwear = () => {
       </Helmet>
 
       {/* Hero Section */}
-      <section className="relative min-h-[70vh] flex items-center -mt-[76px] pt-[76px]">
+      <section className="relative min-h-[70vh] flex items-center py-20">
           <div
             className="absolute inset-0 bg-cover bg-center"
             style={{ backgroundImage: `url(${heroImage})` }}
