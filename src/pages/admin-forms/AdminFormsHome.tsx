@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { 
-  Briefcase, Building2, ShoppingCart, Receipt, 
+  Briefcase, Building2, Receipt, 
   Users, Package, ArrowRight, ClipboardList 
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -62,13 +62,6 @@ const formCards: FormCardProps[] = [
     icon: <Building2 className="h-6 w-6" />,
     accentColor: 'bg-purple-500',
     route: '/admin-forms/add-company'
-  },
-  {
-    title: 'Create Purchase Order',
-    description: 'Record new purchases with supplier, line items, and GST details.',
-    icon: <ShoppingCart className="h-6 w-6" />,
-    accentColor: 'bg-orange-500',
-    route: '/admin-forms/add-purchase'
   },
   {
     title: 'Add Expense',

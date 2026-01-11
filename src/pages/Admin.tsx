@@ -24,7 +24,6 @@ import JobOrders from './admin/JobOrders';
 import JobManagement from './admin/JobManagement';
 import EmployeeDetailsPage from './admin/EmployeeDetailsPage';
 import Settings from './admin/Settings';
-import SeedProducts from './admin/SeedProducts';
 import AddProduct from './admin/AddProduct';
 import ExternalJobOrders from './admin/external-jobs/ExternalJobOrders';
 import RegisterCompany from './admin/external-jobs/RegisterCompany';
@@ -44,11 +43,10 @@ import ExternalJobSalaries from './admin/external-jobs/ExternalJobSalaries';
 import AddSalaryEntry from './admin/external-jobs/AddSalaryEntry';
 import ExternalJobInvoiceHistory from './admin/external-jobs/ExternalJobInvoiceHistory';
 import LabelGenerator from './admin/LabelGenerator';
-import PurchasesExpenses from './admin/PurchasesExpenses';
 import FeatherApps from './admin/FeatherApps';
 import AppAccessManagement from './admin/AppAccessManagement';
-import ReturnsRejections from './admin/ReturnsRejections';
 import ActivityLogs from './admin/ActivityLogs';
+import BuyerFollowups from './admin/BuyerFollowups';
 import Enquiries from './admin/Enquiries';
 import DeliveryChallanList from './admin/delivery-challan/DeliveryChallanList';
 import CreateDeliveryChallan from './admin/delivery-challan/CreateDeliveryChallan';
@@ -95,13 +93,11 @@ const Admin = () => {
               <Route path="/job-management/employee/:id" element={<EmployeeDetailsPage />} />
               <Route path="/branches" element={<BranchesManager />} />
               <Route path="/expenses" element={<ExpensesManager />} />
-              <Route path="/purchases" element={<PurchasesExpenses />} />
               <Route path="/invoice" element={<InvoiceGenerator />} />
               <Route path="/customers" element={<CustomersManager />} />
               <Route path="/customers/:id" element={<CustomerDetails />} />
               <Route path="/products" element={<ProductsManager />} />
               <Route path="/products/add" element={<AddProduct />} />
-              <Route path="/seed-products" element={<SeedProducts />} />
               <Route path="/contacts" element={<EmployeeContactsManager />} />
               <Route path="/history" element={<InvoiceHistory />} />
               <Route path="/invoices/:id" element={<InvoiceDetails />} />
@@ -114,7 +110,7 @@ const Admin = () => {
               <Route path="/settings" element={<Settings />} />
               <Route path="/apps" element={<FeatherApps />} />
               <Route path="/app-access" element={<AppAccessManagement />} />
-              <Route path="/returns" element={<ReturnsRejections />} />
+              <Route path="/buyer-followups" element={<BuyerFollowups />} />
               <Route path="/activity-logs" element={<ActivityLogs />} />
               <Route path="/external-jobs" element={<ExternalJobOrders />} />
               <Route path="/external-jobs/register-company" element={<RegisterCompany />} />

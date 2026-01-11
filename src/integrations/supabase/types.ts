@@ -378,6 +378,36 @@ export type Database = {
         }
         Relationships: []
       }
+      buyer_followup_messages: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          is_active: boolean
+          message: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          message: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          message?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       cart_items: {
         Row: {
           created_at: string | null
