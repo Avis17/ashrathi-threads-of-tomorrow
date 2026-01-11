@@ -88,8 +88,8 @@ const NavbarB2B = () => {
                           onClick={() => navigate('/admin')}
                           className="cursor-pointer"
                         >
-                          <Shield className="h-4 w-4 mr-2 text-amber-500" />
-                          Admin Dashboard
+                          <Shield className="h-4 w-4 mr-2 text-accent" />
+                          Dashboard
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                       </>
@@ -108,7 +108,7 @@ const NavbarB2B = () => {
                   to="/auth"
                   className="text-sm font-medium text-foreground/70 hover:text-accent transition-colors"
                 >
-                  ADMIN
+                  LOGIN
                 </Link>
               )}
 
@@ -166,8 +166,8 @@ const NavbarB2B = () => {
                       onClick={() => setIsOpen(false)}
                       className="flex items-center gap-2 text-foreground hover:text-accent py-2"
                     >
-                      <Shield className="h-5 w-5 text-amber-500" />
-                      Admin Dashboard
+                      <Shield className="h-5 w-5 text-accent" />
+                      Dashboard
                     </Link>
                   )}
                   <button
@@ -184,7 +184,7 @@ const NavbarB2B = () => {
                   onClick={() => setIsOpen(false)}
                   className="text-foreground hover:text-accent"
                 >
-                  ADMIN LOGIN
+                  LOGIN
                 </Link>
               )}
             </div>
