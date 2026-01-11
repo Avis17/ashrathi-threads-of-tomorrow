@@ -18,6 +18,15 @@ import {
 } from "lucide-react";
 import SEO from "@/components/seo/SEO";
 
+// New B2B Sections
+import ExportHeroSection from "@/components/home/ExportHeroSection";
+import WomensNightwearSection from "@/components/home/WomensNightwearSection";
+import KidswearSection from "@/components/home/KidswearSection";
+import WhyChooseFeatherSection from "@/components/home/WhyChooseFeatherSection";
+import ConfidenceModelSection from "@/components/home/ConfidenceModelSection";
+import ProductGridSection from "@/components/home/ProductGridSection";
+import TrustScaleSection from "@/components/home/TrustScaleSection";
+
 // B2B Hero Image
 import heroManufacturing from "@/assets/b2b/hero-manufacturing.jpg";
 import productionLine from "@/assets/b2b/production-line.jpg";
@@ -95,75 +104,8 @@ const Home = () => {
         ogType="website"
       />
       
-      {/* Hero Section */}
-      <section className="relative min-h-[90vh] flex items-center -mt-[76px] pt-[76px]">
-        {/* Background Image */}
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: `url(${heroManufacturing})` }}
-        />
-        {/* Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/70 to-black/50" />
-        
-        <div className="relative z-10 container mx-auto px-6 py-20">
-          <div className="max-w-3xl">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-3 mb-8">
-              <div className="w-12 h-[2px] bg-accent" />
-              <span className="text-accent text-sm font-semibold tracking-[0.3em] uppercase">
-                Export-Ready Manufacturer
-              </span>
-            </div>
-
-            {/* Main Headline */}
-            <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white leading-[1.1] mb-6">
-              Premium Apparel Manufacturing for{" "}
-              <span className="text-accent">Global Brands</span>
-            </h1>
-
-            {/* Subheadline */}
-            <p className="text-lg md:text-xl text-white/80 max-w-2xl mb-10 leading-relaxed">
-              Your trusted knitwear and activewear manufacturing partner from Tiruppur, India. 
-              We deliver quality-controlled, export-ready garments for international buyers, 
-              buying houses, importers, and wholesale distributors.
-            </p>
-
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Button asChild size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 px-8 py-6 text-base font-semibold">
-                <Link to="/contact">
-                  <Phone className="mr-2 h-5 w-5" />
-                  Contact for Bulk Orders
-                </Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-black px-8 py-6 text-base font-semibold">
-                <Link to="/about">
-                  <FileText className="mr-2 h-5 w-5" />
-                  Download Company Profile
-                </Link>
-              </Button>
-            </div>
-
-            {/* Trust Badges */}
-            <div className="flex flex-wrap items-center gap-6 mt-12 pt-8 border-t border-white/20">
-              {complianceItems.map((item, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4 text-accent" />
-                  <span className="text-white/60 text-sm">{item.label}:</span>
-                  <span className="text-white font-medium text-sm">{item.value}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Scroll Indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10">
-          <div className="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center">
-            <div className="w-1.5 h-3 bg-accent rounded-full mt-2 animate-bounce" />
-          </div>
-        </div>
-      </section>
+      {/* NEW: Export-Focused Hero Section */}
+      <ExportHeroSection />
 
       {/* Key Highlights Strip */}
       <section className="py-16 bg-muted/50 border-y border-border">
@@ -183,6 +125,21 @@ const Home = () => {
           </div>
         </div>
       </section>
+
+      {/* NEW: Women's Nightwear Section */}
+      <WomensNightwearSection />
+
+      {/* NEW: Kidswear Section */}
+      <KidswearSection />
+
+      {/* NEW: Why Choose Feather Section */}
+      <WhyChooseFeatherSection />
+
+      {/* NEW: Confidence Model Section */}
+      <ConfidenceModelSection />
+
+      {/* NEW: Product Grid Section */}
+      <ProductGridSection />
 
       {/* Product Categories Section */}
       <section className="py-20 bg-background">
@@ -294,6 +251,9 @@ const Home = () => {
           </div>
         </div>
       </section>
+
+      {/* NEW: Trust & Scale Section */}
+      <TrustScaleSection />
 
       {/* Trust & Compliance Section */}
       <section className="py-20 bg-foreground text-background">
