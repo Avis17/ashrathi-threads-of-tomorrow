@@ -6,21 +6,52 @@
     "contact": "اتصل بنا",
     "requestQuote": "طلب عرض سعر",
     "login": "تسجيل الدخول",
+    "loginRegister": "تسجيل الدخول / التسجيل",
     "dashboard": "لوحة التحكم",
     "signOut": "تسجيل الخروج",
     "region": "المنطقة",
     "womensWear": "ملابس نسائية",
+    "womensWearDesc": "فئة التصدير الرئيسية",
     "kidswear": "ملابس أطفال",
-    "primaryExportCategory": "فئة التصدير الرئيسية",
-    "highDemandExport": "قطاع التصدير عالي الطلب",
+    "kidswearDesc": "قطاع التصدير عالي الطلب",
     "exportManufacturing": "التصدير والتصنيع",
     "fabricConstruction": "الأقمشة والتركيب",
     "quickActions": "إجراءات سريعة",
-    "viewAllProducts": "عرض جميع المنتجات ←",
-    "exportBrochure": "كتيب التصدير ←",
-    "requestQuoteLink": "طلب عرض سعر ←",
+    "viewAllProducts": "← عرض جميع المنتجات",
+    "exportBrochure": "← كتيب التصدير",
+    "requestQuoteLink": "← طلب عرض سعر",
     "exportAssurance": "جميع المنتجات متاحة للطلبات بالجملة والتصدير",
-    "quote": "عرض سعر"
+    "quote": "عرض سعر",
+    "exportCollections": "مجموعات التصدير",
+    "privateLabelOem": "العلامة الخاصة / OEM",
+    "compliance": "الامتثال",
+    "womensWearProducts": {
+      "nightwear": "ملابس النوم (بناطيل وبلوزات)",
+      "pyjamas": "بيجامات وملابس منزلية",
+      "cottonTshirts": "تي شيرتات قطنية",
+      "innerwear": "ملابس داخلية وأساسيات"
+    },
+    "kidswearProducts": {
+      "nightwearSets": "أطقم نوم للأطفال",
+      "pyjamas": "بيجامات أطفال",
+      "cottonSets": "أطقم قطنية للأطفال",
+      "colorfulSets": "أطقم ملونة مطبوعة"
+    },
+    "marketUse": {
+      "exportCollections": "مجموعات التصدير",
+      "bulkOem": "طلبات جملة و OEM",
+      "privateLabel": "تصنيع العلامات الخاصة"
+    },
+    "fabricStyles": {
+      "cotton": "ملابس 100% قطن",
+      "knitted": "ملابس تريكو",
+      "printedDyed": "أنماط مطبوعة ومصبوغة"
+    },
+    "resourceLinks": {
+      "exportBrochure": "كتيب التصدير",
+      "shippingPolicy": "سياسة الشحن",
+      "compliance": "الامتثال"
+    }
   },
   "hero": {
     "badge": "مصنّع ملابس جاهزة للتصدير",
@@ -54,14 +85,22 @@
     "selectLanguage": "اختر اللغة"
   },
   "highlights": {
-    "exportReadyManufacturer": "مصنّع جاهز للتصدير",
-    "exportReadyManufacturerDesc": "منشأة إنتاج حديثة في تيروبور، الهند",
-    "bulkCustomOrders": "طلبات جملة ومخصصة",
-    "bulkCustomOrdersDesc": "حد أدنى مرن للطلب مع خيارات تخصيص كاملة",
-    "qualityControlledProduction": "إنتاج مُراقب الجودة",
-    "qualityControlledProductionDesc": "فحوصات جودة متعددة المراحل في كل مرحلة إنتاج",
-    "ethicalManufacturing": "تصنيع أخلاقي",
-    "ethicalManufacturingDesc": "ممارسات مستدامة مع معايير عمل عادلة"
+    "exportReady": {
+      "title": "مصنّع جاهز للتصدير",
+      "description": "منشأة إنتاج حديثة في تيروبور، الهند"
+    },
+    "bulkCustom": {
+      "title": "طلبات جملة ومخصصة",
+      "description": "حد أدنى مرن للطلب مع خيارات تخصيص كاملة"
+    },
+    "qualityControlled": {
+      "title": "إنتاج مُراقب الجودة",
+      "description": "فحوصات جودة متعددة المراحل في كل مرحلة إنتاج"
+    },
+    "ethicalManufacturing": {
+      "title": "تصنيع أخلاقي",
+      "description": "ممارسات مستدامة مع معايير عمل عادلة"
+    }
   },
   "womensSection": {
     "badge": "مجموعة النساء",
@@ -76,8 +115,10 @@
       "bulk": "إنتاج بالجملة بجودة ثابتة"
     },
     "priceHint": "أسعار الجملة متاحة بعد التحقق",
-    "floatingBadge": "سريع الحركة",
-    "floatingBadgeLine2": "أنماط التصدير"
+    "floatingBadge": {
+      "label": "سريع الحركة",
+      "value": "أنماط التصدير"
+    }
   },
   "kidsSection": {
     "badge": "مجموعة الأطفال",
@@ -91,8 +132,10 @@
       "sizeRanges": "نطاقات مقاسات متعددة",
       "bulkSupply": "توريد جملة ثابت"
     },
-    "floatingBadge": "مفضل التصدير",
-    "floatingBadgeLine2": "ألوان نابضة بالحياة"
+    "floatingBadge": {
+      "label": "مفضل التصدير",
+      "value": "ألوان نابضة بالحياة"
+    }
   },
   "exportCategories": {
     "badge": "فئات التصدير الأساسية",
@@ -101,19 +144,34 @@
     "cottonTshirts": {
       "title": "تي شيرتات قطنية",
       "description": "تي شيرتات قطنية عالية الطلب مصممة لتصدير الجملة. مصنعة بمقاسات ثابتة وتشطيبات ناعمة وجودة قماش طويلة الأمد مناسبة لأسواق التجزئة الدولية.",
-      "highlights": ["100% قطن ومزيج قطني", "GSM ومقاسات ثابتة", "مثالي لبرامج التصدير بالجملة", "مناسب لتوريد العلامات الخاصة"],
+      "highlights": {
+        "0": "100% قطن ومزيج قطني",
+        "1": "GSM ومقاسات ثابتة",
+        "2": "مثالي لبرامج التصدير بالجملة",
+        "3": "مناسب لتوريد العلامات الخاصة"
+      },
       "cta": "عرض مجموعة الجملة"
     },
-    "pyjamas": {
+    "pyjamasCasual": {
       "title": "بيجامات وملابس كاجوال",
       "description": "مجموعات بيجامات وملابس كاجوال مريحة ومناسبة للمناخ مطورة للطلب المتكرر القوي في الأسواق المحلية والدولية.",
-      "highlights": ["أقمشة قطنية قابلة للتنفس", "قصات مركزة على الراحة", "منتجات طلب على مدار السنة", "إمكانية عالية لإعادة الطلب"],
+      "highlights": {
+        "0": "أقمشة قطنية قابلة للتنفس",
+        "1": "قصات مركزة على الراحة",
+        "2": "منتجات طلب على مدار السنة",
+        "3": "إمكانية عالية لإعادة الطلب"
+      },
       "cta": "استكشف مجموعة التصدير"
     },
-    "innerwear": {
+    "innerwearBasics": {
       "title": "ملابس داخلية وأساسيات",
       "description": "ملابس داخلية وأساسية ضرورية مصنعة بجودة ثابتة ومتانة وراحة، مناسبة لأسواق الجملة والتصدير.",
-      "highlights": ["أقمشة ناعمة صديقة للبشرة", "إنتاج جملة ثابت", "مثالي لتوريد الموزعين", "فئة منخفضة الإرجاع عالية الدوران"],
+      "highlights": {
+        "0": "أقمشة ناعمة صديقة للبشرة",
+        "1": "إنتاج جملة ثابت",
+        "2": "مثالي لتوريد الموزعين",
+        "3": "فئة منخفضة الإرجاع عالية الدوران"
+      },
       "cta": "طلب الوصول للجملة"
     },
     "trustNote": "جميع الفئات مصنعة في منشأتنا في تيروبور مع مراقبة جودة ثابتة لمعايير التصدير الدولية."
@@ -201,27 +259,48 @@
     "title": "التميز في التصنيع من تيروبور",
     "description": "تقع في تيروبور، تاميل نادو — عاصمة التريكو في الهند — نجلب عقودًا من الخبرة التصنيعية لكل طلب. منشأتنا المتكاملة رأسيًا تضمن مراقبة جودة كاملة من القماش إلى الملابس الجاهزة.",
     "capabilities": {
-      "inHouseProduction": "إنتاج داخلي",
-      "inHouseProductionValue": "تكامل رأسي كامل",
-      "skilledWorkforce": "قوة عاملة ماهرة",
-      "skilledWorkforceValue": "حرفيون وفنيون مدربون",
-      "qualityAssurance": "ضمان الجودة",
-      "qualityAssuranceValue": "عمليات بمعايير ISO",
-      "exportReady": "جاهز للتصدير",
-      "exportReadyValue": "قدرة شحن عالمية",
-      "internationalCompliance": "الامتثال الدولي",
-      "internationalComplianceValue": "مصدر مسجل IEC",
-      "certifications": "الشهادات",
-      "certificationsValue": "مسجل GST و Udyam"
+      "inHouse": {
+        "title": "إنتاج داخلي",
+        "value": "تكامل رأسي كامل"
+      },
+      "skilled": {
+        "title": "قوة عاملة ماهرة",
+        "value": "حرفيون وفنيون مدربون"
+      },
+      "quality": {
+        "title": "ضمان الجودة",
+        "value": "عمليات بمعايير ISO"
+      },
+      "exportReady": {
+        "title": "جاهز للتصدير",
+        "value": "قدرة شحن عالمية"
+      },
+      "international": {
+        "title": "الامتثال الدولي",
+        "value": "مصدر مسجل IEC"
+      },
+      "certifications": {
+        "title": "الشهادات",
+        "value": "مسجل GST و Udyam"
+      }
     }
   },
   "compliance": {
     "badge": "مصنّع موثق",
     "title": "مسجل قانونياً ومتوافق للتصدير",
     "description": "نحن مصنع تصدير مسجل حكومياً مع جميع الشهادات اللازمة للتجارة الدولية.",
-    "gstRegistration": "تسجيل GST",
-    "importExportCode": "رمز الاستيراد والتصدير",
-    "udyamRegistration": "تسجيل Udyam"
+    "gst": {
+      "label": "GSTIN",
+      "title": "تسجيل GST"
+    },
+    "iec": {
+      "label": "IEC",
+      "title": "رمز الاستيراد والتصدير"
+    },
+    "udyam": {
+      "label": "Udyam",
+      "title": "تسجيل Udyam"
+    }
   },
   "ctaSection": {
     "title": "تشارك معنا في طلبك القادم",
@@ -262,8 +341,8 @@
     "workingHoursValue": "الإثنين - السبت: 9:00 صباحًا - 6:00 مساءً",
     "sundayClosed": "الأحد: مغلق",
     "quickResponse": "رد سريع",
-    "quickResponseDesc": "هل تحتاج مساعدة فورية؟ تواصل معنا عبر واتساب للحصول على ردود أسرع.",
-    "chatWhatsApp": "محادثة عبر واتساب",
+    "quickResponseDescription": "هل تحتاج مساعدة فورية؟ تواصل معنا عبر واتساب للحصول على ردود أسرع.",
+    "chatOnWhatsapp": "محادثة عبر واتساب",
     "sendMessage": "أرسل لنا رسالة",
     "yourName": "اسمك",
     "enterFullName": "أدخل اسمك الكامل",
@@ -273,7 +352,7 @@
     "phonePlaceholder": "+91 XXXXX XXXXX",
     "yourMessage": "رسالتك",
     "messagePlaceholder": "أخبرنا عن متطلباتك، طلبات الجملة، التصاميم المخصصة، أو أي أسئلة...",
-    "sendMessageBtn": "إرسال الرسالة",
+    "sendMessageButton": "إرسال الرسالة",
     "required": "*"
   },
   "common": {
@@ -283,7 +362,7 @@
     "close": "إغلاق",
     "loading": "جاري التحميل...",
     "error": "خطأ",
-    "success": "نجاح",
+    "success": "شكراً لتواصلك! سنرد عليك قريباً.",
     "whatsapp": "واتساب"
   }
 }
