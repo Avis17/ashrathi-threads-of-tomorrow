@@ -21,6 +21,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import MarketIntelApp from "./pages/market-intel/MarketIntelApp";
 import Manufacturing from "./pages/Manufacturing";
 import Compliance from "./pages/Compliance";
+import ExportBrochure from "./pages/ExportBrochure";
 import ProductShowcase from "./pages/ProductShowcase";
 
 const queryClient = new QueryClient();
@@ -53,6 +54,7 @@ const App = () => (
                       <Route path="/products" element={<ProductShowcase />} />
                       <Route path="/manufacturing" element={<Manufacturing />} />
                       <Route path="/compliance" element={<Compliance />} />
+                      <Route path="/export-brochure" element={<ExportBrochure />} />
                       <Route path="/about" element={<About />} />
                       <Route path="/contact" element={<Contact />} />
                       <Route path="/auth" element={<Auth />} />

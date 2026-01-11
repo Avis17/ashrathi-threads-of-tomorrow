@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Mail, Phone, MapPin, MessageCircle } from "lucide-react";
+import { Mail, Phone, MapPin, MessageCircle, Download } from "lucide-react";
 
 const FooterB2B = () => {
   const handleWhatsApp = () => {
@@ -56,6 +56,12 @@ const FooterB2B = () => {
               <li>
                 <Link to="/contact" className="text-sm text-primary-foreground/80 hover:text-accent transition-colors">
                   Contact / Enquiry
+                </Link>
+              </li>
+              <li>
+                <Link to="/export-brochure" className="text-sm text-primary-foreground/80 hover:text-accent transition-colors flex items-center gap-2">
+                  <Download className="h-3 w-3" />
+                  Export Brochure
                 </Link>
               </li>
             </ul>

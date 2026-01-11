@@ -300,6 +300,45 @@ export type Database = {
         }
         Relationships: []
       }
+      brochure_leads: {
+        Row: {
+          company: string
+          country: string
+          downloaded_at: string
+          email: string
+          id: string
+          ip_address: string | null
+          name: string
+          phone: string | null
+          purpose: string
+          user_agent: string | null
+        }
+        Insert: {
+          company: string
+          country: string
+          downloaded_at?: string
+          email: string
+          id?: string
+          ip_address?: string | null
+          name: string
+          phone?: string | null
+          purpose: string
+          user_agent?: string | null
+        }
+        Update: {
+          company?: string
+          country?: string
+          downloaded_at?: string
+          email?: string
+          id?: string
+          ip_address?: string | null
+          name?: string
+          phone?: string | null
+          purpose?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       bulk_order_requests: {
         Row: {
           company_name: string | null
