@@ -6,13 +6,14 @@
     "contact": "CONTACT",
     "requestQuote": "Request Quote",
     "login": "Login",
+    "loginRegister": "Login / Register",
     "dashboard": "Dashboard",
     "signOut": "Sign Out",
     "region": "Region",
     "womensWear": "Women's Wear",
+    "womensWearDesc": "Primary export category",
     "kidswear": "Kidswear",
-    "primaryExportCategory": "Primary export category",
-    "highDemandExport": "High-demand export segment",
+    "kidswearDesc": "High-demand export segment",
     "exportManufacturing": "Export & Manufacturing",
     "fabricConstruction": "Fabric & Construction",
     "quickActions": "Quick Actions",
@@ -20,7 +21,37 @@
     "exportBrochure": "Export Brochure →",
     "requestQuoteLink": "Request Quote →",
     "exportAssurance": "All products available for bulk & export orders",
-    "quote": "Quote"
+    "quote": "Quote",
+    "exportCollections": "Export Collections",
+    "privateLabelOem": "Private Label / OEM",
+    "compliance": "Compliance",
+    "womensWearProducts": {
+      "nightwear": "Nightwear (Night Pants & Tops)",
+      "pyjamas": "Pyjamas & Loungewear",
+      "cottonTshirts": "Cotton T-Shirts",
+      "innerwear": "Innerwear & Basics"
+    },
+    "kidswearProducts": {
+      "nightwearSets": "Kids Nightwear Sets",
+      "pyjamas": "Kids Pyjamas",
+      "cottonSets": "Kids Cotton Sets",
+      "colorfulSets": "Colorful Printed Sets"
+    },
+    "marketUse": {
+      "exportCollections": "Export Collections",
+      "bulkOem": "Bulk & OEM Orders",
+      "privateLabel": "Private Label Manufacturing"
+    },
+    "fabricStyles": {
+      "cotton": "100% Cotton Garments",
+      "knitted": "Knitted Apparel",
+      "printedDyed": "Printed & Dyed Styles"
+    },
+    "resourceLinks": {
+      "exportBrochure": "Export Brochure",
+      "shippingPolicy": "Shipping Policy",
+      "compliance": "Compliance"
+    }
   },
   "hero": {
     "badge": "Export-Ready Garment Manufacturer",
@@ -54,14 +85,22 @@
     "selectLanguage": "Select Language"
   },
   "highlights": {
-    "exportReadyManufacturer": "Export-Ready Manufacturer",
-    "exportReadyManufacturerDesc": "State-of-the-art production facility in Tiruppur, India",
-    "bulkCustomOrders": "Bulk & Custom Orders",
-    "bulkCustomOrdersDesc": "Flexible MOQ with complete customization options",
-    "qualityControlledProduction": "Quality-Controlled Production",
-    "qualityControlledProductionDesc": "Multi-stage quality checks at every production phase",
-    "ethicalManufacturing": "Ethical Manufacturing",
-    "ethicalManufacturingDesc": "Sustainable practices with fair labor standards"
+    "exportReady": {
+      "title": "Export-Ready Manufacturer",
+      "description": "State-of-the-art production facility in Tiruppur, India"
+    },
+    "bulkCustom": {
+      "title": "Bulk & Custom Orders",
+      "description": "Flexible MOQ with complete customization options"
+    },
+    "qualityControlled": {
+      "title": "Quality-Controlled Production",
+      "description": "Multi-stage quality checks at every production phase"
+    },
+    "ethicalManufacturing": {
+      "title": "Ethical Manufacturing",
+      "description": "Sustainable practices with fair labor standards"
+    }
   },
   "womensSection": {
     "badge": "Women's Collection",
@@ -76,8 +115,10 @@
       "bulk": "Bulk production with consistency"
     },
     "priceHint": "Wholesale pricing available after verification",
-    "floatingBadge": "Fast-Moving",
-    "floatingBadgeLine2": "Export Styles"
+    "floatingBadge": {
+      "label": "Fast-Moving",
+      "value": "Export Styles"
+    }
   },
   "kidsSection": {
     "badge": "Kids Collection",
@@ -91,8 +132,10 @@
       "sizeRanges": "Multiple size ranges",
       "bulkSupply": "Consistent bulk supply"
     },
-    "floatingBadge": "Export Favorite",
-    "floatingBadgeLine2": "Vibrant Colors"
+    "floatingBadge": {
+      "label": "Export Favorite",
+      "value": "Vibrant Colors"
+    }
   },
   "exportCategories": {
     "badge": "Core Export Categories",
@@ -101,19 +144,34 @@
     "cottonTshirts": {
       "title": "Cotton T-Shirts",
       "description": "High-demand cotton T-shirts designed for bulk export and wholesale supply. Manufactured with consistent sizing, smooth finishes, and long-lasting fabric quality suitable for international retail markets.",
-      "highlights": ["100% cotton & cotton blends", "Consistent GSM & sizing", "Ideal for bulk export programs", "Suitable for private label supply"],
+      "highlights": {
+        "0": "100% cotton & cotton blends",
+        "1": "Consistent GSM & sizing",
+        "2": "Ideal for bulk export programs",
+        "3": "Suitable for private label supply"
+      },
       "cta": "View Wholesale Range"
     },
-    "pyjamas": {
+    "pyjamasCasual": {
       "title": "Pyjamas & Casual Wear",
       "description": "Comfortable, climate-friendly pyjamas and casual wear collections developed for strong repeat demand in domestic and international markets.",
-      "highlights": ["Breathable cotton fabrics", "Comfort-focused fits", "Year-round demand products", "High repeat-order potential"],
+      "highlights": {
+        "0": "Breathable cotton fabrics",
+        "1": "Comfort-focused fits",
+        "2": "Year-round demand products",
+        "3": "High repeat-order potential"
+      },
       "cta": "Explore Export Collection"
     },
-    "innerwear": {
+    "innerwearBasics": {
       "title": "Innerwear & Basics",
       "description": "Essential innerwear and basic garments manufactured with quality consistency, durability, and comfort, suitable for bulk wholesale and export markets.",
-      "highlights": ["Soft, skin-friendly fabrics", "Consistent bulk production", "Ideal for distributor supply", "Low return, high turnover category"],
+      "highlights": {
+        "0": "Soft, skin-friendly fabrics",
+        "1": "Consistent bulk production",
+        "2": "Ideal for distributor supply",
+        "3": "Low return, high turnover category"
+      },
       "cta": "Request Wholesale Access"
     },
     "trustNote": "All categories manufactured in our Tiruppur facility with consistent quality control for international export standards."
@@ -201,27 +259,48 @@
     "title": "Manufacturing Excellence from Tiruppur",
     "description": "Located in Tiruppur, Tamil Nadu — India's knitwear capital — we bring decades of manufacturing expertise to every order. Our vertically integrated facility ensures complete quality control from fabric to finished garment.",
     "capabilities": {
-      "inHouseProduction": "In-House Production",
-      "inHouseProductionValue": "Complete vertical integration",
-      "skilledWorkforce": "Skilled Workforce",
-      "skilledWorkforceValue": "Trained artisans & technicians",
-      "qualityAssurance": "Quality Assurance",
-      "qualityAssuranceValue": "ISO-standard processes",
-      "exportReady": "Export Ready",
-      "exportReadyValue": "Global shipping capability",
-      "internationalCompliance": "International Compliance",
-      "internationalComplianceValue": "IEC registered exporter",
-      "certifications": "Certifications",
-      "certificationsValue": "GST & Udyam registered"
+      "inHouse": {
+        "title": "In-House Production",
+        "value": "Complete vertical integration"
+      },
+      "skilled": {
+        "title": "Skilled Workforce",
+        "value": "Trained artisans & technicians"
+      },
+      "quality": {
+        "title": "Quality Assurance",
+        "value": "ISO-standard processes"
+      },
+      "exportReady": {
+        "title": "Export Ready",
+        "value": "Global shipping capability"
+      },
+      "international": {
+        "title": "International Compliance",
+        "value": "IEC registered exporter"
+      },
+      "certifications": {
+        "title": "Certifications",
+        "value": "GST & Udyam registered"
+      }
     }
   },
   "compliance": {
     "badge": "Verified Manufacturer",
     "title": "Legally Registered & Export Compliant",
     "description": "We are a government-registered export manufacturer with all necessary certifications for international trade.",
-    "gstRegistration": "GST Registration",
-    "importExportCode": "Import Export Code",
-    "udyamRegistration": "Udyam Registration"
+    "gst": {
+      "label": "GSTIN",
+      "title": "GST Registration"
+    },
+    "iec": {
+      "label": "IEC",
+      "title": "Import Export Code"
+    },
+    "udyam": {
+      "label": "Udyam",
+      "title": "Udyam Registration"
+    }
   },
   "ctaSection": {
     "title": "Partner With Us for Your Next Order",
@@ -262,8 +341,8 @@
     "workingHoursValue": "Mon - Sat: 9:00 AM - 6:00 PM",
     "sundayClosed": "Sunday: Closed",
     "quickResponse": "Quick Response",
-    "quickResponseDesc": "Need immediate assistance? Connect with us on WhatsApp for faster responses.",
-    "chatWhatsApp": "Chat on WhatsApp",
+    "quickResponseDescription": "Need immediate assistance? Connect with us on WhatsApp for faster responses.",
+    "chatOnWhatsapp": "Chat on WhatsApp",
     "sendMessage": "Send Us a Message",
     "yourName": "Your Name",
     "enterFullName": "Enter your full name",
@@ -273,7 +352,7 @@
     "phonePlaceholder": "+91 XXXXX XXXXX",
     "yourMessage": "Your Message",
     "messagePlaceholder": "Tell us about your requirements, bulk orders, custom designs, or any questions...",
-    "sendMessageBtn": "Send Message",
+    "sendMessageButton": "Send Message",
     "required": "*"
   },
   "common": {
@@ -283,7 +362,7 @@
     "close": "Close",
     "loading": "Loading...",
     "error": "Error",
-    "success": "Success",
+    "success": "Thank you for reaching out! We'll get back to you soon.",
     "whatsapp": "WhatsApp"
   }
 }

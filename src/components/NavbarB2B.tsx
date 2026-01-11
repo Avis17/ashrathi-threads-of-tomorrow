@@ -15,6 +15,7 @@ import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useLanguage } from "@/hooks/useLanguage";
 
 const NavbarB2B = () => {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [productsOpen, setProductsOpen] = useState(false);
   const [resourcesOpen, setResourcesOpen] = useState(false);
@@ -26,37 +27,37 @@ const NavbarB2B = () => {
 
   // Core Export Products
   const womensWear = [
-    { name: "Nightwear (Night Pants & Tops)", path: "/products/womens-nightwear" },
-    { name: "Pyjamas & Loungewear", path: "/products/pyjamas-casual-wear" },
-    { name: "Cotton T-Shirts", path: "/products/cotton-tshirts" },
-    { name: "Innerwear & Basics", path: "/products/innerwear-basics" },
+    { nameKey: "nav.womensWearProducts.nightwear", path: "/products/womens-nightwear" },
+    { nameKey: "nav.womensWearProducts.pyjamas", path: "/products/pyjamas-casual-wear" },
+    { nameKey: "nav.womensWearProducts.cottonTshirts", path: "/products/cotton-tshirts" },
+    { nameKey: "nav.womensWearProducts.innerwear", path: "/products/innerwear-basics" },
   ];
 
   const kidswear = [
-    { name: "Kids Nightwear Sets", path: "/products" },
-    { name: "Kids Pyjamas", path: "/products" },
-    { name: "Kids Cotton Sets", path: "/products" },
-    { name: "Colorful Printed Sets", path: "/products/kidswear-colorful-sets" },
+    { nameKey: "nav.kidswearProducts.nightwearSets", path: "/products" },
+    { nameKey: "nav.kidswearProducts.pyjamas", path: "/products" },
+    { nameKey: "nav.kidswearProducts.cottonSets", path: "/products" },
+    { nameKey: "nav.kidswearProducts.colorfulSets", path: "/products/kidswear-colorful-sets" },
   ];
 
   // By Fabric / Style
   const fabricStyles = [
-    { name: "100% Cotton Garments", path: "/products" },
-    { name: "Knitted Apparel", path: "/products" },
-    { name: "Printed & Dyed Styles", path: "/products" },
+    { nameKey: "nav.fabricStyles.cotton", path: "/products" },
+    { nameKey: "nav.fabricStyles.knitted", path: "/products" },
+    { nameKey: "nav.fabricStyles.printedDyed", path: "/products" },
   ];
 
   // By Market Use
   const marketUse = [
-    { name: "Export Collections", path: "/products" },
-    { name: "Bulk & OEM Orders", path: "/contact" },
-    { name: "Private Label Manufacturing", path: "/contact" },
+    { nameKey: "nav.marketUse.exportCollections", path: "/products" },
+    { nameKey: "nav.marketUse.bulkOem", path: "/contact" },
+    { nameKey: "nav.marketUse.privateLabel", path: "/contact" },
   ];
 
   const resourceLinks = [
-    { name: "Export Brochure", path: "/export-brochure", icon: Download },
-    { name: "Shipping Policy", path: "/shipping-export-policy", icon: Ship },
-    { name: "Compliance", path: "/compliance", icon: FileText },
+    { nameKey: "nav.resourceLinks.exportBrochure", path: "/export-brochure", icon: Download },
+    { nameKey: "nav.resourceLinks.shippingPolicy", path: "/shipping-export-policy", icon: Ship },
+    { nameKey: "nav.resourceLinks.compliance", path: "/compliance", icon: FileText },
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -81,7 +82,7 @@ const NavbarB2B = () => {
 
             {/* Desktop Navigation - Center */}
             <div className="hidden lg:flex items-center justify-center flex-1">
-              <div className="flex items-center space-x-1">
+              <div className="flex items-center space-x-1 rtl:space-x-reverse">
                 
                 {/* Products Dropdown */}
                 <DropdownMenu open={productsOpen} onOpenChange={setProductsOpen}>
@@ -93,7 +94,7 @@ const NavbarB2B = () => {
                           : "text-foreground/70 hover:text-foreground hover:bg-muted/50"
                       }`}
                     >
-                      PRODUCT CATEGORIES
+                      {t('nav.productCategories')}
                       <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${productsOpen ? 'rotate-180' : ''}`} />
                     </button>
                   </DropdownMenuTrigger>
@@ -105,19 +106,19 @@ const NavbarB2B = () => {
                     <div className="grid grid-cols-[1.2fr_1fr_0.8fr] gap-6">
                       
                       {/* COLUMN 1 — CORE MANUFACTURING (Dominant) */}
-                      <div className="space-y-6 pr-4 border-r border-border/30">
+                      <div className="space-y-6 pr-4 border-r rtl:border-r-0 rtl:border-l rtl:pr-0 rtl:pl-4 border-border/30">
                         {/* Women's Wear */}
                         <div>
-                          <p className="text-[11px] font-semibold text-foreground uppercase tracking-[0.1em] mb-1">Women's Wear</p>
-                          <p className="text-[10px] text-muted-foreground mb-3">Primary export category</p>
+                          <p className="text-[11px] font-semibold text-foreground uppercase tracking-[0.1em] mb-1">{t('nav.womensWear')}</p>
+                          <p className="text-[10px] text-muted-foreground mb-3">{t('nav.womensWearDesc')}</p>
                           <div className="space-y-0.5">
                             {womensWear.map((item) => (
                               <DropdownMenuItem 
-                                key={item.name}
+                                key={item.nameKey}
                                 onClick={() => navigate(item.path)}
                                 className="cursor-pointer rounded px-2 py-1.5 focus:bg-muted/60 text-foreground/75 hover:text-foreground hover:bg-muted/40"
                               >
-                                <span className="text-[13px]">{item.name}</span>
+                                <span className="text-[13px]">{t(item.nameKey)}</span>
                               </DropdownMenuItem>
                             ))}
                           </div>
@@ -125,16 +126,16 @@ const NavbarB2B = () => {
 
                         {/* Kidswear */}
                         <div>
-                          <p className="text-[11px] font-semibold text-foreground uppercase tracking-[0.1em] mb-1">Kidswear</p>
-                          <p className="text-[10px] text-muted-foreground mb-3">High-demand export segment</p>
+                          <p className="text-[11px] font-semibold text-foreground uppercase tracking-[0.1em] mb-1">{t('nav.kidswear')}</p>
+                          <p className="text-[10px] text-muted-foreground mb-3">{t('nav.kidswearDesc')}</p>
                           <div className="space-y-0.5">
                             {kidswear.map((item) => (
                               <DropdownMenuItem 
-                                key={item.name}
+                                key={item.nameKey}
                                 onClick={() => navigate(item.path)}
                                 className="cursor-pointer rounded px-2 py-1.5 focus:bg-muted/60 text-foreground/75 hover:text-foreground hover:bg-muted/40"
                               >
-                                <span className="text-[13px]">{item.name}</span>
+                                <span className="text-[13px]">{t(item.nameKey)}</span>
                               </DropdownMenuItem>
                             ))}
                           </div>
@@ -142,18 +143,18 @@ const NavbarB2B = () => {
                       </div>
 
                       {/* COLUMN 2 — EXPORT CAPABILITIES (Supporting) */}
-                      <div className="space-y-6 pr-4 border-r border-border/30">
+                      <div className="space-y-6 pr-4 border-r rtl:border-r-0 rtl:border-l rtl:pr-0 rtl:pl-4 border-border/30">
                         {/* Export & Manufacturing */}
                         <div>
-                          <p className="text-[11px] font-semibold text-foreground uppercase tracking-[0.1em] mb-3">Export & Manufacturing</p>
+                          <p className="text-[11px] font-semibold text-foreground uppercase tracking-[0.1em] mb-3">{t('nav.exportManufacturing')}</p>
                           <div className="space-y-0.5">
                             {marketUse.map((item) => (
                               <DropdownMenuItem 
-                                key={item.name}
+                                key={item.nameKey}
                                 onClick={() => navigate(item.path)}
                                 className="cursor-pointer rounded px-2 py-1.5 focus:bg-muted/60 text-foreground/75 hover:text-foreground hover:bg-muted/40"
                               >
-                                <span className="text-[13px]">{item.name}</span>
+                                <span className="text-[13px]">{t(item.nameKey)}</span>
                               </DropdownMenuItem>
                             ))}
                           </div>
@@ -161,15 +162,15 @@ const NavbarB2B = () => {
 
                         {/* Fabric & Construction */}
                         <div>
-                          <p className="text-[11px] font-semibold text-foreground uppercase tracking-[0.1em] mb-3">Fabric & Construction</p>
+                          <p className="text-[11px] font-semibold text-foreground uppercase tracking-[0.1em] mb-3">{t('nav.fabricConstruction')}</p>
                           <div className="space-y-0.5">
                             {fabricStyles.map((item) => (
                               <DropdownMenuItem 
-                                key={item.name}
+                                key={item.nameKey}
                                 onClick={() => navigate(item.path)}
                                 className="cursor-pointer rounded px-2 py-1.5 focus:bg-muted/60 text-foreground/75 hover:text-foreground hover:bg-muted/40"
                               >
-                                <span className="text-[13px]">{item.name}</span>
+                                <span className="text-[13px]">{t(item.nameKey)}</span>
                               </DropdownMenuItem>
                             ))}
                           </div>
@@ -180,25 +181,25 @@ const NavbarB2B = () => {
                       <div className="space-y-5">
                         {/* Quick Actions */}
                         <div>
-                          <p className="text-[11px] font-semibold text-foreground uppercase tracking-[0.1em] mb-3">Quick Actions</p>
+                          <p className="text-[11px] font-semibold text-foreground uppercase tracking-[0.1em] mb-3">{t('nav.quickActions')}</p>
                           <div className="space-y-0.5">
                             <DropdownMenuItem 
                               onClick={() => navigate('/products')}
                               className="cursor-pointer rounded px-2 py-1.5 focus:bg-muted/60 hover:bg-muted/40"
                             >
-                              <span className="text-[13px] text-accent hover:underline">View All Products →</span>
+                              <span className="text-[13px] text-accent hover:underline">{t('nav.viewAllProducts')}</span>
                             </DropdownMenuItem>
                             <DropdownMenuItem 
                               onClick={() => navigate('/export-brochure')}
                               className="cursor-pointer rounded px-2 py-1.5 focus:bg-muted/60 hover:bg-muted/40"
                             >
-                              <span className="text-[13px] text-accent hover:underline">Export Brochure →</span>
+                              <span className="text-[13px] text-accent hover:underline">{t('nav.exportBrochure')}</span>
                             </DropdownMenuItem>
                             <DropdownMenuItem 
                               onClick={() => navigate('/contact')}
                               className="cursor-pointer rounded px-2 py-1.5 focus:bg-muted/60 hover:bg-muted/40"
                             >
-                              <span className="text-[13px] text-accent hover:underline">Request Quote →</span>
+                              <span className="text-[13px] text-accent hover:underline">{t('nav.requestQuoteLink')}</span>
                             </DropdownMenuItem>
                           </div>
                         </div>
@@ -206,7 +207,7 @@ const NavbarB2B = () => {
                         {/* Export Assurance */}
                         <div className="pt-4 mt-auto">
                           <p className="text-[10px] text-muted-foreground leading-relaxed">
-                            All products available for bulk & export orders
+                            {t('nav.exportAssurance')}
                           </p>
                         </div>
                       </div>
@@ -223,7 +224,7 @@ const NavbarB2B = () => {
                       : "text-foreground/70 hover:text-foreground hover:bg-muted/50"
                   }`}
                 >
-                  MANUFACTURING
+                  {t('nav.manufacturing')}
                 </Link>
 
                 {/* Resources Dropdown */}
@@ -236,7 +237,7 @@ const NavbarB2B = () => {
                           : "text-foreground/70 hover:text-foreground hover:bg-muted/50"
                       }`}
                     >
-                      RESOURCES
+                      {t('nav.resources')}
                       <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${resourcesOpen ? 'rotate-180' : ''}`} />
                     </button>
                   </DropdownMenuTrigger>
@@ -247,12 +248,12 @@ const NavbarB2B = () => {
                   >
                     {resourceLinks.map((link) => (
                       <DropdownMenuItem 
-                        key={link.name}
+                        key={link.nameKey}
                         onClick={() => navigate(link.path)}
                         className="cursor-pointer rounded-lg px-3 py-2.5 focus:bg-muted"
                       >
-                        <link.icon className="h-4 w-4 mr-3 text-accent" />
-                        <span className="font-medium">{link.name}</span>
+                        <link.icon className="h-4 w-4 mr-3 rtl:mr-0 rtl:ml-3 text-accent" />
+                        <span className="font-medium">{t(link.nameKey)}</span>
                       </DropdownMenuItem>
                     ))}
                   </DropdownMenuContent>
@@ -267,13 +268,13 @@ const NavbarB2B = () => {
                       : "text-foreground/70 hover:text-foreground hover:bg-muted/50"
                   }`}
                 >
-                  CONTACT
+                  {t('nav.contact')}
                 </Link>
               </div>
             </div>
 
             {/* Desktop Actions - Right */}
-            <div className="hidden lg:flex items-center space-x-3 flex-shrink-0">
+            <div className="hidden lg:flex items-center space-x-3 rtl:space-x-reverse flex-shrink-0">
               
               {/* Language Switcher */}
               <LanguageSwitcher />
@@ -293,8 +294,8 @@ const NavbarB2B = () => {
                           onClick={() => navigate('/admin')}
                           className="cursor-pointer rounded-lg px-3 py-2.5"
                         >
-                          <Shield className="h-4 w-4 mr-3 text-accent" />
-                          Dashboard
+                          <Shield className="h-4 w-4 mr-3 rtl:mr-0 rtl:ml-3 text-accent" />
+                          {t('nav.dashboard')}
                         </DropdownMenuItem>
                         <DropdownMenuSeparator className="my-2" />
                       </>
@@ -303,8 +304,8 @@ const NavbarB2B = () => {
                       onClick={signOut}
                       className="cursor-pointer rounded-lg px-3 py-2.5 text-destructive focus:text-destructive"
                     >
-                      <LogOut className="h-4 w-4 mr-3" />
-                      Sign Out
+                      <LogOut className="h-4 w-4 mr-3 rtl:mr-0 rtl:ml-3" />
+                      {t('nav.signOut')}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -312,7 +313,7 @@ const NavbarB2B = () => {
                 <Link 
                   to="/auth"
                   className="p-2 text-foreground/50 hover:text-foreground transition-colors rounded-full hover:bg-muted/50"
-                  title="Login"
+                  title={t('nav.login')}
                 >
                   <User className="h-4 w-4" />
                 </Link>
@@ -321,7 +322,7 @@ const NavbarB2B = () => {
               {/* Primary CTA */}
               <Button asChild size="sm" className="bg-foreground text-background hover:bg-foreground/90 font-medium tracking-wide px-5">
                 <Link to="/contact">
-                  Request Quote
+                  {t('nav.requestQuote')}
                 </Link>
               </Button>
             </div>
@@ -330,7 +331,7 @@ const NavbarB2B = () => {
             <div className="lg:hidden flex items-center gap-2">
               <Button asChild size="sm" variant="outline" className="text-xs px-3 border-foreground/20">
                 <Link to="/contact">
-                  Quote
+                  {t('nav.quote')}
                 </Link>
               </Button>
               <button
@@ -351,7 +352,7 @@ const NavbarB2B = () => {
             
             {/* Products Section - Collapsible */}
             <div className="py-4 border-b border-border/50">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Product Categories</p>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">{t('nav.productCategories')}</p>
               
               {/* Women's Wear - Collapsible */}
               <div className="mb-2">
@@ -359,19 +360,19 @@ const NavbarB2B = () => {
                   onClick={() => setMobileWomensOpen(!mobileWomensOpen)}
                   className="flex items-center justify-between w-full py-2.5 text-foreground font-medium"
                 >
-                  <span>Women's Wear</span>
-                  <ChevronRight className={`h-4 w-4 transition-transform ${mobileWomensOpen ? 'rotate-90' : ''}`} />
+                  <span>{t('nav.womensWear')}</span>
+                  <ChevronRight className={`h-4 w-4 transition-transform ${mobileWomensOpen ? 'rotate-90 rtl:-rotate-90' : ''}`} />
                 </button>
                 {mobileWomensOpen && (
-                  <div className="pl-4 space-y-1 mt-1">
+                  <div className="pl-4 rtl:pl-0 rtl:pr-4 space-y-1 mt-1">
                     {womensWear.map((item) => (
                       <Link
-                        key={item.name}
+                        key={item.nameKey}
                         to={item.path}
                         onClick={() => setIsOpen(false)}
                         className="block py-2 text-foreground/70 hover:text-accent transition-colors text-sm"
                       >
-                        {item.name}
+                        {t(item.nameKey)}
                       </Link>
                     ))}
                   </div>
@@ -384,19 +385,19 @@ const NavbarB2B = () => {
                   onClick={() => setMobileKidsOpen(!mobileKidsOpen)}
                   className="flex items-center justify-between w-full py-2.5 text-foreground font-medium"
                 >
-                  <span>Kidswear</span>
-                  <ChevronRight className={`h-4 w-4 transition-transform ${mobileKidsOpen ? 'rotate-90' : ''}`} />
+                  <span>{t('nav.kidswear')}</span>
+                  <ChevronRight className={`h-4 w-4 transition-transform ${mobileKidsOpen ? 'rotate-90 rtl:-rotate-90' : ''}`} />
                 </button>
                 {mobileKidsOpen && (
-                  <div className="pl-4 space-y-1 mt-1">
+                  <div className="pl-4 rtl:pl-0 rtl:pr-4 space-y-1 mt-1">
                     {kidswear.map((item) => (
                       <Link
-                        key={item.name}
+                        key={item.nameKey}
                         to={item.path}
                         onClick={() => setIsOpen(false)}
                         className="block py-2 text-foreground/70 hover:text-accent transition-colors text-sm"
                       >
-                        {item.name}
+                        {t(item.nameKey)}
                       </Link>
                     ))}
                   </div>
@@ -410,14 +411,14 @@ const NavbarB2B = () => {
                   onClick={() => setIsOpen(false)}
                   className="block py-2 text-foreground/80 hover:text-accent transition-colors"
                 >
-                  Export Collections
+                  {t('nav.exportCollections')}
                 </Link>
                 <Link
                   to="/contact"
                   onClick={() => setIsOpen(false)}
                   className="block py-2 text-foreground/80 hover:text-accent transition-colors"
                 >
-                  Private Label / OEM
+                  {t('nav.privateLabelOem')}
                 </Link>
               </div>
             </div>
@@ -431,7 +432,7 @@ const NavbarB2B = () => {
                   isActive('/manufacturing') ? "text-accent" : "text-foreground hover:text-accent"
                 }`}
               >
-                Manufacturing
+                {t('nav.manufacturing')}
               </Link>
               <Link
                 to="/compliance"
@@ -440,7 +441,7 @@ const NavbarB2B = () => {
                   isActive('/compliance') ? "text-accent" : "text-foreground hover:text-accent"
                 }`}
               >
-                Compliance
+                {t('nav.compliance')}
               </Link>
               <Link
                 to="/contact"
@@ -449,26 +450,32 @@ const NavbarB2B = () => {
                   isActive('/contact') ? "text-accent" : "text-foreground hover:text-accent"
                 }`}
               >
-                Contact
+                {t('nav.contact')}
               </Link>
             </div>
 
             {/* Resources Section */}
             <div className="py-4 border-b border-border/50">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Resources</p>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">{t('nav.resources')}</p>
               <div className="space-y-1">
                 {resourceLinks.map((link) => (
                   <Link
-                    key={link.name}
+                    key={link.nameKey}
                     to={link.path}
                     onClick={() => setIsOpen(false)}
                     className="flex items-center gap-3 py-2.5 text-foreground/80 hover:text-accent transition-colors"
                   >
                     <link.icon className="h-4 w-4 text-accent" />
-                    {link.name}
+                    {t(link.nameKey)}
                   </Link>
                 ))}
               </div>
+            </div>
+            
+            {/* Language Switcher for Mobile */}
+            <div className="py-4 border-b border-border/50">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">{t('language.selectLanguage')}</p>
+              <LanguageSwitcher />
             </div>
             
             {/* User Section */}
@@ -482,7 +489,7 @@ const NavbarB2B = () => {
                       className="flex items-center gap-3 py-2.5 text-foreground hover:text-accent"
                     >
                       <Shield className="h-4 w-4 text-accent" />
-                      Dashboard
+                      {t('nav.dashboard')}
                     </Link>
                   )}
                   <button
@@ -490,7 +497,7 @@ const NavbarB2B = () => {
                     className="flex items-center gap-3 py-2.5 text-destructive"
                   >
                     <LogOut className="h-4 w-4" />
-                    Sign Out
+                    {t('nav.signOut')}
                   </button>
                 </div>
               ) : (
@@ -500,7 +507,7 @@ const NavbarB2B = () => {
                   className="flex items-center gap-3 py-2.5 text-foreground hover:text-accent"
                 >
                   <User className="h-4 w-4" />
-                  Login / Register
+                  {t('nav.loginRegister')}
                 </Link>
               )}
             </div>
@@ -509,7 +516,7 @@ const NavbarB2B = () => {
             <div className="pt-6">
               <Button asChild className="w-full bg-foreground text-background hover:bg-foreground/90 font-medium">
                 <Link to="/contact" onClick={() => setIsOpen(false)}>
-                  Request Quote
+                  {t('nav.requestQuote')}
                 </Link>
               </Button>
             </div>
