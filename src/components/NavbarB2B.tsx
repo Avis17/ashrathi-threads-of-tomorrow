@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, User, LogOut, Shield, ChevronDown, FileText, Ship, Download, ChevronRight } from "lucide-react";
+import { Menu, X, User, LogOut, Shield, ChevronDown, FileText, Ship, ChevronRight } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -59,7 +59,6 @@ const NavbarB2B = ({ topOffset = "top-0" }: NavbarB2BProps) => {
   ];
 
   const resourceLinks = [
-    { nameKey: "nav.resourceLinks.exportBrochure", path: "/export-brochure", icon: Download },
     { nameKey: "nav.resourceLinks.shippingPolicy", path: "/shipping-export-policy", icon: Ship },
     { nameKey: "nav.resourceLinks.compliance", path: "/compliance", icon: FileText },
   ];
@@ -192,12 +191,6 @@ const NavbarB2B = ({ topOffset = "top-0" }: NavbarB2BProps) => {
                               className="cursor-pointer rounded px-2 py-1.5 focus:bg-muted/60 hover:bg-muted/40"
                             >
                               <span className="text-[13px] text-accent hover:underline">{t('nav.viewAllProducts')}</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              onClick={() => navigate('/export-brochure')}
-                              className="cursor-pointer rounded px-2 py-1.5 focus:bg-muted/60 hover:bg-muted/40"
-                            >
-                              <span className="text-[13px] text-accent hover:underline">{t('nav.exportBrochure')}</span>
                             </DropdownMenuItem>
                             <DropdownMenuItem 
                               onClick={() => navigate('/contact')}

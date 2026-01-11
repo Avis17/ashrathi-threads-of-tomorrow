@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Mail, Phone, MapPin, MessageCircle, Download, Ruler } from "lucide-react";
+import { Mail, Phone, MapPin, MessageCircle, Ruler } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import CurrencyConverter from "./CurrencyConverter";
 
@@ -37,7 +37,6 @@ const FooterB2B = () => {
               <li><Link to="/compliance" className="text-sm text-primary-foreground/80 hover:text-accent transition-colors">{t('footer.complianceCertifications')}</Link></li>
               <li><Link to="/about" className="text-sm text-primary-foreground/80 hover:text-accent transition-colors">{t('footer.aboutUs')}</Link></li>
               <li><Link to="/contact" className="text-sm text-primary-foreground/80 hover:text-accent transition-colors">{t('footer.contactEnquiry')}</Link></li>
-              <li><Link to="/export-brochure" className="text-sm text-primary-foreground/80 hover:text-accent transition-colors flex items-center gap-2"><Download className="h-3 w-3" />{t('footer.exportBrochure')}</Link></li>
               <li><Link to="/size-guide" className="text-sm text-primary-foreground/80 hover:text-accent transition-colors flex items-center gap-2"><Ruler className="h-3 w-3" />{t('footer.sizeGuide')}</Link></li>
             </ul>
           </div>
