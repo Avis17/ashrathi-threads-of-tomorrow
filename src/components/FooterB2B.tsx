@@ -142,7 +142,7 @@ const FooterB2B = () => {
             <p className="text-xs text-primary-foreground/50 text-center md:text-left">
               © {new Date().getFullYear()} Feather Fashions. All rights reserved. | Export-oriented apparel manufacturer from India
             </p>
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-4 flex-wrap justify-center md:justify-end">
               <Link to="/terms-and-conditions" className="text-xs text-primary-foreground/50 hover:text-accent transition-colors">
                 Terms
               </Link>
@@ -153,6 +153,10 @@ const FooterB2B = () => {
               <span className="text-primary-foreground/20">|</span>
               <Link to="/disclaimer" className="text-xs text-primary-foreground/50 hover:text-accent transition-colors">
                 Disclaimer
+              </Link>
+              <span className="text-primary-foreground/20">|</span>
+              <Link to="/shipping-export-policy" className="text-xs text-primary-foreground/50 hover:text-accent transition-colors">
+                Shipping & Export
               </Link>
             </div>
           </div>
