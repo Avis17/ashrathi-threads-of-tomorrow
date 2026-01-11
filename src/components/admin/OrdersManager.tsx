@@ -19,7 +19,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { OrderStatusBadge } from '@/components/customer/OrderStatusBadge';
+import { OrderStatusBadge } from '@/components/admin/OrderStatusBadge';
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { useDebounce } from '@/hooks/useDebounce';
