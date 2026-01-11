@@ -8,7 +8,6 @@ import {
   Globe,
   Users,
   CheckCircle,
-  FileText,
   Phone,
   Mail,
   MapPin,
@@ -16,6 +15,7 @@ import {
   Leaf,
   Target
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import SEO from "@/components/seo/SEO";
 
 // New B2B Sections
@@ -37,44 +37,46 @@ import womenActivewear from "@/assets/b2b/products-women-activewear.jpg";
 import menSportswear from "@/assets/b2b/products-men-sportswear.jpg";
 
 const Home = () => {
+  const { t } = useTranslation();
+
   const keyHighlights = [
     {
       icon: Factory,
-      title: "Export-Ready Manufacturer",
-      description: "State-of-the-art production facility in Tiruppur, India"
+      titleKey: "highlights.exportReady.title",
+      descriptionKey: "highlights.exportReady.description"
     },
     {
       icon: Target,
-      title: "Bulk & Custom Orders",
-      description: "Flexible MOQ with complete customization options"
+      titleKey: "highlights.bulkCustom.title",
+      descriptionKey: "highlights.bulkCustom.description"
     },
     {
       icon: Shield,
-      title: "Quality-Controlled Production",
-      description: "Multi-stage quality checks at every production phase"
+      titleKey: "highlights.qualityControlled.title",
+      descriptionKey: "highlights.qualityControlled.description"
     },
     {
       icon: Leaf,
-      title: "Ethical Manufacturing",
-      description: "Sustainable practices with fair labor standards"
+      titleKey: "highlights.ethicalManufacturing.title",
+      descriptionKey: "highlights.ethicalManufacturing.description"
     }
   ];
 
   const productCategories = [
     {
-      name: "Women's Activewear",
+      nameKey: "productCategories.womensActivewear",
       image: womenActivewear,
       items: ["Sports Bras", "Leggings", "Tank Tops", "Shorts"],
       link: "/products"
     },
     {
-      name: "Men's Sportswear",
+      nameKey: "productCategories.mensSportswear",
       image: menSportswear,
       items: ["T-Shirts", "Track Pants", "Shorts", "Jackets"],
       link: "/products"
     },
     {
-      name: "Custom Knitwear",
+      nameKey: "productCategories.customKnitwear",
       image: productionLine,
       items: ["Private Label", "White Label", "Custom Designs", "OEM/ODM"],
       link: "/products"
@@ -82,18 +84,18 @@ const Home = () => {
   ];
 
   const capabilities = [
-    { icon: Factory, label: "In-House Production", value: "Complete vertical integration" },
-    { icon: Users, label: "Skilled Workforce", value: "Trained artisans & technicians" },
-    { icon: Award, label: "Quality Assurance", value: "ISO-standard processes" },
-    { icon: Truck, label: "Export Ready", value: "Global shipping capability" },
-    { icon: Globe, label: "International Compliance", value: "IEC registered exporter" },
-    { icon: CheckCircle, label: "Certifications", value: "GST & Udyam registered" }
+    { icon: Factory, labelKey: "manufacturing.capabilities.inHouse.title", valueKey: "manufacturing.capabilities.inHouse.value" },
+    { icon: Users, labelKey: "manufacturing.capabilities.skilled.title", valueKey: "manufacturing.capabilities.skilled.value" },
+    { icon: Award, labelKey: "manufacturing.capabilities.quality.title", valueKey: "manufacturing.capabilities.quality.value" },
+    { icon: Truck, labelKey: "manufacturing.capabilities.exportReady.title", valueKey: "manufacturing.capabilities.exportReady.value" },
+    { icon: Globe, labelKey: "manufacturing.capabilities.international.title", valueKey: "manufacturing.capabilities.international.value" },
+    { icon: CheckCircle, labelKey: "manufacturing.capabilities.certifications.title", valueKey: "manufacturing.capabilities.certifications.value" }
   ];
 
   const complianceItems = [
-    { label: "GSTIN", value: "33FWTPS1281P1ZJ" },
-    { label: "IEC", value: "FWTPS1281P" },
-    { label: "Udyam", value: "UDYAM-TN-28-0191326" }
+    { labelKey: "compliance.gst.label", value: "33FWTPS1281P1ZJ" },
+    { labelKey: "compliance.iec.label", value: "FWTPS1281P" },
+    { labelKey: "compliance.udyam.label", value: "UDYAM-TN-28-0191326" }
   ];
 
   return (
@@ -118,8 +120,8 @@ const Home = () => {
                   <highlight.icon className="h-6 w-6 text-accent group-hover:text-accent-foreground transition-colors" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-foreground mb-1">{highlight.title}</h3>
-                  <p className="text-sm text-muted-foreground">{highlight.description}</p>
+                  <h3 className="font-semibold text-foreground mb-1">{t(highlight.titleKey)}</h3>
+                  <p className="text-sm text-muted-foreground">{t(highlight.descriptionKey)}</p>
                 </div>
               </div>
             ))}
@@ -150,14 +152,13 @@ const Home = () => {
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
             <span className="text-accent text-sm font-semibold tracking-[0.2em] uppercase mb-4 block">
-              Our Capabilities
+              {t('productCategories.badge')}
             </span>
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Product Categories
+              {t('productCategories.title')}
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Premium knitwear and activewear manufactured to international standards. 
-              Customization available for all categories.
+              {t('productCategories.description')}
             </p>
           </div>
 
@@ -167,7 +168,7 @@ const Home = () => {
                 <div className="aspect-[4/3] overflow-hidden">
                   <img 
                     src={category.image} 
-                    alt={`${category.name} - Wholesale garment manufacturing in Tiruppur`}
+                    alt={`${t(category.nameKey)} - Wholesale garment manufacturing in Tiruppur`}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                     width={400}
                     height={300}
@@ -176,8 +177,8 @@ const Home = () => {
                   />
                 </div>
                 <div className="p-6">
-                  <h3 className="text-xl font-bold text-foreground mb-3">{category.name}</h3>
-                  <ul className="space-y-2 mb-6" aria-label={`${category.name} product types`}>
+                  <h3 className="text-xl font-bold text-foreground mb-3">{t(category.nameKey)}</h3>
+                  <ul className="space-y-2 mb-6" aria-label={`${t(category.nameKey)} product types`}>
                     {category.items.map((item, idx) => (
                       <li key={idx} className="flex items-center gap-2 text-sm text-muted-foreground">
                         <CheckCircle className="h-4 w-4 text-accent" aria-hidden="true" />
@@ -186,9 +187,9 @@ const Home = () => {
                     ))}
                   </ul>
                   <Button asChild variant="outline" className="w-full group-hover:bg-accent group-hover:text-accent-foreground group-hover:border-accent transition-all">
-                    <Link to={category.link} aria-label={`Enquire for ${category.name} bulk export orders`}>
-                      Enquire for Export / Bulk Orders
-                      <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+                    <Link to={category.link} aria-label={`${t('cta.enquireExportBulk')} ${t(category.nameKey)}`}>
+                      {t('cta.enquireExportBulk')}
+                      <ArrowRight className="ml-2 rtl:ml-0 rtl:mr-2 h-4 w-4 rtl:rotate-180" aria-hidden="true" />
                     </Link>
                   </Button>
                 </div>
@@ -204,15 +205,13 @@ const Home = () => {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
               <span className="text-accent text-sm font-semibold tracking-[0.2em] uppercase mb-4 block">
-                Why Choose Us
+                {t('manufacturing.badge')}
               </span>
               <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
-                Manufacturing Excellence from Tiruppur
+                {t('manufacturing.title')}
               </h2>
               <p className="text-muted-foreground mb-8 leading-relaxed">
-                Located in Tiruppur, Tamil Nadu — India's knitwear capital — we bring decades of 
-                manufacturing expertise to every order. Our vertically integrated facility ensures 
-                complete quality control from fabric to finished garment.
+                {t('manufacturing.description')}
               </p>
 
               <div className="grid grid-cols-2 gap-6">
@@ -222,8 +221,8 @@ const Home = () => {
                       <cap.icon className="h-5 w-5 text-accent" />
                     </div>
                     <div>
-                      <h4 className="font-medium text-foreground text-sm">{cap.label}</h4>
-                      <p className="text-xs text-muted-foreground">{cap.value}</p>
+                      <h4 className="font-medium text-foreground text-sm">{t(cap.labelKey)}</h4>
+                      <p className="text-xs text-muted-foreground">{t(cap.valueKey)}</p>
                     </div>
                   </div>
                 ))}
@@ -232,8 +231,8 @@ const Home = () => {
               <div className="mt-10">
                 <Button asChild className="bg-accent text-accent-foreground hover:bg-accent/90">
                   <Link to="/manufacturing">
-                    Explore Our Capabilities
-                    <ArrowRight className="ml-2 h-4 w-4" />
+                    {t('cta.exploreCapabilities')}
+                    <ArrowRight className="ml-2 rtl:ml-0 rtl:mr-2 h-4 w-4 rtl:rotate-180" />
                   </Link>
                 </Button>
               </div>
@@ -280,31 +279,30 @@ const Home = () => {
         <div className="container mx-auto px-6">
           <div className="text-center mb-12">
             <span className="text-accent text-sm font-semibold tracking-[0.2em] uppercase mb-4 block">
-              Verified Manufacturer
+              {t('compliance.badge')}
             </span>
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Legally Registered & Export Compliant
+              {t('compliance.title')}
             </h2>
             <p className="text-background/70 max-w-2xl mx-auto">
-              We are a government-registered export manufacturer with all necessary certifications 
-              for international trade.
+              {t('compliance.description')}
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
             <div className="bg-background/10 backdrop-blur-sm border border-background/20 rounded-xl p-6 text-center hover:bg-background/20 transition-all">
               <Shield className="h-10 w-10 text-accent mx-auto mb-4" />
-              <h3 className="font-semibold mb-2">GST Registration</h3>
+              <h3 className="font-semibold mb-2">{t('compliance.gst.title')}</h3>
               <p className="text-accent font-mono text-sm">33FWTPS1281P1ZJ</p>
             </div>
             <div className="bg-background/10 backdrop-blur-sm border border-background/20 rounded-xl p-6 text-center hover:bg-background/20 transition-all">
               <Globe className="h-10 w-10 text-accent mx-auto mb-4" />
-              <h3 className="font-semibold mb-2">Import Export Code</h3>
+              <h3 className="font-semibold mb-2">{t('compliance.iec.title')}</h3>
               <p className="text-accent font-mono text-sm">FWTPS1281P</p>
             </div>
             <div className="bg-background/10 backdrop-blur-sm border border-background/20 rounded-xl p-6 text-center hover:bg-background/20 transition-all">
               <Award className="h-10 w-10 text-accent mx-auto mb-4" />
-              <h3 className="font-semibold mb-2">Udyam Registration</h3>
+              <h3 className="font-semibold mb-2">{t('compliance.udyam.title')}</h3>
               <p className="text-accent font-mono text-sm">UDYAM-TN-28-0191326</p>
             </div>
           </div>
@@ -312,8 +310,8 @@ const Home = () => {
           <div className="text-center mt-10">
             <Button asChild variant="outline" className="border-background/30 text-background hover:bg-background hover:text-foreground">
               <Link to="/compliance">
-                View All Certifications
-                <ArrowRight className="ml-2 h-4 w-4" />
+                {t('cta.viewCertifications')}
+                <ArrowRight className="ml-2 rtl:ml-0 rtl:mr-2 h-4 w-4 rtl:rotate-180" />
               </Link>
             </Button>
           </div>
@@ -325,18 +323,17 @@ const Home = () => {
         <div className="container mx-auto px-6">
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
-              Partner With Us for Your Next Order
+              {t('ctaSection.title')}
             </h2>
             <p className="text-lg text-muted-foreground mb-10 max-w-2xl mx-auto">
-              Whether you're a buying house, importer, or brand looking for reliable manufacturing, 
-              we're ready to discuss your requirements.
+              {t('ctaSection.description')}
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
               <Button asChild size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 px-8">
                 <Link to="/contact">
-                  <Mail className="mr-2 h-5 w-5" />
-                  Send Enquiry
+                  <Mail className="mr-2 rtl:mr-0 rtl:ml-2 h-5 w-5" />
+                  {t('cta.sendEnquiry')}
                 </Link>
               </Button>
               <Button 
@@ -345,14 +342,14 @@ const Home = () => {
                 onClick={() => window.open("https://wa.me/919988322555?text=Hello, I'm interested in bulk orders from Feather Fashions.", "_blank")}
                 className="px-8"
               >
-                <Phone className="mr-2 h-5 w-5" />
-                WhatsApp: +91 9988322555
+                <Phone className="mr-2 rtl:mr-0 rtl:ml-2 h-5 w-5" />
+                {t('common.whatsapp')}: +91 9988322555
               </Button>
             </div>
 
             <div className="flex items-center justify-center gap-2 text-muted-foreground">
               <MapPin className="h-4 w-4" />
-              <span className="text-sm">Tiruppur, Tamil Nadu, India — The Knitwear Capital</span>
+              <span className="text-sm">{t('ctaSection.location')}</span>
             </div>
           </div>
         </div>

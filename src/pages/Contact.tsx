@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { MapPin, Phone, Mail, Clock, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
+import { useTranslation } from "react-i18next";
 
 const contactSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
@@ -16,6 +17,7 @@ const contactSchema = z.object({
 });
 
 const Contact = () => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -64,10 +66,10 @@ const Contact = () => {
         console.error("Email notification error:", emailError);
       }
 
-      toast.success("Thank you for reaching out! We'll get back to you soon.");
+      toast.success(t('common.success'));
       setFormData({ name: "", email: "", phone: "", message: "" });
     } catch (err: any) {
-      toast.error(err.message || "Failed to send message");
+      toast.error(err.message || t('common.error'));
     }
   };
 
@@ -83,10 +85,9 @@ const Contact = () => {
         {/* Header */}
         <div className="text-center mb-16">
           <div className="divider-accent mb-6" />
-          <h1 className="text-5xl md:text-6xl font-bold mb-4">Let's Connect</h1>
+          <h1 className="text-5xl md:text-6xl font-bold mb-4">{t('contact.title')}</h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Let's create sustainable fashion together. Reach out for inquiries,
-            bulk orders, private labeling, or eco-conscious collaborations.
+            {t('contact.subtitle')}
           </p>
         </div>
 
@@ -100,9 +101,9 @@ const Contact = () => {
                     <MapPin className="h-6 w-6 text-secondary" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-lg mb-1">Our Location</h3>
+                    <h3 className="font-semibold text-lg mb-1">{t('contact.ourLocation')}</h3>
                     <p className="text-muted-foreground text-sm">
-                      Tirupur, Tamil Nadu, India
+                      {t('contact.locationValue')}
                     </p>
                   </div>
                 </div>
@@ -112,9 +113,9 @@ const Contact = () => {
                     <Phone className="h-6 w-6 text-accent" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-lg mb-1">Phone</h3>
+                    <h3 className="font-semibold text-lg mb-1">{t('contact.phone')}</h3>
                     <p className="text-muted-foreground text-sm">
-                      +91 9988322555 (WhatsApp)<br />
+                      +91 9988322555 ({t('common.whatsapp')})<br />
                       +91 9789225510<br />
                       +91 421-6610850
                     </p>
@@ -126,7 +127,7 @@ const Contact = () => {
                     <Mail className="h-6 w-6 text-primary" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-lg mb-1">Email</h3>
+                    <h3 className="font-semibold text-lg mb-1">{t('contact.email')}</h3>
                     <a 
                       href="mailto:hello@featherfashions.in"
                       className="text-sm font-semibold text-primary hover:text-secondary transition-colors duration-200 underline decoration-primary/30 hover:decoration-secondary break-all block"
@@ -148,12 +149,12 @@ const Contact = () => {
                   </div>
                   <div>
                     <h3 className="font-semibold text-lg mb-1">
-                      Working Hours
+                      {t('contact.workingHours')}
                     </h3>
                     <p className="text-muted-foreground text-sm">
-                      Mon - Sat: 9:00 AM - 6:00 PM
+                      {t('contact.workingHoursValue')}
                       <br />
-                      Sunday: Closed
+                      {t('contact.sundayClosed')}
                     </p>
                   </div>
                 </div>
@@ -164,17 +165,17 @@ const Contact = () => {
               <CardContent className="p-6">
                 <MessageCircle className="h-10 w-10 mb-3" />
                 <h3 className="font-accent font-semibold text-xl mb-2">
-                  Quick Response
+                  {t('contact.quickResponse')}
                 </h3>
                 <p className="text-white/90 text-sm mb-4">
-                  Need immediate assistance? Connect with us on WhatsApp for
-                  faster responses.
+                  {t('contact.quickResponseDescription')}
                 </p>
                 <Button
                   variant="outline"
                   className="w-full bg-white/20 border-white text-white hover:bg-white hover:text-primary"
+                  onClick={() => window.open("https://wa.me/919988322555?text=Hello, I'm interested in bulk orders from Feather Fashions.", "_blank")}
                 >
-                  Chat on WhatsApp
+                  {t('contact.chatOnWhatsapp')}
                 </Button>
               </CardContent>
             </Card>
@@ -184,7 +185,7 @@ const Contact = () => {
           <div className="lg:col-span-2">
             <Card className="border-2">
               <CardContent className="p-8">
-                <h2 className="text-3xl font-bold mb-6">Send Us a Message</h2>
+                <h2 className="text-3xl font-bold mb-6">{t('contact.sendMessage')}</h2>
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
@@ -192,7 +193,7 @@ const Contact = () => {
                         htmlFor="name"
                         className="text-base font-semibold mb-2 block"
                       >
-                        Your Name *
+                        {t('contact.yourName')} *
                       </Label>
                       <Input
                         id="name"
@@ -200,7 +201,7 @@ const Contact = () => {
                         value={formData.name}
                         onChange={handleChange}
                         required
-                        placeholder="Enter your full name"
+                        placeholder={t('contact.enterFullName')}
                         className="h-12"
                       />
                     </div>
@@ -209,7 +210,7 @@ const Contact = () => {
                         htmlFor="email"
                         className="text-base font-semibold mb-2 block"
                       >
-                        Email Address *
+                        {t('contact.emailAddress')} *
                       </Label>
                       <Input
                         id="email"
@@ -218,7 +219,7 @@ const Contact = () => {
                         value={formData.email}
                         onChange={handleChange}
                         required
-                        placeholder="your.email@example.com"
+                        placeholder={t('contact.emailPlaceholder')}
                         className="h-12"
                       />
                     </div>
@@ -229,7 +230,7 @@ const Contact = () => {
                       htmlFor="phone"
                       className="text-base font-semibold mb-2 block"
                     >
-                      Phone Number
+                      {t('contact.phoneNumber')}
                     </Label>
                     <Input
                       id="phone"
@@ -237,7 +238,7 @@ const Contact = () => {
                       type="tel"
                       value={formData.phone}
                       onChange={handleChange}
-                      placeholder="+91 XXXXX XXXXX"
+                      placeholder={t('contact.phonePlaceholder')}
                       className="h-12"
                     />
                   </div>
@@ -247,7 +248,7 @@ const Contact = () => {
                       htmlFor="message"
                       className="text-base font-semibold mb-2 block"
                     >
-                      Your Message *
+                      {t('contact.yourMessage')} *
                     </Label>
                     <Textarea
                       id="message"
@@ -255,7 +256,7 @@ const Contact = () => {
                       value={formData.message}
                       onChange={handleChange}
                       required
-                      placeholder="Tell us about your requirements, bulk orders, custom designs, or any questions..."
+                      placeholder={t('contact.messagePlaceholder')}
                       rows={6}
                       className="resize-none"
                     />
@@ -266,7 +267,7 @@ const Contact = () => {
                     size="lg"
                     className="w-full bg-gradient-to-r from-secondary to-accent hover:opacity-90 text-lg h-14"
                   >
-                    Send Message
+                    {t('contact.sendMessageButton')}
                   </Button>
                 </form>
               </CardContent>

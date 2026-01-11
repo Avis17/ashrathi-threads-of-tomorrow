@@ -1,25 +1,28 @@
 import { Zap, Palette, Scale } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const ConfidenceModelSection = () => {
+  const { t } = useTranslation();
+
   const pillars = [
     {
       icon: Zap,
-      title: "FAST MOVERS ONLY",
-      description: "We focus on proven, high-demand styles that sell quickly across markets",
+      titleKey: "confidence.pillars.fastMovers.title",
+      descriptionKey: "confidence.pillars.fastMovers.description",
       gradient: "from-pink-500 to-rose-500",
       bgGradient: "from-pink-500/10 to-rose-500/10"
     },
     {
       icon: Palette,
-      title: "SIZE & COLOR FLEXIBILITY",
-      description: "Customize size ratios and color assortments to match your market needs",
+      titleKey: "confidence.pillars.flexibility.title",
+      descriptionKey: "confidence.pillars.flexibility.description",
       gradient: "from-teal-500 to-cyan-500",
       bgGradient: "from-teal-500/10 to-cyan-500/10"
     },
     {
       icon: Scale,
-      title: "FAIR ADJUSTMENT POLICY",
-      description: "Transparent policies for quality issues and order adjustments",
+      titleKey: "confidence.pillars.fairPolicy.title",
+      descriptionKey: "confidence.pillars.fairPolicy.description",
       gradient: "from-gold to-amber-500",
       bgGradient: "from-gold/10 to-amber-500/10"
     },
@@ -33,14 +36,14 @@ const ConfidenceModelSection = () => {
       <div className="container mx-auto px-6 relative z-10">
         <header className="text-center mb-16">
           <span className="inline-block px-4 py-2 bg-gradient-to-r from-gold/10 to-gold/5 border border-gold/20 rounded-full text-gold text-sm font-semibold tracking-wide uppercase mb-6">
-            Our Promise
+            {t('confidence.badge')}
           </span>
           <h2 id="confidence-heading" className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">
-            Feather{" "}
-            <span className="text-gradient-gold">Safe Trade Model</span>
+            {t('confidence.title')}{" "}
+            <span className="text-gradient-gold">{t('confidence.titleHighlight')}</span>
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Designed to reduce dead stock risk for wholesale & export partners
+            {t('confidence.description')}
           </p>
         </header>
 
@@ -58,13 +61,13 @@ const ConfidenceModelSection = () => {
                   <pillar.icon className="h-10 w-10 text-white" aria-hidden="true" />
                 </div>
                 
-                <h3 className="text-xl font-bold text-foreground mb-3">{pillar.title}</h3>
-                <p className="text-muted-foreground leading-relaxed">{pillar.description}</p>
+                <h3 className="text-xl font-bold text-foreground mb-3">{t(pillar.titleKey)}</h3>
+                <p className="text-muted-foreground leading-relaxed">{t(pillar.descriptionKey)}</p>
               </div>
 
               {/* Connector Line (except last) */}
               {index < pillars.length - 1 && (
-                <div className="hidden md:block absolute top-1/2 -right-4 w-8 h-px bg-gradient-to-r from-border to-transparent" aria-hidden="true" />
+                <div className="hidden md:block absolute top-1/2 -right-4 rtl:-right-auto rtl:-left-4 w-8 h-px bg-gradient-to-r rtl:bg-gradient-to-l from-border to-transparent" aria-hidden="true" />
               )}
             </article>
           ))}
@@ -73,7 +76,7 @@ const ConfidenceModelSection = () => {
         {/* Terms Note */}
         <div className="text-center mt-12">
           <p className="text-sm text-muted-foreground/60 italic">
-            * Terms & conditions apply. Contact us for detailed partnership terms.
+            {t('confidence.termsNote')}
           </p>
         </div>
       </div>

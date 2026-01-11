@@ -1,7 +1,9 @@
 import { useEffect, useState, useRef } from "react";
 import { Users, Package, Globe, Award, TrendingUp, CheckCircle } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const TrustScaleSection = () => {
+  const { t } = useTranslation();
   const [isVisible, setIsVisible] = useState(false);
   const sectionRef = useRef<HTMLDivElement>(null);
 
@@ -10,28 +12,28 @@ const TrustScaleSection = () => {
       icon: Users, 
       value: 500, 
       suffix: "+", 
-      label: "Wholesale Partners",
+      labelKey: "trustScale.stats.wholesalePartners",
       gradient: "from-pink-500 to-rose-500"
     },
     { 
       icon: Package, 
       value: 50, 
       suffix: "K+", 
-      label: "Units Monthly Capacity",
+      labelKey: "trustScale.stats.monthlyCapacity",
       gradient: "from-purple-500 to-indigo-500"
     },
     { 
       icon: Globe, 
       value: 15, 
       suffix: "+", 
-      label: "Export Countries",
+      labelKey: "trustScale.stats.exportCountries",
       gradient: "from-teal-500 to-cyan-500"
     },
     { 
       icon: Award, 
       value: 10, 
       suffix: "+", 
-      label: "Years Experience",
+      labelKey: "trustScale.stats.yearsExperience",
       gradient: "from-gold to-amber-500"
     },
   ];
@@ -93,14 +95,14 @@ const TrustScaleSection = () => {
         <header className="text-center mb-16">
           <span className="inline-flex items-center gap-2 px-4 py-2 bg-gold/10 border border-gold/20 rounded-full text-gold text-sm font-semibold tracking-wide uppercase mb-6">
             <TrendingUp className="h-4 w-4" aria-hidden="true" />
-            Scale & Trust
+            {t('trustScale.badge')}
           </span>
           <h2 id="trust-scale-heading" className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4">
-            Trusted by Retailers &{" "}
-            <span className="text-gradient-gold">Bulk Buyers Across India</span>
+            {t('trustScale.title')}{" "}
+            <span className="text-gradient-gold">{t('trustScale.titleHighlight')}</span>
           </h2>
           <p className="text-lg text-white/60 max-w-2xl mx-auto">
-            Our track record speaks for itself. Join hundreds of successful wholesale partnerships.
+            {t('trustScale.description')}
           </p>
         </header>
 
@@ -122,7 +124,7 @@ const TrustScaleSection = () => {
               </div>
               
               {/* Label */}
-              <p className="text-white/60 font-medium">{stat.label}</p>
+              <p className="text-white/60 font-medium">{t(stat.labelKey)}</p>
             </article>
           ))}
         </div>
@@ -131,15 +133,15 @@ const TrustScaleSection = () => {
         <div className="flex flex-wrap justify-center gap-6" role="list" aria-label="Certifications and registrations">
           <div className="flex items-center gap-2 px-6 py-3 bg-white/5 border border-white/10 rounded-full" role="listitem">
             <CheckCircle className="h-5 w-5 text-green-500" aria-hidden="true" />
-            <span className="text-white/80">GST Registered</span>
+            <span className="text-white/80">{t('trustScale.badges.gstRegistered')}</span>
           </div>
           <div className="flex items-center gap-2 px-6 py-3 bg-white/5 border border-white/10 rounded-full" role="listitem">
             <CheckCircle className="h-5 w-5 text-green-500" aria-hidden="true" />
-            <span className="text-white/80">IEC Certified Exporter</span>
+            <span className="text-white/80">{t('trustScale.badges.iecCertified')}</span>
           </div>
           <div className="flex items-center gap-2 px-6 py-3 bg-white/5 border border-white/10 rounded-full" role="listitem">
             <CheckCircle className="h-5 w-5 text-green-500" aria-hidden="true" />
-            <span className="text-white/80">Udyam Registered</span>
+            <span className="text-white/80">{t('trustScale.badges.udyamRegistered')}</span>
           </div>
         </div>
       </div>
