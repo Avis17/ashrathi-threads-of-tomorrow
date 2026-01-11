@@ -909,6 +909,45 @@ export type Database = {
           },
         ]
       }
+      export_buyer_contacts: {
+        Row: {
+          buyer_name: string
+          country: string
+          created_at: string
+          email: string | null
+          id: string
+          is_active: boolean
+          notes: string | null
+          phone: string
+          state: string | null
+          updated_at: string
+        }
+        Insert: {
+          buyer_name: string
+          country: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          phone: string
+          state?: string | null
+          updated_at?: string
+        }
+        Update: {
+          buyer_name?: string
+          country?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          phone?: string
+          state?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       external_job_companies: {
         Row: {
           account_details: string | null

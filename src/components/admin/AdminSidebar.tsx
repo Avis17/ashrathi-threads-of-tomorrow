@@ -19,7 +19,8 @@ import {
   ShieldCheck,
   Activity,
   Truck,
-  MessageCircle
+  MessageCircle,
+  Globe
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import {
@@ -53,6 +54,7 @@ const menuItems = [
   { title: 'Enquiries', url: '/admin/enquiries', icon: Mail },
   { title: 'Newsletter', url: '/admin/newsletter', icon: Newspaper },
   { title: 'Buyer Follow-ups', url: '/admin/buyer-followups', icon: MessageCircle },
+  { title: 'Export Buyers', url: '/admin/export-buyers', icon: Globe },
   { title: 'Activity Logs', url: '/admin/activity-logs', icon: Activity },
   { title: 'Invoice Reset', url: '/admin/invoice-reset', icon: Settings },
   { title: 'Settings', url: '/admin/settings', icon: Settings },
