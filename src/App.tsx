@@ -9,6 +9,7 @@ import { AuthProvider } from "./hooks/useAuth";
 import { ScrollToTop } from "./components/ScrollToTop";
 import NavbarB2B from "./components/NavbarB2B";
 import FooterB2B from "./components/FooterB2B";
+import ArabicLanguageDisclaimer from "./components/ArabicLanguageDisclaimer";
 
 // Eagerly loaded public pages (small, frequently accessed)
 import Home from "./pages/Home";
@@ -86,6 +87,7 @@ const App = () => (
               path="*"
               element={
                 <div className="flex flex-col min-h-screen">
+                  <ArabicLanguageDisclaimer />
                   <NavbarB2B />
                   <main className="flex-1 pt-[76px]">
                     <Suspense fallback={<PageLoader />}>
