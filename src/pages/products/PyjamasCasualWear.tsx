@@ -18,8 +18,14 @@ import pyjamasMatchingSet from "@/assets/products/pyjamas-matching-set.jpg";
 import pyjamasColorVariants from "@/assets/products/pyjamas-color-variants.jpg";
 import pyjamasFabricTexture from "@/assets/products/pyjamas-fabric-texture.jpg";
 import pyjamasWaistbandDetail from "@/assets/products/pyjamas-waistband-detail.jpg";
+import pyjamasWomensLuxury from "@/assets/products/pyjamas-womens-luxury.jpg";
+import pyjamasColorfulPrints from "@/assets/products/pyjamas-colorful-prints.jpg";
+import pyjamasDesignerNightwear from "@/assets/products/pyjamas-designer-nightwear.jpg";
 
 const productImages = [
+  { src: pyjamasWomensLuxury, alt: "Luxury women's satin pyjamas in jewel tones" },
+  { src: pyjamasColorfulPrints, alt: "Colorful printed loungewear sets" },
+  { src: pyjamasDesignerNightwear, alt: "Designer nightwear with lace details" },
   { src: pyjamasPants, alt: "Cotton pyjama pants in solid colors" },
   { src: pyjamasTops, alt: "Folded casual loungewear tops" },
   { src: pyjamasMatchingSet, alt: "Coordinated pyjama set in navy blue" },
@@ -83,7 +89,7 @@ const PyjamasCasualWear = () => {
       </Helmet>
 
       {/* Hero Section */}
-      <section className="relative min-h-[70vh] flex items-center">
+      <section className="relative min-h-[70vh] flex items-center py-20">
         <div className="absolute inset-0 z-0">
           <img
             src={heroImage}
