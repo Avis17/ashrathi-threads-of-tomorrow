@@ -15,8 +15,7 @@ const FooterB2B = () => {
           <div className="lg:col-span-1">
             <h2 className="text-xl font-athletic font-bold tracking-[0.2em] mb-4">FEATHER FASHIONS</h2>
             <p className="text-sm text-primary-foreground/70 leading-relaxed mb-6">
-              Export-oriented apparel manufacturer from Tiruppur, India. 
-              Premium activewear and sportswear for global brands.
+              Export-oriented apparel manufacturer from Tiruppur, India, specializing in premium nightwear, kidswear, and casual garments. Trusted by global buyers for consistent quality, compliance, and scalable production.
             </p>
             <button
               onClick={handleWhatsApp}
@@ -140,25 +139,25 @@ const FooterB2B = () => {
         <div className="container mx-auto px-6 py-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-xs text-primary-foreground/50 text-center md:text-left">
-              © {new Date().getFullYear()} Feather Fashions. All rights reserved. | Export-oriented apparel manufacturer from India
+              © {new Date().getFullYear()} Feather Fashions. Export-oriented apparel manufacturer from India.
             </p>
-            <div className="flex items-center gap-3 flex-wrap justify-center md:justify-end">
+            <div className="flex items-center gap-2 flex-wrap justify-center md:justify-end">
               <Link to="/terms-and-conditions" className="text-xs text-primary-foreground/50 hover:text-accent transition-colors">
                 Terms
               </Link>
-              <span className="text-primary-foreground/20">|</span>
+              <span className="text-primary-foreground/30">•</span>
               <Link to="/privacy-policy" className="text-xs text-primary-foreground/50 hover:text-accent transition-colors">
                 Privacy
               </Link>
-              <span className="text-primary-foreground/20">|</span>
+              <span className="text-primary-foreground/30">•</span>
               <Link to="/disclaimer" className="text-xs text-primary-foreground/50 hover:text-accent transition-colors">
                 Disclaimer
               </Link>
-              <span className="text-primary-foreground/20">|</span>
+              <span className="text-primary-foreground/30">•</span>
               <Link to="/shipping-export-policy" className="text-xs text-primary-foreground/50 hover:text-accent transition-colors">
                 Shipping
               </Link>
-              <span className="text-primary-foreground/20">|</span>
+              <span className="text-primary-foreground/30">•</span>
               <Link to="/refund-cancellation-policy" className="text-xs text-primary-foreground/50 hover:text-accent transition-colors">
                 Refunds
               </Link>
