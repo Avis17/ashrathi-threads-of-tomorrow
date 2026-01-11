@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { useExternalJobOrder } from "@/hooks/useExternalJobOrders";
@@ -46,6 +46,7 @@ const GenerateInvoice = () => {
   const [showLayoutEditor, setShowLayoutEditor] = useState(false);
   const [invoiceDate, setInvoiceDate] = useState<Date | undefined>(undefined);
   const [includeAdvancePayments, setIncludeAdvancePayments] = useState(false);
+  const [showIncrementConfirm, setShowIncrementConfirm] = useState(false);
   
   // Company account details
   const [bankName, setBankName] = useState("Kotak Mahindra Bank");
@@ -118,6 +119,37 @@ const GenerateInvoice = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['job-order-invoice-settings'] });
+    },
+  });
+
+  const saveInvoiceToHistoryMutation = useMutation({
+    mutationFn: async () => {
+      const invoiceData = {
+        invoiceType,
+        gstRate: parseFloat(gstRate),
+        accountType,
+        bankName,
+        accountNumber,
+        ifscCode,
+        branch,
+        phoneNumber,
+        upiId,
+        includeAdvancePayments,
+      };
+      
+      const { error } = await supabase
+        .from('external_job_invoices')
+        .insert({
+          job_order_id: id!,
+          invoice_number: invoiceNumber,
+          invoice_date: invoiceDate?.toISOString() || new Date().toISOString(),
+          invoice_data: invoiceData,
+        });
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['external-job-invoices'] });
     },
   });
 
@@ -378,13 +410,25 @@ const GenerateInvoice = () => {
     const invoiceSuffix = invoiceNumber ? `-${invoiceNumber.slice(-4).padStart(4, '0')}` : '';
     doc.save(`Job-Invoice-${jobOrder.job_id}${invoiceSuffix}.pdf`);
     
-    // Update invoice number for next invoice
+    // Save invoice to history
+    saveInvoiceToHistoryMutation.mutate();
+    
+    // Show confirmation dialog for incrementing invoice number
+    handleClosePreview();
+    setShowIncrementConfirm(true);
+  };
+
+  const handleConfirmIncrement = () => {
     if (invoiceSettings) {
       updateInvoiceNumberMutation.mutate(invoiceSettings.current_invoice_number);
-      toast.success('Invoice generated successfully');
+      toast.success('Invoice saved and number incremented');
     }
-    
-    handleClosePreview();
+    setShowIncrementConfirm(false);
+  };
+
+  const handleSkipIncrement = () => {
+    toast.success('Invoice saved without incrementing number');
+    setShowIncrementConfirm(false);
   };
 
   if (isLoading) {
@@ -787,6 +831,34 @@ const GenerateInvoice = () => {
           deliveryCharge: jobOrder.delivery_charge || 0,
         }}
       />
+
+      {/* Increment Invoice Number Confirmation Dialog */}
+      <Dialog open={showIncrementConfirm} onOpenChange={setShowIncrementConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Increment Invoice Number?</DialogTitle>
+            <DialogDescription>
+              The invoice has been downloaded and saved to history. Do you want to increment the invoice number for the next invoice?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-muted-foreground">
+              Current invoice number: <span className="font-mono font-medium">{invoiceNumber}</span>
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Next invoice number will be: <span className="font-mono font-medium">{parseInt(invoiceNumber || '0') + 1}</span>
+            </p>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={handleSkipIncrement}>
+              No, Keep Current
+            </Button>
+            <Button onClick={handleConfirmIncrement}>
+              Yes, Increment
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

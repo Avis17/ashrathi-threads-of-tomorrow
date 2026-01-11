@@ -42,6 +42,7 @@ import CompaniesList from './admin/external-jobs/CompaniesList';
 import GenericJobExpenses from './admin/external-jobs/GenericJobExpenses';
 import ExternalJobSalaries from './admin/external-jobs/ExternalJobSalaries';
 import AddSalaryEntry from './admin/external-jobs/AddSalaryEntry';
+import ExternalJobInvoiceHistory from './admin/external-jobs/ExternalJobInvoiceHistory';
 import LabelGenerator from './admin/LabelGenerator';
 import PurchasesExpenses from './admin/PurchasesExpenses';
 import FeatherApps from './admin/FeatherApps';
@@ -131,6 +132,7 @@ const Admin = () => {
               <Route path="/external-jobs/generic-expenses" element={<GenericJobExpenses />} />
               <Route path="/external-jobs/salaries" element={<ExternalJobSalaries />} />
               <Route path="/external-jobs/salaries/add" element={<AddSalaryEntry />} />
+              <Route path="/external-jobs/invoices" element={<ExternalJobInvoiceHistory />} />
               <Route path="/delivery-challan" element={<DeliveryChallanList />} />
               <Route path="/delivery-challan/create" element={<CreateDeliveryChallan />} />
               <Route path="/delivery-challan/:id" element={<DeliveryChallanView />} />
