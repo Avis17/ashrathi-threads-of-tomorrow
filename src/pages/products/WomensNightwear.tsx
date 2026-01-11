@@ -73,10 +73,14 @@ const WomensNightwear = () => {
   return (
     <>
       <Helmet>
-        <title>Women's Nightwear Manufacturer in India | Feather Fashions</title>
+        <title>Women's Nightwear Manufacturer India | Ladies Night Pants Exporter</title>
         <meta
           name="description"
-          content="Export-quality women's nightwear manufacturer from India specializing in cotton night pants and tops for bulk and private label orders."
+          content="Women nightwear manufacturer India. Export-quality ladies night pants, cotton nightwear, women pyjamas for wholesale buyers in UAE, Saudi Arabia & global markets."
+        />
+        <meta
+          name="keywords"
+          content="women nightwear manufacturer India, ladies night pants exporter, women nightwear wholesale supplier, cotton nightwear exporter, women pyjamas manufacturer India, loungewear manufacturer"
         />
         <link rel="canonical" href="https://featherfashions.in/products/womens-nightwear" />
       </Helmet>

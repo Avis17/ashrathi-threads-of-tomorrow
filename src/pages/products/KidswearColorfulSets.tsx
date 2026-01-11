@@ -74,10 +74,14 @@ const KidswearColorfulSets = () => {
   return (
     <>
       <Helmet>
-        <title>Kidswear Manufacturer in India | Colorful Cotton Sets for Export</title>
+        <title>Kidswear Manufacturer & Exporter from India | Colorful Cotton Sets</title>
         <meta
           name="description"
-          content="Export-quality kidswear manufacturer from India specializing in colorful cotton sets for bulk and private label orders."
+          content="Trusted kidswear manufacturer in India producing colorful cotton sets, kids nightwear, and export-ready apparel for international buyers. OEM & private label support for wholesale markets."
+        />
+        <meta
+          name="keywords"
+          content="kidswear manufacturer India, kids clothing exporter, kids cotton sets manufacturer, kids nightwear exporter, colorful kidswear wholesale, children apparel manufacturer Tiruppur"
         />
         <link rel="canonical" href="https://featherfashions.in/products/kidswear-colorful-sets" />
       </Helmet>
@@ -106,10 +110,16 @@ const KidswearColorfulSets = () => {
             </div>
 
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-light text-white leading-tight mb-6">
-              Kidswear Manufacturer – Colorful Cotton Sets for Export Markets
+              Kidswear Manufacturer & Exporter from India
             </h1>
-            <p className="text-lg md:text-xl text-white/80 leading-relaxed mb-8 max-w-xl">
-              Export-quality kids cotton sets designed for comfort, durability, and vibrant appeal across global markets.
+            <h2 className="text-xl md:text-2xl text-accent font-medium mb-4">
+              Colorful Cotton Sets for Global Wholesale Markets
+            </h2>
+            <p className="text-lg text-white/80 leading-relaxed mb-4 max-w-xl">
+              Feather Fashions is a trusted kidswear manufacturer in India, producing colorful cotton sets, kids nightwear, and export-ready apparel for international buyers.
+            </p>
+            <p className="text-base text-white/70 leading-relaxed mb-8 max-w-xl">
+              Our kidswear collections are designed with comfort, vibrant colors, and consistent sizing, making them ideal for wholesale and private label export markets.
             </p>
             <Button
               asChild
