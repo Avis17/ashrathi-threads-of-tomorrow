@@ -33,7 +33,7 @@ const NavbarB2B = () => {
     { name: "Kids Nightwear Sets", path: "/products" },
     { name: "Kids Pyjamas", path: "/products" },
     { name: "Kids Cotton Sets", path: "/products" },
-    { name: "Colorful Printed Sets", path: "/products" },
+    { name: "Colorful Printed Sets", path: "/products/kidswear-colorful-sets" },
   ];
 
   // By Fabric / Style

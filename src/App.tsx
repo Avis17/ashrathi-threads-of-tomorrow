@@ -27,6 +27,7 @@ const Compliance = lazy(() => import("./pages/Compliance"));
 const ExportBrochure = lazy(() => import("./pages/ExportBrochure"));
 const ProductShowcase = lazy(() => import("./pages/ProductShowcase"));
 const WomensNightwear = lazy(() => import("./pages/products/WomensNightwear"));
+const KidswearColorfulSets = lazy(() => import("./pages/products/KidswearColorfulSets"));
 const ExportToUAE = lazy(() => import("./pages/export/ExportToUAE"));
 const ExportToSaudiArabia = lazy(() => import("./pages/export/ExportToSaudiArabia"));
 const ExportToSouthAfrica = lazy(() => import("./pages/export/ExportToSouthAfrica"));
@@ -88,6 +89,7 @@ const App = () => (
                         <Route path="/" element={<Home />} />
                         <Route path="/products" element={<ProductShowcase />} />
                         <Route path="/products/womens-nightwear" element={<WomensNightwear />} />
+                        <Route path="/products/kidswear-colorful-sets" element={<KidswearColorfulSets />} />
                         <Route path="/manufacturing" element={<Manufacturing />} />
                         <Route path="/compliance" element={<Compliance />} />
                         <Route path="/export-brochure" element={<ExportBrochure />} />
