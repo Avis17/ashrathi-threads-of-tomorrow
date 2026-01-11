@@ -1,10 +1,10 @@
 import { Link } from "react-router-dom";
-import { Mail, Phone, MapPin, MessageCircle, Download } from "lucide-react";
+import { Mail, Phone, MapPin, MessageCircle, Download, Ruler } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import CurrencyConverter from "./CurrencyConverter";
 
 const FooterB2B = () => {
   const { t } = useTranslation();
-
   const handleWhatsApp = () => {
     window.open("https://wa.me/919988322555?text=Hello, I'm interested in bulk orders from Feather Fashions.", "_blank");
   };
@@ -12,7 +12,7 @@ const FooterB2B = () => {
   return (
     <footer className="bg-primary text-primary-foreground">
       <div className="container mx-auto px-6 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12">
           <div className="lg:col-span-1">
             <h2 className="text-xl font-athletic font-bold tracking-[0.2em] mb-4">FEATHER FASHIONS</h2>
             <p className="text-sm text-primary-foreground/70 leading-relaxed mb-6">
@@ -38,6 +38,7 @@ const FooterB2B = () => {
               <li><Link to="/about" className="text-sm text-primary-foreground/80 hover:text-accent transition-colors">{t('footer.aboutUs')}</Link></li>
               <li><Link to="/contact" className="text-sm text-primary-foreground/80 hover:text-accent transition-colors">{t('footer.contactEnquiry')}</Link></li>
               <li><Link to="/export-brochure" className="text-sm text-primary-foreground/80 hover:text-accent transition-colors flex items-center gap-2"><Download className="h-3 w-3" />{t('footer.exportBrochure')}</Link></li>
+              <li><Link to="/size-guide" className="text-sm text-primary-foreground/80 hover:text-accent transition-colors flex items-center gap-2"><Ruler className="h-3 w-3" />{t('footer.sizeGuide')}</Link></li>
             </ul>
           </div>
 
@@ -85,6 +86,11 @@ const FooterB2B = () => {
               <li><span className="text-primary-foreground/50">GSTIN:</span> <span className="font-mono text-xs">33FWTPS1281P1ZJ</span></li>
               <li><span className="text-primary-foreground/50">IEC:</span> <span className="font-mono text-xs">FWTPS1281P</span></li>
             </ul>
+          </div>
+
+          {/* Currency Converter */}
+          <div>
+            <CurrencyConverter />
           </div>
         </div>
       </div>
