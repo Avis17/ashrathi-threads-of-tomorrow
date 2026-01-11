@@ -7,9 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider } from "./hooks/useAuth";
 import { ScrollToTop } from "./components/ScrollToTop";
-import NavbarB2B from "./components/NavbarB2B";
-import FooterB2B from "./components/FooterB2B";
-import ArabicLanguageDisclaimer from "./components/ArabicLanguageDisclaimer";
+import PublicLayout from "./components/PublicLayout";
 
 // Eagerly loaded public pages (small, frequently accessed)
 import Home from "./pages/Home";
@@ -86,42 +84,37 @@ const App = () => (
             <Route
               path="*"
               element={
-                <div className="flex flex-col min-h-screen">
-                  <ArabicLanguageDisclaimer />
-                  <NavbarB2B />
-                  <main className="flex-1 pt-[76px]">
-                    <Suspense fallback={<PageLoader />}>
-                      <Routes>
-                        <Route path="/" element={<Home />} />
-                        <Route path="/products" element={<ProductShowcase />} />
-                        <Route path="/products/womens-nightwear" element={<WomensNightwear />} />
-                        <Route path="/products/kidswear-colorful-sets" element={<KidswearColorfulSets />} />
-                        <Route path="/products/cotton-tshirts" element={<CottonTshirts />} />
-                        <Route path="/products/pyjamas-casual-wear" element={<PyjamasCasualWear />} />
-                        <Route path="/products/innerwear-basics" element={<InnerwearBasics />} />
-                        <Route path="/manufacturing" element={<Manufacturing />} />
-                        <Route path="/compliance" element={<Compliance />} />
-                        <Route path="/export-brochure" element={<ExportBrochure />} />
-                        <Route path="/export-garments-to-uae" element={<ExportToUAE />} />
-                        <Route path="/export-garments-to-saudi-arabia" element={<ExportToSaudiArabia />} />
-                        <Route path="/export-garments-to-south-africa" element={<ExportToSouthAfrica />} />
-                        <Route path="/about" element={<About />} />
-                        <Route path="/contact" element={<Contact />} />
-                        <Route path="/auth" element={<Auth />} />
-                        <Route path="/forgot-password" element={<ForgotPassword />} />
-                        <Route path="/reset-password" element={<ResetPassword />} />
-                        <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
-                        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-                        <Route path="/disclaimer" element={<Disclaimer />} />
-                        <Route path="/shipping-export-policy" element={<ShippingExportPolicy />} />
-                        <Route path="/refund-cancellation-policy" element={<RefundCancellationPolicy />} />
-                        <Route path="/size-guide" element={<SizeGuide />} />
-                        <Route path="*" element={<NotFound />} />
-                      </Routes>
-                    </Suspense>
-                  </main>
-                  <FooterB2B />
-                </div>
+                <PublicLayout>
+                  <Suspense fallback={<PageLoader />}>
+                    <Routes>
+                      <Route path="/" element={<Home />} />
+                      <Route path="/products" element={<ProductShowcase />} />
+                      <Route path="/products/womens-nightwear" element={<WomensNightwear />} />
+                      <Route path="/products/kidswear-colorful-sets" element={<KidswearColorfulSets />} />
+                      <Route path="/products/cotton-tshirts" element={<CottonTshirts />} />
+                      <Route path="/products/pyjamas-casual-wear" element={<PyjamasCasualWear />} />
+                      <Route path="/products/innerwear-basics" element={<InnerwearBasics />} />
+                      <Route path="/manufacturing" element={<Manufacturing />} />
+                      <Route path="/compliance" element={<Compliance />} />
+                      <Route path="/export-brochure" element={<ExportBrochure />} />
+                      <Route path="/export-garments-to-uae" element={<ExportToUAE />} />
+                      <Route path="/export-garments-to-saudi-arabia" element={<ExportToSaudiArabia />} />
+                      <Route path="/export-garments-to-south-africa" element={<ExportToSouthAfrica />} />
+                      <Route path="/about" element={<About />} />
+                      <Route path="/contact" element={<Contact />} />
+                      <Route path="/auth" element={<Auth />} />
+                      <Route path="/forgot-password" element={<ForgotPassword />} />
+                      <Route path="/reset-password" element={<ResetPassword />} />
+                      <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+                      <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                      <Route path="/disclaimer" element={<Disclaimer />} />
+                      <Route path="/shipping-export-policy" element={<ShippingExportPolicy />} />
+                      <Route path="/refund-cancellation-policy" element={<RefundCancellationPolicy />} />
+                      <Route path="/size-guide" element={<SizeGuide />} />
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </Suspense>
+                </PublicLayout>
               }
             />
           </Routes>

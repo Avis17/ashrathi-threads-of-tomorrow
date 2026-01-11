@@ -14,7 +14,11 @@ import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useLanguage } from "@/hooks/useLanguage";
 
-const NavbarB2B = () => {
+interface NavbarB2BProps {
+  topOffset?: string;
+}
+
+const NavbarB2B = ({ topOffset = "top-0" }: NavbarB2BProps) => {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [productsOpen, setProductsOpen] = useState(false);
@@ -64,7 +68,7 @@ const NavbarB2B = () => {
 
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-border/40">
+      <nav className={`fixed ${topOffset} left-0 right-0 z-50 bg-white border-b border-border/40`}>
         <div className="container mx-auto px-6">
           <div className="flex items-center justify-between h-[76px]">
             
