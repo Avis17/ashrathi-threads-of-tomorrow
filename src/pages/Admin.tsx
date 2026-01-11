@@ -47,6 +47,7 @@ import FeatherApps from './admin/FeatherApps';
 import AppAccessManagement from './admin/AppAccessManagement';
 import ActivityLogs from './admin/ActivityLogs';
 import BuyerFollowups from './admin/BuyerFollowups';
+import ExportBuyerContacts from './admin/ExportBuyerContacts';
 import Enquiries from './admin/Enquiries';
 import DeliveryChallanList from './admin/delivery-challan/DeliveryChallanList';
 import CreateDeliveryChallan from './admin/delivery-challan/CreateDeliveryChallan';
@@ -111,6 +112,7 @@ const Admin = () => {
               <Route path="/apps" element={<FeatherApps />} />
               <Route path="/app-access" element={<AppAccessManagement />} />
               <Route path="/buyer-followups" element={<BuyerFollowups />} />
+              <Route path="/export-buyers" element={<ExportBuyerContacts />} />
               <Route path="/activity-logs" element={<ActivityLogs />} />
               <Route path="/external-jobs" element={<ExternalJobOrders />} />
               <Route path="/external-jobs/register-company" element={<RegisterCompany />} />
