@@ -57,7 +57,6 @@ import {
   SALARY_OPERATIONS,
   ExternalJobSalary
 } from "@/hooks/useExternalJobSalaries";
-import { SalaryEntryForm } from "@/components/admin/external-jobs/SalaryEntryForm";
 import { SalaryDetailView } from "@/components/admin/external-jobs/SalaryDetailView";
 import { TrackAdvances } from "@/components/admin/external-jobs/TrackAdvances";
 
@@ -104,10 +103,6 @@ const ExternalJobSalaries = () => {
     }
   };
   
-  const handleFormClose = () => {
-    setIsFormOpen(false);
-    setEditingSalary(null);
-  };
   
   const getCustomJobProductName = (jobOrder: any) => {
     if (!jobOrder?.custom_products_data || !Array.isArray(jobOrder.custom_products_data)) {
@@ -183,7 +178,7 @@ const ExternalJobSalaries = () => {
             <Banknote className="h-4 w-4" />
             Track Advance
           </Button>
-          <Button onClick={() => setIsFormOpen(true)} className="gap-2">
+          <Button onClick={() => navigate("/admin/external-jobs/salaries/add")} className="gap-2">
             <Plus className="h-4 w-4" />
             Add Salary Entry
           </Button>
@@ -387,10 +382,7 @@ const ExternalJobSalaries = () => {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => {
-                          setEditingSalary(salary);
-                          setIsFormOpen(true);
-                        }}
+                        onClick={() => navigate(`/admin/external-jobs/salaries/edit/${salary.id}`)}
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -411,21 +403,6 @@ const ExternalJobSalaries = () => {
         </Table>
       </Card>
       
-      {/* Add/Edit Dialog */}
-      <Dialog open={isFormOpen} onOpenChange={handleFormClose}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {editingSalary ? 'Edit Salary Entry' : 'Add Salary Entry'}
-            </DialogTitle>
-          </DialogHeader>
-          <SalaryEntryForm
-            salary={editingSalary}
-            onSuccess={handleFormClose}
-            onCancel={handleFormClose}
-          />
-        </DialogContent>
-      </Dialog>
       
       {/* View Dialog */}
       <Dialog open={!!viewingSalary} onOpenChange={() => setViewingSalary(null)}>
