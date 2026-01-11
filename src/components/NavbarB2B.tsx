@@ -26,7 +26,7 @@ const NavbarB2B = () => {
     { name: "Nightwear (Night Pants & Tops)", path: "/products/womens-nightwear" },
     { name: "Pyjamas & Loungewear", path: "/products/pyjamas-casual-wear" },
     { name: "Cotton T-Shirts", path: "/products/cotton-tshirts" },
-    { name: "Innerwear & Basics", path: "/products" },
+    { name: "Innerwear & Basics", path: "/products/innerwear-basics" },
   ];
 
   const kidswear = [
