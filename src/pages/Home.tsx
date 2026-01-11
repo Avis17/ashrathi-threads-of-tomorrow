@@ -22,6 +22,7 @@ import SEO from "@/components/seo/SEO";
 import ExportHeroSection from "@/components/home/ExportHeroSection";
 import WomensNightwearSection from "@/components/home/WomensNightwearSection";
 import KidswearSection from "@/components/home/KidswearSection";
+import ExportCoreCategories from "@/components/home/ExportCoreCategories";
 import WhyChooseFeatherSection from "@/components/home/WhyChooseFeatherSection";
 import ConfidenceModelSection from "@/components/home/ConfidenceModelSection";
 import ProductGridSection from "@/components/home/ProductGridSection";
@@ -131,6 +132,9 @@ const Home = () => {
 
       {/* NEW: Kidswear Section */}
       <KidswearSection />
+
+      {/* NEW: Export Core Categories Section (T-Shirts, Pyjamas, Innerwear) */}
+      <ExportCoreCategories />
 
       {/* NEW: Why Choose Feather Section */}
       <WhyChooseFeatherSection />
