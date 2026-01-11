@@ -31,6 +31,7 @@ const ExportToSaudiArabia = lazy(() => import("./pages/export/ExportToSaudiArabi
 const ExportToSouthAfrica = lazy(() => import("./pages/export/ExportToSouthAfrica"));
 const Disclaimer = lazy(() => import("./pages/Disclaimer"));
 const ShippingExportPolicy = lazy(() => import("./pages/ShippingExportPolicy"));
+const RefundCancellationPolicy = lazy(() => import("./pages/RefundCancellationPolicy"));
 
 // Heavy admin module - lazy loaded (contains jsPDF, fabric, recharts)
 const Admin = lazy(() => import("./pages/Admin"));
@@ -100,6 +101,7 @@ const App = () => (
                         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                         <Route path="/disclaimer" element={<Disclaimer />} />
                         <Route path="/shipping-export-policy" element={<ShippingExportPolicy />} />
+                        <Route path="/refund-cancellation-policy" element={<RefundCancellationPolicy />} />
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </Suspense>
