@@ -106,7 +106,7 @@ export default function PrintDeliveryChallan() {
                 <p className="text-xs text-muted-foreground">Premium Sportswear Manufacturing</p>
                 <p className="text-[10px] text-muted-foreground mt-1 leading-tight">
                   251/1, Vadivel Nagar, Thottipalayam, Pooluvapatti, Tiruppur, Tamil Nadu 641602<br />
-                  Phone: +91 9789225510 | Email: hello@featherfashions.in | Web: featherfashions.in
+                  Phone: +91 9988322555 | Email: hello@featherfashions.in | Web: featherfashions.in
                 </p>
               </div>
               <div className="text-right">

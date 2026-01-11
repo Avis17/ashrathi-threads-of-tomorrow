@@ -30,7 +30,7 @@ const manufacturingBusinessSchema = {
   "logo": `${BASE_URL}/logo.png`,
   "image": `${BASE_URL}/og-image.jpg`,
   "description": "Leading activewear and sportswear manufacturer in Tirupur, India. Specializing in private label, white label, and wholesale activewear production with low MOQ.",
-  "telephone": "+91-9876543210",
+  "telephone": "+91-9988322555",
   "email": "info@featherfashions.in",
   "address": {
     "@type": "PostalAddress",

@@ -19,7 +19,7 @@ const LetterheadFooter = ({ forPrint = false, isAbsolute = false }: LetterheadFo
       }}
     >
       <p>251/1, Vadivel Nagar, Thottipalayam, Pooluvapatti, Tiruppur, Tamil Nadu 641602</p>
-      <p style={{ color: '#B8860B' }}>featherfashions.in | hello@featherfashions.in | +91 9789225510</p>
+      <p style={{ color: '#B8860B' }}>featherfashions.in | hello@featherfashions.in | +91 9988322555</p>
     </div>
   );
 };

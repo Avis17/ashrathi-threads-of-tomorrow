@@ -130,7 +130,7 @@ export default function AdminOrderDetails() {
     doc.setFont('helvetica', 'normal');
     doc.text('Vadivel Nagar, 251/1, Thottipalayam', pageWidth - 14, 21, { align: 'right' });
     doc.text('Pooluvapatti, Tiruppur, TN - 641602', pageWidth - 14, 26, { align: 'right' });
-    doc.text('Ph: +91 97892 25510 | hello@featherfashions.in', pageWidth - 14, 31, { align: 'right' });
+    doc.text('Ph: +91 9988322555 | hello@featherfashions.in', pageWidth - 14, 31, { align: 'right' });
     doc.text('www.featherfashions.in', pageWidth - 14, 36, { align: 'right' });
 
     // Invoice title with decorative line
