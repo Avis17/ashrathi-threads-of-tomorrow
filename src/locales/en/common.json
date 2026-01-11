@@ -19,7 +19,8 @@
     "viewAllProducts": "View All Products →",
     "exportBrochure": "Export Brochure →",
     "requestQuoteLink": "Request Quote →",
-    "exportAssurance": "All products available for bulk & export orders"
+    "exportAssurance": "All products available for bulk & export orders",
+    "quote": "Quote"
   },
   "hero": {
     "badge": "Export-Ready Garment Manufacturer",
@@ -30,7 +31,14 @@
   },
   "cta": {
     "requestExportQuote": "Request Export Quote",
-    "requestQuote": "Request Quote"
+    "requestQuote": "Request Quote",
+    "sendEnquiry": "Send Enquiry",
+    "exploreCapabilities": "Explore Our Capabilities",
+    "viewCertifications": "View All Certifications",
+    "viewWholesaleCatalog": "View Wholesale Catalog",
+    "requestExportPricing": "Request Export Pricing",
+    "exploreKidsRange": "Explore Kids Wholesale Range",
+    "enquireExportBulk": "Enquire for Export / Bulk Orders"
   },
   "trust": {
     "wholesalePartners": "Active Wholesale",
@@ -44,5 +52,238 @@
     "english": "English",
     "arabic": "العربية",
     "selectLanguage": "Select Language"
+  },
+  "highlights": {
+    "exportReadyManufacturer": "Export-Ready Manufacturer",
+    "exportReadyManufacturerDesc": "State-of-the-art production facility in Tiruppur, India",
+    "bulkCustomOrders": "Bulk & Custom Orders",
+    "bulkCustomOrdersDesc": "Flexible MOQ with complete customization options",
+    "qualityControlledProduction": "Quality-Controlled Production",
+    "qualityControlledProductionDesc": "Multi-stage quality checks at every production phase",
+    "ethicalManufacturing": "Ethical Manufacturing",
+    "ethicalManufacturingDesc": "Sustainable practices with fair labor standards"
+  },
+  "womensSection": {
+    "badge": "Women's Collection",
+    "title": "Women's Nightwear —",
+    "titleHighlight": "Fast-Moving Export Styles",
+    "description": "Designed for comfort, repeat sales, and global appeal. Our women's night pants and tops are crafted using export-grade cotton with consistent sizing, rich color retention, and high demand across domestic and international markets.",
+    "highlights": {
+      "breathable": "Breathable cotton & cotton blends",
+      "elastic": "Elastic waist, relaxed comfort fits",
+      "colorfast": "Colorfast dyeing (export standards)",
+      "ideal": "Ideal for retail chains & export buyers",
+      "bulk": "Bulk production with consistency"
+    },
+    "priceHint": "Wholesale pricing available after verification",
+    "floatingBadge": "Fast-Moving",
+    "floatingBadgeLine2": "Export Styles"
+  },
+  "kidsSection": {
+    "badge": "Kids Collection",
+    "title": "Kidswear That",
+    "titleHighlight": "Sells Across Borders",
+    "description": "Bright colors, soft fabrics, and designs kids love. Our kidswear collections are built for high turnover retail and export markets, offering comfort, durability, and visual appeal.",
+    "highlights": {
+      "skinFriendly": "Skin-friendly fabrics",
+      "colorVibrancy": "High color vibrancy",
+      "printSolid": "Print & solid options",
+      "sizeRanges": "Multiple size ranges",
+      "bulkSupply": "Consistent bulk supply"
+    },
+    "floatingBadge": "Export Favorite",
+    "floatingBadgeLine2": "Vibrant Colors"
+  },
+  "exportCategories": {
+    "badge": "Core Export Categories",
+    "title": "Export-Ready Core Garment Categories",
+    "description": "High-volume, consistent-quality apparel manufactured in India for global markets.",
+    "cottonTshirts": {
+      "title": "Cotton T-Shirts",
+      "description": "High-demand cotton T-shirts designed for bulk export and wholesale supply. Manufactured with consistent sizing, smooth finishes, and long-lasting fabric quality suitable for international retail markets.",
+      "highlights": ["100% cotton & cotton blends", "Consistent GSM & sizing", "Ideal for bulk export programs", "Suitable for private label supply"],
+      "cta": "View Wholesale Range"
+    },
+    "pyjamas": {
+      "title": "Pyjamas & Casual Wear",
+      "description": "Comfortable, climate-friendly pyjamas and casual wear collections developed for strong repeat demand in domestic and international markets.",
+      "highlights": ["Breathable cotton fabrics", "Comfort-focused fits", "Year-round demand products", "High repeat-order potential"],
+      "cta": "Explore Export Collection"
+    },
+    "innerwear": {
+      "title": "Innerwear & Basics",
+      "description": "Essential innerwear and basic garments manufactured with quality consistency, durability, and comfort, suitable for bulk wholesale and export markets.",
+      "highlights": ["Soft, skin-friendly fabrics", "Consistent bulk production", "Ideal for distributor supply", "Low return, high turnover category"],
+      "cta": "Request Wholesale Access"
+    },
+    "trustNote": "All categories manufactured in our Tiruppur facility with consistent quality control for international export standards."
+  },
+  "whyChoose": {
+    "badge": "Why Choose Us",
+    "title": "Why Exporters & Wholesale Buyers",
+    "titleHighlight": "Choose Feather",
+    "description": "Built for scale, designed for trust. We understand what wholesale and export partners need.",
+    "features": {
+      "qualityControl": {
+        "title": "Export-Ready Quality Control",
+        "description": "Multi-stage quality checks meeting international standards"
+      },
+      "bulkProduction": {
+        "title": "Consistent Bulk Production",
+        "description": "Reliable capacity for large-scale orders with uniform quality"
+      },
+      "moqFlexibility": {
+        "title": "MOQ Flexibility",
+        "description": "Flexible minimum order quantities for new partnerships"
+      },
+      "dashboard": {
+        "title": "Private Wholesale Dashboard",
+        "description": "Exclusive access to catalogs, pricing, and order tracking"
+      },
+      "exportSupport": {
+        "title": "Pan-India & Export Support",
+        "description": "Seamless logistics for domestic and international shipping"
+      },
+      "pricing": {
+        "title": "Transparent Pricing Model",
+        "description": "Clear wholesale pricing with no hidden costs"
+      }
+    }
+  },
+  "confidence": {
+    "badge": "Our Promise",
+    "title": "Feather",
+    "titleHighlight": "Safe Trade Model",
+    "description": "Designed to reduce dead stock risk for wholesale & export partners",
+    "pillars": {
+      "fastMovers": {
+        "title": "FAST MOVERS ONLY",
+        "description": "We focus on proven, high-demand styles that sell quickly across markets"
+      },
+      "flexibility": {
+        "title": "SIZE & COLOR FLEXIBILITY",
+        "description": "Customize size ratios and color assortments to match your market needs"
+      },
+      "fairPolicy": {
+        "title": "FAIR ADJUSTMENT POLICY",
+        "description": "Transparent policies for quality issues and order adjustments"
+      }
+    },
+    "termsNote": "* Terms & conditions apply. Contact us for detailed partnership terms."
+  },
+  "trustScale": {
+    "badge": "Scale & Trust",
+    "title": "Trusted by Retailers &",
+    "titleHighlight": "Bulk Buyers Across India",
+    "description": "Our track record speaks for itself. Join hundreds of successful wholesale partnerships.",
+    "stats": {
+      "wholesalePartners": "Wholesale Partners",
+      "monthlyCapacity": "Units Monthly Capacity",
+      "exportCountries": "Export Countries",
+      "yearsExperience": "Years Experience"
+    },
+    "badges": {
+      "gstRegistered": "GST Registered",
+      "iecCertified": "IEC Certified Exporter",
+      "udyamRegistered": "Udyam Registered"
+    }
+  },
+  "productCategories": {
+    "badge": "Our Capabilities",
+    "title": "Product Categories",
+    "description": "Premium knitwear and activewear manufactured to international standards. Customization available for all categories.",
+    "womensActivewear": "Women's Activewear",
+    "mensSportswear": "Men's Sportswear",
+    "customKnitwear": "Custom Knitwear"
+  },
+  "manufacturing": {
+    "badge": "Why Choose Us",
+    "title": "Manufacturing Excellence from Tiruppur",
+    "description": "Located in Tiruppur, Tamil Nadu — India's knitwear capital — we bring decades of manufacturing expertise to every order. Our vertically integrated facility ensures complete quality control from fabric to finished garment.",
+    "capabilities": {
+      "inHouseProduction": "In-House Production",
+      "inHouseProductionValue": "Complete vertical integration",
+      "skilledWorkforce": "Skilled Workforce",
+      "skilledWorkforceValue": "Trained artisans & technicians",
+      "qualityAssurance": "Quality Assurance",
+      "qualityAssuranceValue": "ISO-standard processes",
+      "exportReady": "Export Ready",
+      "exportReadyValue": "Global shipping capability",
+      "internationalCompliance": "International Compliance",
+      "internationalComplianceValue": "IEC registered exporter",
+      "certifications": "Certifications",
+      "certificationsValue": "GST & Udyam registered"
+    }
+  },
+  "compliance": {
+    "badge": "Verified Manufacturer",
+    "title": "Legally Registered & Export Compliant",
+    "description": "We are a government-registered export manufacturer with all necessary certifications for international trade.",
+    "gstRegistration": "GST Registration",
+    "importExportCode": "Import Export Code",
+    "udyamRegistration": "Udyam Registration"
+  },
+  "ctaSection": {
+    "title": "Partner With Us for Your Next Order",
+    "description": "Whether you're a buying house, importer, or brand looking for reliable manufacturing, we're ready to discuss your requirements.",
+    "location": "Tiruppur, Tamil Nadu, India — The Knitwear Capital"
+  },
+  "footer": {
+    "brandDescription": "Export-oriented apparel manufacturer from Tiruppur, India, specializing in premium nightwear, kidswear, and casual garments. Trusted by global buyers for consistent quality, compliance, and scalable production.",
+    "whatsappUs": "WhatsApp Us",
+    "quickLinks": "Quick Links",
+    "productCategories": "Product Categories",
+    "manufacturing": "Manufacturing",
+    "complianceCertifications": "Compliance & Certifications",
+    "aboutUs": "About Us",
+    "contactEnquiry": "Contact / Enquiry",
+    "exportBrochure": "Export Brochure",
+    "contact": "Contact",
+    "exportMarkets": "Export Markets",
+    "exportToUAE": "Export to UAE",
+    "exportToSaudiArabia": "Export to Saudi Arabia",
+    "exportToSouthAfrica": "Export to South Africa",
+    "registrations": "Registrations",
+    "copyright": "Feather Fashions. Export-oriented apparel manufacturer from India.",
+    "terms": "Terms",
+    "privacy": "Privacy",
+    "disclaimer": "Disclaimer",
+    "shipping": "Shipping",
+    "refunds": "Refunds"
+  },
+  "contact": {
+    "title": "Let's Connect",
+    "subtitle": "Let's create sustainable fashion together. Reach out for inquiries, bulk orders, private labeling, or eco-conscious collaborations.",
+    "ourLocation": "Our Location",
+    "locationValue": "Tirupur, Tamil Nadu, India",
+    "phone": "Phone",
+    "email": "Email",
+    "workingHours": "Working Hours",
+    "workingHoursValue": "Mon - Sat: 9:00 AM - 6:00 PM",
+    "sundayClosed": "Sunday: Closed",
+    "quickResponse": "Quick Response",
+    "quickResponseDesc": "Need immediate assistance? Connect with us on WhatsApp for faster responses.",
+    "chatWhatsApp": "Chat on WhatsApp",
+    "sendMessage": "Send Us a Message",
+    "yourName": "Your Name",
+    "enterFullName": "Enter your full name",
+    "emailAddress": "Email Address",
+    "emailPlaceholder": "your.email@example.com",
+    "phoneNumber": "Phone Number",
+    "phonePlaceholder": "+91 XXXXX XXXXX",
+    "yourMessage": "Your Message",
+    "messagePlaceholder": "Tell us about your requirements, bulk orders, custom designs, or any questions...",
+    "sendMessageBtn": "Send Message",
+    "required": "*"
+  },
+  "common": {
+    "learnMore": "Learn More",
+    "viewAll": "View All",
+    "readMore": "Read More",
+    "close": "Close",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "whatsapp": "WhatsApp"
   }
 }
