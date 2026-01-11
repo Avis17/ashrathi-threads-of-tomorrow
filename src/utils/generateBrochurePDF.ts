@@ -1,9 +1,9 @@
-import jsPDF from "jspdf";
+// Lazy-loaded PDF generation to reduce main bundle size
+// jsPDF is ~200KB+ and should only load when user downloads brochure
 
 // Import images as base64 for PDF
 import womenNightwearImg from "@/assets/brochure/women-nightwear-brochure.jpg";
 import kidsClothingImg from "@/assets/brochure/kids-clothing-brochure.jpg";
-import fabricDetailImg from "@/assets/brochure/fabric-quality-detail.jpg";
 
 const loadImage = (src: string): Promise<HTMLImageElement> => {
   return new Promise((resolve, reject) => {
@@ -16,6 +16,9 @@ const loadImage = (src: string): Promise<HTMLImageElement> => {
 };
 
 export const generateExportBrochure = async (): Promise<void> => {
+  // Dynamically import jsPDF only when needed
+  const { default: jsPDF } = await import("jspdf");
+  
   const pdf = new jsPDF({
     orientation: "portrait",
     unit: "mm",
