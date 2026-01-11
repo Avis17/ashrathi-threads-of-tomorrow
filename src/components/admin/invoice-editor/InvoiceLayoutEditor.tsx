@@ -13,8 +13,14 @@ import {
   X
 } from "lucide-react";
 import { FabricObject, IText, FabricImage, Canvas } from 'fabric';
-import jsPDF from 'jspdf';
 import { toast } from 'sonner';
+import type jsPDF from 'jspdf';
+
+// Dynamic import for jsPDF - reduces bundle size
+const loadJsPDF = async () => {
+  const { default: jsPDF } = await import('jspdf');
+  return jsPDF;
+};
 
 interface InvoiceElement {
   id: string;
@@ -358,7 +364,8 @@ export const InvoiceLayoutEditor = ({
   const generatePDF = async () => {
     if (!canvasRef.current) return null;
 
-    const doc = new jsPDF({
+    const JsPDF = await loadJsPDF();
+    const doc = new JsPDF({
       orientation: 'portrait',
       unit: 'pt',
       format: 'a4',

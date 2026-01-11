@@ -18,8 +18,14 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Plus, Trash2, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { TAX_TYPES } from '@/lib/constants';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+// Dynamic import for jsPDF - reduces bundle size
+const loadPdfLibs = async () => {
+  const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+    import('jspdf'),
+    import('jspdf-autotable')
+  ]);
+  return { jsPDF, autoTable };
+};
 import { format } from 'date-fns';
 import logo from '@/assets/logo.png';
 import signature from '@/assets/signature.png';
@@ -265,7 +271,7 @@ export default function InvoiceGenerator() {
   });
 
 
-  const generatePDF = (downloadImmediately: boolean = true) => {
+  const generatePDF = async (downloadImmediately: boolean = true) => {
     if (!selectedCustomer) {
       toast({ title: 'Please select a customer', variant: 'destructive' });
       return null;
@@ -276,6 +282,7 @@ export default function InvoiceGenerator() {
       return null;
     }
 
+    const { jsPDF, autoTable } = await loadPdfLibs();
     const doc = new jsPDF();
     const invoiceNumber = customInvoiceNumber ? parseInt(customInvoiceNumber) : (invoiceSettings.current_invoice_number || 1);
     const formattedInvoiceNumber = formatInvoiceNumber(invoiceNumber, new Date(invoiceDate));
@@ -696,13 +703,13 @@ export default function InvoiceGenerator() {
     }
   };
 
-  const handlePreviewInvoice = () => {
+  const handlePreviewInvoice = async () => {
     if (!customerId || items.some(i => !i.product_id && !i.custom_product_name)) {
       toast({ title: 'Please fill all required fields', variant: 'destructive' });
       return;
     }
 
-    const result = generatePDF(false);
+    const result = await generatePDF(false);
     if (result) {
       setPreviewPdfUrl(result.url);
       setPreviewOpen(true);
@@ -712,7 +719,7 @@ export default function InvoiceGenerator() {
   const handleConfirmAndDownload = async () => {
     try {
       await createInvoiceMutation.mutateAsync();
-      generatePDF(true);
+      await generatePDF(true);
       setPreviewOpen(false);
       if (previewPdfUrl) {
         URL.revokeObjectURL(previewPdfUrl);

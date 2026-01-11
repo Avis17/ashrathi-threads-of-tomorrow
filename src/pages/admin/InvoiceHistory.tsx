@@ -42,8 +42,14 @@ import {
 } from '@/components/ui/pagination';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+// Dynamic import for jsPDF - reduces bundle size
+const loadPdfLibs = async () => {
+  const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+    import('jspdf'),
+    import('jspdf-autotable')
+  ]);
+  return { jsPDF, autoTable };
+};
 import logo from '@/assets/logo.png';
 import signature from '@/assets/signature.png';
 import { Badge } from '@/components/ui/badge';
@@ -115,6 +121,7 @@ export default function InvoiceHistory() {
       return;
     }
 
+    const { jsPDF, autoTable } = await loadPdfLibs();
     const doc = new jsPDF();
     const pageHeight = doc.internal.pageSize.height;
     const pageWidth = doc.internal.pageSize.width;

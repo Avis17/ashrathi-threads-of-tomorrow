@@ -36,8 +36,14 @@ import { ArrowLeft, Download, Plus, CheckCircle2, Clock, AlertCircle, Edit2, Tra
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+// Dynamic import for jsPDF - reduces bundle size
+const loadPdfLibs = async () => {
+  const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+    import('jspdf'),
+    import('jspdf-autotable')
+  ]);
+  return { jsPDF, autoTable };
+};
 import { formatCurrencyAscii, sanitizePdfText, numberToWords, formatInvoiceNumber, groupByHSN } from '@/lib/invoiceUtils';
 
 import logo from '@/assets/logo.png';
@@ -106,6 +112,7 @@ export default function InvoiceDetails() {
       return;
     }
 
+    const { jsPDF, autoTable } = await loadPdfLibs();
     const doc = new jsPDF();
     const pageHeight = doc.internal.pageSize.height;
     const pageWidth = doc.internal.pageSize.width;

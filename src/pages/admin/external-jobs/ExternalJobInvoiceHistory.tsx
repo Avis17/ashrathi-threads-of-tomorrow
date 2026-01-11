@@ -17,8 +17,14 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+// Dynamic import for jsPDF - reduces bundle size
+const loadPdfLibs = async () => {
+  const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+    import('jspdf'),
+    import('jspdf-autotable')
+  ]);
+  return { jsPDF, autoTable };
+};
 import { formatCurrencyAscii, numberToWords, sanitizePdfText, formatInvoiceNumberWithTemplate } from "@/lib/invoiceUtils";
 import logo from "@/assets/logo.png";
 import signature from "@/assets/signature.png";
@@ -112,11 +118,12 @@ const ExternalJobInvoiceHistory = () => {
     );
   });
 
-  const downloadInvoice = (invoice: ExternalJobInvoice) => {
+  const downloadInvoice = async (invoice: ExternalJobInvoice) => {
     const jobOrder = invoice.external_job_orders;
     const company = jobOrder.external_job_companies;
     const invoiceData = invoice.invoice_data || {};
     
+    const { jsPDF, autoTable } = await loadPdfLibs();
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.width;
 
