@@ -17,9 +17,15 @@ import colorVarietyImage from "@/assets/products/kidswear-color-variety.jpg";
 import fabricTextureImage from "@/assets/products/kidswear-fabric-texture.jpg";
 import stitchingDetailImage from "@/assets/products/kidswear-stitching-detail.jpg";
 import sizeGradingImage from "@/assets/products/kidswear-size-grading.jpg";
+import kidsSweaters from "@/assets/products/kids-sweaters-colorful.jpg";
+import kidsMuslin from "@/assets/products/kids-muslin-clothes.jpg";
+import kidsBabyClothes from "@/assets/products/kids-baby-clothes.jpg";
 
 const KidswearColorfulSets = () => {
   const productImages = [
+    { src: kidsSweaters, alt: "Colorful kids sweaters and cardigans" },
+    { src: kidsMuslin, alt: "Soft muslin baby clothes and swaddles" },
+    { src: kidsBabyClothes, alt: "Adorable baby bodysuits and rompers" },
     { src: yellowSetImage, alt: "Kids yellow cotton set" },
     { src: blueSetImage, alt: "Kids sky blue cotton set" },
     { src: colorVarietyImage, alt: "Multiple color variations" },
@@ -77,7 +83,7 @@ const KidswearColorfulSets = () => {
       </Helmet>
 
       {/* Hero Section */}
-      <section className="relative min-h-[70vh] flex items-center -mt-[76px] pt-[76px]">
+      <section className="relative min-h-[70vh] flex items-center py-20">
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: `url(${heroImage})` }}
