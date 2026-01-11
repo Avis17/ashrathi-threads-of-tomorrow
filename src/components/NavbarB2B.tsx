@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, User, LogOut, Shield, MessageCircle } from "lucide-react";
+import { Menu, X, User, LogOut, Shield, ChevronDown, Globe, FileText, Ship, Download, Shirt, Moon, Baby, Package } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,92 +13,187 @@ import { useAuth } from "@/hooks/useAuth";
 
 const NavbarB2B = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [productsOpen, setProductsOpen] = useState(false);
+  const [resourcesOpen, setResourcesOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isAdmin, signOut } = useAuth();
 
-  const navLinks = [
-    { name: "Home", path: "/" },
-    { name: "Products", path: "/products" },
-    { name: "Manufacturing", path: "/manufacturing" },
-    { name: "Compliance", path: "/compliance" },
-    { name: "Brochure", path: "/export-brochure" },
-    { name: "Contact", path: "/contact" },
+  const productCategories = [
+    { name: "Women's Nightwear", path: "/products", icon: Moon },
+    { name: "Kids Cotton Wear", path: "/products", icon: Baby },
+    { name: "Cotton T-Shirts", path: "/products", icon: Shirt },
+    { name: "Pyjamas & Casual Wear", path: "/products", icon: Package },
+    { name: "Innerwear & Basics", path: "/products", icon: Package },
+  ];
+
+  const resourceLinks = [
+    { name: "Export Brochure", path: "/export-brochure", icon: Download },
+    { name: "Shipping Policy", path: "/shipping-export-policy", icon: Ship },
+    { name: "Compliance", path: "/compliance", icon: FileText },
   ];
 
   const isActive = (path: string) => location.pathname === path;
 
-  const handleWhatsApp = () => {
-    window.open("https://wa.me/919789225510?text=Hello, I'm interested in bulk orders from Feather Fashions.", "_blank");
-  };
-
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-black/[0.06] shadow-sm">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-border/40">
         <div className="container mx-auto px-6">
           <div className="flex items-center justify-between h-[76px]">
-            {/* Logo */}
-            <Link to="/" className="flex-shrink-0">
-              <h1 className="text-xl md:text-2xl font-athletic font-bold tracking-[0.2em] text-foreground">
-                FEATHER FASHIONS
-              </h1>
+            
+            {/* Premium Logo - Stacked */}
+            <Link to="/" className="flex-shrink-0 group">
+              <div className="flex flex-col items-start leading-none">
+                <span className="text-xl md:text-2xl font-serif font-light tracking-[0.35em] text-foreground group-hover:text-accent transition-colors duration-300">
+                  FEATHER
+                </span>
+                <span className="text-[10px] md:text-xs font-medium tracking-[0.5em] text-muted-foreground uppercase mt-0.5">
+                  FASHIONS
+                </span>
+              </div>
             </Link>
 
-            {/* Desktop Navigation */}
-            <div className="hidden lg:flex items-center justify-center flex-1 space-x-8">
-              {navLinks.map((link) => (
+            {/* Desktop Navigation - Center */}
+            <div className="hidden lg:flex items-center justify-center flex-1">
+              <div className="flex items-center space-x-1">
+                
+                {/* Products Dropdown */}
+                <DropdownMenu open={productsOpen} onOpenChange={setProductsOpen}>
+                  <DropdownMenuTrigger asChild>
+                    <button 
+                      className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium tracking-wide transition-all duration-300 rounded-md ${
+                        isActive('/products') 
+                          ? "text-accent" 
+                          : "text-foreground/70 hover:text-foreground hover:bg-muted/50"
+                      }`}
+                    >
+                      PRODUCTS
+                      <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${productsOpen ? 'rotate-180' : ''}`} />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent 
+                    align="center" 
+                    className="w-56 bg-white border border-border shadow-xl rounded-xl p-2 mt-2"
+                    sideOffset={8}
+                  >
+                    <div className="px-3 py-2 mb-1">
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Product Categories</p>
+                    </div>
+                    {productCategories.map((category) => (
+                      <DropdownMenuItem 
+                        key={category.name}
+                        onClick={() => navigate(category.path)}
+                        className="cursor-pointer rounded-lg px-3 py-2.5 focus:bg-muted"
+                      >
+                        <category.icon className="h-4 w-4 mr-3 text-accent" />
+                        <span className="font-medium">{category.name}</span>
+                      </DropdownMenuItem>
+                    ))}
+                    <DropdownMenuSeparator className="my-2" />
+                    <DropdownMenuItem 
+                      onClick={() => navigate('/products')}
+                      className="cursor-pointer rounded-lg px-3 py-2.5 focus:bg-muted"
+                    >
+                      <span className="font-medium text-accent">View All Products →</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                {/* Manufacturing */}
                 <Link
-                  key={link.path}
-                  to={link.path}
-                  className={`text-sm font-medium tracking-wide transition-all duration-300 relative ${
-                    isActive(link.path) 
+                  to="/manufacturing"
+                  className={`px-4 py-2 text-sm font-medium tracking-wide transition-all duration-300 rounded-md ${
+                    isActive('/manufacturing') 
                       ? "text-accent" 
-                      : "text-foreground/70 hover:text-accent"
+                      : "text-foreground/70 hover:text-foreground hover:bg-muted/50"
                   }`}
                 >
-                  {link.name.toUpperCase()}
-                  {isActive(link.path) && (
-                    <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-accent" />
-                  )}
+                  MANUFACTURING
                 </Link>
-              ))}
+
+                {/* Resources Dropdown */}
+                <DropdownMenu open={resourcesOpen} onOpenChange={setResourcesOpen}>
+                  <DropdownMenuTrigger asChild>
+                    <button 
+                      className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium tracking-wide transition-all duration-300 rounded-md ${
+                        isActive('/export-brochure') || isActive('/shipping-export-policy')
+                          ? "text-accent" 
+                          : "text-foreground/70 hover:text-foreground hover:bg-muted/50"
+                      }`}
+                    >
+                      RESOURCES
+                      <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${resourcesOpen ? 'rotate-180' : ''}`} />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent 
+                    align="center" 
+                    className="w-52 bg-white border border-border shadow-xl rounded-xl p-2 mt-2"
+                    sideOffset={8}
+                  >
+                    {resourceLinks.map((link) => (
+                      <DropdownMenuItem 
+                        key={link.name}
+                        onClick={() => navigate(link.path)}
+                        className="cursor-pointer rounded-lg px-3 py-2.5 focus:bg-muted"
+                      >
+                        <link.icon className="h-4 w-4 mr-3 text-accent" />
+                        <span className="font-medium">{link.name}</span>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                {/* Contact */}
+                <Link
+                  to="/contact"
+                  className={`px-4 py-2 text-sm font-medium tracking-wide transition-all duration-300 rounded-md ${
+                    isActive('/contact') 
+                      ? "text-accent" 
+                      : "text-foreground/70 hover:text-foreground hover:bg-muted/50"
+                  }`}
+                >
+                  CONTACT
+                </Link>
+              </div>
             </div>
 
-            {/* Desktop Actions */}
-            <div className="hidden lg:flex items-center space-x-4 flex-shrink-0">
-              <button 
-                onClick={handleWhatsApp}
-                className="text-foreground/70 hover:text-green-600 transition-colors"
-                title="Chat on WhatsApp"
-              >
-                <MessageCircle className="h-5 w-5" />
-              </button>
+            {/* Desktop Actions - Right */}
+            <div className="hidden lg:flex items-center space-x-3 flex-shrink-0">
               
+              {/* Language/Region Icon */}
+              <button 
+                className="p-2 text-foreground/50 hover:text-foreground transition-colors rounded-full hover:bg-muted/50"
+                title="Region"
+              >
+                <Globe className="h-4 w-4" />
+              </button>
+
+              {/* User Menu */}
               {user ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <button className="text-foreground/70 hover:text-accent transition-colors">
-                      <User className="h-5 w-5" />
+                    <button className="p-2 text-foreground/50 hover:text-foreground transition-colors rounded-full hover:bg-muted/50">
+                      <User className="h-4 w-4" />
                     </button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48 bg-white border shadow-lg">
+                  <DropdownMenuContent align="end" className="w-48 bg-white border border-border shadow-xl rounded-xl p-2 mt-2">
                     {isAdmin && (
                       <>
                         <DropdownMenuItem 
                           onClick={() => navigate('/admin')}
-                          className="cursor-pointer"
+                          className="cursor-pointer rounded-lg px-3 py-2.5"
                         >
-                          <Shield className="h-4 w-4 mr-2 text-accent" />
+                          <Shield className="h-4 w-4 mr-3 text-accent" />
                           Dashboard
                         </DropdownMenuItem>
-                        <DropdownMenuSeparator />
+                        <DropdownMenuSeparator className="my-2" />
                       </>
                     )}
                     <DropdownMenuItem 
                       onClick={signOut}
-                      className="cursor-pointer text-red-600"
+                      className="cursor-pointer rounded-lg px-3 py-2.5 text-destructive focus:text-destructive"
                     >
-                      <LogOut className="h-4 w-4 mr-2" />
+                      <LogOut className="h-4 w-4 mr-3" />
                       Sign Out
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -106,13 +201,15 @@ const NavbarB2B = () => {
               ) : (
                 <Link 
                   to="/auth"
-                  className="text-sm font-medium text-foreground/70 hover:text-accent transition-colors"
+                  className="p-2 text-foreground/50 hover:text-foreground transition-colors rounded-full hover:bg-muted/50"
+                  title="Login"
                 >
-                  LOGIN
+                  <User className="h-4 w-4" />
                 </Link>
               )}
 
-              <Button asChild size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90 ml-2">
+              {/* Primary CTA */}
+              <Button asChild size="sm" className="bg-foreground text-background hover:bg-foreground/90 font-medium tracking-wide px-5">
                 <Link to="/contact">
                   Request Quote
                 </Link>
@@ -120,18 +217,17 @@ const NavbarB2B = () => {
             </div>
 
             {/* Mobile Menu Button */}
-            <div className="lg:hidden flex items-center gap-3">
-              <button 
-                onClick={handleWhatsApp}
-                className="text-foreground/70 hover:text-green-600 transition-colors p-2"
-              >
-                <MessageCircle className="h-5 w-5" />
-              </button>
+            <div className="lg:hidden flex items-center gap-2">
+              <Button asChild size="sm" variant="outline" className="text-xs px-3 border-foreground/20">
+                <Link to="/contact">
+                  Quote
+                </Link>
+              </Button>
               <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="p-2 text-foreground"
+                className="p-2 text-foreground hover:bg-muted/50 rounded-lg transition-colors"
               >
-                {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+                {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </button>
             </div>
           </div>
@@ -140,60 +236,118 @@ const NavbarB2B = () => {
 
       {/* Mobile Navigation */}
       {isOpen && (
-        <div className="lg:hidden fixed left-0 right-0 top-[76px] bottom-0 z-[9999] bg-white shadow-lg overflow-y-auto">
-          <div className="flex flex-col p-6 space-y-6">
-            {navLinks.map((link) => (
+        <div className="lg:hidden fixed left-0 right-0 top-[76px] bottom-0 z-[9999] bg-white overflow-y-auto">
+          <div className="flex flex-col p-6">
+            
+            {/* Products Section */}
+            <div className="py-4 border-b border-border/50">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Products</p>
+              <div className="space-y-1">
+                {productCategories.map((category) => (
+                  <Link
+                    key={category.name}
+                    to={category.path}
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center gap-3 py-2.5 text-foreground/80 hover:text-accent transition-colors"
+                  >
+                    <category.icon className="h-4 w-4 text-accent" />
+                    {category.name}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            {/* Main Links */}
+            <div className="py-4 border-b border-border/50 space-y-1">
               <Link
-                key={link.path}
-                to={link.path}
+                to="/manufacturing"
                 onClick={() => setIsOpen(false)}
-                className={`text-lg font-medium tracking-wide ${
-                  isActive(link.path) 
-                    ? "text-accent" 
-                    : "text-foreground hover:text-accent"
+                className={`block py-3 text-lg font-medium tracking-wide ${
+                  isActive('/manufacturing') ? "text-accent" : "text-foreground hover:text-accent"
                 }`}
               >
-                {link.name.toUpperCase()}
+                Manufacturing
               </Link>
-            ))}
+              <Link
+                to="/compliance"
+                onClick={() => setIsOpen(false)}
+                className={`block py-3 text-lg font-medium tracking-wide ${
+                  isActive('/compliance') ? "text-accent" : "text-foreground hover:text-accent"
+                }`}
+              >
+                Compliance
+              </Link>
+              <Link
+                to="/contact"
+                onClick={() => setIsOpen(false)}
+                className={`block py-3 text-lg font-medium tracking-wide ${
+                  isActive('/contact') ? "text-accent" : "text-foreground hover:text-accent"
+                }`}
+              >
+                Contact
+              </Link>
+            </div>
+
+            {/* Resources Section */}
+            <div className="py-4 border-b border-border/50">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Resources</p>
+              <div className="space-y-1">
+                {resourceLinks.map((link) => (
+                  <Link
+                    key={link.name}
+                    to={link.path}
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center gap-3 py-2.5 text-foreground/80 hover:text-accent transition-colors"
+                  >
+                    <link.icon className="h-4 w-4 text-accent" />
+                    {link.name}
+                  </Link>
+                ))}
+              </div>
+            </div>
             
-            <div className="pt-4 border-t">
+            {/* User Section */}
+            <div className="py-4 border-b border-border/50">
               {user ? (
-                <>
+                <div className="space-y-1">
                   {isAdmin && (
                     <Link
                       to="/admin"
                       onClick={() => setIsOpen(false)}
-                      className="flex items-center gap-2 text-foreground hover:text-accent py-2"
+                      className="flex items-center gap-3 py-2.5 text-foreground hover:text-accent"
                     >
-                      <Shield className="h-5 w-5 text-accent" />
+                      <Shield className="h-4 w-4 text-accent" />
                       Dashboard
                     </Link>
                   )}
                   <button
                     onClick={() => { signOut(); setIsOpen(false); }}
-                    className="flex items-center gap-2 text-red-600 py-2"
+                    className="flex items-center gap-3 py-2.5 text-destructive"
                   >
-                    <LogOut className="h-5 w-5" />
+                    <LogOut className="h-4 w-4" />
                     Sign Out
                   </button>
-                </>
+                </div>
               ) : (
                 <Link
                   to="/auth"
                   onClick={() => setIsOpen(false)}
-                  className="text-foreground hover:text-accent"
+                  className="flex items-center gap-3 py-2.5 text-foreground hover:text-accent"
                 >
-                  LOGIN
+                  <User className="h-4 w-4" />
+                  Login / Register
                 </Link>
               )}
             </div>
 
-            <Button asChild className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
-              <Link to="/contact" onClick={() => setIsOpen(false)}>
-                Request Quote
-              </Link>
-            </Button>
+            {/* Mobile CTA */}
+            <div className="pt-6">
+              <Button asChild className="w-full bg-foreground text-background hover:bg-foreground/90 font-medium">
+                <Link to="/contact" onClick={() => setIsOpen(false)}>
+                  Request Quote
+                </Link>
+              </Button>
+            </div>
           </div>
         </div>
       )}
