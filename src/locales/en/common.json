@@ -1,0 +1,48 @@
+{
+  "nav": {
+    "productCategories": "PRODUCT CATEGORIES",
+    "manufacturing": "MANUFACTURING",
+    "resources": "RESOURCES",
+    "contact": "CONTACT",
+    "requestQuote": "Request Quote",
+    "login": "Login",
+    "dashboard": "Dashboard",
+    "signOut": "Sign Out",
+    "region": "Region",
+    "womensWear": "Women's Wear",
+    "kidswear": "Kidswear",
+    "primaryExportCategory": "Primary export category",
+    "highDemandExport": "High-demand export segment",
+    "exportManufacturing": "Export & Manufacturing",
+    "fabricConstruction": "Fabric & Construction",
+    "quickActions": "Quick Actions",
+    "viewAllProducts": "View All Products →",
+    "exportBrochure": "Export Brochure →",
+    "requestQuoteLink": "Request Quote →",
+    "exportAssurance": "All products available for bulk & export orders"
+  },
+  "hero": {
+    "badge": "Export-Ready Garment Manufacturer",
+    "title": "Export-Ready Nightwear & Kidswear",
+    "titleLine2": "Manufacturer",
+    "supportLine": "Premium wholesale production for global markets",
+    "subtitle": "Export-ready designs with consistent quality, scalable production, and global supply capability. Trusted by wholesalers and export buyers across international markets."
+  },
+  "cta": {
+    "requestExportQuote": "Request Export Quote",
+    "requestQuote": "Request Quote"
+  },
+  "trust": {
+    "wholesalePartners": "Active Wholesale",
+    "partnersLine2": "Partners",
+    "exportCountries": "Export",
+    "countriesLine2": "Countries",
+    "exportCertified": "Export",
+    "certifiedLine2": "Certified"
+  },
+  "language": {
+    "english": "English",
+    "arabic": "العربية",
+    "selectLanguage": "Select Language"
+  }
+}
