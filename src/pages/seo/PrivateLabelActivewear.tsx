@@ -4,6 +4,14 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, CheckCircle, Factory, Users, Package, Truck, Award, Shield } from "lucide-react";
 
+// Collection images for client types
+import collegeCollection from "@/assets/college-collection.jpg";
+import corporateCollection from "@/assets/corporate-collection.jpg";
+import eventCollection from "@/assets/event-collection.jpg";
+import uniformCollection from "@/assets/uniform-collection.jpg";
+import sportsCollection from "@/assets/sports-collection.jpg";
+import trackPantsCollection from "@/assets/track-pants-collection.jpg";
+
 const PrivateLabelActivewear = () => {
   const structuredData = {
     "@context": "https://schema.org",
@@ -265,12 +273,37 @@ const PrivateLabelActivewear = () => {
           </div>
         </section>
 
-        {/* Section 6: Who We Work With */}
+        {/* Who We Work With - Enhanced with Images */}
         <section className="py-16 md:py-20">
           <div className="container mx-auto px-4">
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-12 text-center">
               Who We Work With
             </h2>
+            
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto mb-12">
+              {[
+                { image: collegeCollection, label: "Educational Institutions", desc: "School & college sports uniforms" },
+                { image: corporateCollection, label: "Corporate Clients", desc: "Branded wellness programs" },
+                { image: eventCollection, label: "Event Organizers", desc: "Marathon & sports events" },
+                { image: uniformCollection, label: "Uniform Suppliers", desc: "Team sports & fitness centers" },
+                { image: sportsCollection, label: "Sports Brands", desc: "D2C & e-commerce sellers" },
+                { image: trackPantsCollection, label: "Athleisure Brands", desc: "Casual & lifestyle collections" },
+              ].map((item, index) => (
+                <div key={index} className="group relative aspect-[4/3] rounded-xl overflow-hidden">
+                  <img 
+                    src={item.image} 
+                    alt={item.label}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                  <div className="absolute bottom-4 left-4 right-4">
+                    <h3 className="text-white font-bold mb-1">{item.label}</h3>
+                    <p className="text-white/70 text-sm">{item.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
             
             <div className="flex flex-wrap justify-center gap-4 max-w-4xl mx-auto">
               {clientTypes.map((client, index) => (
