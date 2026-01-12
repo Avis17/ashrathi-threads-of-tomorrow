@@ -35,6 +35,7 @@ const NavbarB2B = ({ topOffset = "top-0" }: NavbarB2BProps) => {
     { nameKey: "nav.womensWearProducts.pyjamas", path: "/products/pyjamas-casual-wear" },
     { nameKey: "nav.womensWearProducts.cottonTshirts", path: "/products/cotton-tshirts" },
     { nameKey: "nav.womensWearProducts.innerwear", path: "/products/innerwear-basics" },
+    { name: "Leggings", path: "/products/leggings" },
   ];
 
   const kidswear = [
@@ -42,6 +43,11 @@ const NavbarB2B = ({ topOffset = "top-0" }: NavbarB2BProps) => {
     { nameKey: "nav.kidswearProducts.pyjamas", path: "/products" },
     { nameKey: "nav.kidswearProducts.cottonSets", path: "/products" },
     { nameKey: "nav.kidswearProducts.colorfulSets", path: "/products/kidswear-colorful-sets" },
+  ];
+
+  const activewear = [
+    { name: "Women's Leggings", path: "/products/leggings" },
+    { name: "Men's Sportswear", path: "/products/mens-sportswear" },
   ];
 
   // By Fabric / Style
@@ -109,13 +115,30 @@ const NavbarB2B = ({ topOffset = "top-0" }: NavbarB2BProps) => {
                     <div className="grid grid-cols-[1.2fr_1fr_0.8fr] gap-6">
                       
                       {/* COLUMN 1 — CORE MANUFACTURING (Dominant) */}
-                      <div className="space-y-6 pr-4 border-r rtl:border-r-0 rtl:border-l rtl:pr-0 rtl:pl-4 border-border/30">
+                      <div className="space-y-5 pr-4 border-r rtl:border-r-0 rtl:border-l rtl:pr-0 rtl:pl-4 border-border/30">
                         {/* Women's Wear */}
                         <div>
                           <p className="text-[11px] font-semibold text-foreground uppercase tracking-[0.1em] mb-1">{t('nav.womensWear')}</p>
-                          <p className="text-[10px] text-muted-foreground mb-3">{t('nav.womensWearDesc')}</p>
+                          <p className="text-[10px] text-muted-foreground mb-2">{t('nav.womensWearDesc')}</p>
                           <div className="space-y-0.5">
                             {womensWear.map((item) => (
+                              <DropdownMenuItem 
+                                key={item.nameKey || item.name}
+                                onClick={() => navigate(item.path)}
+                                className="cursor-pointer rounded px-2 py-1.5 focus:bg-muted/60 text-foreground/75 hover:text-foreground hover:bg-muted/40"
+                              >
+                                <span className="text-[13px]">{item.nameKey ? t(item.nameKey) : item.name}</span>
+                              </DropdownMenuItem>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Kidswear */}
+                        <div>
+                          <p className="text-[11px] font-semibold text-foreground uppercase tracking-[0.1em] mb-1">{t('nav.kidswear')}</p>
+                          <p className="text-[10px] text-muted-foreground mb-2">{t('nav.kidswearDesc')}</p>
+                          <div className="space-y-0.5">
+                            {kidswear.map((item) => (
                               <DropdownMenuItem 
                                 key={item.nameKey}
                                 onClick={() => navigate(item.path)}
@@ -127,18 +150,18 @@ const NavbarB2B = ({ topOffset = "top-0" }: NavbarB2BProps) => {
                           </div>
                         </div>
 
-                        {/* Kidswear */}
+                        {/* Activewear - NEW */}
                         <div>
-                          <p className="text-[11px] font-semibold text-foreground uppercase tracking-[0.1em] mb-1">{t('nav.kidswear')}</p>
-                          <p className="text-[10px] text-muted-foreground mb-3">{t('nav.kidswearDesc')}</p>
+                          <p className="text-[11px] font-semibold text-accent uppercase tracking-[0.1em] mb-1">ACTIVEWEAR</p>
+                          <p className="text-[10px] text-muted-foreground mb-2">Performance sportswear</p>
                           <div className="space-y-0.5">
-                            {kidswear.map((item) => (
+                            {activewear.map((item) => (
                               <DropdownMenuItem 
-                                key={item.nameKey}
+                                key={item.name}
                                 onClick={() => navigate(item.path)}
                                 className="cursor-pointer rounded px-2 py-1.5 focus:bg-muted/60 text-foreground/75 hover:text-foreground hover:bg-muted/40"
                               >
-                                <span className="text-[13px]">{t(item.nameKey)}</span>
+                                <span className="text-[13px]">{item.name}</span>
                               </DropdownMenuItem>
                             ))}
                           </div>
