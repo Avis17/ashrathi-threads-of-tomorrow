@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { Download, Mail, Package, CheckCircle, Factory, ArrowRight } from "lucide-react";
 import womenNightwearImg from "@/assets/brochure/women-nightwear-brochure.jpg";
 import kidsClothingImg from "@/assets/brochure/kids-clothing-brochure.jpg";
-import manufacturingImg from "@/assets/hero-manufacturing.jpg";
+import manufacturingImg from "@/assets/b2b/hero-manufacturing.jpg";
 
 const ExportToUAE = () => {
   const structuredData = {
