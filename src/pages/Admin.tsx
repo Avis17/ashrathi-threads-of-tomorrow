@@ -53,6 +53,7 @@ import DeliveryChallanList from './admin/delivery-challan/DeliveryChallanList';
 import CreateDeliveryChallan from './admin/delivery-challan/CreateDeliveryChallan';
 import DeliveryChallanView from './admin/delivery-challan/DeliveryChallanView';
 import PrintDeliveryChallan from './admin/delivery-challan/PrintDeliveryChallan';
+import SamplingPreparation from './admin/SamplingPreparation';
 
 const Admin = () => {
   const { isAdmin, loading } = useAuth();
@@ -114,6 +115,7 @@ const Admin = () => {
               <Route path="/buyer-followups" element={<BuyerFollowups />} />
               <Route path="/export-buyers" element={<ExportBuyerContacts />} />
               <Route path="/activity-logs" element={<ActivityLogs />} />
+              <Route path="/sampling" element={<SamplingPreparation />} />
               <Route path="/external-jobs" element={<ExternalJobOrders />} />
               <Route path="/external-jobs/register-company" element={<RegisterCompany />} />
               <Route path="/external-jobs/add-job" element={<AddJob />} />
