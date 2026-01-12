@@ -40,6 +40,7 @@ const menuItems = [
   { title: 'Feather Apps', url: '/admin/apps', icon: Boxes },
   { title: 'App Access', url: '/admin/app-access', icon: ShieldCheck },
   { title: 'Sampling Preparation', url: '/admin/sampling', icon: FlaskConical },
+  { title: 'Sampling Terms', url: '/admin/sampling-terms', icon: FileText },
   { title: 'Orders', url: '/admin/orders', icon: ClipboardList },
   { title: 'External Job Orders', url: '/admin/external-jobs', icon: Briefcase },
   { title: 'Delivery Challan', url: '/admin/delivery-challan', icon: Truck },
