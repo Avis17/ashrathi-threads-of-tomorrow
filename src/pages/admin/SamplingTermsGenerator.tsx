@@ -206,6 +206,10 @@ export default function SamplingTermsGenerator() {
       yPos = addWrappedText(termsData.sampleChargesNote, margin, yPos, contentWidth, 10);
       yPos += 3;
       
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Standard Advance: ${termsData.advancePaymentPercent}% payment required before sampling begins.`, margin, yPos);
+      yPos += 5;
+      
       doc.setFont('helvetica', 'italic');
       yPos = addWrappedText('Note: Sampling without payment is not supported.', margin, yPos, contentWidth, 9);
       yPos += 8;
@@ -461,12 +465,29 @@ export default function SamplingTermsGenerator() {
             <CardHeader className="pb-4">
               <CardTitle className="text-lg">Sample Charges Policy</CardTitle>
             </CardHeader>
-            <CardContent>
-              <Textarea
-                value={termsData.sampleChargesNote}
-                onChange={(e) => setTermsData({ ...termsData, sampleChargesNote: e.target.value })}
-                rows={4}
-              />
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Standard Sampling Advance (%)</Label>
+                <div className="flex items-center gap-3">
+                  <Input
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={termsData.advancePaymentPercent}
+                    onChange={(e) => setTermsData({ ...termsData, advancePaymentPercent: parseInt(e.target.value) || 0 })}
+                    className="w-32"
+                  />
+                  <span className="text-sm text-muted-foreground">% advance payment required for sampling</span>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Sample Charges Note</Label>
+                <Textarea
+                  value={termsData.sampleChargesNote}
+                  onChange={(e) => setTermsData({ ...termsData, sampleChargesNote: e.target.value })}
+                  rows={4}
+                />
+              </div>
             </CardContent>
           </Card>
 
@@ -606,7 +627,10 @@ export default function SamplingTermsGenerator() {
                 <div>
                   <h3 className="font-semibold text-foreground mb-2">3. Sample Charges</h3>
                   <p className="text-sm text-muted-foreground">{termsData.sampleChargesNote}</p>
-                  <p className="text-sm text-muted-foreground italic mt-2">Note: Sampling without payment is not supported.</p>
+                  <p className="text-sm font-medium text-foreground mt-2">
+                    Standard Advance: {termsData.advancePaymentPercent}% payment required before sampling begins.
+                  </p>
+                  <p className="text-sm text-muted-foreground italic mt-1">Note: Sampling without payment is not supported.</p>
                 </div>
 
                 {/* Branding Policy */}
