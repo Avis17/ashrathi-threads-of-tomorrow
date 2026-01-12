@@ -4,6 +4,17 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, CheckCircle, Users, Truck, DollarSign, Globe, Factory, Award } from "lucide-react";
 
+// Activity images
+import activityCycling from "@/assets/activity-cycling.jpg";
+import activityGym from "@/assets/activity-gym.jpg";
+import activityPilates from "@/assets/activity-pilates.jpg";
+import activityRunning from "@/assets/activity-running.jpg";
+import activityYoga from "@/assets/activity-yoga.jpg";
+
+// Collection images
+import collectionsWomenActivewear from "@/assets/collections-women-activewear.jpg";
+import collectionsMenSportswear from "@/assets/collections-men-sportswear.jpg";
+
 const ActivewearManufacturerTirupur = () => {
   const structuredData = {
     "@context": "https://schema.org",
@@ -160,6 +171,39 @@ const ActivewearManufacturerTirupur = () => {
           </div>
         </section>
 
+        {/* Activity Showcase Section */}
+        <section className="py-16 md:py-20 bg-muted/10">
+          <div className="container mx-auto px-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 text-center">
+              Activewear for Every Activity
+            </h2>
+            <p className="text-muted-foreground text-center mb-12 max-w-2xl mx-auto">
+              Performance-tested fabrics designed for diverse athletic pursuits
+            </p>
+            
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 max-w-5xl mx-auto">
+              {[
+                { image: activityGym, label: "Gym Training" },
+                { image: activityYoga, label: "Yoga & Pilates" },
+                { image: activityRunning, label: "Running" },
+                { image: activityCycling, label: "Cycling" },
+                { image: activityPilates, label: "Stretching" },
+              ].map((activity, index) => (
+                <div key={index} className="group relative aspect-square rounded-xl overflow-hidden">
+                  <img 
+                    src={activity.image} 
+                    alt={activity.label}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                  <span className="absolute bottom-3 left-3 text-white text-sm font-medium">{activity.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* Products Section */}
         <section className="py-16 md:py-20">
           <div className="container mx-auto px-4">
@@ -169,6 +213,25 @@ const ActivewearManufacturerTirupur = () => {
             <p className="text-muted-foreground text-center mb-12 max-w-2xl mx-auto">
               Complete range of performance activewear with premium fabrics and expert finishing
             </p>
+            
+            <div className="grid lg:grid-cols-2 gap-8 max-w-5xl mx-auto mb-12">
+              <div className="relative aspect-[4/3] rounded-2xl overflow-hidden">
+                <img src={collectionsWomenActivewear} alt="Women's activewear collection" className="w-full h-full object-cover" loading="lazy" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                <div className="absolute bottom-6 left-6">
+                  <span className="text-white/80 text-sm">Collection</span>
+                  <h3 className="text-2xl font-bold text-white">Women's Activewear</h3>
+                </div>
+              </div>
+              <div className="relative aspect-[4/3] rounded-2xl overflow-hidden">
+                <img src={collectionsMenSportswear} alt="Men's sportswear collection" className="w-full h-full object-cover" loading="lazy" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                <div className="absolute bottom-6 left-6">
+                  <span className="text-white/80 text-sm">Collection</span>
+                  <h3 className="text-2xl font-bold text-white">Men's Sportswear</h3>
+                </div>
+              </div>
+            </div>
             
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
               {products.map((product, index) => (

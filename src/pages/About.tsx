@@ -3,6 +3,12 @@ import { Target, Eye, Heart, Award, Leaf, Sparkles } from "lucide-react";
 import aboutImage from "@/assets/about-team.jpg";
 import aboutHeroBanner from "@/assets/about-hero-banner.jpg";
 
+// Feature and highlight images
+import featureDesign from "@/assets/feature-design.jpg";
+import featureQuality from "@/assets/feature-quality.jpg";
+import highlightCampaign from "@/assets/highlight-campaign.jpg";
+import highlightDetail from "@/assets/highlight-detail.jpg";
+
 const About = () => {
   const values = [
     { icon: Leaf, title: "Sustainability First", description: "Eco-friendly fabrics and ethical production practices" },
@@ -144,13 +150,35 @@ const About = () => {
         </div>
       </section>
 
-      {/* Values */}
+      {/* Values with Images */}
       <section className="py-24 bg-muted/30 px-4">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-16">
             <p className="text-accent font-medium tracking-[0.2em] mb-4 text-sm">WHAT WE BELIEVE</p>
             <h2 className="text-4xl md:text-5xl font-serif font-bold text-foreground">Our Values</h2>
           </div>
+          
+          {/* Feature Images Grid */}
+          <div className="grid md:grid-cols-2 gap-8 mb-16">
+            <div className="relative rounded-2xl overflow-hidden aspect-[4/3]">
+              <img src={featureDesign} alt="Design Excellence" className="w-full h-full object-cover" loading="lazy" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+              <div className="absolute bottom-6 left-6">
+                <h3 className="text-2xl font-bold text-white mb-2">Design Excellence</h3>
+                <p className="text-white/80 text-sm max-w-xs">Every stitch reflects our commitment to craftsmanship and innovation</p>
+              </div>
+            </div>
+            <div className="relative rounded-2xl overflow-hidden aspect-[4/3]">
+              <img src={featureQuality} alt="Quality First" className="w-full h-full object-cover" loading="lazy" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+              <div className="absolute bottom-6 left-6">
+                <h3 className="text-2xl font-bold text-white mb-2">Quality First</h3>
+                <p className="text-white/80 text-sm max-w-xs">Rigorous quality control ensures every garment meets international standards</p>
+              </div>
+            </div>
+          </div>
+          
+          {/* Values Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {values.map((value, idx) => (
               <div key={idx} className="text-center group">
@@ -161,6 +189,16 @@ const About = () => {
                 <p className="text-muted-foreground">{value.description}</p>
               </div>
             ))}
+          </div>
+          
+          {/* Highlight Images */}
+          <div className="grid md:grid-cols-2 gap-8 mt-16">
+            <div className="relative rounded-2xl overflow-hidden aspect-video">
+              <img src={highlightCampaign} alt="Campaign highlight" className="w-full h-full object-cover" loading="lazy" />
+            </div>
+            <div className="relative rounded-2xl overflow-hidden aspect-video">
+              <img src={highlightDetail} alt="Detail highlight" className="w-full h-full object-cover" loading="lazy" />
+            </div>
           </div>
         </div>
       </section>

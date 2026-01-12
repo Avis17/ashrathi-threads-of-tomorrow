@@ -30,6 +30,8 @@ const KidswearColorfulSets = lazy(() => import("./pages/products/KidswearColorfu
 const CottonTshirts = lazy(() => import("./pages/products/CottonTshirts"));
 const PyjamasCasualWear = lazy(() => import("./pages/products/PyjamasCasualWear"));
 const InnerwearBasics = lazy(() => import("./pages/products/InnerwearBasics"));
+const Leggings = lazy(() => import("./pages/products/Leggings"));
+const MensSportswear = lazy(() => import("./pages/products/MensSportswear"));
 const ExportToUAE = lazy(() => import("./pages/export/ExportToUAE"));
 const ExportToSaudiArabia = lazy(() => import("./pages/export/ExportToSaudiArabia"));
 const ExportToSouthAfrica = lazy(() => import("./pages/export/ExportToSouthAfrica"));
@@ -94,6 +96,8 @@ const App = () => (
                       <Route path="/products/cotton-tshirts" element={<CottonTshirts />} />
                       <Route path="/products/pyjamas-casual-wear" element={<PyjamasCasualWear />} />
                       <Route path="/products/innerwear-basics" element={<InnerwearBasics />} />
+                      <Route path="/products/leggings" element={<Leggings />} />
+                      <Route path="/products/mens-sportswear" element={<MensSportswear />} />
                       <Route path="/manufacturing" element={<Manufacturing />} />
                       <Route path="/compliance" element={<Compliance />} />
                       <Route path="/export-brochure" element={<ExportBrochure />} />
