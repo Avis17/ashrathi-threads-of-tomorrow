@@ -9,9 +9,10 @@ import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Download, Plus, Trash2, Building2, FileText, Package, Clock, CreditCard, Eye } from 'lucide-react';
+import { Download, Plus, Trash2, Building2, FileText, Package, Clock, CreditCard, Eye, Phone, Mail, Globe } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import logoImage from '@/assets/logo.png';
+import { sanitizePdfText } from '@/lib/invoiceUtils';
 
 // Dynamic import for jsPDF - reduces bundle size
 const loadPdfLibs = async () => {
@@ -75,6 +76,18 @@ interface QuotationData {
   currency: string;
   deliveryTerms: string;
   notes: string;
+  
+  // Company Contact
+  companyPhone: string;
+  companyEmail: string;
+  companyWebsite: string;
+  
+  // Bank Details (optional)
+  showBankDetails: boolean;
+  bankName: string;
+  accountNumber: string;
+  ifscCode: string;
+  accountHolder: string;
 }
 
 const defaultInclusions = [
@@ -106,6 +119,19 @@ const fabricOptions = [
   'Jersey Knit'
 ];
 
+// ASCII-safe currency display for PDF
+const getCurrencyText = (currency: string): string => {
+  const currencyTexts: Record<string, string> = {
+    'INR': 'Rs.',
+    'USD': 'USD',
+    'EUR': 'EUR',
+    'GBP': 'GBP',
+    'AED': 'AED'
+  };
+  return currencyTexts[currency] || currency;
+};
+
+// For UI display (can use unicode)
 const currencySymbols: Record<string, string> = {
   'INR': '₹',
   'USD': '$',
@@ -160,7 +186,19 @@ export default function QuotationGenerator() {
     validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     currency: 'INR',
     deliveryTerms: 'EX-Factory',
-    notes: ''
+    notes: '',
+    
+    // Company Contact defaults
+    companyPhone: '+91 86100 36556',
+    companyEmail: 'featherfashions.in@gmail.com',
+    companyWebsite: 'https://featherfashions.in',
+    
+    // Bank Details
+    showBankDetails: false,
+    bankName: '',
+    accountNumber: '',
+    ifscCode: '',
+    accountHolder: 'FEATHER FASHIONS'
   });
 
   const [newInclusion, setNewInclusion] = useState('');
@@ -212,8 +250,16 @@ export default function QuotationGenerator() {
     updateData('exclusions', quotationData.exclusions.filter((_, i) => i !== index));
   };
 
-  const formatNumber = (num: number) => {
+  // Format number with Indian grouping
+  const formatNumber = (num: number): string => {
     return new Intl.NumberFormat('en-IN').format(num);
+  };
+
+  // Format rate for PDF (ASCII-safe)
+  const formatRate = (rate: number, currency: string, unit: string): string => {
+    const currencyText = getCurrencyText(currency);
+    const unitSingular = unit.replace(/s$/, '');
+    return sanitizePdfText(`${currencyText} ${formatNumber(rate)}/${unitSingular}`);
   };
 
   const generatePDF = async (download: boolean = true) => {
@@ -226,19 +272,25 @@ export default function QuotationGenerator() {
       const margin = 15;
       let yPos = margin;
 
-      const currencySymbol = currencySymbols[quotationData.currency] || quotationData.currency;
+      const currencyText = getCurrencyText(quotationData.currency);
 
       // Colors
       const primaryColor: [number, number, number] = [30, 41, 59]; // slate-800
       const accentColor: [number, number, number] = [14, 165, 233]; // sky-500
       const mutedColor: [number, number, number] = [100, 116, 139]; // slate-500
       const lightBg: [number, number, number] = [248, 250, 252]; // slate-50
+      const successColor: [number, number, number] = [22, 163, 74]; // green-600
+      const dangerColor: [number, number, number] = [220, 38, 38]; // red-600
 
-      // Header Background
+      // Header Background with gradient effect
       doc.setFillColor(15, 23, 42); // slate-900
       doc.rect(0, 0, pageWidth, 55, 'F');
+      
+      // Accent stripe
+      doc.setFillColor(...accentColor);
+      doc.rect(0, 53, pageWidth, 2, 'F');
 
-      // Logo placeholder - left side
+      // Logo - left side
       try {
         const img = new Image();
         img.src = logoImage;
@@ -276,7 +328,7 @@ export default function QuotationGenerator() {
       doc.setTextColor(148, 163, 184);
       doc.setFontSize(8);
       doc.setFont('helvetica', 'normal');
-      doc.text(`#${quotationData.quotationNumber}`, pageWidth - margin - 25, 40, { align: 'center' });
+      doc.text(sanitizePdfText(`#${quotationData.quotationNumber}`), pageWidth - margin - 25, 40, { align: 'center' });
 
       yPos = 65;
 
@@ -287,13 +339,13 @@ export default function QuotationGenerator() {
       doc.setTextColor(...mutedColor);
       doc.setFontSize(7);
       const regDetails = [
-        `GSTIN: 33FWTPS1281P1ZJ`,
-        `IEC: FWTPS1281P`,
-        `UDYAM: UDYAM-TN-28-0191326`
+        'GSTIN: 33FWTPS1281P1ZJ',
+        'IEC: FWTPS1281P',
+        'UDYAM: UDYAM-TN-28-0191326'
       ];
       const regWidth = (pageWidth - 2 * margin) / 3;
       regDetails.forEach((detail, i) => {
-        doc.text(detail, margin + (i * regWidth) + regWidth/2, yPos + 4, { align: 'center' });
+        doc.text(sanitizePdfText(detail), margin + (i * regWidth) + regWidth/2, yPos + 4, { align: 'center' });
       });
 
       yPos += 20;
@@ -304,17 +356,28 @@ export default function QuotationGenerator() {
       doc.setFont('helvetica', 'normal');
       
       // Left side - Quotation details
-      doc.text(`Date: ${new Date(quotationData.quotationDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}`, margin, yPos);
-      doc.text(`Valid Until: ${new Date(quotationData.validUntil).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}`, margin, yPos + 5);
+      const dateFormatted = new Date(quotationData.quotationDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+      const validUntilFormatted = new Date(quotationData.validUntil).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+      doc.text(sanitizePdfText(`Date: ${dateFormatted}`), margin, yPos);
+      doc.text(sanitizePdfText(`Valid Until: ${validUntilFormatted}`), margin, yPos + 5);
       
       // Right side - Buyer details (if provided)
       if (quotationData.buyerCompany || quotationData.buyerName) {
         doc.setFont('helvetica', 'bold');
         doc.text('Prepared For:', pageWidth - margin - 60, yPos);
         doc.setFont('helvetica', 'normal');
-        if (quotationData.buyerCompany) doc.text(quotationData.buyerCompany, pageWidth - margin - 60, yPos + 5);
-        if (quotationData.buyerName) doc.text(quotationData.buyerName, pageWidth - margin - 60, yPos + 10);
-        if (quotationData.buyerCountry) doc.text(quotationData.buyerCountry, pageWidth - margin - 60, yPos + 15);
+        let buyerY = yPos + 5;
+        if (quotationData.buyerCompany) {
+          doc.text(sanitizePdfText(quotationData.buyerCompany), pageWidth - margin - 60, buyerY);
+          buyerY += 5;
+        }
+        if (quotationData.buyerName) {
+          doc.text(sanitizePdfText(quotationData.buyerName), pageWidth - margin - 60, buyerY);
+          buyerY += 5;
+        }
+        if (quotationData.buyerCountry) {
+          doc.text(sanitizePdfText(quotationData.buyerCountry), pageWidth - margin - 60, buyerY);
+        }
       }
 
       yPos += 25;
@@ -325,7 +388,7 @@ export default function QuotationGenerator() {
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(11);
       doc.setFont('helvetica', 'bold');
-      const productTitle = `${quotationData.productName} | ${quotationData.gsm} GSM ${quotationData.fabric}`;
+      const productTitle = sanitizePdfText(`${quotationData.productName} | ${quotationData.gsm} GSM ${quotationData.fabric}`);
       doc.text(productTitle, pageWidth/2, yPos + 8, { align: 'center' });
       
       yPos += 18;
@@ -334,24 +397,31 @@ export default function QuotationGenerator() {
       doc.setTextColor(...mutedColor);
       doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
-      const orderSummary = `Order Quantity: ${formatNumber(quotationData.quantity)} ${quotationData.quantityUnit} | Size Range: ${quotationData.sizeRange} | Delivery: ${quotationData.deliveryTerms}`;
+      const orderSummary = sanitizePdfText(`Order Quantity: ${formatNumber(quotationData.quantity)} ${quotationData.quantityUnit} | Size Range: ${quotationData.sizeRange} | Delivery: ${quotationData.deliveryTerms}`);
       doc.text(orderSummary, pageWidth/2, yPos, { align: 'center' });
 
       yPos += 10;
 
       // Pricing Table
       const tableData = quotationData.variants.map(v => [
-        quotationData.productName,
-        quotationData.fabric,
+        sanitizePdfText(quotationData.productName),
+        sanitizePdfText(quotationData.fabric),
         quotationData.gsm.toString(),
-        v.variant,
-        `${formatNumber(quotationData.quantity)} ${quotationData.quantityUnit}`,
-        `${currencySymbol} ${formatNumber(v.rate)} / ${quotationData.quantityUnit.replace(/s$/, '')}`
+        sanitizePdfText(v.variant),
+        sanitizePdfText(`${formatNumber(quotationData.quantity)} ${quotationData.quantityUnit}`),
+        formatRate(v.rate, quotationData.currency, quotationData.quantityUnit)
       ]);
 
       autoTable(doc, {
         startY: yPos,
-        head: [['Item', 'Fabric', 'GSM', 'Variant', 'Quantity', `Rate (${quotationData.deliveryTerms})`]],
+        head: [[
+          'Item', 
+          'Fabric', 
+          'GSM', 
+          'Variant', 
+          'Quantity', 
+          sanitizePdfText(`Rate (${quotationData.deliveryTerms})`)
+        ]],
         body: tableData,
         theme: 'plain',
         headStyles: {
@@ -375,76 +445,100 @@ export default function QuotationGenerator() {
 
       yPos = (doc as any).lastAutoTable.finalY + 12;
 
-      // Section helper function
-      const addSection = (title: string, items: string[], icon: string) => {
+      // Section helper function - NO EMOJIS, clean text headers
+      const addSection = (title: string, items: string[], type: 'default' | 'success' | 'info' = 'default') => {
         // Check if we need a new page
         if (yPos > pageHeight - 60) {
           doc.addPage();
           yPos = margin;
         }
 
+        // Section header background
         doc.setFillColor(...lightBg);
         doc.rect(margin, yPos, pageWidth - 2*margin, 8, 'F');
+        
+        // Add colored left border for visual distinction
+        if (type === 'success') {
+          doc.setFillColor(...successColor);
+        } else if (type === 'info') {
+          doc.setFillColor(...accentColor);
+        } else {
+          doc.setFillColor(...primaryColor);
+        }
+        doc.rect(margin, yPos, 2, 8, 'F');
+        
         doc.setTextColor(...primaryColor);
         doc.setFontSize(10);
         doc.setFont('helvetica', 'bold');
-        doc.text(`${icon}  ${title}`, margin + 3, yPos + 5.5);
+        doc.text(sanitizePdfText(title), margin + 5, yPos + 5.5);
         yPos += 12;
 
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(8);
         doc.setTextColor(...mutedColor);
-        items.forEach((item, i) => {
+        items.forEach((item) => {
           if (yPos > pageHeight - 20) {
             doc.addPage();
             yPos = margin;
           }
-          doc.text(`•  ${item}`, margin + 3, yPos);
+          // Use bullet point instead of emoji
+          doc.text(sanitizePdfText(`  •  ${item}`), margin + 3, yPos);
           yPos += 5;
         });
         yPos += 5;
       };
 
       // Inclusions
-      addSection('Inclusions (Included in above rate)', quotationData.inclusions, '✓');
+      addSection('INCLUSIONS (Included in above rate)', quotationData.inclusions, 'success');
 
-      // Exclusions
-      addSection('Exclusions (Additional cost if required)', quotationData.exclusions, '✗');
+      // Exclusions  
+      addSection('EXCLUSIONS (Additional cost if required)', quotationData.exclusions, 'default');
 
       // Company Capacity
       if (yPos > pageHeight - 50) {
         doc.addPage();
         yPos = margin;
       }
-      addSection('Company Capacity & Production Setup', [
+      addSection('COMPANY CAPACITY & PRODUCTION SETUP', [
         `In-house stitching unit: ${quotationData.stitchingMachines} sewing machines (${quotationData.stitchingMachines}F seats)`,
         'Additional regular sub-units for bulk orders',
-        `Monthly capacity: ${formatNumber(quotationData.monthlyCapacityMin)} – ${formatNumber(quotationData.monthlyCapacityMax)} ${quotationData.quantityUnit} (depending on style complexity)`,
+        `Monthly capacity: ${formatNumber(quotationData.monthlyCapacityMin)} - ${formatNumber(quotationData.monthlyCapacityMax)} ${quotationData.quantityUnit} (depending on style complexity)`,
         'GS1 Barcode allocation available (1000 numbers ready)'
-      ], '🏭');
+      ], 'info');
 
       // Timeline
-      addSection('Timeline', [
-        `Sampling: ${quotationData.samplingDaysMin}–${quotationData.samplingDaysMax} days after receiving tech pack / size chart / artwork`,
-        `Bulk production: ${quotationData.productionDaysMin}–${quotationData.productionDaysMax} days after PP sample approval + advance payment`,
+      addSection('TIMELINE', [
+        `Sampling: ${quotationData.samplingDaysMin}-${quotationData.samplingDaysMax} days after receiving tech pack / size chart / artwork`,
+        `Bulk production: ${quotationData.productionDaysMin}-${quotationData.productionDaysMax} days after PP sample approval + advance payment`,
         'Dispatch plan: Single lot or multiple lots as per buyer requirement'
-      ], '📅');
+      ], 'info');
 
-      // Payment Terms
-      addSection('Payment Terms', [
-        `${quotationData.advancePercent}% advance + ${100 - quotationData.advancePercent}% ${quotationData.balanceTerms.toLowerCase()} (preferred)`,
-        `${quotationData.repeatBuyerTerms} (for repeat buyers)`,
+      // Payment Terms - FIXED: Changed T0% to proper percentage
+      const balancePercent = 100 - quotationData.advancePercent;
+      addSection('PAYMENT TERMS', [
+        `${quotationData.advancePercent}% advance + ${balancePercent}% ${quotationData.balanceTerms.toLowerCase()} (preferred)`,
+        sanitizePdfText(quotationData.repeatBuyerTerms) + ' (for repeat buyers)',
         'Bank transfer / LC / PayPal accepted'
-      ], '💳');
+      ], 'info');
 
       // Details Required
-      addSection('Details Required to Confirm Final Price', [
+      addSection('DETAILS REQUIRED TO CONFIRM FINAL PRICE', [
         'Tech pack / measurement spec / size chart',
         'Style reference photo or sample details',
         'Fabric type confirmation (knit/woven) and size range',
         'Printing type and artwork (for printed variant)',
         'Packing requirements and delivery terms'
-      ], '📋');
+      ], 'default');
+
+      // Bank Details (optional)
+      if (quotationData.showBankDetails && quotationData.bankName) {
+        addSection('BANK DETAILS FOR PAYMENT', [
+          `Bank Name: ${quotationData.bankName}`,
+          `Account Holder: ${quotationData.accountHolder}`,
+          `Account Number: ${quotationData.accountNumber}`,
+          `IFSC Code: ${quotationData.ifscCode}`
+        ], 'info');
+      }
 
       // Notes
       if (quotationData.notes) {
@@ -453,26 +547,43 @@ export default function QuotationGenerator() {
           yPos = margin;
         }
         doc.setFillColor(254, 249, 195); // amber-100
-        doc.rect(margin, yPos, pageWidth - 2*margin, 15, 'F');
+        doc.rect(margin, yPos, pageWidth - 2*margin, 18, 'F');
+        doc.setFillColor(146, 64, 14); // amber-800 for left border
+        doc.rect(margin, yPos, 2, 18, 'F');
+        
         doc.setTextColor(146, 64, 14); // amber-800
         doc.setFontSize(8);
         doc.setFont('helvetica', 'bold');
-        doc.text('Note:', margin + 3, yPos + 5);
+        doc.text('NOTE:', margin + 5, yPos + 6);
         doc.setFont('helvetica', 'normal');
-        const noteLines = doc.splitTextToSize(quotationData.notes, pageWidth - 2*margin - 20);
-        doc.text(noteLines, margin + 15, yPos + 5);
-        yPos += 20;
+        const noteLines = doc.splitTextToSize(sanitizePdfText(quotationData.notes), pageWidth - 2*margin - 25);
+        doc.text(noteLines, margin + 18, yPos + 6);
+        yPos += 22;
       }
 
-      // Footer
-      const footerY = pageHeight - 35;
+      // Thank you message
+      if (yPos > pageHeight - 50) {
+        doc.addPage();
+        yPos = margin;
+      }
+      yPos += 5;
+      doc.setFillColor(...lightBg);
+      doc.rect(margin, yPos, pageWidth - 2*margin, 15, 'F');
+      doc.setTextColor(...primaryColor);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'italic');
+      doc.text('Thank you for considering Feather Fashions as your manufacturing partner.', pageWidth/2, yPos + 6, { align: 'center' });
+      doc.text('We look forward to working with you!', pageWidth/2, yPos + 11, { align: 'center' });
       
-      // Footer line
+      // Footer
+      const footerY = pageHeight - 30;
+      
+      // Footer separator line
       doc.setDrawColor(...accentColor);
       doc.setLineWidth(0.5);
       doc.line(margin, footerY - 5, pageWidth - margin, footerY - 5);
 
-      // Contact section
+      // Contact section - Left side
       doc.setTextColor(...primaryColor);
       doc.setFontSize(10);
       doc.setFont('helvetica', 'bold');
@@ -483,19 +594,20 @@ export default function QuotationGenerator() {
       doc.setTextColor(...mutedColor);
       doc.text('Tirupur, Tamil Nadu, India', margin, footerY + 7);
       
-      // Contact details - right side
-      doc.text('📧 featherfashions.in@gmail.com', pageWidth - margin - 50, footerY + 2);
-      doc.text('🌐 https://featherfashions.in', pageWidth - margin - 50, footerY + 7);
-      doc.text('📱 +91 9876543210', pageWidth - margin - 50, footerY + 12);
+      // Contact details - Right side (NO EMOJIS)
+      const contactX = pageWidth - margin - 55;
+      doc.text(sanitizePdfText(`Email: ${quotationData.companyEmail}`), contactX, footerY + 2);
+      doc.text(sanitizePdfText(`Web: ${quotationData.companyWebsite}`), contactX, footerY + 7);
+      doc.text(sanitizePdfText(`Phone: ${quotationData.companyPhone}`), contactX, footerY + 12);
 
       // Signature line
-      doc.setTextColor(...primaryColor);
+      doc.setTextColor(...mutedColor);
       doc.setFont('helvetica', 'italic');
-      doc.setFontSize(8);
-      doc.text('This quotation is computer generated and valid without signature.', pageWidth/2, footerY + 20, { align: 'center' });
+      doc.setFontSize(7);
+      doc.text('This quotation is computer generated and valid without signature.', pageWidth/2, footerY + 22, { align: 'center' });
 
       if (download) {
-        const fileName = `Feather_Fashions_Quotation_${quotationData.productName.replace(/\s+/g, '_')}_${formatNumber(quotationData.quantity)}.pdf`;
+        const fileName = sanitizePdfText(`Feather_Fashions_Quotation_${quotationData.productName.replace(/\s+/g, '_')}_${formatNumber(quotationData.quantity)}.pdf`);
         doc.save(fileName);
         toast({
           title: 'Quotation Generated',
@@ -605,6 +717,46 @@ export default function QuotationGenerator() {
                     <SelectItem value="DDP">DDP (Delivered Duty Paid)</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Company Contact Details */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Phone className="h-5 w-5" />
+                Company Contact Details
+              </CardTitle>
+              <CardDescription>Your contact information for the quotation footer</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Phone Number</Label>
+                  <Input
+                    placeholder="+91 98765 43210"
+                    value={quotationData.companyPhone}
+                    onChange={(e) => updateData('companyPhone', e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Email</Label>
+                  <Input
+                    type="email"
+                    placeholder="contact@company.com"
+                    value={quotationData.companyEmail}
+                    onChange={(e) => updateData('companyEmail', e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Website</Label>
+                <Input
+                  placeholder="https://yourwebsite.com"
+                  value={quotationData.companyWebsite}
+                  onChange={(e) => updateData('companyWebsite', e.target.value)}
+                />
               </div>
             </CardContent>
           </Card>
@@ -927,28 +1079,19 @@ export default function QuotationGenerator() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Advance Payment (%)</Label>
+                  <Label>Advance Percentage</Label>
                   <Input
                     type="number"
-                    min="0"
-                    max="100"
                     value={quotationData.advancePercent}
                     onChange={(e) => updateData('advancePercent', parseInt(e.target.value) || 0)}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label>Balance Terms</Label>
-                  <Select value={quotationData.balanceTerms} onValueChange={(v) => updateData('balanceTerms', v)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Before dispatch">Before dispatch</SelectItem>
-                      <SelectItem value="On delivery">On delivery</SelectItem>
-                      <SelectItem value="Net 30 days">Net 30 days</SelectItem>
-                      <SelectItem value="Against LC">Against LC</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Input
+                    value={quotationData.balanceTerms}
+                    onChange={(e) => updateData('balanceTerms', e.target.value)}
+                  />
                 </div>
               </div>
               <div className="space-y-2">
@@ -961,6 +1104,62 @@ export default function QuotationGenerator() {
             </CardContent>
           </Card>
 
+          {/* Bank Details */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <CreditCard className="h-5 w-5" />
+                  Bank Details (Optional)
+                </CardTitle>
+                <Switch
+                  checked={quotationData.showBankDetails}
+                  onCheckedChange={(v) => updateData('showBankDetails', v)}
+                />
+              </div>
+              <CardDescription>Include bank details for payment in the quotation</CardDescription>
+            </CardHeader>
+            {quotationData.showBankDetails && (
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Bank Name</Label>
+                    <Input
+                      placeholder="e.g., HDFC Bank"
+                      value={quotationData.bankName}
+                      onChange={(e) => updateData('bankName', e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Account Holder</Label>
+                    <Input
+                      value={quotationData.accountHolder}
+                      onChange={(e) => updateData('accountHolder', e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Account Number</Label>
+                    <Input
+                      placeholder="Account number"
+                      value={quotationData.accountNumber}
+                      onChange={(e) => updateData('accountNumber', e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>IFSC Code</Label>
+                    <Input
+                      placeholder="e.g., HDFC0001234"
+                      value={quotationData.ifscCode}
+                      onChange={(e) => updateData('ifscCode', e.target.value)}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            )}
+          </Card>
+
           {/* Notes */}
           <Card>
             <CardHeader>
@@ -968,10 +1167,10 @@ export default function QuotationGenerator() {
             </CardHeader>
             <CardContent>
               <Textarea
-                placeholder="Any special notes or terms..."
-                rows={3}
+                placeholder="Any additional notes or special conditions..."
                 value={quotationData.notes}
                 onChange={(e) => updateData('notes', e.target.value)}
+                rows={3}
               />
             </CardContent>
           </Card>
@@ -979,13 +1178,7 @@ export default function QuotationGenerator() {
       </div>
 
       {/* Preview Dialog */}
-      <Dialog open={previewOpen} onOpenChange={(open) => {
-        setPreviewOpen(open);
-        if (!open && previewUrl) {
-          URL.revokeObjectURL(previewUrl);
-          setPreviewUrl(null);
-        }
-      }}>
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
         <DialogContent className="max-w-4xl h-[90vh]">
           <DialogHeader>
             <DialogTitle>Quotation Preview</DialogTitle>
@@ -993,7 +1186,7 @@ export default function QuotationGenerator() {
           {previewUrl && (
             <iframe
               src={previewUrl}
-              className="w-full h-full rounded-lg"
+              className="w-full h-full rounded-md"
               title="Quotation Preview"
             />
           )}
