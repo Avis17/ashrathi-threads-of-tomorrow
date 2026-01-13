@@ -15,7 +15,8 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus, Trash2, Eye } from 'lucide-react';
+import { Plus, Trash2, Eye, Calculator } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useToast } from '@/hooks/use-toast';
 import { TAX_TYPES } from '@/lib/constants';
 // Dynamic import for jsPDF - reduces bundle size
@@ -73,6 +74,13 @@ export default function InvoiceGenerator() {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewPdfUrl, setPreviewPdfUrl] = useState<string | null>(null);
   const [customInvoiceNumber, setCustomInvoiceNumber] = useState<string>('');
+  
+  // Rate calculator state
+  const [calcTotalAmount, setCalcTotalAmount] = useState<string>('');
+  const [calcQuantity, setCalcQuantity] = useState<string>('');
+  const calculatedRate = calcTotalAmount && calcQuantity && Number(calcQuantity) > 0 
+    ? (Number(calcTotalAmount) / Number(calcQuantity)).toFixed(2) 
+    : '0.00';
 
   const { data: customers } = useQuery({
     queryKey: ['customers'],
@@ -850,8 +858,65 @@ export default function InvoiceGenerator() {
       </Card>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Products</CardTitle>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-2">
+                <Calculator className="h-4 w-4" />
+                Rate Calculator
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80 bg-background border shadow-lg" align="end">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <h4 className="font-medium text-sm">Calculate Rate per Piece</h4>
+                  <p className="text-xs text-muted-foreground">
+                    Enter total amount and quantity to find rate per piece
+                  </p>
+                </div>
+                <div className="grid gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Total Amount (₹)</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="Enter total amount"
+                      value={calcTotalAmount}
+                      onChange={(e) => setCalcTotalAmount(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Quantity (Pieces)</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      placeholder="Enter quantity"
+                      value={calcQuantity}
+                      onChange={(e) => setCalcQuantity(e.target.value)}
+                    />
+                  </div>
+                  <div className="border-t pt-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium">Rate per Piece:</span>
+                      <span className="text-lg font-bold text-primary">₹{calculatedRate}</span>
+                    </div>
+                  </div>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => {
+                      setCalcTotalAmount('');
+                      setCalcQuantity('');
+                    }}
+                  >
+                    Clear
+                  </Button>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
         </CardHeader>
         <CardContent className="space-y-4">
           {items.map((item, index) => (
