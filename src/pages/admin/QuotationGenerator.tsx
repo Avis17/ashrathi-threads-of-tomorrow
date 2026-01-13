@@ -12,15 +12,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Download, Plus, Trash2, Building2, FileText, Package, Clock, CreditCard, Eye } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import logoImage from '@/assets/logo.png';
-
-// Dynamic import for jsPDF
-const loadJsPDF = async () => {
-  const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
-    import('jspdf'),
-    import('jspdf-autotable')
-  ]);
-  return { jsPDF, autoTable };
-};
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 interface PricingVariant {
   id: string;
@@ -219,7 +212,6 @@ export default function QuotationGenerator() {
   const generatePDF = async (download: boolean = true) => {
     setGenerating(true);
     try {
-      const { jsPDF } = await loadJsPDF();
       const doc = new jsPDF('p', 'mm', 'a4');
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
