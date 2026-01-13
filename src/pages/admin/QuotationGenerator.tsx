@@ -57,6 +57,10 @@ interface QuotationData {
   stitchingMachines: number;
   monthlyCapacityMin: number;
   monthlyCapacityMax: number;
+  capacityItems: string[];
+  hasSubUnits: boolean;
+  hasBarcodeAllocation: boolean;
+  barcodeCount: number;
   
   // Timeline
   samplingDaysMin: number;
@@ -171,6 +175,12 @@ export default function QuotationGenerator() {
     stitchingMachines: 80,
     monthlyCapacityMin: 20000,
     monthlyCapacityMax: 30000,
+    capacityItems: [
+      'Additional regular sub-units for bulk orders'
+    ],
+    hasSubUnits: true,
+    hasBarcodeAllocation: true,
+    barcodeCount: 1000,
     
     samplingDaysMin: 7,
     samplingDaysMax: 10,
@@ -498,17 +508,20 @@ export default function QuotationGenerator() {
       // Exclusions  
       addSection('EXCLUSIONS (Additional cost if required)', quotationData.exclusions, 'default');
 
-      // Company Capacity
+      // Company Capacity - Build items dynamically
       if (yPos > pageHeight - 50) {
         doc.addPage();
         yPos = margin;
       }
-      addSection('COMPANY CAPACITY & PRODUCTION SETUP', [
+      const capacityItemsList: string[] = [
         `In-house stitching unit: ${quotationData.stitchingMachines} sewing machines (${quotationData.stitchingMachines}F seats)`,
-        'Additional regular sub-units for bulk orders',
-        `Monthly capacity: ${formatNumber(quotationData.monthlyCapacityMin)} - ${formatNumber(quotationData.monthlyCapacityMax)} ${quotationData.quantityUnit} (depending on style complexity)`,
-        'GS1 Barcode allocation available (1000 numbers ready)'
-      ], 'info');
+        ...quotationData.capacityItems,
+        `Monthly capacity: ${formatNumber(quotationData.monthlyCapacityMin)} - ${formatNumber(quotationData.monthlyCapacityMax)} ${quotationData.quantityUnit} (depending on style complexity)`
+      ];
+      if (quotationData.hasBarcodeAllocation) {
+        capacityItemsList.push(`GS1 Barcode allocation available (${formatNumber(quotationData.barcodeCount)} numbers ready)`);
+      }
+      addSection('COMPANY CAPACITY & PRODUCTION SETUP', capacityItemsList, 'info');
 
       // Timeline
       addSection('TIMELINE', [
@@ -1000,12 +1013,12 @@ export default function QuotationGenerator() {
             </CardContent>
           </Card>
 
-          {/* Timeline & Payment */}
+          {/* Timeline */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Clock className="h-5 w-5" />
-                Timeline & Capacity
+                Timeline
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -1043,6 +1056,19 @@ export default function QuotationGenerator() {
                   </div>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Company Capacity & Production Setup */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Building2 className="h-5 w-5" />
+                Company Capacity & Production Setup
+              </CardTitle>
+              <CardDescription>Editable production capabilities shown in quotation</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label>Stitching Machines</Label>
@@ -1069,6 +1095,74 @@ export default function QuotationGenerator() {
                   />
                 </div>
               </div>
+              
+              <Separator />
+              
+              {/* Additional Capacity Items */}
+              <div className="space-y-3">
+                <Label>Additional Capacity Details</Label>
+                <div className="flex flex-wrap gap-2">
+                  {quotationData.capacityItems.map((item, index) => (
+                    <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                      {item}
+                      <button 
+                        onClick={() => updateData('capacityItems', quotationData.capacityItems.filter((_, i) => i !== index))} 
+                        className="ml-1 hover:text-destructive"
+                      >
+                        ×
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Add capacity detail (e.g., Additional sub-units for bulk orders)..."
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && (e.target as HTMLInputElement).value.trim()) {
+                        updateData('capacityItems', [...quotationData.capacityItems, (e.target as HTMLInputElement).value.trim()]);
+                        (e.target as HTMLInputElement).value = '';
+                      }
+                    }}
+                  />
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={(e) => {
+                      const input = (e.target as HTMLButtonElement).previousElementSibling as HTMLInputElement;
+                      if (input?.value.trim()) {
+                        updateData('capacityItems', [...quotationData.capacityItems, input.value.trim()]);
+                        input.value = '';
+                      }
+                    }}
+                  >
+                    Add
+                  </Button>
+                </div>
+              </div>
+              
+              <Separator />
+              
+              {/* Barcode Allocation */}
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>GS1 Barcode Allocation</Label>
+                  <p className="text-xs text-muted-foreground">Show barcode availability in quotation</p>
+                </div>
+                <Switch
+                  checked={quotationData.hasBarcodeAllocation}
+                  onCheckedChange={(v) => updateData('hasBarcodeAllocation', v)}
+                />
+              </div>
+              {quotationData.hasBarcodeAllocation && (
+                <div className="space-y-2">
+                  <Label>Number of Barcodes Available</Label>
+                  <Input
+                    type="number"
+                    value={quotationData.barcodeCount}
+                    onChange={(e) => updateData('barcodeCount', parseInt(e.target.value) || 0)}
+                  />
+                </div>
+              )}
             </CardContent>
           </Card>
 
