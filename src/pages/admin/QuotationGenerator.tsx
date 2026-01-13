@@ -290,33 +290,37 @@ export default function QuotationGenerator() {
       doc.setFillColor(...accentColor);
       doc.rect(0, 53, pageWidth, 2, 'F');
 
-      // Logo - left side
+      // Logo - left side (reduced size for better spacing)
+      const logoSize = 30;
+      const logoX = margin;
+      const logoY = 12;
       try {
         const img = new Image();
         img.src = logoImage;
-        doc.addImage(img, 'PNG', margin, 10, 35, 35);
+        doc.addImage(img, 'PNG', logoX, logoY, logoSize, logoSize);
       } catch (e) {
         // Fallback if logo fails
         doc.setFillColor(255, 255, 255);
-        doc.circle(margin + 17.5, 27.5, 17.5, 'F');
+        doc.circle(logoX + logoSize/2, logoY + logoSize/2, logoSize/2, 'F');
         doc.setTextColor(15, 23, 42);
         doc.setFontSize(8);
-        doc.text('LOGO', margin + 17.5, 29, { align: 'center' });
+        doc.text('LOGO', logoX + logoSize/2, logoY + logoSize/2 + 2, { align: 'center' });
       }
 
-      // Company Name - Header
+      // Company Name - Header (positioned after logo with proper spacing)
+      const textStartX = logoX + logoSize + 8;
       doc.setTextColor(255, 255, 255);
-      doc.setFontSize(24);
+      doc.setFontSize(20);
       doc.setFont('helvetica', 'bold');
-      doc.text('FEATHER FASHIONS', margin + 45, 22);
+      doc.text('FEATHER FASHIONS', textStartX, 22);
       
-      doc.setFontSize(10);
+      doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(148, 163, 184); // slate-400
-      doc.text("Women's Activewear & Sportswear Manufacturer", margin + 45, 30);
-      doc.text('Tirupur, Tamil Nadu, India', margin + 45, 36);
+      doc.text("Women's Activewear & Sportswear Manufacturer", textStartX, 29);
+      doc.text('Tirupur, Tamil Nadu, India', textStartX, 35);
 
-      // Quotation Badge - Right side
+      // Quotation Badge - Far right with proper margin
       doc.setFillColor(...accentColor);
       doc.roundedRect(pageWidth - margin - 50, 12, 50, 20, 3, 3, 'F');
       doc.setTextColor(255, 255, 255);
