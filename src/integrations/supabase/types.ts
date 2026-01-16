@@ -948,6 +948,69 @@ export type Database = {
         }
         Relationships: []
       }
+      exporters: {
+        Row: {
+          address: string | null
+          contact_person: string | null
+          created_at: string
+          email: string | null
+          export_markets: string | null
+          hall_no: string | null
+          id: string
+          is_active: boolean | null
+          landline_number: string | null
+          mobile_number: string
+          name: string
+          notes: string | null
+          products_on_display: string | null
+          sl_no: number | null
+          stall_no: string | null
+          state: string | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          contact_person?: string | null
+          created_at?: string
+          email?: string | null
+          export_markets?: string | null
+          hall_no?: string | null
+          id?: string
+          is_active?: boolean | null
+          landline_number?: string | null
+          mobile_number: string
+          name: string
+          notes?: string | null
+          products_on_display?: string | null
+          sl_no?: number | null
+          stall_no?: string | null
+          state?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          contact_person?: string | null
+          created_at?: string
+          email?: string | null
+          export_markets?: string | null
+          hall_no?: string | null
+          id?: string
+          is_active?: boolean | null
+          landline_number?: string | null
+          mobile_number?: string
+          name?: string
+          notes?: string | null
+          products_on_display?: string | null
+          sl_no?: number | null
+          stall_no?: string | null
+          state?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       external_job_companies: {
         Row: {
           account_details: string | null
