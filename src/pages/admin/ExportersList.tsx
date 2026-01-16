@@ -63,7 +63,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-// Initial exporters data for seeding
+// Initial exporters data for seeding - Indian Garment Exporters Directory
 const INITIAL_EXPORTERS_DATA: ExporterInput[] = [
   { sl_no: 1, name: "Aabote Fashion LLP", hall_no: "2A", stall_no: "T-12", address: "G-1-158, Industrial Area Apparel Park, Jagatpura Jaipur-302025", state: "Rajasthan", contact_person: "Arpit Jain", mobile_number: "95097 07990", landline_number: "", email: "aabotefashionllp@gmail.com", website: "www.aabotefashionllp.com", products_on_display: "Beach Wear,Trousers, Shorts, Skirts, Women 's Blouses,Women Dresses,Women 's Trousers,Women 's Skirts, Tunics,Boys Wear, Girls Wear", export_markets: "" },
   { sl_no: 2, name: "Tushar Handworks", hall_no: "2C", stall_no: "F-07", address: "P-7A Tilak Marg, C-Scheme, Jaipur-302001", state: "Rajasthan", contact_person: "Tushar Bhatnagar", mobile_number: "98290 60717", landline_number: "0141-404-8625", email: "mail@tushargroup.com", website: "www.tusharhandworks.com", products_on_display: "Jeans/ Denims, Women Blouses, Women Dresses, Knitwear, Designer Labels-Fashion", export_markets: "Japan, France, Spain, Italy, Norway, USA, Australia, Chile, Uruguay, Egypt, Dubai" },
@@ -171,13 +171,17 @@ export default function ExportersList() {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editFormData, setEditFormData] = useState<Partial<ExporterInput>>({});
+  const [isSeeding, setIsSeeding] = useState(false);
 
   // Seed data on first load if no exporters exist
   useEffect(() => {
-    if (!isLoading && exporters.length === 0) {
-      bulkAddExporters.mutate(INITIAL_EXPORTERS_DATA);
+    if (!isLoading && exporters.length === 0 && !isSeeding) {
+      setIsSeeding(true);
+      bulkAddExporters.mutate(INITIAL_EXPORTERS_DATA, {
+        onSettled: () => setIsSeeding(false)
+      });
     }
-  }, [isLoading, exporters.length]);
+  }, [isLoading, exporters.length, isSeeding]);
 
   // Extract unique states and markets for filters
   const uniqueStates = useMemo(() => {
@@ -307,10 +311,10 @@ export default function ExportersList() {
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-            Indian Exporters Directory
+            Indian Garment Exporters
           </h1>
           <p className="text-muted-foreground mt-1">
-            Comprehensive database of verified Indian garment exporters
+            Directory of established Indian garment manufacturers successfully exporting globally
           </p>
         </div>
         <div className="flex gap-2">
@@ -318,9 +322,14 @@ export default function ExportersList() {
             <Download className="h-4 w-4 mr-2" />
             Export CSV
           </Button>
-          <Button variant="outline" size="sm" onClick={() => bulkAddExporters.mutate(INITIAL_EXPORTERS_DATA)}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Sync Data
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => bulkAddExporters.mutate(INITIAL_EXPORTERS_DATA)}
+            disabled={bulkAddExporters.isPending}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${bulkAddExporters.isPending ? 'animate-spin' : ''}`} />
+            {bulkAddExporters.isPending ? 'Loading...' : 'Load Data'}
           </Button>
         </div>
       </div>
@@ -334,7 +343,7 @@ export default function ExportersList() {
                 <Users className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Total Exporters</p>
+                <p className="text-sm text-muted-foreground">Total Manufacturers</p>
                 <p className="text-2xl font-bold">{exporters.length}</p>
               </div>
             </div>
@@ -465,7 +474,7 @@ export default function ExportersList() {
       {/* Table */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-4">
-          <CardTitle className="text-lg">Exporters List</CardTitle>
+          <CardTitle className="text-lg">Garment Manufacturers & Exporters</CardTitle>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">Show:</span>
@@ -651,7 +660,7 @@ export default function ExportersList() {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl">{selectedExporter?.name}</DialogTitle>
-            <DialogDescription>Complete exporter details</DialogDescription>
+            <DialogDescription>Garment manufacturer details and export capabilities</DialogDescription>
           </DialogHeader>
           {selectedExporter && (
             <div className="space-y-6">
