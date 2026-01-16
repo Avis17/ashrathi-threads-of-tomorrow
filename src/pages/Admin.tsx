@@ -56,6 +56,7 @@ import PrintDeliveryChallan from './admin/delivery-challan/PrintDeliveryChallan'
 import SamplingPreparation from './admin/SamplingPreparation';
 import SamplingTermsGenerator from './admin/SamplingTermsGenerator';
 import QuotationGenerator from './admin/QuotationGenerator';
+import ExportersList from './admin/ExportersList';
 
 const Admin = () => {
   const { isAdmin, loading } = useAuth();
@@ -116,6 +117,7 @@ const Admin = () => {
               <Route path="/app-access" element={<AppAccessManagement />} />
               <Route path="/buyer-followups" element={<BuyerFollowups />} />
               <Route path="/export-buyers" element={<ExportBuyerContacts />} />
+              <Route path="/exporters" element={<ExportersList />} />
               <Route path="/activity-logs" element={<ActivityLogs />} />
               <Route path="/sampling" element={<SamplingPreparation />} />
               <Route path="/sampling-terms" element={<SamplingTermsGenerator />} />
