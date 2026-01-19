@@ -39,7 +39,12 @@ const CompanyProfile = () => {
     
     toast.loading('Generating premium PDF...');
     try {
-      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdf = new jsPDF({
+        orientation: 'p',
+        unit: 'mm',
+        format: 'a4',
+        compress: true  // Enable PDF compression
+      });
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfPageHeight = pdf.internal.pageSize.getHeight();
       
@@ -59,9 +64,9 @@ const CompanyProfile = () => {
       let currentY = marginTop;
       let pageNumber = 1;
       
-      // Higher quality rendering
+      // Optimized rendering - scale 2 is sufficient for print quality
       const renderOptions = {
-        scale: 3,
+        scale: 2,  // Reduced from 3 - still crisp for A4 printing
         useCORS: true,
         logging: false,
         backgroundColor: '#ffffff',
@@ -72,7 +77,8 @@ const CompanyProfile = () => {
       const addElementToPDF = async (element: Element, isFixed: boolean = false) => {
         const canvas = await html2canvas(element as HTMLElement, renderOptions);
         
-        const imgData = canvas.toDataURL('image/png');
+        // Use JPEG with 85% quality for smaller file size (vs PNG)
+        const imgData = canvas.toDataURL('image/jpeg', 0.85);
         const aspectRatio = canvas.height / canvas.width;
         const imgHeight = contentWidth * aspectRatio;
         
@@ -83,7 +89,7 @@ const CompanyProfile = () => {
           currentY = marginTop;
         }
         
-        pdf.addImage(imgData, 'PNG', marginLeft, currentY, contentWidth, imgHeight);
+        pdf.addImage(imgData, 'JPEG', marginLeft, currentY, contentWidth, imgHeight);
         currentY += imgHeight + 2; // Add 2mm gap between sections
         
         return imgHeight;
@@ -111,7 +117,8 @@ const CompanyProfile = () => {
           backgroundColor: '#0f172a',
         });
         
-        const footerImgData = footerCanvas.toDataURL('image/png');
+        // Use JPEG for footer too
+        const footerImgData = footerCanvas.toDataURL('image/jpeg', 0.85);
         const footerAspectRatio = footerCanvas.height / footerCanvas.width;
         const footerHeight = pdfWidth * footerAspectRatio;
         
@@ -122,7 +129,7 @@ const CompanyProfile = () => {
         
         // Position footer at the very bottom of the last page
         const footerY = pdfPageHeight - footerHeight;
-        pdf.addImage(footerImgData, 'PNG', 0, footerY, pdfWidth, footerHeight);
+        pdf.addImage(footerImgData, 'JPEG', 0, footerY, pdfWidth, footerHeight);
       }
       
       // Add page numbers
