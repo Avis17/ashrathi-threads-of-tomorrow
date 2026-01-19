@@ -195,7 +195,7 @@ export const ProfilePreviewPrint = forwardRef<HTMLDivElement, ProfilePreviewPrin
             {profile.city && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#334155' }}>
                 <MapPin style={{ width: '16px', height: '16px', color: '#f59e0b' }} />
-                <span>{profile.city}, {profile.state}</span>
+                <span>{profile.city}</span>
               </div>
             )}
           </div>
