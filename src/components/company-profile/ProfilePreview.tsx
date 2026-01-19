@@ -2,6 +2,7 @@ import { forwardRef } from 'react';
 import { CompanyProfile } from './useProfileData';
 import { Building2, Scissors, Shirt, CheckCircle, Flame, Package, Users, Phone, Mail, MapPin, Globe, Zap } from 'lucide-react';
 import { format } from 'date-fns';
+import { StitchingMachine } from './StitchingMachinesInput';
 
 interface ProfilePreviewProps {
   profile: Partial<CompanyProfile>;
@@ -74,15 +75,7 @@ export const ProfilePreview = forwardRef<HTMLDivElement, ProfilePreviewProps>(
           />
 
           {/* Stitching Section */}
-          <SectionCard
-            icon={<Shirt className="h-5 w-5" />}
-            title="Stitching Section"
-            color="blue"
-            items={[
-              { label: 'Staff', value: profile.stitching_staff || 0 },
-            ]}
-            notes={profile.stitching_notes}
-          />
+          <StitchingSectionCard profile={profile} />
 
           {/* Checking Section */}
           <SectionCard
@@ -169,6 +162,63 @@ const FeatureCard = ({ title, available, detail }: { title: string; available?: 
     </p>
   </div>
 );
+
+const StitchingSectionCard = ({ profile }: { profile: Partial<CompanyProfile> }) => {
+  // Parse stitching_machines from JSON
+  const machines: StitchingMachine[] = profile.stitching_machines 
+    ? (typeof profile.stitching_machines === 'string' 
+        ? JSON.parse(profile.stitching_machines) 
+        : profile.stitching_machines as unknown as StitchingMachine[])
+    : [];
+
+  const totalMachines = machines.reduce((sum, m) => sum + (m.count || 0), 0);
+
+  return (
+    <div className="rounded-xl border border-slate-200 overflow-hidden">
+      <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-3 flex items-center gap-2">
+        <Shirt className="h-5 w-5" />
+        <h3 className="font-semibold">Stitching Section</h3>
+      </div>
+      <div className="p-4 bg-white">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <p className="text-xs text-slate-500 uppercase tracking-wide">Staff</p>
+            <p className="font-semibold text-slate-800">{profile.stitching_staff || 0}</p>
+          </div>
+          {totalMachines > 0 && (
+            <div className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
+              Total: {totalMachines} Machines
+            </div>
+          )}
+        </div>
+        
+        {machines.length > 0 && (
+          <div className="space-y-1">
+            <p className="text-xs text-slate-500 uppercase tracking-wide mb-2">Stitching Machines Available:</p>
+            <ul className="space-y-1">
+              {machines.map((machine, idx) => (
+                <li key={idx} className="flex items-center gap-2 text-sm">
+                  <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                  <span className="font-medium text-slate-700">
+                    {machine.type === 'Others' ? machine.customType : machine.type}
+                  </span>
+                  <span className="text-slate-500">- {machine.count} Nos</span>
+                  {machine.brand && (
+                    <span className="text-slate-400 text-xs">({machine.brand})</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        
+        {profile.stitching_notes && (
+          <p className="text-sm text-slate-600 mt-3 pt-3 border-t border-slate-100">{profile.stitching_notes}</p>
+        )}
+      </div>
+    </div>
+  );
+};
 
 const SectionCard = ({ icon, title, color, items, notes }: { 
   icon: React.ReactNode; 

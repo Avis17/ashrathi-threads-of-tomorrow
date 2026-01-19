@@ -6,6 +6,7 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Building2, Scissors, Shirt, CheckCircle, Flame, Package, Users } from 'lucide-react';
 import { CompanyProfile, CompanyProfileInsert } from './useProfileData';
+import { StitchingMachinesInput, StitchingMachine } from './StitchingMachinesInput';
 
 interface ProfileFormProps {
   formData: Partial<CompanyProfileInsert>;
@@ -90,15 +91,58 @@ const CuttingForm = ({ formData, onChange }: ProfileFormProps) => (
   </Card>
 );
 
-const StitchingForm = ({ formData, onChange }: ProfileFormProps) => (
-  <Card>
-    <CardHeader><CardTitle className="flex items-center gap-2"><Shirt className="h-5 w-5" />Stitching Section</CardTitle></CardHeader>
-    <CardContent className="grid grid-cols-2 gap-4">
-      <div><Label>Stitching Staff Count</Label><Input type="number" value={formData.stitching_staff || 0} onChange={(e) => onChange('stitching_staff', parseInt(e.target.value) || 0)} /></div>
-      <div className="col-span-2"><Label>Stitching Notes</Label><Textarea value={formData.stitching_notes || ''} onChange={(e) => onChange('stitching_notes', e.target.value)} placeholder="Machine types, counts, brands..." /></div>
-    </CardContent>
-  </Card>
-);
+const StitchingForm = ({ formData, onChange }: ProfileFormProps) => {
+  // Parse stitching_machines from JSON
+  const parseMachines = (): StitchingMachine[] => {
+    if (!formData.stitching_machines) return [];
+    if (typeof formData.stitching_machines === 'string') {
+      try {
+        return JSON.parse(formData.stitching_machines);
+      } catch {
+        return [];
+      }
+    }
+    if (Array.isArray(formData.stitching_machines)) {
+      return formData.stitching_machines as unknown as StitchingMachine[];
+    }
+    return [];
+  };
+  
+  const machines = parseMachines();
+
+  return (
+    <Card>
+      <CardHeader><CardTitle className="flex items-center gap-2"><Shirt className="h-5 w-5" />Stitching Section</CardTitle></CardHeader>
+      <CardContent className="space-y-6">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label>Stitching Staff Count</Label>
+            <Input 
+              type="number" 
+              value={formData.stitching_staff || 0} 
+              onChange={(e) => onChange('stitching_staff', parseInt(e.target.value) || 0)} 
+            />
+          </div>
+        </div>
+
+        <StitchingMachinesInput 
+          value={machines}
+          onChange={(newMachines) => onChange('stitching_machines', newMachines)}
+        />
+
+        <div>
+          <Label>Additional Notes</Label>
+          <Textarea 
+            value={formData.stitching_notes || ''} 
+            onChange={(e) => onChange('stitching_notes', e.target.value)} 
+            placeholder="Any additional notes about stitching section..."
+            rows={3}
+          />
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
 
 const CheckingForm = ({ formData, onChange }: ProfileFormProps) => (
   <Card>
