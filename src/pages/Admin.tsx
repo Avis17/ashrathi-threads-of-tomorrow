@@ -1,5 +1,5 @@
 // Admin Dashboard Router
-import { useEffect } from 'react';
+import { useEffect, lazy, Suspense } from 'react';
 import { useNavigate, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { SidebarProvider } from '@/components/ui/sidebar';
@@ -58,7 +58,7 @@ import SamplingPreparation from './admin/SamplingPreparation';
 import SamplingTermsGenerator from './admin/SamplingTermsGenerator';
 import QuotationGenerator from './admin/QuotationGenerator';
 import ExportersList from './admin/ExportersList';
-// CompanyProfile temporarily disabled due to compiler issue
+const CompanyProfile = lazy(() => import('./admin/CompanyProfile'));
 
 const Admin = () => {
   const { isAdmin, loading } = useAuth();
@@ -113,7 +113,7 @@ const Admin = () => {
               <Route path="/newsletter" element={<NewsletterManager />} />
               <Route path="/invoice-reset" element={<InvoiceReset />} />
               <Route path="/letterhead" element={<CompanyLetterhead />} />
-              {/* Company Profile route temporarily disabled */}
+              <Route path="/company-profile" element={<Suspense fallback={<div className="p-6">Loading...</div>}><CompanyProfile /></Suspense>} />
               <Route path="/label-generator" element={<LabelGenerator />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/apps" element={<FeatherApps />} />
