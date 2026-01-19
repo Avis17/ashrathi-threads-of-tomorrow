@@ -1,3 +1,4 @@
+// Admin Dashboard Router
 import { useEffect } from 'react';
 import { useNavigate, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -118,6 +119,7 @@ const Admin = () => {
               <Route path="/buyer-followups" element={<BuyerFollowups />} />
               <Route path="/export-buyers" element={<ExportBuyerContacts />} />
               <Route path="/exporters" element={<ExportersList />} />
+              <Route path="/activity-logs" element={<ActivityLogs />} />
               <Route path="/activity-logs" element={<ActivityLogs />} />
               <Route path="/sampling" element={<SamplingPreparation />} />
               <Route path="/sampling-terms" element={<SamplingTermsGenerator />} />
