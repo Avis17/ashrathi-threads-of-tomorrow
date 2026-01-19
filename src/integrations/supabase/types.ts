@@ -509,8 +509,11 @@ export type Database = {
       company_profiles: {
         Row: {
           address: string | null
+          aql_followed: boolean | null
+          authorized_signatory_name: string | null
           boiler_available: boolean | null
           brand_name: string | null
+          carton_packing_support: boolean | null
           checking_images: string[] | null
           checking_notes: string | null
           checking_staff: number | null
@@ -531,20 +534,26 @@ export type Database = {
           cutting_table_size: string | null
           cutting_tables_count: number | null
           daily_production_capacity: string | null
+          eb_power_available: boolean | null
           email: string | null
           fabric_inspection_table_size: string | null
           fabric_inspection_tables_count: number | null
+          final_checking: boolean | null
           general_remarks: string | null
           generator_available: boolean | null
           generator_capacity: string | null
           gst_number: string | null
           id: string
+          inline_checking: boolean | null
           ironing_images: string[] | null
           ironing_notes: string | null
           ironing_staff: number | null
           ironing_tables_count: number | null
           is_active: boolean | null
+          lead_time: string | null
+          measurement_check: boolean | null
           measurement_tools: Json | null
+          moq: string | null
           packing_images: string[] | null
           packing_notes: string | null
           packing_staff: number | null
@@ -552,6 +561,9 @@ export type Database = {
           phone: string | null
           polybag_sealing_available: boolean | null
           power_connection_type: string | null
+          power_phase: string | null
+          sample_lead_time: string | null
+          signatory_designation: string | null
           staff_notes: string | null
           state: string | null
           steam_iron_count: number | null
@@ -570,8 +582,11 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          aql_followed?: boolean | null
+          authorized_signatory_name?: string | null
           boiler_available?: boolean | null
           brand_name?: string | null
+          carton_packing_support?: boolean | null
           checking_images?: string[] | null
           checking_notes?: string | null
           checking_staff?: number | null
@@ -592,20 +607,26 @@ export type Database = {
           cutting_table_size?: string | null
           cutting_tables_count?: number | null
           daily_production_capacity?: string | null
+          eb_power_available?: boolean | null
           email?: string | null
           fabric_inspection_table_size?: string | null
           fabric_inspection_tables_count?: number | null
+          final_checking?: boolean | null
           general_remarks?: string | null
           generator_available?: boolean | null
           generator_capacity?: string | null
           gst_number?: string | null
           id?: string
+          inline_checking?: boolean | null
           ironing_images?: string[] | null
           ironing_notes?: string | null
           ironing_staff?: number | null
           ironing_tables_count?: number | null
           is_active?: boolean | null
+          lead_time?: string | null
+          measurement_check?: boolean | null
           measurement_tools?: Json | null
+          moq?: string | null
           packing_images?: string[] | null
           packing_notes?: string | null
           packing_staff?: number | null
@@ -613,6 +634,9 @@ export type Database = {
           phone?: string | null
           polybag_sealing_available?: boolean | null
           power_connection_type?: string | null
+          power_phase?: string | null
+          sample_lead_time?: string | null
+          signatory_designation?: string | null
           staff_notes?: string | null
           state?: string | null
           steam_iron_count?: number | null
@@ -631,8 +655,11 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          aql_followed?: boolean | null
+          authorized_signatory_name?: string | null
           boiler_available?: boolean | null
           brand_name?: string | null
+          carton_packing_support?: boolean | null
           checking_images?: string[] | null
           checking_notes?: string | null
           checking_staff?: number | null
@@ -653,20 +680,26 @@ export type Database = {
           cutting_table_size?: string | null
           cutting_tables_count?: number | null
           daily_production_capacity?: string | null
+          eb_power_available?: boolean | null
           email?: string | null
           fabric_inspection_table_size?: string | null
           fabric_inspection_tables_count?: number | null
+          final_checking?: boolean | null
           general_remarks?: string | null
           generator_available?: boolean | null
           generator_capacity?: string | null
           gst_number?: string | null
           id?: string
+          inline_checking?: boolean | null
           ironing_images?: string[] | null
           ironing_notes?: string | null
           ironing_staff?: number | null
           ironing_tables_count?: number | null
           is_active?: boolean | null
+          lead_time?: string | null
+          measurement_check?: boolean | null
           measurement_tools?: Json | null
+          moq?: string | null
           packing_images?: string[] | null
           packing_notes?: string | null
           packing_staff?: number | null
@@ -674,6 +707,9 @@ export type Database = {
           phone?: string | null
           polybag_sealing_available?: boolean | null
           power_connection_type?: string | null
+          power_phase?: string | null
+          sample_lead_time?: string | null
+          signatory_designation?: string | null
           staff_notes?: string | null
           state?: string | null
           steam_iron_count?: number | null

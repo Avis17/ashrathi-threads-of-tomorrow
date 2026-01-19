@@ -21,6 +21,8 @@ export const defaultProfile: Partial<CompanyProfileInsert> = {
   total_employees: 0,
   daily_production_capacity: '',
   power_connection_type: '',
+  eb_power_available: true,
+  power_phase: '3 Phase',
   generator_available: false,
   generator_capacity: '',
   compressor_available: false,
@@ -47,8 +49,21 @@ export const defaultProfile: Partial<CompanyProfileInsert> = {
   storage_racks_available: false,
   polybag_sealing_available: false,
   tagging_barcode_support: false,
+  carton_packing_support: false,
   packing_staff: 0,
   packing_notes: '',
+  // Quality Control
+  inline_checking: false,
+  final_checking: true,
+  measurement_check: true,
+  aql_followed: false,
+  // Production Capability
+  moq: '',
+  lead_time: '',
+  sample_lead_time: '',
+  // Signatory
+  authorized_signatory_name: '',
+  signatory_designation: '',
   staff_notes: '',
   general_remarks: '',
 };

@@ -1,8 +1,9 @@
 import { forwardRef } from 'react';
 import { CompanyProfile } from './useProfileData';
-import { Building2, Scissors, Shirt, CheckCircle, Flame, Package, Users, Phone, Mail, MapPin, Globe, Zap } from 'lucide-react';
+import { Building2, Scissors, Shirt, CheckCircle, Flame, Package, Users, Phone, Mail, MapPin, Globe, Zap, ClipboardCheck, Factory, FileSignature, Check, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { StitchingMachine } from './StitchingMachinesInput';
+import signatureImage from '@/assets/signature.png';
 
 interface ProfilePreviewProps {
   profile: Partial<CompanyProfile>;
@@ -27,6 +28,15 @@ export const ProfilePreview = forwardRef<HTMLDivElement, ProfilePreviewProps>(
     };
 
     const badgeContent = getBadgeContent();
+
+    // Power display helper
+    const getPowerDisplay = () => {
+      const parts: string[] = [];
+      if (profile.eb_power_available !== false) parts.push('EB Power');
+      if (profile.power_phase) parts.push(profile.power_phase);
+      if (profile.power_connection_type) parts.push(profile.power_connection_type);
+      return parts.length > 0 ? parts.join(' • ') : 'Available';
+    };
 
     return (
       <div ref={ref} className="bg-white min-h-[297mm] w-full max-w-[210mm] mx-auto shadow-2xl" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
@@ -61,8 +71,8 @@ export const ProfilePreview = forwardRef<HTMLDivElement, ProfilePreviewProps>(
         <div className="grid grid-cols-4 gap-4 p-8 bg-gradient-to-b from-slate-50 to-white">
           <StatCard icon={<Users className="h-6 w-6" />} label="Total Staff" value={profile.total_employees || totalStaff} color="blue" />
           <StatCard icon={<Scissors className="h-6 w-6" />} label="Total Tables" value={totalTables} color="green" />
-          <StatCard icon={<Zap className="h-6 w-6" />} label="Power" value={profile.power_connection_type || 'N/A'} color="amber" />
-          <StatCard icon={<Building2 className="h-6 w-6" />} label="Capacity" value={profile.daily_production_capacity || 'N/A'} color="purple" />
+          <StatCard icon={<Zap className="h-6 w-6" />} label="Power" value={getPowerDisplay()} color="amber" />
+          <StatCard icon={<Building2 className="h-6 w-6" />} label="Capacity" value={profile.daily_production_capacity || 'Contact Us'} color="purple" />
         </div>
 
         {/* Sections Grid */}
@@ -74,13 +84,19 @@ export const ProfilePreview = forwardRef<HTMLDivElement, ProfilePreviewProps>(
             <FeatureCard title="Boiler" available={profile.boiler_available} />
           </div>
 
+          {/* Production Capability */}
+          <ProductionCapabilityCard profile={profile} />
+
+          {/* Quality Control */}
+          <QualityControlCard profile={profile} />
+
           {/* Cutting Section */}
           <SectionCard
             icon={<Scissors className="h-5 w-5" />}
             title="Cutting Section"
             color="emerald"
             items={[
-              { label: 'Cutting Tables', value: `${profile.cutting_tables_count || 0} (${profile.cutting_table_size || 'N/A'})` },
+              { label: 'Cutting Tables', value: `${profile.cutting_tables_count || 0} (${profile.cutting_table_size || '-'})` },
               { label: 'Fabric Inspection Tables', value: `${profile.fabric_inspection_tables_count || 0}` },
               { label: 'Staff', value: profile.cutting_staff || 0 },
             ]}
@@ -96,7 +112,7 @@ export const ProfilePreview = forwardRef<HTMLDivElement, ProfilePreviewProps>(
             title="Checking Section"
             color="violet"
             items={[
-              { label: 'Checking Tables', value: `${profile.checking_tables_count || 0} (${profile.checking_table_size || 'N/A'})` },
+              { label: 'Checking Tables', value: `${profile.checking_tables_count || 0} (${profile.checking_table_size || '-'})` },
               { label: 'Staff', value: profile.checking_staff || 0 },
             ]}
             notes={profile.checking_notes}
@@ -126,6 +142,7 @@ export const ProfilePreview = forwardRef<HTMLDivElement, ProfilePreviewProps>(
               { label: 'Storage Racks', value: profile.storage_racks_available ? 'Yes' : 'No' },
               { label: 'Polybag Sealing', value: profile.polybag_sealing_available ? 'Yes' : 'No' },
               { label: 'Tagging/Barcode', value: profile.tagging_barcode_support ? 'Yes' : 'No' },
+              { label: 'Carton Packing', value: profile.carton_packing_support ? 'Yes' : 'No' },
               { label: 'Staff', value: profile.packing_staff || 0 },
             ]}
             notes={profile.packing_notes}
@@ -138,6 +155,9 @@ export const ProfilePreview = forwardRef<HTMLDivElement, ProfilePreviewProps>(
               <p className="text-slate-600 text-sm whitespace-pre-wrap">{profile.general_remarks}</p>
             </div>
           )}
+
+          {/* Signature & Seal Section */}
+          <SignatorySection profile={profile} />
         </div>
 
         {/* Footer */}
@@ -162,7 +182,7 @@ const StatCard = ({ icon, label, value, color }: { icon: React.ReactNode; label:
   return (
     <div className={`rounded-xl p-4 border-2 ${colorClasses[color]}`}>
       <div className="flex items-center gap-2 mb-2">{icon}<span className="text-xs font-medium uppercase tracking-wide">{label}</span></div>
-      <p className="text-2xl font-bold">{value}</p>
+      <p className="text-lg font-bold leading-tight">{value}</p>
     </div>
   );
 };
@@ -173,6 +193,83 @@ const FeatureCard = ({ title, available, detail }: { title: string; available?: 
     <p className={`text-sm ${available ? 'text-green-600' : 'text-slate-400'}`}>
       {available ? (detail || 'Available') : 'Not Available'}
     </p>
+  </div>
+);
+
+const ProductionCapabilityCard = ({ profile }: { profile: Partial<CompanyProfile> }) => (
+  <div className="rounded-xl border border-slate-200 overflow-hidden">
+    <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white px-4 py-3 flex items-center gap-2">
+      <Factory className="h-5 w-5" />
+      <h3 className="font-semibold">Production Capability</h3>
+    </div>
+    <div className="p-4 bg-white">
+      <div className="grid grid-cols-4 gap-4">
+        <div>
+          <p className="text-xs text-slate-500 uppercase tracking-wide">Daily Capacity</p>
+          <p className="font-semibold text-slate-800">{profile.daily_production_capacity || 'Contact Us'}</p>
+        </div>
+        <div>
+          <p className="text-xs text-slate-500 uppercase tracking-wide">MOQ</p>
+          <p className="font-semibold text-slate-800">{profile.moq || 'Flexible'}</p>
+        </div>
+        <div>
+          <p className="text-xs text-slate-500 uppercase tracking-wide">Lead Time</p>
+          <p className="font-semibold text-slate-800">{profile.lead_time || '30-45 days'}</p>
+        </div>
+        <div>
+          <p className="text-xs text-slate-500 uppercase tracking-wide">Sample Lead Time</p>
+          <p className="font-semibold text-slate-800">{profile.sample_lead_time || '7-10 days'}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+const QualityControlCard = ({ profile }: { profile: Partial<CompanyProfile> }) => {
+  const qcItems = [
+    { label: 'Inline Checking', checked: profile.inline_checking },
+    { label: 'Final Checking', checked: profile.final_checking ?? true },
+    { label: 'Measurement Check', checked: profile.measurement_check ?? true },
+    { label: 'AQL Followed', checked: profile.aql_followed },
+  ];
+
+  return (
+    <div className="rounded-xl border border-slate-200 overflow-hidden">
+      <div className="bg-gradient-to-r from-rose-500 to-rose-600 text-white px-4 py-3 flex items-center gap-2">
+        <ClipboardCheck className="h-5 w-5" />
+        <h3 className="font-semibold">Quality Control Process</h3>
+      </div>
+      <div className="p-4 bg-white">
+        <div className="grid grid-cols-4 gap-4">
+          {qcItems.map((item, idx) => (
+            <div key={idx} className="flex items-center gap-2">
+              <div className={`w-5 h-5 rounded-full flex items-center justify-center ${item.checked ? 'bg-green-500' : 'bg-slate-300'}`}>
+                {item.checked ? <Check className="h-3 w-3 text-white" /> : <X className="h-3 w-3 text-white" />}
+              </div>
+              <span className={`text-sm ${item.checked ? 'text-slate-800 font-medium' : 'text-slate-500'}`}>{item.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const SignatorySection = ({ profile }: { profile: Partial<CompanyProfile> }) => (
+  <div className="border-t-2 border-slate-200 pt-8 mt-8">
+    <div className="flex justify-between items-end">
+      <div className="text-sm text-slate-500">
+        <p>This document is system generated.</p>
+        <p>For queries, contact: {profile.phone || profile.email || 'info@company.com'}</p>
+      </div>
+      <div className="text-center">
+        <img src={signatureImage} alt="Signature" className="h-16 mx-auto mb-2" />
+        <div className="border-t border-slate-400 pt-2 min-w-[200px]">
+          <p className="font-semibold text-slate-800">{profile.authorized_signatory_name || profile.contact_person || 'Authorized Signatory'}</p>
+          <p className="text-sm text-slate-600">{profile.signatory_designation || 'Director'}</p>
+        </div>
+      </div>
+    </div>
   </div>
 );
 
