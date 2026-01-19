@@ -37,7 +37,7 @@ const CompanyProfile = () => {
   const handleDownloadPDF = async () => {
     if (!previewRef.current) return;
     
-    toast.loading('Generating PDF...');
+    toast.loading('Generating premium PDF...');
     try {
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
@@ -49,43 +49,47 @@ const CompanyProfile = () => {
       const contactStrip = previewRef.current.querySelector('.profile-container > div:nth-child(2)');
       const footer = previewRef.current.querySelector('.footer-section');
       
-      // Margins in mm
-      const marginTop = 5;
-      const marginBottom = 20;
-      const marginLeft = 5;
-      const contentWidth = pdfWidth - (marginLeft * 2);
-      const usableHeight = pdfPageHeight - marginTop - marginBottom;
+      // Margins in mm - more professional spacing
+      const marginTop = 8;
+      const marginBottom = 8;
+      const marginLeft = 8;
+      const marginRight = 8;
+      const contentWidth = pdfWidth - marginLeft - marginRight;
       
       let currentY = marginTop;
       let pageNumber = 1;
       
-      // Helper function to add element to PDF
-      const addElementToPDF = async (element: Element, isFirstPage: boolean = false) => {
-        const canvas = await html2canvas(element as HTMLElement, {
-          scale: 2,
-          useCORS: true,
-          logging: false,
-          backgroundColor: '#ffffff',
-        });
+      // Higher quality rendering
+      const renderOptions = {
+        scale: 3,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+        allowTaint: true,
+      };
+      
+      // Helper function to add element to PDF with proper page break handling
+      const addElementToPDF = async (element: Element, isFixed: boolean = false) => {
+        const canvas = await html2canvas(element as HTMLElement, renderOptions);
         
         const imgData = canvas.toDataURL('image/png');
         const aspectRatio = canvas.height / canvas.width;
         const imgHeight = contentWidth * aspectRatio;
         
-        // Check if element fits on current page
-        if (currentY + imgHeight > pdfPageHeight - marginBottom && !isFirstPage) {
+        // Check if element fits on current page (with margin for footer)
+        if (currentY + imgHeight > pdfPageHeight - marginBottom && !isFixed) {
           pdf.addPage();
           pageNumber++;
           currentY = marginTop;
         }
         
         pdf.addImage(imgData, 'PNG', marginLeft, currentY, contentWidth, imgHeight);
-        currentY += imgHeight;
+        currentY += imgHeight + 2; // Add 2mm gap between sections
         
         return imgHeight;
       };
       
-      // Add header
+      // Add header (always on first page)
       if (header) {
         await addElementToPDF(header, true);
       }
@@ -95,17 +99,15 @@ const CompanyProfile = () => {
         await addElementToPDF(contactStrip, true);
       }
       
-      // Add each section card (they won't be split)
+      // Add each section card - they won't be split across pages
       for (const section of sections) {
         await addElementToPDF(section);
       }
       
-      // Add footer at the bottom of the last page
+      // Add footer at the bottom of the LAST page only
       if (footer) {
         const footerCanvas = await html2canvas(footer as HTMLElement, {
-          scale: 2,
-          useCORS: true,
-          logging: false,
+          ...renderOptions,
           backgroundColor: '#0f172a',
         });
         
@@ -113,15 +115,29 @@ const CompanyProfile = () => {
         const footerAspectRatio = footerCanvas.height / footerCanvas.width;
         const footerHeight = pdfWidth * footerAspectRatio;
         
+        // Check if footer fits on current page, otherwise add new page
+        if (currentY + footerHeight > pdfPageHeight) {
+          pdf.addPage();
+        }
+        
         // Position footer at the very bottom of the last page
         const footerY = pdfPageHeight - footerHeight;
         pdf.addImage(footerImgData, 'PNG', 0, footerY, pdfWidth, footerHeight);
       }
       
+      // Add page numbers
+      const totalPages = pdf.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        pdf.setPage(i);
+        pdf.setFontSize(9);
+        pdf.setTextColor(150, 150, 150);
+        pdf.text(`Page ${i} of ${totalPages}`, pdfWidth / 2, pdfPageHeight - 3, { align: 'center' });
+      }
+      
       pdf.save(`Company_Profile_${formData.company_name || 'Unknown'}_${new Date().toISOString().split('T')[0]}.pdf`);
       
       toast.dismiss();
-      toast.success('PDF downloaded successfully');
+      toast.success('Premium PDF downloaded successfully');
     } catch (error) {
       console.error('PDF generation error:', error);
       toast.dismiss();
