@@ -12,12 +12,12 @@ interface ProfilePreviewPrintProps {
 
 export const ProfilePreviewPrint = forwardRef<HTMLDivElement, ProfilePreviewPrintProps>(
   ({ profile }, ref) => {
-    const totalTables = (profile.cutting_tables_count || 0) + (profile.checking_tables_count || 0) +
-      (profile.ironing_tables_count || 0) + (profile.packing_tables_count || 0) +
-      (profile.fabric_inspection_tables_count || 0);
-
-    const totalStaff = (profile.cutting_staff || 0) + (profile.stitching_staff || 0) +
-      (profile.checking_staff || 0) + (profile.ironing_staff || 0) + (profile.packing_staff || 0);
+    const totalTables = (profile.cutting_tables_count || 0) + (profile.checking_tables_count || 0) + 
+                        (profile.ironing_tables_count || 0) + (profile.packing_tables_count || 0) +
+                        (profile.fabric_inspection_tables_count || 0);
+    
+    const totalStaff = (profile.cutting_staff || 0) + (profile.stitching_staff || 0) + 
+                       (profile.checking_staff || 0) + (profile.ironing_staff || 0) + (profile.packing_staff || 0);
 
     const getBadgeContent = () => {
       if (profile.company_code) return profile.company_code;
@@ -115,7 +115,7 @@ export const ProfilePreviewPrint = forwardRef<HTMLDivElement, ProfilePreviewPrin
 
         <div className="profile-container">
           {/* Premium Header with Logo */}
-          <div style={{
+          <div style={{ 
             background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)',
             padding: '32px 40px',
             borderBottom: '4px solid #f59e0b'
@@ -124,9 +124,9 @@ export const ProfilePreviewPrint = forwardRef<HTMLDivElement, ProfilePreviewPrin
               <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                 <img src={logoImage} alt="Company Logo" style={{ height: '56px', width: 'auto' }} />
                 <div>
-                  <h1 style={{
-                    fontSize: '28px',
-                    fontWeight: '700',
+                  <h1 style={{ 
+                    fontSize: '28px', 
+                    fontWeight: '700', 
                     color: '#ffffff',
                     letterSpacing: '-0.5px',
                     margin: 0,
@@ -166,8 +166,8 @@ export const ProfilePreviewPrint = forwardRef<HTMLDivElement, ProfilePreviewPrin
           </div>
 
           {/* Contact Strip */}
-          <div style={{
-            background: '#f8fafc',
+          <div style={{ 
+            background: '#f8fafc', 
             padding: '16px 40px',
             display: 'flex',
             flexWrap: 'wrap',
@@ -175,37 +175,37 @@ export const ProfilePreviewPrint = forwardRef<HTMLDivElement, ProfilePreviewPrin
             borderBottom: '1px solid #e2e8f0'
           }}>
             {profile.phone && (
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#334155', lineHeight: '16px' }}>
-                <Phone style={{ width: '16px', height: '16px', color: '#f59e0b', flexShrink: 0 }} />
-                <span style={{ lineHeight: '16px' }}>{profile.phone}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#334155' }}>
+                <Phone style={{ width: '16px', height: '16px', color: '#f59e0b' }} />
+                <span>{profile.phone}</span>
               </div>
             )}
             {profile.email && (
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#334155', lineHeight: '16px' }}>
-                <Mail style={{ width: '16px', height: '16px', color: '#f59e0b', flexShrink: 0 }} />
-                <span style={{ lineHeight: '16px' }}>{profile.email}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#334155' }}>
+                <Mail style={{ width: '16px', height: '16px', color: '#f59e0b' }} />
+                <span>{profile.email}</span>
               </div>
             )}
             {profile.website && (
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#334155', lineHeight: '16px' }}>
-                <Globe style={{ width: '16px', height: '16px', color: '#f59e0b', flexShrink: 0 }} />
-                <span style={{ lineHeight: '16px' }}>{profile.website}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#334155' }}>
+                <Globe style={{ width: '16px', height: '16px', color: '#f59e0b' }} />
+                <span>{profile.website}</span>
               </div>
             )}
             {profile.city && (
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#334155', lineHeight: '16px' }}>
-                <MapPin style={{ width: '16px', height: '16px', color: '#f59e0b', flexShrink: 0 }} />
-                <span style={{ lineHeight: '16px' }}>{profile.city}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#334155' }}>
+                <MapPin style={{ width: '16px', height: '16px', color: '#f59e0b' }} />
+                <span>{profile.city}, {profile.state}</span>
               </div>
             )}
           </div>
 
           <div className="content-wrapper">
             {/* Summary Stats - Redesigned */}
-            <div className="section-card" style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
-              gap: '16px',
+            <div className="section-card" style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(4, 1fr)', 
+              gap: '16px', 
               padding: '28px 0',
               marginBottom: '24px'
             }}>
@@ -216,9 +216,9 @@ export const ProfilePreviewPrint = forwardRef<HTMLDivElement, ProfilePreviewPrin
             </div>
 
             {/* Utilities Row */}
-            <div className="section-card" style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
+            <div className="section-card" style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(3, 1fr)', 
               gap: '16px',
               marginBottom: '24px'
             }}>
@@ -313,9 +313,9 @@ export const ProfilePreviewPrint = forwardRef<HTMLDivElement, ProfilePreviewPrin
                 padding: '24px',
                 border: '1px solid #e2e8f0'
               }}>
-                <h3 style={{
-                  fontSize: '15px',
-                  fontWeight: '600',
+                <h3 style={{ 
+                  fontSize: '15px', 
+                  fontWeight: '600', 
                   color: '#1e293b',
                   marginBottom: '12px',
                   display: 'flex',
@@ -325,9 +325,9 @@ export const ProfilePreviewPrint = forwardRef<HTMLDivElement, ProfilePreviewPrin
                   <span style={{ color: '#64748b' }}>📝</span>
                   General Remarks
                 </h3>
-                <p style={{
-                  fontSize: '14px',
-                  color: '#475569',
+                <p style={{ 
+                  fontSize: '14px', 
+                  color: '#475569', 
                   lineHeight: '1.6',
                   whiteSpace: 'pre-wrap'
                 }}>
@@ -344,8 +344,8 @@ export const ProfilePreviewPrint = forwardRef<HTMLDivElement, ProfilePreviewPrin
 
           {/* Footer - Only appears at the bottom */}
           <div className="footer-section">
-            <p style={{
-              color: '#94a3b8',
+            <p style={{ 
+              color: '#94a3b8', 
               fontSize: '12px',
               letterSpacing: '0.3px'
             }}>
@@ -384,9 +384,9 @@ const StatCard = ({ icon, label, value, color }: { icon: React.ReactNode; label:
         <span style={{ color: styles.icon, display: 'flex' }}>
           {icon && <span style={{ width: '20px', height: '20px' }}>{icon}</span>}
         </span>
-        <span style={{
-          fontSize: '11px',
-          fontWeight: '600',
+        <span style={{ 
+          fontSize: '11px', 
+          fontWeight: '600', 
           color: styles.text,
           textTransform: 'uppercase',
           letterSpacing: '0.5px'
@@ -394,9 +394,9 @@ const StatCard = ({ icon, label, value, color }: { icon: React.ReactNode; label:
           {label}
         </span>
       </div>
-      <p style={{
-        fontSize: '18px',
-        fontWeight: '700',
+      <p style={{ 
+        fontSize: '18px', 
+        fontWeight: '700', 
         color: styles.text,
         lineHeight: '1.3',
         wordBreak: 'break-word'
@@ -415,16 +415,16 @@ const FeatureCard = ({ title, available, detail }: { title: string; available?: 
     padding: '20px',
     textAlign: 'center'
   }}>
-    <p style={{
-      fontWeight: '600',
+    <p style={{ 
+      fontWeight: '600', 
       fontSize: '15px',
       color: available ? '#047857' : '#64748b',
       marginBottom: '4px'
     }}>
       {title}
     </p>
-    <p style={{
-      fontSize: '13px',
+    <p style={{ 
+      fontSize: '13px', 
       color: available ? '#059669' : '#94a3b8'
     }}>
       {available ? (detail || 'Available') : 'Not Available'}
@@ -438,13 +438,11 @@ const ProductionCapabilityCard = ({ profile }: { profile: Partial<CompanyProfile
       background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
       color: '#ffffff',
       padding: '14px 20px',
-      display: 'inline-flex',
+      display: 'flex',
       alignItems: 'center',
-      gap: '10px',
-      width: '100%',
-      boxSizing: 'border-box'
+      gap: '10px'
     }}>
-      <Factory style={{ width: '20px', height: '20px', flexShrink: 0 }} />
+      <Factory style={{ width: '20px', height: '20px' }} />
       <h3 style={{ fontWeight: '600', fontSize: '15px', margin: 0 }}>Production Capability</h3>
     </div>
     <div style={{ background: '#ffffff' }}>
@@ -494,9 +492,9 @@ const QualityControlCard = ({ profile }: { profile: Partial<CompanyProfile> }) =
       <div style={{ padding: '20px', background: '#ffffff' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
           {qcItems.map((item, idx) => (
-            <div key={idx} style={{
-              display: 'flex',
-              alignItems: 'center',
+            <div key={idx} style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
               gap: '12px',
               padding: '12px 16px',
               background: item.checked ? '#ecfdf5' : '#f8fafc',
@@ -519,8 +517,8 @@ const QualityControlCard = ({ profile }: { profile: Partial<CompanyProfile> }) =
                   <X style={{ width: '14px', height: '14px', color: '#ffffff' }} />
                 )}
               </div>
-              <span style={{
-                fontSize: '14px',
+              <span style={{ 
+                fontSize: '14px', 
                 fontWeight: item.checked ? '600' : '500',
                 color: item.checked ? '#047857' : '#64748b'
               }}>
@@ -535,9 +533,9 @@ const QualityControlCard = ({ profile }: { profile: Partial<CompanyProfile> }) =
 };
 
 const SignatorySection = ({ profile }: { profile: Partial<CompanyProfile> }) => (
-  <div style={{
-    borderTop: '2px solid #e2e8f0',
-    paddingTop: '32px',
+  <div style={{ 
+    borderTop: '2px solid #e2e8f0', 
+    paddingTop: '32px', 
     marginTop: '16px',
     background: '#fafafa',
     padding: '32px',
@@ -550,21 +548,21 @@ const SignatorySection = ({ profile }: { profile: Partial<CompanyProfile> }) => 
       </div>
       <div style={{ textAlign: 'center' }}>
         <img src={signatureImage} alt="Signature" style={{ height: '60px', marginBottom: '12px' }} />
-        <div style={{
-          borderTop: '2px solid #1e293b',
+        <div style={{ 
+          borderTop: '2px solid #1e293b', 
           paddingTop: '12px',
           minWidth: '220px'
         }}>
-          <p style={{
-            fontWeight: '700',
+          <p style={{ 
+            fontWeight: '700', 
             fontSize: '15px',
             color: '#1e293b',
             margin: '0 0 4px 0'
           }}>
             {profile.authorized_signatory_name || profile.contact_person || 'Authorized Signatory'}
           </p>
-          <p style={{
-            fontSize: '13px',
+          <p style={{ 
+            fontSize: '13px', 
             color: '#64748b',
             margin: 0
           }}>
@@ -577,10 +575,10 @@ const SignatorySection = ({ profile }: { profile: Partial<CompanyProfile> }) => 
 );
 
 const StitchingSectionCard = ({ profile }: { profile: Partial<CompanyProfile> }) => {
-  const machines: StitchingMachine[] = profile.stitching_machines
-    ? (typeof profile.stitching_machines === 'string'
-      ? JSON.parse(profile.stitching_machines)
-      : profile.stitching_machines as unknown as StitchingMachine[])
+  const machines: StitchingMachine[] = profile.stitching_machines 
+    ? (typeof profile.stitching_machines === 'string' 
+        ? JSON.parse(profile.stitching_machines) 
+        : profile.stitching_machines as unknown as StitchingMachine[])
     : [];
 
   const totalMachines = machines.reduce((sum, m) => sum + (m.count || 0), 0);
@@ -595,9 +593,9 @@ const StitchingSectionCard = ({ profile }: { profile: Partial<CompanyProfile> })
         alignItems: 'center',
         justifyContent: 'space-between'
       }}>
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
-          <Shirt style={{ width: '20px', height: '20px', flexShrink: 0 }} />
-          <h3 style={{ fontWeight: '600', fontSize: '15px', margin: 0, lineHeight: '20px' }}>Stitching Section</h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <Shirt style={{ width: '20px', height: '20px' }} />
+          <h3 style={{ fontWeight: '600', fontSize: '15px', margin: 0 }}>Stitching Section</h3>
         </div>
         {totalMachines > 0 && (
           <div style={{
@@ -613,7 +611,7 @@ const StitchingSectionCard = ({ profile }: { profile: Partial<CompanyProfile> })
       </div>
       <div style={{ background: '#ffffff' }}>
         {/* Staff Info */}
-        <div style={{
+        <div style={{ 
           padding: '16px 20px',
           borderBottom: '1px solid #e2e8f0',
           display: 'flex',
@@ -627,9 +625,9 @@ const StitchingSectionCard = ({ profile }: { profile: Partial<CompanyProfile> })
         {/* Machine Table */}
         {machines.length > 0 && (
           <div style={{ padding: '16px 20px' }}>
-            <p style={{
-              fontSize: '12px',
-              color: '#64748b',
+            <p style={{ 
+              fontSize: '12px', 
+              color: '#64748b', 
               textTransform: 'uppercase',
               letterSpacing: '0.5px',
               marginBottom: '12px',
@@ -666,8 +664,8 @@ const StitchingSectionCard = ({ profile }: { profile: Partial<CompanyProfile> })
 
         {/* Notes */}
         {profile.stitching_notes && (
-          <div style={{
-            padding: '16px 20px',
+          <div style={{ 
+            padding: '16px 20px', 
             borderTop: '1px solid #e2e8f0',
             background: '#f8fafc'
           }}>
@@ -679,9 +677,9 @@ const StitchingSectionCard = ({ profile }: { profile: Partial<CompanyProfile> })
   );
 };
 
-const SectionCard = ({ icon, title, color, items, notes }: {
-  icon: React.ReactNode;
-  title: string;
+const SectionCard = ({ icon, title, color, items, notes }: { 
+  icon: React.ReactNode; 
+  title: string; 
   color: string;
   items: { label: string; value: string | number; isBadge?: boolean; badgeValue?: boolean | null }[];
   notes?: string | null;
@@ -700,27 +698,25 @@ const SectionCard = ({ icon, title, color, items, notes }: {
         background: headerColors[color] || headerColors.blue,
         color: '#ffffff',
         padding: '14px 20px',
-        display: 'inline-flex',
+        display: 'flex',
         alignItems: 'center',
-        gap: '10px',
-        width: '100%',
-        boxSizing: 'border-box'
+        gap: '10px'
       }}>
-        <span style={{ width: '20px', height: '20px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{icon}</span>
-        <h3 style={{ fontWeight: '600', fontSize: '15px', margin: 0, lineHeight: '20px' }}>{title}</h3>
+        <span style={{ width: '20px', height: '20px', display: 'flex' }}>{icon}</span>
+        <h3 style={{ fontWeight: '600', fontSize: '15px', margin: 0 }}>{title}</h3>
       </div>
       <div style={{ background: '#ffffff' }}>
         {items.map((item, idx) => (
-          <div
-            key={idx}
-            style={{
+          <div 
+            key={idx} 
+            style={{ 
               display: 'flex',
               borderBottom: idx < items.length - 1 ? '1px solid #e2e8f0' : 'none',
               background: idx % 2 === 0 ? '#ffffff' : '#f8fafc'
             }}
           >
-            <div style={{
-              width: '45%',
+            <div style={{ 
+              width: '45%', 
               padding: '14px 20px',
               fontSize: '13px',
               color: '#64748b',
@@ -728,8 +724,8 @@ const SectionCard = ({ icon, title, color, items, notes }: {
             }}>
               {item.label}
             </div>
-            <div style={{
-              width: '55%',
+            <div style={{ 
+              width: '55%', 
               padding: '14px 20px',
               fontSize: '14px',
               color: '#1e293b',
@@ -761,8 +757,8 @@ const SectionCard = ({ icon, title, color, items, notes }: {
           </div>
         ))}
         {notes && (
-          <div style={{
-            padding: '16px 20px',
+          <div style={{ 
+            padding: '16px 20px', 
             borderTop: '1px solid #e2e8f0',
             background: '#f8fafc'
           }}>

@@ -131,7 +131,7 @@ const CompanyProfile = () => {
         pdf.setPage(i);
         pdf.setFontSize(9);
         pdf.setTextColor(150, 150, 150);
-        // pdf.text(`Page ${i} of ${totalPages}`, pdfWidth / 2, pdfPageHeight - 3, { align: 'center' });
+        pdf.text(`Page ${i} of ${totalPages}`, pdfWidth / 2, pdfPageHeight - 3, { align: 'center' });
       }
       
       pdf.save(`Company_Profile_${formData.company_name || 'Unknown'}_${new Date().toISOString().split('T')[0]}.pdf`);
