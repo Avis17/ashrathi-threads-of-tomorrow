@@ -64,7 +64,7 @@ export const ProfilePreview = forwardRef<HTMLDivElement, ProfilePreviewProps>(
           {profile.phone && <div className="flex items-center gap-2"><Phone className="h-4 w-4 text-amber-600" />{profile.phone}</div>}
           {profile.email && <div className="flex items-center gap-2"><Mail className="h-4 w-4 text-amber-600" />{profile.email}</div>}
           {profile.website && <div className="flex items-center gap-2"><Globe className="h-4 w-4 text-amber-600" />{profile.website}</div>}
-          {profile.city && <div className="flex items-center gap-2"><MapPin className="h-4 w-4 text-amber-600" />{profile.city}, {profile.state}</div>}
+          {profile.city && <div className="flex items-center gap-2"><MapPin className="h-4 w-4 text-amber-600" />{profile.city}</div>}
         </div>
 
         {/* Summary Stats */}
