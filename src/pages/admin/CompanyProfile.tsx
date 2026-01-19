@@ -66,7 +66,7 @@ const CompanyProfile = () => {
       
       // Optimized rendering - scale 2 is sufficient for print quality
       const renderOptions = {
-        scale: 2,  // Reduced from 3 - still crisp for A4 printing
+        scale: 3,  // Reduced from 3 - still crisp for A4 printing
         useCORS: true,
         logging: false,
         backgroundColor: '#ffffff',
