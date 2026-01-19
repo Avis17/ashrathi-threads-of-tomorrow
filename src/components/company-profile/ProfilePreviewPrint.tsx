@@ -1,0 +1,401 @@
+import { forwardRef } from 'react';
+import { CompanyProfile } from './useProfileData';
+import { Building2, Scissors, Shirt, CheckCircle, Flame, Package, Users, Phone, Mail, MapPin, Globe, Zap, ClipboardCheck, Factory, Check, X } from 'lucide-react';
+import { format } from 'date-fns';
+import { StitchingMachine } from './StitchingMachinesInput';
+import signatureImage from '@/assets/signature.png';
+
+interface ProfilePreviewPrintProps {
+  profile: Partial<CompanyProfile>;
+}
+
+export const ProfilePreviewPrint = forwardRef<HTMLDivElement, ProfilePreviewPrintProps>(
+  ({ profile }, ref) => {
+    const totalTables = (profile.cutting_tables_count || 0) + (profile.checking_tables_count || 0) + 
+                        (profile.ironing_tables_count || 0) + (profile.packing_tables_count || 0) +
+                        (profile.fabric_inspection_tables_count || 0);
+    
+    const totalStaff = (profile.cutting_staff || 0) + (profile.stitching_staff || 0) + 
+                       (profile.checking_staff || 0) + (profile.ironing_staff || 0) + (profile.packing_staff || 0);
+
+    const getBadgeContent = () => {
+      if (profile.company_code) return profile.company_code;
+      if (profile.gst_number) return `GST: ${profile.gst_number.slice(-6)}`;
+      if (profile.daily_production_capacity) return profile.daily_production_capacity;
+      if (profile.total_employees) return `${profile.total_employees} Staff`;
+      return null;
+    };
+
+    const badgeContent = getBadgeContent();
+
+    const getPowerDisplay = () => {
+      const parts: string[] = [];
+      if (profile.eb_power_available !== false) parts.push('EB Power');
+      if (profile.power_phase) parts.push(profile.power_phase);
+      if (profile.power_connection_type) parts.push(profile.power_connection_type);
+      return parts.length > 0 ? parts.join(' • ') : 'Available';
+    };
+
+    return (
+      <div ref={ref} className="bg-white" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+        {/* CSS for print page breaks */}
+        <style>{`
+          @media print {
+            .print-page-break { page-break-inside: avoid; break-inside: avoid; }
+            .print-footer { position: fixed; bottom: 0; left: 0; right: 0; }
+          }
+          .section-card { page-break-inside: avoid; break-inside: avoid; margin-bottom: 16px; }
+          .profile-container { width: 210mm; min-height: 297mm; margin: 0 auto; position: relative; }
+          .content-wrapper { padding-bottom: 80px; }
+          .footer-section { 
+            background: #0f172a; 
+            padding: 12px 32px; 
+            text-align: center;
+            margin-top: auto;
+          }
+        `}</style>
+
+        <div className="profile-container">
+          {/* Premium Header */}
+          <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white p-8">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold tracking-tight">{profile.company_name || 'Company Name'}</h1>
+                {profile.brand_name && <p className="text-amber-400 text-lg font-medium mt-1">{profile.brand_name}</p>}
+                <p className="text-slate-400 text-sm mt-2">Infrastructure & Capability Profile</p>
+              </div>
+              <div className="text-right">
+                {badgeContent && (
+                  <div className="bg-amber-500 text-slate-900 px-4 py-2 rounded-lg font-bold text-sm">
+                    {badgeContent}
+                  </div>
+                )}
+                <p className="text-slate-400 text-xs mt-2">{format(new Date(), 'dd MMM yyyy')}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Contact Strip */}
+          <div className="bg-slate-100 px-8 py-4 flex flex-wrap gap-6 text-sm text-slate-700 border-b-2 border-amber-500">
+            {profile.phone && <div className="flex items-center gap-2"><Phone className="h-4 w-4 text-amber-600" />{profile.phone}</div>}
+            {profile.email && <div className="flex items-center gap-2"><Mail className="h-4 w-4 text-amber-600" />{profile.email}</div>}
+            {profile.website && <div className="flex items-center gap-2"><Globe className="h-4 w-4 text-amber-600" />{profile.website}</div>}
+            {profile.city && <div className="flex items-center gap-2"><MapPin className="h-4 w-4 text-amber-600" />{profile.city}, {profile.state}</div>}
+          </div>
+
+          <div className="content-wrapper">
+            {/* Summary Stats */}
+            <div className="section-card grid grid-cols-4 gap-4 p-8 bg-gradient-to-b from-slate-50 to-white">
+              <StatCard icon={<Users className="h-6 w-6" />} label="Total Staff" value={profile.total_employees || totalStaff} color="blue" />
+              <StatCard icon={<Scissors className="h-6 w-6" />} label="Total Tables" value={totalTables} color="green" />
+              <StatCard icon={<Zap className="h-6 w-6" />} label="Power" value={getPowerDisplay()} color="amber" />
+              <StatCard icon={<Building2 className="h-6 w-6" />} label="Capacity" value={profile.daily_production_capacity || 'Contact Us'} color="purple" />
+            </div>
+
+            {/* Sections Grid */}
+            <div className="px-8 space-y-4">
+              {/* Utilities Row */}
+              <div className="section-card grid grid-cols-3 gap-4">
+                <FeatureCard title="Generator" available={profile.generator_available} detail={profile.generator_capacity} />
+                <FeatureCard title="Compressor" available={profile.compressor_available} detail={profile.compressor_capacity} />
+                <FeatureCard title="Boiler" available={profile.boiler_available} />
+              </div>
+
+              {/* Production Capability */}
+              <div className="section-card">
+                <ProductionCapabilityCard profile={profile} />
+              </div>
+
+              {/* Quality Control */}
+              <div className="section-card">
+                <QualityControlCard profile={profile} />
+              </div>
+
+              {/* Cutting Section */}
+              <div className="section-card">
+                <SectionCard
+                  icon={<Scissors className="h-5 w-5" />}
+                  title="Cutting Section"
+                  color="emerald"
+                  items={[
+                    { label: 'Cutting Tables', value: `${profile.cutting_tables_count || 0} (${profile.cutting_table_size || '-'})` },
+                    { label: 'Fabric Inspection Tables', value: `${profile.fabric_inspection_tables_count || 0}` },
+                    { label: 'Staff', value: profile.cutting_staff || 0 },
+                  ]}
+                  notes={profile.cutting_notes}
+                />
+              </div>
+
+              {/* Stitching Section */}
+              <div className="section-card">
+                <StitchingSectionCard profile={profile} />
+              </div>
+
+              {/* Checking Section */}
+              <div className="section-card">
+                <SectionCard
+                  icon={<CheckCircle className="h-5 w-5" />}
+                  title="Checking Section"
+                  color="violet"
+                  items={[
+                    { label: 'Checking Tables', value: `${profile.checking_tables_count || 0} (${profile.checking_table_size || '-'})` },
+                    { label: 'Staff', value: profile.checking_staff || 0 },
+                  ]}
+                  notes={profile.checking_notes}
+                />
+              </div>
+
+              {/* Ironing Section */}
+              <div className="section-card">
+                <SectionCard
+                  icon={<Flame className="h-5 w-5" />}
+                  title="Ironing Section"
+                  color="orange"
+                  items={[
+                    { label: 'Ironing Tables', value: profile.ironing_tables_count || 0 },
+                    { label: 'Steam Irons', value: profile.steam_iron_count || 0 },
+                    { label: 'Vacuum Table', value: profile.vacuum_table_available ? 'Yes' : 'No' },
+                    { label: 'Staff', value: profile.ironing_staff || 0 },
+                  ]}
+                  notes={profile.ironing_notes}
+                />
+              </div>
+
+              {/* Packing Section */}
+              <div className="section-card">
+                <SectionCard
+                  icon={<Package className="h-5 w-5" />}
+                  title="Packing Section"
+                  color="teal"
+                  items={[
+                    { label: 'Packing Tables', value: profile.packing_tables_count || 0 },
+                    { label: 'Storage Racks', value: profile.storage_racks_available ? 'Yes' : 'No' },
+                    { label: 'Polybag Sealing', value: profile.polybag_sealing_available ? 'Yes' : 'No' },
+                    { label: 'Tagging/Barcode', value: profile.tagging_barcode_support ? 'Yes' : 'No' },
+                    { label: 'Carton Packing', value: profile.carton_packing_support ? 'Yes' : 'No' },
+                    { label: 'Staff', value: profile.packing_staff || 0 },
+                  ]}
+                  notes={profile.packing_notes}
+                />
+              </div>
+
+              {/* General Remarks */}
+              {profile.general_remarks && (
+                <div className="section-card bg-slate-50 rounded-xl p-6 border border-slate-200">
+                  <h3 className="font-semibold text-slate-800 mb-2">General Remarks</h3>
+                  <p className="text-slate-600 text-sm whitespace-pre-wrap">{profile.general_remarks}</p>
+                </div>
+              )}
+
+              {/* Signature & Seal Section */}
+              <div className="section-card">
+                <SignatorySection profile={profile} />
+              </div>
+            </div>
+          </div>
+
+          {/* Footer - Will be at the bottom of content flow */}
+          <div className="footer-section">
+            <p className="text-slate-400 text-xs">Generated by Feather Fashions • {format(new Date(), 'dd MMM yyyy, hh:mm a')}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+);
+
+ProfilePreviewPrint.displayName = 'ProfilePreviewPrint';
+
+const StatCard = ({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string | number; color: string }) => {
+  const colorClasses: Record<string, string> = {
+    blue: 'bg-blue-50 text-blue-600 border-blue-200',
+    green: 'bg-green-50 text-green-600 border-green-200',
+    amber: 'bg-amber-50 text-amber-600 border-amber-200',
+    purple: 'bg-purple-50 text-purple-600 border-purple-200',
+  };
+
+  return (
+    <div className={`rounded-xl p-4 border-2 ${colorClasses[color]}`}>
+      <div className="flex items-center gap-2 mb-2">{icon}<span className="text-xs font-medium uppercase tracking-wide">{label}</span></div>
+      <p className="text-lg font-bold leading-tight">{value}</p>
+    </div>
+  );
+};
+
+const FeatureCard = ({ title, available, detail }: { title: string; available?: boolean | null; detail?: string | null }) => (
+  <div className={`rounded-lg p-4 text-center border ${available ? 'bg-green-50 border-green-200' : 'bg-slate-50 border-slate-200'}`}>
+    <p className={`font-semibold ${available ? 'text-green-700' : 'text-slate-500'}`}>{title}</p>
+    <p className={`text-sm ${available ? 'text-green-600' : 'text-slate-400'}`}>
+      {available ? (detail || 'Available') : 'Not Available'}
+    </p>
+  </div>
+);
+
+const ProductionCapabilityCard = ({ profile }: { profile: Partial<CompanyProfile> }) => (
+  <div className="rounded-xl border border-slate-200 overflow-hidden">
+    <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white px-4 py-3 flex items-center gap-2">
+      <Factory className="h-5 w-5" />
+      <h3 className="font-semibold">Production Capability</h3>
+    </div>
+    <div className="p-4 bg-white">
+      <div className="grid grid-cols-4 gap-4">
+        <div>
+          <p className="text-xs text-slate-500 uppercase tracking-wide">Daily Capacity</p>
+          <p className="font-semibold text-slate-800">{profile.daily_production_capacity || 'Contact Us'}</p>
+        </div>
+        <div>
+          <p className="text-xs text-slate-500 uppercase tracking-wide">MOQ</p>
+          <p className="font-semibold text-slate-800">{profile.moq || 'Flexible'}</p>
+        </div>
+        <div>
+          <p className="text-xs text-slate-500 uppercase tracking-wide">Lead Time</p>
+          <p className="font-semibold text-slate-800">{profile.lead_time || '30-45 days'}</p>
+        </div>
+        <div>
+          <p className="text-xs text-slate-500 uppercase tracking-wide">Sample Lead Time</p>
+          <p className="font-semibold text-slate-800">{profile.sample_lead_time || '7-10 days'}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+const QualityControlCard = ({ profile }: { profile: Partial<CompanyProfile> }) => {
+  const qcItems = [
+    { label: 'Inline Checking', checked: profile.inline_checking },
+    { label: 'Final Checking', checked: profile.final_checking ?? true },
+    { label: 'Measurement Check', checked: profile.measurement_check ?? true },
+    { label: 'AQL Followed', checked: profile.aql_followed },
+  ];
+
+  return (
+    <div className="rounded-xl border border-slate-200 overflow-hidden">
+      <div className="bg-gradient-to-r from-rose-500 to-rose-600 text-white px-4 py-3 flex items-center gap-2">
+        <ClipboardCheck className="h-5 w-5" />
+        <h3 className="font-semibold">Quality Control Process</h3>
+      </div>
+      <div className="p-4 bg-white">
+        <div className="grid grid-cols-4 gap-4">
+          {qcItems.map((item, idx) => (
+            <div key={idx} className="flex items-center gap-2">
+              <div className={`w-5 h-5 rounded-full flex items-center justify-center ${item.checked ? 'bg-green-500' : 'bg-slate-300'}`}>
+                {item.checked ? <Check className="h-3 w-3 text-white" /> : <X className="h-3 w-3 text-white" />}
+              </div>
+              <span className={`text-sm ${item.checked ? 'text-slate-800 font-medium' : 'text-slate-500'}`}>{item.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const SignatorySection = ({ profile }: { profile: Partial<CompanyProfile> }) => (
+  <div className="border-t-2 border-slate-200 pt-8 mt-4">
+    <div className="flex justify-between items-end">
+      <div className="text-sm text-slate-500">
+        <p>This document is system generated.</p>
+        <p>For queries, contact: {profile.phone || '9789225510'}</p>
+      </div>
+      <div className="text-center">
+        <img src={signatureImage} alt="Signature" className="h-16 mx-auto mb-2" />
+        <div className="border-t border-slate-400 pt-2 min-w-[200px]">
+          <p className="font-semibold text-slate-800">{profile.authorized_signatory_name || profile.contact_person || 'Authorized Signatory'}</p>
+          <p className="text-sm text-slate-600">{profile.signatory_designation || 'Managing Director'}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+const StitchingSectionCard = ({ profile }: { profile: Partial<CompanyProfile> }) => {
+  const machines: StitchingMachine[] = profile.stitching_machines 
+    ? (typeof profile.stitching_machines === 'string' 
+        ? JSON.parse(profile.stitching_machines) 
+        : profile.stitching_machines as unknown as StitchingMachine[])
+    : [];
+
+  const totalMachines = machines.reduce((sum, m) => sum + (m.count || 0), 0);
+
+  return (
+    <div className="rounded-xl border border-slate-200 overflow-hidden">
+      <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-3 flex items-center gap-2">
+        <Shirt className="h-5 w-5" />
+        <h3 className="font-semibold">Stitching Section</h3>
+      </div>
+      <div className="p-4 bg-white">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <p className="text-xs text-slate-500 uppercase tracking-wide">Staff</p>
+            <p className="font-semibold text-slate-800">{profile.stitching_staff || 0}</p>
+          </div>
+          {totalMachines > 0 && (
+            <div className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
+              Total: {totalMachines} Machines
+            </div>
+          )}
+        </div>
+        
+        {machines.length > 0 && (
+          <div className="space-y-1">
+            <p className="text-xs text-slate-500 uppercase tracking-wide mb-2">Stitching Machines Available:</p>
+            <ul className="space-y-1">
+              {machines.map((machine, idx) => (
+                <li key={idx} className="flex items-center gap-2 text-sm">
+                  <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                  <span className="font-medium text-slate-700">
+                    {machine.type === 'Others' ? machine.customType : machine.type}
+                  </span>
+                  <span className="text-slate-500">- {machine.count} Nos</span>
+                  {machine.brand && (
+                    <span className="text-slate-400 text-xs">({machine.brand})</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        
+        {profile.stitching_notes && (
+          <p className="text-sm text-slate-600 mt-3 pt-3 border-t border-slate-100">{profile.stitching_notes}</p>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const SectionCard = ({ icon, title, color, items, notes }: { 
+  icon: React.ReactNode; 
+  title: string; 
+  color: string;
+  items: { label: string; value: string | number }[];
+  notes?: string | null;
+}) => {
+  const headerColors: Record<string, string> = {
+    emerald: 'from-emerald-500 to-emerald-600',
+    blue: 'from-blue-500 to-blue-600',
+    violet: 'from-violet-500 to-violet-600',
+    orange: 'from-orange-500 to-orange-600',
+    teal: 'from-teal-500 to-teal-600',
+  };
+
+  return (
+    <div className="rounded-xl border border-slate-200 overflow-hidden">
+      <div className={`bg-gradient-to-r ${headerColors[color]} text-white px-4 py-3 flex items-center gap-2`}>
+        {icon}
+        <h3 className="font-semibold">{title}</h3>
+      </div>
+      <div className="p-4 bg-white">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {items.map((item, idx) => (
+            <div key={idx}>
+              <p className="text-xs text-slate-500 uppercase tracking-wide">{item.label}</p>
+              <p className="font-semibold text-slate-800">{item.value}</p>
+            </div>
+          ))}
+        </div>
+        {notes && <p className="text-sm text-slate-600 mt-3 pt-3 border-t border-slate-100">{notes}</p>}
+      </div>
+    </div>
+  );
+};
