@@ -175,27 +175,27 @@ export const ProfilePreviewPrint = forwardRef<HTMLDivElement, ProfilePreviewPrin
             borderBottom: '1px solid #e2e8f0'
           }}>
             {profile.phone && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#334155' }}>
-                <Phone style={{ width: '16px', height: '16px', color: '#f59e0b' }} />
-                <span>{profile.phone}</span>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#334155', lineHeight: '16px' }}>
+                <Phone style={{ width: '16px', height: '16px', color: '#f59e0b', flexShrink: 0 }} />
+                <span style={{ lineHeight: '16px' }}>{profile.phone}</span>
               </div>
             )}
             {profile.email && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#334155' }}>
-                <Mail style={{ width: '16px', height: '16px', color: '#f59e0b' }} />
-                <span>{profile.email}</span>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#334155', lineHeight: '16px' }}>
+                <Mail style={{ width: '16px', height: '16px', color: '#f59e0b', flexShrink: 0 }} />
+                <span style={{ lineHeight: '16px' }}>{profile.email}</span>
               </div>
             )}
             {profile.website && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#334155' }}>
-                <Globe style={{ width: '16px', height: '16px', color: '#f59e0b' }} />
-                <span>{profile.website}</span>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#334155', lineHeight: '16px' }}>
+                <Globe style={{ width: '16px', height: '16px', color: '#f59e0b', flexShrink: 0 }} />
+                <span style={{ lineHeight: '16px' }}>{profile.website}</span>
               </div>
             )}
             {profile.city && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#334155' }}>
-                <MapPin style={{ width: '16px', height: '16px', color: '#f59e0b' }} />
-                <span>{profile.city}</span>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#334155', lineHeight: '16px' }}>
+                <MapPin style={{ width: '16px', height: '16px', color: '#f59e0b', flexShrink: 0 }} />
+                <span style={{ lineHeight: '16px' }}>{profile.city}</span>
               </div>
             )}
           </div>
@@ -438,11 +438,13 @@ const ProductionCapabilityCard = ({ profile }: { profile: Partial<CompanyProfile
       background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
       color: '#ffffff',
       padding: '14px 20px',
-      display: 'flex',
+      display: 'inline-flex',
       alignItems: 'center',
-      gap: '10px'
+      gap: '10px',
+      width: '100%',
+      boxSizing: 'border-box'
     }}>
-      <Factory style={{ width: '20px', height: '20px' }} />
+      <Factory style={{ width: '20px', height: '20px', flexShrink: 0 }} />
       <h3 style={{ fontWeight: '600', fontSize: '15px', margin: 0 }}>Production Capability</h3>
     </div>
     <div style={{ background: '#ffffff' }}>
@@ -593,9 +595,9 @@ const StitchingSectionCard = ({ profile }: { profile: Partial<CompanyProfile> })
         alignItems: 'center',
         justifyContent: 'space-between'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Shirt style={{ width: '20px', height: '20px' }} />
-          <h3 style={{ fontWeight: '600', fontSize: '15px', margin: 0 }}>Stitching Section</h3>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
+          <Shirt style={{ width: '20px', height: '20px', flexShrink: 0 }} />
+          <h3 style={{ fontWeight: '600', fontSize: '15px', margin: 0, lineHeight: '20px' }}>Stitching Section</h3>
         </div>
         {totalMachines > 0 && (
           <div style={{
@@ -698,12 +700,14 @@ const SectionCard = ({ icon, title, color, items, notes }: {
         background: headerColors[color] || headerColors.blue,
         color: '#ffffff',
         padding: '14px 20px',
-        display: 'flex',
+        display: 'inline-flex',
         alignItems: 'center',
-        gap: '10px'
+        gap: '10px',
+        width: '100%',
+        boxSizing: 'border-box'
       }}>
-        <span style={{ width: '20px', height: '20px', display: 'flex' }}>{icon}</span>
-        <h3 style={{ fontWeight: '600', fontSize: '15px', margin: 0 }}>{title}</h3>
+        <span style={{ width: '20px', height: '20px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{icon}</span>
+        <h3 style={{ fontWeight: '600', fontSize: '15px', margin: 0, lineHeight: '20px' }}>{title}</h3>
       </div>
       <div style={{ background: '#ffffff' }}>
         {items.map((item, idx) => (
