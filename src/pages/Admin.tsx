@@ -58,6 +58,7 @@ import SamplingPreparation from './admin/SamplingPreparation';
 import SamplingTermsGenerator from './admin/SamplingTermsGenerator';
 import QuotationGenerator from './admin/QuotationGenerator';
 import ExportersList from './admin/ExportersList';
+import CompanyProfile from './admin/CompanyProfile';
 
 const Admin = () => {
   const { isAdmin, loading } = useAuth();
@@ -112,6 +113,7 @@ const Admin = () => {
               <Route path="/newsletter" element={<NewsletterManager />} />
               <Route path="/invoice-reset" element={<InvoiceReset />} />
               <Route path="/letterhead" element={<CompanyLetterhead />} />
+              <Route path="/company-profile" element={<CompanyProfile />} />
               <Route path="/label-generator" element={<LabelGenerator />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/apps" element={<FeatherApps />} />
