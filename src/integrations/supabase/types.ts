@@ -506,6 +506,192 @@ export type Database = {
         }
         Relationships: []
       }
+      company_profiles: {
+        Row: {
+          address: string | null
+          boiler_available: boolean | null
+          brand_name: string | null
+          checking_images: string[] | null
+          checking_notes: string | null
+          checking_staff: number | null
+          checking_table_size: string | null
+          checking_tables_count: number | null
+          city: string | null
+          company_code: string | null
+          company_name: string
+          compressor_available: boolean | null
+          compressor_capacity: string | null
+          contact_person: string | null
+          country: string | null
+          created_at: string
+          created_by: string | null
+          cutting_images: string[] | null
+          cutting_notes: string | null
+          cutting_staff: number | null
+          cutting_table_size: string | null
+          cutting_tables_count: number | null
+          daily_production_capacity: string | null
+          email: string | null
+          fabric_inspection_table_size: string | null
+          fabric_inspection_tables_count: number | null
+          general_remarks: string | null
+          generator_available: boolean | null
+          generator_capacity: string | null
+          gst_number: string | null
+          id: string
+          ironing_images: string[] | null
+          ironing_notes: string | null
+          ironing_staff: number | null
+          ironing_tables_count: number | null
+          is_active: boolean | null
+          measurement_tools: Json | null
+          packing_images: string[] | null
+          packing_notes: string | null
+          packing_staff: number | null
+          packing_tables_count: number | null
+          phone: string | null
+          polybag_sealing_available: boolean | null
+          power_connection_type: string | null
+          staff_notes: string | null
+          state: string | null
+          steam_iron_count: number | null
+          stitching_images: string[] | null
+          stitching_machines: Json | null
+          stitching_notes: string | null
+          stitching_staff: number | null
+          storage_racks_available: boolean | null
+          tagging_barcode_support: boolean | null
+          total_employees: number | null
+          updated_at: string
+          utilities_images: string[] | null
+          utilities_notes: string | null
+          vacuum_table_available: boolean | null
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          boiler_available?: boolean | null
+          brand_name?: string | null
+          checking_images?: string[] | null
+          checking_notes?: string | null
+          checking_staff?: number | null
+          checking_table_size?: string | null
+          checking_tables_count?: number | null
+          city?: string | null
+          company_code?: string | null
+          company_name: string
+          compressor_available?: boolean | null
+          compressor_capacity?: string | null
+          contact_person?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          cutting_images?: string[] | null
+          cutting_notes?: string | null
+          cutting_staff?: number | null
+          cutting_table_size?: string | null
+          cutting_tables_count?: number | null
+          daily_production_capacity?: string | null
+          email?: string | null
+          fabric_inspection_table_size?: string | null
+          fabric_inspection_tables_count?: number | null
+          general_remarks?: string | null
+          generator_available?: boolean | null
+          generator_capacity?: string | null
+          gst_number?: string | null
+          id?: string
+          ironing_images?: string[] | null
+          ironing_notes?: string | null
+          ironing_staff?: number | null
+          ironing_tables_count?: number | null
+          is_active?: boolean | null
+          measurement_tools?: Json | null
+          packing_images?: string[] | null
+          packing_notes?: string | null
+          packing_staff?: number | null
+          packing_tables_count?: number | null
+          phone?: string | null
+          polybag_sealing_available?: boolean | null
+          power_connection_type?: string | null
+          staff_notes?: string | null
+          state?: string | null
+          steam_iron_count?: number | null
+          stitching_images?: string[] | null
+          stitching_machines?: Json | null
+          stitching_notes?: string | null
+          stitching_staff?: number | null
+          storage_racks_available?: boolean | null
+          tagging_barcode_support?: boolean | null
+          total_employees?: number | null
+          updated_at?: string
+          utilities_images?: string[] | null
+          utilities_notes?: string | null
+          vacuum_table_available?: boolean | null
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          boiler_available?: boolean | null
+          brand_name?: string | null
+          checking_images?: string[] | null
+          checking_notes?: string | null
+          checking_staff?: number | null
+          checking_table_size?: string | null
+          checking_tables_count?: number | null
+          city?: string | null
+          company_code?: string | null
+          company_name?: string
+          compressor_available?: boolean | null
+          compressor_capacity?: string | null
+          contact_person?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          cutting_images?: string[] | null
+          cutting_notes?: string | null
+          cutting_staff?: number | null
+          cutting_table_size?: string | null
+          cutting_tables_count?: number | null
+          daily_production_capacity?: string | null
+          email?: string | null
+          fabric_inspection_table_size?: string | null
+          fabric_inspection_tables_count?: number | null
+          general_remarks?: string | null
+          generator_available?: boolean | null
+          generator_capacity?: string | null
+          gst_number?: string | null
+          id?: string
+          ironing_images?: string[] | null
+          ironing_notes?: string | null
+          ironing_staff?: number | null
+          ironing_tables_count?: number | null
+          is_active?: boolean | null
+          measurement_tools?: Json | null
+          packing_images?: string[] | null
+          packing_notes?: string | null
+          packing_staff?: number | null
+          packing_tables_count?: number | null
+          phone?: string | null
+          polybag_sealing_available?: boolean | null
+          power_connection_type?: string | null
+          staff_notes?: string | null
+          state?: string | null
+          steam_iron_count?: number | null
+          stitching_images?: string[] | null
+          stitching_machines?: Json | null
+          stitching_notes?: string | null
+          stitching_staff?: number | null
+          storage_racks_available?: boolean | null
+          tagging_barcode_support?: boolean | null
+          total_employees?: number | null
+          updated_at?: string
+          utilities_images?: string[] | null
+          utilities_notes?: string | null
+          vacuum_table_available?: boolean | null
+          website?: string | null
+        }
+        Relationships: []
+      }
       company_vehicles: {
         Row: {
           created_at: string
