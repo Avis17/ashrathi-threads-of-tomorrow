@@ -4,6 +4,7 @@ import { Building2, Scissors, Shirt, CheckCircle, Flame, Package, Users, Phone, 
 import { format } from 'date-fns';
 import { StitchingMachine } from './StitchingMachinesInput';
 import signatureImage from '@/assets/signature.png';
+import logoImage from '@/assets/logo.png';
 
 interface ProfilePreviewPrintProps {
   profile: Partial<CompanyProfile>;
@@ -37,166 +38,319 @@ export const ProfilePreviewPrint = forwardRef<HTMLDivElement, ProfilePreviewPrin
     };
 
     return (
-      <div ref={ref} className="bg-white" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-        {/* CSS for print page breaks */}
+      <div ref={ref} className="bg-white" style={{ fontFamily: "'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif" }}>
+        {/* CSS for print page breaks and premium styling */}
         <style>{`
           @media print {
             .print-page-break { page-break-inside: avoid; break-inside: avoid; }
-            .print-footer { position: fixed; bottom: 0; left: 0; right: 0; }
           }
-          .section-card { page-break-inside: avoid; break-inside: avoid; margin-bottom: 16px; }
-          .profile-container { width: 210mm; min-height: 297mm; margin: 0 auto; position: relative; }
-          .content-wrapper { padding-bottom: 80px; }
+          .section-card { 
+            page-break-inside: avoid; 
+            break-inside: avoid; 
+            margin-bottom: 20px; 
+          }
+          .profile-container { 
+            width: 210mm; 
+            min-height: 297mm; 
+            margin: 0 auto; 
+            position: relative; 
+            background: #ffffff;
+          }
+          .content-wrapper { 
+            padding: 0 32px 100px 32px; 
+          }
           .footer-section { 
-            background: #0f172a; 
-            padding: 12px 32px; 
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            padding: 16px 40px; 
             text-align: center;
-            margin-top: auto;
+            margin-top: 40px;
+          }
+          .table-row {
+            display: flex;
+            border-bottom: 1px solid #e2e8f0;
+          }
+          .table-row:nth-child(even) {
+            background: #f8fafc;
+          }
+          .table-row:last-child {
+            border-bottom: none;
+          }
+          .table-label {
+            width: 45%;
+            padding: 12px 16px;
+            font-size: 13px;
+            color: #64748b;
+            font-weight: 500;
+          }
+          .table-value {
+            width: 55%;
+            padding: 12px 16px;
+            font-size: 14px;
+            color: #1e293b;
+            font-weight: 600;
+          }
+          .badge-yes {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #dcfce7;
+            color: #15803d;
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 600;
+          }
+          .badge-no {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #f1f5f9;
+            color: #64748b;
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 500;
           }
         `}</style>
 
         <div className="profile-container">
-          {/* Premium Header */}
-          <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white p-8">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold tracking-tight">{profile.company_name || 'Company Name'}</h1>
-                {profile.brand_name && <p className="text-amber-400 text-lg font-medium mt-1">{profile.brand_name}</p>}
-                <p className="text-slate-400 text-sm mt-2">Infrastructure & Capability Profile</p>
+          {/* Premium Header with Logo */}
+          <div style={{ 
+            background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)',
+            padding: '32px 40px',
+            borderBottom: '4px solid #f59e0b'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                <img src={logoImage} alt="Company Logo" style={{ height: '56px', width: 'auto' }} />
+                <div>
+                  <h1 style={{ 
+                    fontSize: '28px', 
+                    fontWeight: '700', 
+                    color: '#ffffff',
+                    letterSpacing: '-0.5px',
+                    margin: 0,
+                    lineHeight: 1.2
+                  }}>
+                    {profile.company_name || 'Company Name'}
+                  </h1>
+                  {profile.brand_name && (
+                    <p style={{ color: '#fbbf24', fontSize: '16px', fontWeight: '600', margin: '4px 0 0 0' }}>
+                      {profile.brand_name}
+                    </p>
+                  )}
+                  <p style={{ color: '#94a3b8', fontSize: '13px', marginTop: '6px', letterSpacing: '0.5px' }}>
+                    INFRASTRUCTURE & CAPABILITY PROFILE
+                  </p>
+                </div>
               </div>
-              <div className="text-right">
+              <div style={{ textAlign: 'right' }}>
                 {badgeContent && (
-                  <div className="bg-amber-500 text-slate-900 px-4 py-2 rounded-lg font-bold text-sm">
+                  <div style={{
+                    background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+                    color: '#0f172a',
+                    padding: '10px 20px',
+                    borderRadius: '8px',
+                    fontWeight: '700',
+                    fontSize: '14px',
+                    boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)'
+                  }}>
                     {badgeContent}
                   </div>
                 )}
-                <p className="text-slate-400 text-xs mt-2">{format(new Date(), 'dd MMM yyyy')}</p>
+                <p style={{ color: '#64748b', fontSize: '12px', marginTop: '12px' }}>
+                  Doc Date: {format(new Date(), 'dd MMM yyyy')}
+                </p>
               </div>
             </div>
           </div>
 
           {/* Contact Strip */}
-          <div className="bg-slate-100 px-8 py-4 flex flex-wrap gap-6 text-sm text-slate-700 border-b-2 border-amber-500">
-            {profile.phone && <div className="flex items-center gap-2"><Phone className="h-4 w-4 text-amber-600" />{profile.phone}</div>}
-            {profile.email && <div className="flex items-center gap-2"><Mail className="h-4 w-4 text-amber-600" />{profile.email}</div>}
-            {profile.website && <div className="flex items-center gap-2"><Globe className="h-4 w-4 text-amber-600" />{profile.website}</div>}
-            {profile.city && <div className="flex items-center gap-2"><MapPin className="h-4 w-4 text-amber-600" />{profile.city}, {profile.state}</div>}
+          <div style={{ 
+            background: '#f8fafc', 
+            padding: '16px 40px',
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '28px',
+            borderBottom: '1px solid #e2e8f0'
+          }}>
+            {profile.phone && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#334155' }}>
+                <Phone style={{ width: '16px', height: '16px', color: '#f59e0b' }} />
+                <span>{profile.phone}</span>
+              </div>
+            )}
+            {profile.email && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#334155' }}>
+                <Mail style={{ width: '16px', height: '16px', color: '#f59e0b' }} />
+                <span>{profile.email}</span>
+              </div>
+            )}
+            {profile.website && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#334155' }}>
+                <Globe style={{ width: '16px', height: '16px', color: '#f59e0b' }} />
+                <span>{profile.website}</span>
+              </div>
+            )}
+            {profile.city && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#334155' }}>
+                <MapPin style={{ width: '16px', height: '16px', color: '#f59e0b' }} />
+                <span>{profile.city}, {profile.state}</span>
+              </div>
+            )}
           </div>
 
           <div className="content-wrapper">
-            {/* Summary Stats */}
-            <div className="section-card grid grid-cols-4 gap-4 p-8 bg-gradient-to-b from-slate-50 to-white">
-              <StatCard icon={<Users className="h-6 w-6" />} label="Total Staff" value={profile.total_employees || totalStaff} color="blue" />
-              <StatCard icon={<Scissors className="h-6 w-6" />} label="Total Tables" value={totalTables} color="green" />
-              <StatCard icon={<Zap className="h-6 w-6" />} label="Power" value={getPowerDisplay()} color="amber" />
-              <StatCard icon={<Building2 className="h-6 w-6" />} label="Capacity" value={profile.daily_production_capacity || 'Contact Us'} color="purple" />
+            {/* Summary Stats - Redesigned */}
+            <div className="section-card" style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(4, 1fr)', 
+              gap: '16px', 
+              padding: '28px 0',
+              marginBottom: '24px'
+            }}>
+              <StatCard icon={<Users />} label="Total Staff" value={profile.total_employees || totalStaff} color="blue" />
+              <StatCard icon={<Scissors />} label="Total Tables" value={totalTables} color="emerald" />
+              <StatCard icon={<Zap />} label="Power Supply" value={getPowerDisplay()} color="amber" />
+              <StatCard icon={<Building2 />} label="Daily Capacity" value={profile.daily_production_capacity || 'Contact Us'} color="violet" />
             </div>
 
-            {/* Sections Grid */}
-            <div className="px-8 space-y-4">
-              {/* Utilities Row */}
-              <div className="section-card grid grid-cols-3 gap-4">
-                <FeatureCard title="Generator" available={profile.generator_available} detail={profile.generator_capacity} />
-                <FeatureCard title="Compressor" available={profile.compressor_available} detail={profile.compressor_capacity} />
-                <FeatureCard title="Boiler" available={profile.boiler_available} />
-              </div>
+            {/* Utilities Row */}
+            <div className="section-card" style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(3, 1fr)', 
+              gap: '16px',
+              marginBottom: '24px'
+            }}>
+              <FeatureCard title="Generator" available={profile.generator_available} detail={profile.generator_capacity} />
+              <FeatureCard title="Compressor" available={profile.compressor_available} detail={profile.compressor_capacity} />
+              <FeatureCard title="Boiler" available={profile.boiler_available} />
+            </div>
 
-              {/* Production Capability */}
-              <div className="section-card">
-                <ProductionCapabilityCard profile={profile} />
-              </div>
+            {/* Production Capability */}
+            <div className="section-card">
+              <ProductionCapabilityCard profile={profile} />
+            </div>
 
-              {/* Quality Control */}
-              <div className="section-card">
-                <QualityControlCard profile={profile} />
-              </div>
+            {/* Quality Control */}
+            <div className="section-card">
+              <QualityControlCard profile={profile} />
+            </div>
 
-              {/* Cutting Section */}
-              <div className="section-card">
-                <SectionCard
-                  icon={<Scissors className="h-5 w-5" />}
-                  title="Cutting Section"
-                  color="emerald"
-                  items={[
-                    { label: 'Cutting Tables', value: `${profile.cutting_tables_count || 0} (${profile.cutting_table_size || '-'})` },
-                    { label: 'Fabric Inspection Tables', value: `${profile.fabric_inspection_tables_count || 0}` },
-                    { label: 'Staff', value: profile.cutting_staff || 0 },
-                  ]}
-                  notes={profile.cutting_notes}
-                />
-              </div>
+            {/* Cutting Section */}
+            <div className="section-card">
+              <SectionCard
+                icon={<Scissors />}
+                title="Cutting Section"
+                color="emerald"
+                items={[
+                  { label: 'Cutting Tables', value: `${profile.cutting_tables_count || 0} (${profile.cutting_table_size || 'Standard'})` },
+                  { label: 'Fabric Inspection Tables', value: `${profile.fabric_inspection_tables_count || 0}` },
+                  { label: 'Cutting Staff', value: `${profile.cutting_staff || 0} Persons` },
+                ]}
+                notes={profile.cutting_notes}
+              />
+            </div>
 
-              {/* Stitching Section */}
-              <div className="section-card">
-                <StitchingSectionCard profile={profile} />
-              </div>
+            {/* Stitching Section */}
+            <div className="section-card">
+              <StitchingSectionCard profile={profile} />
+            </div>
 
-              {/* Checking Section */}
-              <div className="section-card">
-                <SectionCard
-                  icon={<CheckCircle className="h-5 w-5" />}
-                  title="Checking Section"
-                  color="violet"
-                  items={[
-                    { label: 'Checking Tables', value: `${profile.checking_tables_count || 0} (${profile.checking_table_size || '-'})` },
-                    { label: 'Staff', value: profile.checking_staff || 0 },
-                  ]}
-                  notes={profile.checking_notes}
-                />
-              </div>
+            {/* Checking Section */}
+            <div className="section-card">
+              <SectionCard
+                icon={<CheckCircle />}
+                title="Checking Section"
+                color="violet"
+                items={[
+                  { label: 'Checking Tables', value: `${profile.checking_tables_count || 0} (${profile.checking_table_size || 'Standard'})` },
+                  { label: 'Checking Staff', value: `${profile.checking_staff || 0} Persons` },
+                ]}
+                notes={profile.checking_notes}
+              />
+            </div>
 
-              {/* Ironing Section */}
-              <div className="section-card">
-                <SectionCard
-                  icon={<Flame className="h-5 w-5" />}
-                  title="Ironing Section"
-                  color="orange"
-                  items={[
-                    { label: 'Ironing Tables', value: profile.ironing_tables_count || 0 },
-                    { label: 'Steam Irons', value: profile.steam_iron_count || 0 },
-                    { label: 'Vacuum Table', value: profile.vacuum_table_available ? 'Yes' : 'No' },
-                    { label: 'Staff', value: profile.ironing_staff || 0 },
-                  ]}
-                  notes={profile.ironing_notes}
-                />
-              </div>
+            {/* Ironing Section */}
+            <div className="section-card">
+              <SectionCard
+                icon={<Flame />}
+                title="Ironing Section"
+                color="orange"
+                items={[
+                  { label: 'Ironing Tables', value: `${profile.ironing_tables_count || 0}` },
+                  { label: 'Steam Irons', value: `${profile.steam_iron_count || 0}` },
+                  { label: 'Vacuum Table', value: profile.vacuum_table_available ? 'Available' : 'Not Available', isBadge: true, badgeValue: profile.vacuum_table_available },
+                  { label: 'Ironing Staff', value: `${profile.ironing_staff || 0} Persons` },
+                ]}
+                notes={profile.ironing_notes}
+              />
+            </div>
 
-              {/* Packing Section */}
-              <div className="section-card">
-                <SectionCard
-                  icon={<Package className="h-5 w-5" />}
-                  title="Packing Section"
-                  color="teal"
-                  items={[
-                    { label: 'Packing Tables', value: profile.packing_tables_count || 0 },
-                    { label: 'Storage Racks', value: profile.storage_racks_available ? 'Yes' : 'No' },
-                    { label: 'Polybag Sealing', value: profile.polybag_sealing_available ? 'Yes' : 'No' },
-                    { label: 'Tagging/Barcode', value: profile.tagging_barcode_support ? 'Yes' : 'No' },
-                    { label: 'Carton Packing', value: profile.carton_packing_support ? 'Yes' : 'No' },
-                    { label: 'Staff', value: profile.packing_staff || 0 },
-                  ]}
-                  notes={profile.packing_notes}
-                />
-              </div>
+            {/* Packing Section */}
+            <div className="section-card">
+              <SectionCard
+                icon={<Package />}
+                title="Packing Section"
+                color="teal"
+                items={[
+                  { label: 'Packing Tables', value: `${profile.packing_tables_count || 0}` },
+                  { label: 'Storage Racks', value: profile.storage_racks_available ? 'Available' : 'Not Available', isBadge: true, badgeValue: profile.storage_racks_available },
+                  { label: 'Polybag Sealing', value: profile.polybag_sealing_available ? 'Available' : 'Not Available', isBadge: true, badgeValue: profile.polybag_sealing_available },
+                  { label: 'Tagging/Barcode Support', value: profile.tagging_barcode_support ? 'Available' : 'Not Available', isBadge: true, badgeValue: profile.tagging_barcode_support },
+                  { label: 'Carton Packing', value: profile.carton_packing_support ? 'Available' : 'Not Available', isBadge: true, badgeValue: profile.carton_packing_support },
+                  { label: 'Packing Staff', value: `${profile.packing_staff || 0} Persons` },
+                ]}
+                notes={profile.packing_notes}
+              />
+            </div>
 
-              {/* General Remarks */}
-              {profile.general_remarks && (
-                <div className="section-card bg-slate-50 rounded-xl p-6 border border-slate-200">
-                  <h3 className="font-semibold text-slate-800 mb-2">General Remarks</h3>
-                  <p className="text-slate-600 text-sm whitespace-pre-wrap">{profile.general_remarks}</p>
-                </div>
-              )}
-
-              {/* Signature & Seal Section */}
-              <div className="section-card">
-                <SignatorySection profile={profile} />
+            {/* General Remarks */}
+            {profile.general_remarks && (
+              <div className="section-card" style={{
+                background: '#f8fafc',
+                borderRadius: '12px',
+                padding: '24px',
+                border: '1px solid #e2e8f0'
+              }}>
+                <h3 style={{ 
+                  fontSize: '15px', 
+                  fontWeight: '600', 
+                  color: '#1e293b',
+                  marginBottom: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  <span style={{ color: '#64748b' }}>📝</span>
+                  General Remarks
+                </h3>
+                <p style={{ 
+                  fontSize: '14px', 
+                  color: '#475569', 
+                  lineHeight: '1.6',
+                  whiteSpace: 'pre-wrap'
+                }}>
+                  {profile.general_remarks}
+                </p>
               </div>
+            )}
+
+            {/* Signature & Signatory Section */}
+            <div className="section-card">
+              <SignatorySection profile={profile} />
             </div>
           </div>
 
-          {/* Footer - Will be at the bottom of content flow */}
+          {/* Footer - Only appears at the bottom */}
           <div className="footer-section">
-            <p className="text-slate-400 text-xs">Generated by Feather Fashions • {format(new Date(), 'dd MMM yyyy, hh:mm a')}</p>
+            <p style={{ 
+              color: '#94a3b8', 
+              fontSize: '12px',
+              letterSpacing: '0.3px'
+            }}>
+              Generated by <strong style={{ color: '#f59e0b' }}>Feather Fashions</strong> • {format(new Date(), 'dd MMM yyyy, hh:mm a')}
+            </p>
           </div>
         </div>
       </div>
@@ -206,54 +360,108 @@ export const ProfilePreviewPrint = forwardRef<HTMLDivElement, ProfilePreviewPrin
 
 ProfilePreviewPrint.displayName = 'ProfilePreviewPrint';
 
+// ============ HELPER COMPONENTS ============
+
 const StatCard = ({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string | number; color: string }) => {
-  const colorClasses: Record<string, string> = {
-    blue: 'bg-blue-50 text-blue-600 border-blue-200',
-    green: 'bg-green-50 text-green-600 border-green-200',
-    amber: 'bg-amber-50 text-amber-600 border-amber-200',
-    purple: 'bg-purple-50 text-purple-600 border-purple-200',
+  const colorStyles: Record<string, { bg: string; border: string; icon: string; text: string }> = {
+    blue: { bg: '#eff6ff', border: '#bfdbfe', icon: '#2563eb', text: '#1e40af' },
+    emerald: { bg: '#ecfdf5', border: '#a7f3d0', icon: '#059669', text: '#047857' },
+    amber: { bg: '#fffbeb', border: '#fde68a', icon: '#d97706', text: '#b45309' },
+    violet: { bg: '#f5f3ff', border: '#c4b5fd', icon: '#7c3aed', text: '#6d28d9' },
   };
 
+  const styles = colorStyles[color] || colorStyles.blue;
+
   return (
-    <div className={`rounded-xl p-4 border-2 ${colorClasses[color]}`}>
-      <div className="flex items-center gap-2 mb-2">{icon}<span className="text-xs font-medium uppercase tracking-wide">{label}</span></div>
-      <p className="text-lg font-bold leading-tight">{value}</p>
+    <div style={{
+      background: styles.bg,
+      border: `2px solid ${styles.border}`,
+      borderRadius: '12px',
+      padding: '20px',
+      minHeight: '100px'
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+        <span style={{ color: styles.icon, display: 'flex' }}>
+          {icon && <span style={{ width: '20px', height: '20px' }}>{icon}</span>}
+        </span>
+        <span style={{ 
+          fontSize: '11px', 
+          fontWeight: '600', 
+          color: styles.text,
+          textTransform: 'uppercase',
+          letterSpacing: '0.5px'
+        }}>
+          {label}
+        </span>
+      </div>
+      <p style={{ 
+        fontSize: '18px', 
+        fontWeight: '700', 
+        color: styles.text,
+        lineHeight: '1.3',
+        wordBreak: 'break-word'
+      }}>
+        {value}
+      </p>
     </div>
   );
 };
 
 const FeatureCard = ({ title, available, detail }: { title: string; available?: boolean | null; detail?: string | null }) => (
-  <div className={`rounded-lg p-4 text-center border ${available ? 'bg-green-50 border-green-200' : 'bg-slate-50 border-slate-200'}`}>
-    <p className={`font-semibold ${available ? 'text-green-700' : 'text-slate-500'}`}>{title}</p>
-    <p className={`text-sm ${available ? 'text-green-600' : 'text-slate-400'}`}>
+  <div style={{
+    background: available ? '#ecfdf5' : '#f8fafc',
+    border: `2px solid ${available ? '#a7f3d0' : '#e2e8f0'}`,
+    borderRadius: '12px',
+    padding: '20px',
+    textAlign: 'center'
+  }}>
+    <p style={{ 
+      fontWeight: '600', 
+      fontSize: '15px',
+      color: available ? '#047857' : '#64748b',
+      marginBottom: '4px'
+    }}>
+      {title}
+    </p>
+    <p style={{ 
+      fontSize: '13px', 
+      color: available ? '#059669' : '#94a3b8'
+    }}>
       {available ? (detail || 'Available') : 'Not Available'}
     </p>
   </div>
 );
 
 const ProductionCapabilityCard = ({ profile }: { profile: Partial<CompanyProfile> }) => (
-  <div className="rounded-xl border border-slate-200 overflow-hidden">
-    <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white px-4 py-3 flex items-center gap-2">
-      <Factory className="h-5 w-5" />
-      <h3 className="font-semibold">Production Capability</h3>
+  <div style={{ borderRadius: '12px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+    <div style={{
+      background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+      color: '#ffffff',
+      padding: '14px 20px',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '10px'
+    }}>
+      <Factory style={{ width: '20px', height: '20px' }} />
+      <h3 style={{ fontWeight: '600', fontSize: '15px', margin: 0 }}>Production Capability</h3>
     </div>
-    <div className="p-4 bg-white">
-      <div className="grid grid-cols-4 gap-4">
-        <div>
-          <p className="text-xs text-slate-500 uppercase tracking-wide">Daily Capacity</p>
-          <p className="font-semibold text-slate-800">{profile.daily_production_capacity || 'Contact Us'}</p>
+    <div style={{ background: '#ffffff' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)' }}>
+        <div style={{ padding: '16px 20px', borderRight: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0' }}>
+          <p style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>Daily Capacity</p>
+          <p style={{ fontSize: '16px', fontWeight: '700', color: '#1e293b' }}>{profile.daily_production_capacity || 'Contact Us'}</p>
         </div>
-        <div>
-          <p className="text-xs text-slate-500 uppercase tracking-wide">MOQ</p>
-          <p className="font-semibold text-slate-800">{profile.moq || 'Flexible'}</p>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0' }}>
+          <p style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>MOQ</p>
+          <p style={{ fontSize: '16px', fontWeight: '700', color: '#1e293b' }}>{profile.moq || 'Flexible'}</p>
         </div>
-        <div>
-          <p className="text-xs text-slate-500 uppercase tracking-wide">Lead Time</p>
-          <p className="font-semibold text-slate-800">{profile.lead_time || '30-45 days'}</p>
+        <div style={{ padding: '16px 20px', borderRight: '1px solid #e2e8f0' }}>
+          <p style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>Lead Time</p>
+          <p style={{ fontSize: '16px', fontWeight: '700', color: '#1e293b' }}>{profile.lead_time || '30-45 days'}</p>
         </div>
-        <div>
-          <p className="text-xs text-slate-500 uppercase tracking-wide">Sample Lead Time</p>
-          <p className="font-semibold text-slate-800">{profile.sample_lead_time || '7-10 days'}</p>
+        <div style={{ padding: '16px 20px' }}>
+          <p style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>Sample Lead Time</p>
+          <p style={{ fontSize: '16px', fontWeight: '700', color: '#1e293b' }}>{profile.sample_lead_time || '7-10 days'}</p>
         </div>
       </div>
     </div>
@@ -269,19 +477,53 @@ const QualityControlCard = ({ profile }: { profile: Partial<CompanyProfile> }) =
   ];
 
   return (
-    <div className="rounded-xl border border-slate-200 overflow-hidden">
-      <div className="bg-gradient-to-r from-rose-500 to-rose-600 text-white px-4 py-3 flex items-center gap-2">
-        <ClipboardCheck className="h-5 w-5" />
-        <h3 className="font-semibold">Quality Control Process</h3>
+    <div style={{ borderRadius: '12px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+      <div style={{
+        background: 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)',
+        color: '#ffffff',
+        padding: '14px 20px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '10px'
+      }}>
+        <ClipboardCheck style={{ width: '20px', height: '20px' }} />
+        <h3 style={{ fontWeight: '600', fontSize: '15px', margin: 0 }}>Quality Control Process</h3>
       </div>
-      <div className="p-4 bg-white">
-        <div className="grid grid-cols-4 gap-4">
+      <div style={{ padding: '20px', background: '#ffffff' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
           {qcItems.map((item, idx) => (
-            <div key={idx} className="flex items-center gap-2">
-              <div className={`w-5 h-5 rounded-full flex items-center justify-center ${item.checked ? 'bg-green-500' : 'bg-slate-300'}`}>
-                {item.checked ? <Check className="h-3 w-3 text-white" /> : <X className="h-3 w-3 text-white" />}
+            <div key={idx} style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '12px',
+              padding: '12px 16px',
+              background: item.checked ? '#ecfdf5' : '#f8fafc',
+              borderRadius: '8px',
+              border: `1px solid ${item.checked ? '#a7f3d0' : '#e2e8f0'}`
+            }}>
+              <div style={{
+                width: '24px',
+                height: '24px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: item.checked ? '#22c55e' : '#cbd5e1',
+                flexShrink: 0
+              }}>
+                {item.checked ? (
+                  <Check style={{ width: '14px', height: '14px', color: '#ffffff' }} />
+                ) : (
+                  <X style={{ width: '14px', height: '14px', color: '#ffffff' }} />
+                )}
               </div>
-              <span className={`text-sm ${item.checked ? 'text-slate-800 font-medium' : 'text-slate-500'}`}>{item.label}</span>
+              <span style={{ 
+                fontSize: '14px', 
+                fontWeight: item.checked ? '600' : '500',
+                color: item.checked ? '#047857' : '#64748b'
+              }}>
+                {item.label}
+              </span>
             </div>
           ))}
         </div>
@@ -291,17 +533,41 @@ const QualityControlCard = ({ profile }: { profile: Partial<CompanyProfile> }) =
 };
 
 const SignatorySection = ({ profile }: { profile: Partial<CompanyProfile> }) => (
-  <div className="border-t-2 border-slate-200 pt-8 mt-4">
-    <div className="flex justify-between items-end">
-      <div className="text-sm text-slate-500">
-        <p>This document is system generated.</p>
-        <p>For queries, contact: {profile.phone || '9789225510'}</p>
+  <div style={{ 
+    borderTop: '2px solid #e2e8f0', 
+    paddingTop: '32px', 
+    marginTop: '16px',
+    background: '#fafafa',
+    padding: '32px',
+    borderRadius: '12px'
+  }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+      <div style={{ fontSize: '13px', color: '#64748b', lineHeight: '1.8' }}>
+        <p style={{ margin: '0 0 4px 0' }}>This document is system generated.</p>
+        <p style={{ margin: 0 }}>For queries, contact: <strong style={{ color: '#1e293b' }}>{profile.phone || '9789225510'}</strong></p>
       </div>
-      <div className="text-center">
-        <img src={signatureImage} alt="Signature" className="h-16 mx-auto mb-2" />
-        <div className="border-t border-slate-400 pt-2 min-w-[200px]">
-          <p className="font-semibold text-slate-800">{profile.authorized_signatory_name || profile.contact_person || 'Authorized Signatory'}</p>
-          <p className="text-sm text-slate-600">{profile.signatory_designation || 'Managing Director'}</p>
+      <div style={{ textAlign: 'center' }}>
+        <img src={signatureImage} alt="Signature" style={{ height: '60px', marginBottom: '12px' }} />
+        <div style={{ 
+          borderTop: '2px solid #1e293b', 
+          paddingTop: '12px',
+          minWidth: '220px'
+        }}>
+          <p style={{ 
+            fontWeight: '700', 
+            fontSize: '15px',
+            color: '#1e293b',
+            margin: '0 0 4px 0'
+          }}>
+            {profile.authorized_signatory_name || profile.contact_person || 'Authorized Signatory'}
+          </p>
+          <p style={{ 
+            fontSize: '13px', 
+            color: '#64748b',
+            margin: 0
+          }}>
+            {profile.signatory_designation || 'Managing Director'}
+          </p>
         </div>
       </div>
     </div>
@@ -318,46 +584,93 @@ const StitchingSectionCard = ({ profile }: { profile: Partial<CompanyProfile> })
   const totalMachines = machines.reduce((sum, m) => sum + (m.count || 0), 0);
 
   return (
-    <div className="rounded-xl border border-slate-200 overflow-hidden">
-      <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-3 flex items-center gap-2">
-        <Shirt className="h-5 w-5" />
-        <h3 className="font-semibold">Stitching Section</h3>
-      </div>
-      <div className="p-4 bg-white">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <p className="text-xs text-slate-500 uppercase tracking-wide">Staff</p>
-            <p className="font-semibold text-slate-800">{profile.stitching_staff || 0}</p>
-          </div>
-          {totalMachines > 0 && (
-            <div className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
-              Total: {totalMachines} Machines
-            </div>
-          )}
+    <div style={{ borderRadius: '12px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+      <div style={{
+        background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+        color: '#ffffff',
+        padding: '14px 20px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <Shirt style={{ width: '20px', height: '20px' }} />
+          <h3 style={{ fontWeight: '600', fontSize: '15px', margin: 0 }}>Stitching Section</h3>
         </div>
-        
-        {machines.length > 0 && (
-          <div className="space-y-1">
-            <p className="text-xs text-slate-500 uppercase tracking-wide mb-2">Stitching Machines Available:</p>
-            <ul className="space-y-1">
-              {machines.map((machine, idx) => (
-                <li key={idx} className="flex items-center gap-2 text-sm">
-                  <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-                  <span className="font-medium text-slate-700">
-                    {machine.type === 'Others' ? machine.customType : machine.type}
-                  </span>
-                  <span className="text-slate-500">- {machine.count} Nos</span>
-                  {machine.brand && (
-                    <span className="text-slate-400 text-xs">({machine.brand})</span>
-                  )}
-                </li>
-              ))}
-            </ul>
+        {totalMachines > 0 && (
+          <div style={{
+            background: 'rgba(255,255,255,0.2)',
+            padding: '6px 14px',
+            borderRadius: '20px',
+            fontSize: '13px',
+            fontWeight: '600'
+          }}>
+            Total: {totalMachines} Machines
           </div>
         )}
-        
+      </div>
+      <div style={{ background: '#ffffff' }}>
+        {/* Staff Info */}
+        <div style={{ 
+          padding: '16px 20px',
+          borderBottom: '1px solid #e2e8f0',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between'
+        }}>
+          <span style={{ fontSize: '14px', color: '#64748b', fontWeight: '500' }}>Stitching Staff</span>
+          <span style={{ fontSize: '16px', color: '#1e293b', fontWeight: '700' }}>{profile.stitching_staff || 0} Persons</span>
+        </div>
+
+        {/* Machine Table */}
+        {machines.length > 0 && (
+          <div style={{ padding: '16px 20px' }}>
+            <p style={{ 
+              fontSize: '12px', 
+              color: '#64748b', 
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+              marginBottom: '12px',
+              fontWeight: '600'
+            }}>
+              Stitching Machines Available
+            </p>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ background: '#f8fafc' }}>
+                  <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '12px', color: '#64748b', fontWeight: '600', borderBottom: '2px solid #e2e8f0' }}>Machine Type</th>
+                  <th style={{ padding: '10px 12px', textAlign: 'center', fontSize: '12px', color: '#64748b', fontWeight: '600', borderBottom: '2px solid #e2e8f0' }}>Count</th>
+                  <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '12px', color: '#64748b', fontWeight: '600', borderBottom: '2px solid #e2e8f0' }}>Brand</th>
+                </tr>
+              </thead>
+              <tbody>
+                {machines.map((machine, idx) => (
+                  <tr key={idx} style={{ background: idx % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
+                    <td style={{ padding: '12px', fontSize: '14px', color: '#1e293b', fontWeight: '600', borderBottom: '1px solid #e2e8f0' }}>
+                      {machine.type === 'Others' ? machine.customType : machine.type}
+                    </td>
+                    <td style={{ padding: '12px', textAlign: 'center', fontSize: '14px', color: '#1e293b', fontWeight: '700', borderBottom: '1px solid #e2e8f0' }}>
+                      {machine.count}
+                    </td>
+                    <td style={{ padding: '12px', fontSize: '13px', color: '#64748b', borderBottom: '1px solid #e2e8f0' }}>
+                      {machine.brand || '-'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Notes */}
         {profile.stitching_notes && (
-          <p className="text-sm text-slate-600 mt-3 pt-3 border-t border-slate-100">{profile.stitching_notes}</p>
+          <div style={{ 
+            padding: '16px 20px', 
+            borderTop: '1px solid #e2e8f0',
+            background: '#f8fafc'
+          }}>
+            <p style={{ fontSize: '13px', color: '#64748b', margin: 0, lineHeight: '1.6' }}>{profile.stitching_notes}</p>
+          </div>
         )}
       </div>
     </div>
@@ -368,33 +681,90 @@ const SectionCard = ({ icon, title, color, items, notes }: {
   icon: React.ReactNode; 
   title: string; 
   color: string;
-  items: { label: string; value: string | number }[];
+  items: { label: string; value: string | number; isBadge?: boolean; badgeValue?: boolean | null }[];
   notes?: string | null;
 }) => {
   const headerColors: Record<string, string> = {
-    emerald: 'from-emerald-500 to-emerald-600',
-    blue: 'from-blue-500 to-blue-600',
-    violet: 'from-violet-500 to-violet-600',
-    orange: 'from-orange-500 to-orange-600',
-    teal: 'from-teal-500 to-teal-600',
+    emerald: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+    blue: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+    violet: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+    orange: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+    teal: 'linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)',
   };
 
   return (
-    <div className="rounded-xl border border-slate-200 overflow-hidden">
-      <div className={`bg-gradient-to-r ${headerColors[color]} text-white px-4 py-3 flex items-center gap-2`}>
-        {icon}
-        <h3 className="font-semibold">{title}</h3>
+    <div style={{ borderRadius: '12px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+      <div style={{
+        background: headerColors[color] || headerColors.blue,
+        color: '#ffffff',
+        padding: '14px 20px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '10px'
+      }}>
+        <span style={{ width: '20px', height: '20px', display: 'flex' }}>{icon}</span>
+        <h3 style={{ fontWeight: '600', fontSize: '15px', margin: 0 }}>{title}</h3>
       </div>
-      <div className="p-4 bg-white">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {items.map((item, idx) => (
-            <div key={idx}>
-              <p className="text-xs text-slate-500 uppercase tracking-wide">{item.label}</p>
-              <p className="font-semibold text-slate-800">{item.value}</p>
+      <div style={{ background: '#ffffff' }}>
+        {items.map((item, idx) => (
+          <div 
+            key={idx} 
+            style={{ 
+              display: 'flex',
+              borderBottom: idx < items.length - 1 ? '1px solid #e2e8f0' : 'none',
+              background: idx % 2 === 0 ? '#ffffff' : '#f8fafc'
+            }}
+          >
+            <div style={{ 
+              width: '45%', 
+              padding: '14px 20px',
+              fontSize: '13px',
+              color: '#64748b',
+              fontWeight: '500'
+            }}>
+              {item.label}
             </div>
-          ))}
-        </div>
-        {notes && <p className="text-sm text-slate-600 mt-3 pt-3 border-t border-slate-100">{notes}</p>}
+            <div style={{ 
+              width: '55%', 
+              padding: '14px 20px',
+              fontSize: '14px',
+              color: '#1e293b',
+              fontWeight: '600'
+            }}>
+              {item.isBadge ? (
+                <span style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  background: item.badgeValue ? '#dcfce7' : '#f1f5f9',
+                  color: item.badgeValue ? '#15803d' : '#64748b',
+                  padding: '4px 12px',
+                  borderRadius: '9999px',
+                  fontSize: '12px',
+                  fontWeight: '600'
+                }}>
+                  {item.badgeValue ? (
+                    <Check style={{ width: '12px', height: '12px' }} />
+                  ) : (
+                    <X style={{ width: '12px', height: '12px' }} />
+                  )}
+                  {item.badgeValue ? 'Available' : 'Not Available'}
+                </span>
+              ) : (
+                item.value
+              )}
+            </div>
+          </div>
+        ))}
+        {notes && (
+          <div style={{ 
+            padding: '16px 20px', 
+            borderTop: '1px solid #e2e8f0',
+            background: '#f8fafc'
+          }}>
+            <p style={{ fontSize: '13px', color: '#64748b', margin: 0, lineHeight: '1.6' }}>{notes}</p>
+          </div>
+        )}
       </div>
     </div>
   );
