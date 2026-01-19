@@ -17,6 +17,17 @@ export const ProfilePreview = forwardRef<HTMLDivElement, ProfilePreviewProps>(
     const totalStaff = (profile.cutting_staff || 0) + (profile.stitching_staff || 0) + 
                        (profile.checking_staff || 0) + (profile.ironing_staff || 0) + (profile.packing_staff || 0);
 
+    // Smart badge content selection with fallback hierarchy
+    const getBadgeContent = () => {
+      if (profile.company_code) return profile.company_code;
+      if (profile.gst_number) return `GST: ${profile.gst_number.slice(-6)}`;
+      if (profile.daily_production_capacity) return profile.daily_production_capacity;
+      if (profile.total_employees) return `${profile.total_employees} Staff`;
+      return null;
+    };
+
+    const badgeContent = getBadgeContent();
+
     return (
       <div ref={ref} className="bg-white min-h-[297mm] w-full max-w-[210mm] mx-auto shadow-2xl" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
         {/* Premium Header */}
@@ -28,9 +39,11 @@ export const ProfilePreview = forwardRef<HTMLDivElement, ProfilePreviewProps>(
               <p className="text-slate-400 text-sm mt-2">Infrastructure & Capability Profile</p>
             </div>
             <div className="text-right">
-              <div className="bg-amber-500 text-slate-900 px-4 py-2 rounded-lg font-bold text-sm">
-                {profile.company_code || 'N/A'}
-              </div>
+              {badgeContent && (
+                <div className="bg-amber-500 text-slate-900 px-4 py-2 rounded-lg font-bold text-sm">
+                  {badgeContent}
+                </div>
+              )}
               <p className="text-slate-400 text-xs mt-2">{format(new Date(), 'dd MMM yyyy')}</p>
             </div>
           </div>
