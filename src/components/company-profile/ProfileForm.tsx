@@ -4,7 +4,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Building2, Scissors, Shirt, CheckCircle, Flame, Package, Users } from 'lucide-react';
+import { Building2, Scissors, Shirt, CheckCircle, Flame, Package, Users, ClipboardCheck, Factory, FileSignature } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CompanyProfile, CompanyProfileInsert } from './useProfileData';
 import { StitchingMachinesInput, StitchingMachine } from './StitchingMachinesInput';
 
@@ -16,18 +17,24 @@ interface ProfileFormProps {
 export const ProfileForm = ({ formData, onChange }: ProfileFormProps) => {
   return (
     <Tabs defaultValue="basic" className="w-full">
-      <TabsList className="grid w-full grid-cols-7 mb-6">
+      <TabsList className="grid w-full grid-cols-10 mb-6">
         <TabsTrigger value="basic" className="text-xs"><Building2 className="h-4 w-4 mr-1" />Basic</TabsTrigger>
+        <TabsTrigger value="power" className="text-xs"><Flame className="h-4 w-4 mr-1" />Power</TabsTrigger>
         <TabsTrigger value="cutting" className="text-xs"><Scissors className="h-4 w-4 mr-1" />Cutting</TabsTrigger>
         <TabsTrigger value="stitching" className="text-xs"><Shirt className="h-4 w-4 mr-1" />Stitching</TabsTrigger>
         <TabsTrigger value="checking" className="text-xs"><CheckCircle className="h-4 w-4 mr-1" />Checking</TabsTrigger>
         <TabsTrigger value="ironing" className="text-xs"><Flame className="h-4 w-4 mr-1" />Ironing</TabsTrigger>
         <TabsTrigger value="packing" className="text-xs"><Package className="h-4 w-4 mr-1" />Packing</TabsTrigger>
-        <TabsTrigger value="staff" className="text-xs"><Users className="h-4 w-4 mr-1" />Staff</TabsTrigger>
+        <TabsTrigger value="qc" className="text-xs"><ClipboardCheck className="h-4 w-4 mr-1" />QC</TabsTrigger>
+        <TabsTrigger value="production" className="text-xs"><Factory className="h-4 w-4 mr-1" />Production</TabsTrigger>
+        <TabsTrigger value="signatory" className="text-xs"><FileSignature className="h-4 w-4 mr-1" />Signatory</TabsTrigger>
       </TabsList>
 
       <TabsContent value="basic">
         <BasicDetailsForm formData={formData} onChange={onChange} />
+      </TabsContent>
+      <TabsContent value="power">
+        <PowerForm formData={formData} onChange={onChange} />
       </TabsContent>
       <TabsContent value="cutting">
         <CuttingForm formData={formData} onChange={onChange} />
@@ -44,8 +51,14 @@ export const ProfileForm = ({ formData, onChange }: ProfileFormProps) => {
       <TabsContent value="packing">
         <PackingForm formData={formData} onChange={onChange} />
       </TabsContent>
-      <TabsContent value="staff">
-        <StaffForm formData={formData} onChange={onChange} />
+      <TabsContent value="qc">
+        <QualityControlForm formData={formData} onChange={onChange} />
+      </TabsContent>
+      <TabsContent value="production">
+        <ProductionCapabilityForm formData={formData} onChange={onChange} />
+      </TabsContent>
+      <TabsContent value="signatory">
+        <SignatoryForm formData={formData} onChange={onChange} />
       </TabsContent>
     </Tabs>
   );
@@ -62,14 +75,37 @@ const BasicDetailsForm = ({ formData, onChange }: ProfileFormProps) => (
       <div><Label>Email</Label><Input value={formData.email || ''} onChange={(e) => onChange('email', e.target.value)} /></div>
       <div><Label>Website</Label><Input value={formData.website || ''} onChange={(e) => onChange('website', e.target.value)} /></div>
       <div><Label>GST Number</Label><Input value={formData.gst_number || ''} onChange={(e) => onChange('gst_number', e.target.value)} /></div>
-      <div><Label>Daily Production Capacity</Label><Input value={formData.daily_production_capacity || ''} onChange={(e) => onChange('daily_production_capacity', e.target.value)} /></div>
+      <div><Label>Total Employees</Label><Input type="number" value={formData.total_employees || 0} onChange={(e) => onChange('total_employees', parseInt(e.target.value) || 0)} /></div>
       <div className="col-span-2"><Label>Address</Label><Textarea value={formData.address || ''} onChange={(e) => onChange('address', e.target.value)} /></div>
       <div><Label>City</Label><Input value={formData.city || ''} onChange={(e) => onChange('city', e.target.value)} /></div>
       <div><Label>State</Label><Input value={formData.state || ''} onChange={(e) => onChange('state', e.target.value)} /></div>
       <div><Label>Country</Label><Input value={formData.country || ''} onChange={(e) => onChange('country', e.target.value)} /></div>
-      <div><Label>Power Connection Type</Label><Input value={formData.power_connection_type || ''} onChange={(e) => onChange('power_connection_type', e.target.value)} /></div>
+      <div className="col-span-2"><Label>General Remarks</Label><Textarea value={formData.general_remarks || ''} onChange={(e) => onChange('general_remarks', e.target.value)} rows={4} /></div>
+    </CardContent>
+  </Card>
+);
+
+const PowerForm = ({ formData, onChange }: ProfileFormProps) => (
+  <Card>
+    <CardHeader><CardTitle className="flex items-center gap-2"><Flame className="h-5 w-5" />Power & Utilities</CardTitle></CardHeader>
+    <CardContent className="grid grid-cols-2 gap-4">
+      <div className="flex items-center gap-2"><Switch checked={formData.eb_power_available ?? true} onCheckedChange={(v) => onChange('eb_power_available', v)} /><Label>EB Power Available</Label></div>
+      <div>
+        <Label>Power Phase</Label>
+        <Select value={formData.power_phase || '3 Phase'} onValueChange={(v) => onChange('power_phase', v)}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Single Phase">Single Phase</SelectItem>
+            <SelectItem value="3 Phase">3 Phase</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div><Label>Power Connection Details</Label><Input value={formData.power_connection_type || ''} onChange={(e) => onChange('power_connection_type', e.target.value)} placeholder="e.g., Industrial 100KVA" /></div>
+      <div className="col-span-2 border-t pt-4 mt-2">
+        <p className="text-sm font-medium text-muted-foreground mb-3">Backup & Equipment</p>
+      </div>
       <div className="flex items-center gap-2"><Switch checked={formData.generator_available || false} onCheckedChange={(v) => onChange('generator_available', v)} /><Label>Generator Available</Label></div>
-      {formData.generator_available && <div><Label>Generator Capacity</Label><Input value={formData.generator_capacity || ''} onChange={(e) => onChange('generator_capacity', e.target.value)} /></div>}
+      {formData.generator_available && <div><Label>Generator Capacity</Label><Input value={formData.generator_capacity || ''} onChange={(e) => onChange('generator_capacity', e.target.value)} placeholder="e.g., 62.5 KVA" /></div>}
       <div className="flex items-center gap-2"><Switch checked={formData.compressor_available || false} onCheckedChange={(v) => onChange('compressor_available', v)} /><Label>Compressor Available</Label></div>
       {formData.compressor_available && <div><Label>Compressor Capacity</Label><Input value={formData.compressor_capacity || ''} onChange={(e) => onChange('compressor_capacity', e.target.value)} /></div>}
       <div className="flex items-center gap-2"><Switch checked={formData.boiler_available || false} onCheckedChange={(v) => onChange('boiler_available', v)} /><Label>Boiler Available</Label></div>
@@ -176,20 +212,50 @@ const PackingForm = ({ formData, onChange }: ProfileFormProps) => (
       <div><Label>Number of Packing Tables</Label><Input type="number" value={formData.packing_tables_count || 0} onChange={(e) => onChange('packing_tables_count', parseInt(e.target.value) || 0)} /></div>
       <div><Label>Packing Staff Count</Label><Input type="number" value={formData.packing_staff || 0} onChange={(e) => onChange('packing_staff', parseInt(e.target.value) || 0)} /></div>
       <div className="flex items-center gap-2"><Switch checked={formData.storage_racks_available || false} onCheckedChange={(v) => onChange('storage_racks_available', v)} /><Label>Storage Racks Available</Label></div>
-      <div className="flex items-center gap-2"><Switch checked={formData.polybag_sealing_available || false} onCheckedChange={(v) => onChange('polybag_sealing_available', v)} /><Label>Polybag Sealing Available</Label></div>
+      <div className="flex items-center gap-2"><Switch checked={formData.polybag_sealing_available || false} onCheckedChange={(v) => onChange('polybag_sealing_available', v)} /><Label>Polybag Sealing Machine</Label></div>
       <div className="flex items-center gap-2"><Switch checked={formData.tagging_barcode_support || false} onCheckedChange={(v) => onChange('tagging_barcode_support', v)} /><Label>Tagging/Barcode Support</Label></div>
+      <div className="flex items-center gap-2"><Switch checked={formData.carton_packing_support || false} onCheckedChange={(v) => onChange('carton_packing_support', v)} /><Label>Carton Packing Support</Label></div>
       <div className="col-span-2"><Label>Packing Notes</Label><Textarea value={formData.packing_notes || ''} onChange={(e) => onChange('packing_notes', e.target.value)} /></div>
     </CardContent>
   </Card>
 );
 
-const StaffForm = ({ formData, onChange }: ProfileFormProps) => (
+const QualityControlForm = ({ formData, onChange }: ProfileFormProps) => (
   <Card>
-    <CardHeader><CardTitle className="flex items-center gap-2"><Users className="h-5 w-5" />Staff & General</CardTitle></CardHeader>
+    <CardHeader><CardTitle className="flex items-center gap-2"><ClipboardCheck className="h-5 w-5" />Quality Control Process</CardTitle></CardHeader>
+    <CardContent className="space-y-4">
+      <p className="text-sm text-muted-foreground">Select the quality control processes you follow:</p>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="flex items-center gap-2"><Switch checked={formData.inline_checking || false} onCheckedChange={(v) => onChange('inline_checking', v)} /><Label>Inline Checking</Label></div>
+        <div className="flex items-center gap-2"><Switch checked={formData.final_checking ?? true} onCheckedChange={(v) => onChange('final_checking', v)} /><Label>Final Checking</Label></div>
+        <div className="flex items-center gap-2"><Switch checked={formData.measurement_check ?? true} onCheckedChange={(v) => onChange('measurement_check', v)} /><Label>Measurement Check</Label></div>
+        <div className="flex items-center gap-2"><Switch checked={formData.aql_followed || false} onCheckedChange={(v) => onChange('aql_followed', v)} /><Label>AQL Followed</Label></div>
+      </div>
+    </CardContent>
+  </Card>
+);
+
+const ProductionCapabilityForm = ({ formData, onChange }: ProfileFormProps) => (
+  <Card>
+    <CardHeader><CardTitle className="flex items-center gap-2"><Factory className="h-5 w-5" />Production Capability</CardTitle></CardHeader>
     <CardContent className="grid grid-cols-2 gap-4">
-      <div><Label>Total Employees</Label><Input type="number" value={formData.total_employees || 0} onChange={(e) => onChange('total_employees', parseInt(e.target.value) || 0)} /></div>
-      <div className="col-span-2"><Label>Staff Notes</Label><Textarea value={formData.staff_notes || ''} onChange={(e) => onChange('staff_notes', e.target.value)} /></div>
-      <div className="col-span-2"><Label>General Remarks</Label><Textarea value={formData.general_remarks || ''} onChange={(e) => onChange('general_remarks', e.target.value)} rows={4} /></div>
+      <div><Label>Daily Production Capacity</Label><Input value={formData.daily_production_capacity || ''} onChange={(e) => onChange('daily_production_capacity', e.target.value)} placeholder="e.g., 1500 pieces/day" /></div>
+      <div><Label>Minimum Order Quantity (MOQ)</Label><Input value={formData.moq || ''} onChange={(e) => onChange('moq', e.target.value)} placeholder="e.g., 500 pieces" /></div>
+      <div><Label>Lead Time (Production)</Label><Input value={formData.lead_time || ''} onChange={(e) => onChange('lead_time', e.target.value)} placeholder="e.g., 30-45 days" /></div>
+      <div><Label>Sample Lead Time</Label><Input value={formData.sample_lead_time || ''} onChange={(e) => onChange('sample_lead_time', e.target.value)} placeholder="e.g., 7-10 days" /></div>
+    </CardContent>
+  </Card>
+);
+
+const SignatoryForm = ({ formData, onChange }: ProfileFormProps) => (
+  <Card>
+    <CardHeader><CardTitle className="flex items-center gap-2"><FileSignature className="h-5 w-5" />Authorized Signatory</CardTitle></CardHeader>
+    <CardContent className="grid grid-cols-2 gap-4">
+      <div><Label>Signatory Name</Label><Input value={formData.authorized_signatory_name || ''} onChange={(e) => onChange('authorized_signatory_name', e.target.value)} placeholder="e.g., Mr. John Doe" /></div>
+      <div><Label>Designation</Label><Input value={formData.signatory_designation || ''} onChange={(e) => onChange('signatory_designation', e.target.value)} placeholder="e.g., Managing Director" /></div>
+      <div className="col-span-2 text-sm text-muted-foreground">
+        <p>Note: The signature and seal images are taken from your company letterhead settings.</p>
+      </div>
     </CardContent>
   </Card>
 );
