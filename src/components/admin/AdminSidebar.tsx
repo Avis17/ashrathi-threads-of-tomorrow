@@ -51,7 +51,7 @@ const menuItems = [
   { title: 'Expenses', url: '/admin/expenses', icon: Receipt },
   { title: 'Generate Invoice', url: '/admin/invoice', icon: FileText },
   { title: 'Company Letterhead', url: '/admin/letterhead', icon: ScrollText },
-  { title: 'Company Profile', url: '/admin/company-profile', icon: Building2 },
+  // Company Profile - to be added
   { title: 'Label Generator', url: '/admin/label-generator', icon: Tags },
   { title: 'Customers', url: '/admin/customers', icon: Users },
   { title: 'Products', url: '/admin/products', icon: Package },
