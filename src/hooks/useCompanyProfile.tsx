@@ -31,31 +31,26 @@ export interface CompanyProfile {
   website: string | null;
   gst_number: string | null;
   company_code: string | null;
-  
   cutting_tables_count: number | null;
   cutting_table_size: string | null;
   fabric_inspection_tables_count: number | null;
   fabric_inspection_table_size: string | null;
   cutting_notes: string | null;
   cutting_images: string[] | null;
-  
   stitching_machines: StitchingMachine[] | null;
   stitching_notes: string | null;
   stitching_images: string[] | null;
-  
   checking_tables_count: number | null;
   checking_table_size: string | null;
   measurement_tools: MeasurementTools | null;
   checking_notes: string | null;
   checking_images: string[] | null;
-  
   ironing_tables_count: number | null;
   steam_iron_count: number | null;
   vacuum_table_available: boolean | null;
   boiler_available: boolean | null;
   ironing_notes: string | null;
   ironing_images: string[] | null;
-  
   generator_available: boolean | null;
   generator_capacity: string | null;
   compressor_available: boolean | null;
@@ -63,14 +58,12 @@ export interface CompanyProfile {
   power_connection_type: string | null;
   utilities_notes: string | null;
   utilities_images: string[] | null;
-  
   packing_tables_count: number | null;
   polybag_sealing_available: boolean | null;
   tagging_barcode_support: boolean | null;
   storage_racks_available: boolean | null;
   packing_notes: string | null;
   packing_images: string[] | null;
-  
   total_employees: number | null;
   cutting_staff: number | null;
   stitching_staff: number | null;
@@ -79,7 +72,6 @@ export interface CompanyProfile {
   packing_staff: number | null;
   daily_production_capacity: string | null;
   staff_notes: string | null;
-  
   general_remarks: string | null;
   is_active: boolean | null;
   created_at: string;
@@ -88,6 +80,13 @@ export interface CompanyProfile {
 }
 
 export type CompanyProfileInput = Omit<CompanyProfile, 'id' | 'created_at' | 'updated_at'>;
+
+export const defaultMeasurementTools: MeasurementTools = {
+  tape: false,
+  gsm_cutter: false,
+  shade_card: false,
+  needle_detector: false,
+};
 
 export const defaultCompanyProfile: CompanyProfileInput = {
   company_name: 'Feather Fashions',
@@ -102,31 +101,26 @@ export const defaultCompanyProfile: CompanyProfileInput = {
   website: 'www.featherfashions.in',
   gst_number: '',
   company_code: '',
-  
   cutting_tables_count: 0,
   cutting_table_size: '',
   fabric_inspection_tables_count: 0,
   fabric_inspection_table_size: '',
   cutting_notes: '',
   cutting_images: [],
-  
   stitching_machines: [],
   stitching_notes: '',
   stitching_images: [],
-  
   checking_tables_count: 0,
   checking_table_size: '',
-  measurement_tools: { tape: false, gsm_cutter: false, shade_card: false, needle_detector: false },
+  measurement_tools: defaultMeasurementTools,
   checking_notes: '',
   checking_images: [],
-  
   ironing_tables_count: 0,
   steam_iron_count: 0,
   vacuum_table_available: false,
   boiler_available: false,
   ironing_notes: '',
   ironing_images: [],
-  
   generator_available: false,
   generator_capacity: '',
   compressor_available: false,
@@ -134,14 +128,12 @@ export const defaultCompanyProfile: CompanyProfileInput = {
   power_connection_type: '',
   utilities_notes: '',
   utilities_images: [],
-  
   packing_tables_count: 0,
   polybag_sealing_available: false,
   tagging_barcode_support: false,
   storage_racks_available: false,
   packing_notes: '',
   packing_images: [],
-  
   total_employees: 0,
   cutting_staff: 0,
   stitching_staff: 0,
@@ -150,7 +142,6 @@ export const defaultCompanyProfile: CompanyProfileInput = {
   packing_staff: 0,
   daily_production_capacity: '',
   staff_notes: '',
-  
   general_remarks: '',
   is_active: true,
   created_by: null,
@@ -172,12 +163,11 @@ export function useCompanyProfile() {
       
       if (error) throw error;
       
-      // Transform the data to match our types
       if (data) {
         return {
           ...data,
           stitching_machines: (data.stitching_machines as unknown as StitchingMachine[]) || [],
-          measurement_tools: (data.measurement_tools as unknown as MeasurementTools) || defaultCompanyProfile.measurement_tools,
+          measurement_tools: (data.measurement_tools as unknown as MeasurementTools) || defaultMeasurementTools,
         } as CompanyProfile;
       }
       return null;
@@ -186,7 +176,6 @@ export function useCompanyProfile() {
 
   const saveProfile = useMutation({
     mutationFn: async (profileData: CompanyProfileInput) => {
-      // Check if profile exists
       const { data: existing } = await supabase
         .from('company_profiles')
         .select('id')
@@ -195,27 +184,20 @@ export function useCompanyProfile() {
         .maybeSingle();
 
       if (existing) {
-        // Update existing
         const { data, error } = await supabase
           .from('company_profiles')
-          .update({
-            ...profileData,
-            updated_at: new Date().toISOString(),
-          })
+          .update({ ...profileData, updated_at: new Date().toISOString() })
           .eq('id', existing.id)
           .select()
           .single();
-        
         if (error) throw error;
         return data;
       } else {
-        // Create new
         const { data, error } = await supabase
           .from('company_profiles')
           .insert([profileData])
           .select()
           .single();
-        
         if (error) throw error;
         return data;
       }
@@ -229,10 +211,5 @@ export function useCompanyProfile() {
     },
   });
 
-  return {
-    profile,
-    isLoading,
-    error,
-    saveProfile,
-  };
+  return { profile, isLoading, error, saveProfile };
 }
