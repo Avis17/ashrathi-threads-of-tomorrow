@@ -132,16 +132,33 @@ export const generateCMTPdf = async (data: CMTQuotationData): Promise<void> => {
   doc.setFont('helvetica', 'normal');
   doc.text(sanitizePdfText(data.buyerName || 'Not specified'), margin + 15, yPos);
   
-  if (data.buyerAddress) {
-    yPos += 5;
+  let buyerInfoY = yPos + 5;
+  doc.setFontSize(8);
+  
+  // Contact Person
+  if (data.contactPersonName || data.contactPersonPhone) {
+    doc.setTextColor(...COLORS.light);
+    doc.text('Contact:', margin, buyerInfoY);
     doc.setTextColor(...COLORS.muted);
-    doc.setFontSize(8);
-    const addressLines = data.buyerAddress.split('\n');
-    addressLines.slice(0, 2).forEach((line, i) => {
-      doc.text(sanitizePdfText(line), margin, yPos + (i * 4));
-    });
-    yPos += Math.min(addressLines.length, 2) * 4;
+    const contactText = [data.contactPersonName, data.contactPersonPhone].filter(Boolean).join(' | ');
+    doc.text(sanitizePdfText(contactText), margin + 18, buyerInfoY);
+    buyerInfoY += 5;
   }
+  
+  // Address
+  if (data.buyerAddress) {
+    doc.setTextColor(...COLORS.light);
+    doc.text('Address:', margin, buyerInfoY);
+    doc.setTextColor(...COLORS.muted);
+    const addressLines = data.buyerAddress.split('\n');
+    doc.text(sanitizePdfText(addressLines[0] || ''), margin + 18, buyerInfoY);
+    addressLines.slice(1, 3).forEach((line, i) => {
+      doc.text(sanitizePdfText(line), margin + 18, buyerInfoY + ((i + 1) * 4));
+    });
+    buyerInfoY += Math.min(addressLines.length, 3) * 4;
+  }
+  
+  yPos = buyerInfoY;
 
   // Right column - Style Details
   const rightCol = margin + colWidth + 10;
@@ -282,7 +299,7 @@ export const generateCMTPdf = async (data: CMTQuotationData): Promise<void> => {
 
   // Cost details grid
   const costItems = [
-    ['Total Stitching Cost', `Rs ${totalStitchingCost.toFixed(2)}`],
+    ['Total Operations Cost', `Rs ${totalStitchingCost.toFixed(2)}`],
     ['Finishing & Packing', `Rs ${data.finishingPackingCost.toFixed(2)}`],
     ['Overheads', `Rs ${data.overheadsCost.toFixed(2)}`],
     ['Order Quantity', data.orderQuantity > 0 ? `${data.orderQuantity.toLocaleString()} pcs` : '-']
