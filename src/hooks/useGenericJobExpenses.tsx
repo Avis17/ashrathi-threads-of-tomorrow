@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 export interface GenericJobExpense {
   id: string;
   date: string;
+  expense_time: string | null;
   category: string;
   subcategory: string | null;
   description: string;
