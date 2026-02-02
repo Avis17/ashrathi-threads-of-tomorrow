@@ -1,11 +1,18 @@
 export interface CMTOperation {
   id: string;
-  category: 'Cutting' | 'Stitching' | 'Finishing' | 'Packing' | 'Accessories' | 'Special';
+  category: 'Cutting' | 'Stitching' | 'Finishing' | 'Packing' | 'Accessories' | 'Checking' | 'Special';
   machineType: string;
   description: string;
   smv: number;
   ratePerPiece: number;
   amount: number;
+}
+
+export interface CMTBuyerDetails {
+  buyerName: string;
+  buyerAddress: string;
+  contactPersonName: string;
+  contactPersonPhone: string;
 }
 
 export interface CMTTrim {
@@ -24,6 +31,8 @@ export interface CMTQuotationData {
   // Buyer Details
   buyerName: string;
   buyerAddress: string;
+  contactPersonName: string;
+  contactPersonPhone: string;
   
   // Style Details
   styleName: string;
@@ -63,7 +72,7 @@ export const defaultTermsAndConditions = `1. Delivery Timeline: 15-20 working da
 7. Fabric & Trims: To be provided by buyer unless mentioned
 8. Rate Revision: Subject to change based on order quantity variation`;
 
-export const operationCategories = ['Cutting', 'Stitching', 'Finishing', 'Packing', 'Accessories', 'Special'] as const;
+export const operationCategories = ['Cutting', 'Stitching', 'Finishing', 'Packing', 'Accessories', 'Checking', 'Special'] as const;
 
 export const machineTypes = [
   'Single Needle',

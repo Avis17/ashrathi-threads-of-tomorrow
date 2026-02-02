@@ -29,7 +29,7 @@ export function CMTCostSummary({
         <div className="grid grid-cols-2 gap-4">
           {/* Read-only calculated fields */}
           <div className="space-y-1">
-            <Label className="text-muted-foreground text-sm">Total Stitching Cost (from operations)</Label>
+            <Label className="text-muted-foreground text-sm">Total Operations Cost (from operations)</Label>
             <div className="h-10 px-3 py-2 bg-muted rounded-md flex items-center font-medium">
               ₹{totalStitchingCost.toFixed(2)}
             </div>

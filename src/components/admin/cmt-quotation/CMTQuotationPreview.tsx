@@ -55,7 +55,19 @@ export const CMTQuotationPreview = ({ data }: CMTQuotationPreviewProps) => {
             <div>
               <h3 className="text-xs font-semibold uppercase tracking-wider text-[#6b7280] mb-3">Buyer Details</h3>
               <p className="font-semibold text-[#1a1a1a]">{data.buyerName || 'Buyer Name'}</p>
-              <p className="text-sm text-[#6b7280] mt-1 whitespace-pre-line">{data.buyerAddress || 'Buyer Address'}</p>
+              <div className="text-sm text-[#6b7280] mt-2 space-y-1">
+                {(data.contactPersonName || data.contactPersonPhone) && (
+                  <p>
+                    <span className="text-[#9ca3af]">Contact:</span>{' '}
+                    <span>{data.contactPersonName || '-'}</span>
+                    {data.contactPersonPhone && <span> | {data.contactPersonPhone}</span>}
+                  </p>
+                )}
+                <p>
+                  <span className="text-[#9ca3af]">Address:</span>{' '}
+                  <span className="whitespace-pre-line">{data.buyerAddress || '-'}</span>
+                </p>
+              </div>
             </div>
             <div>
               <h3 className="text-xs font-semibold uppercase tracking-wider text-[#6b7280] mb-3">Style Details</h3>
@@ -143,7 +155,7 @@ export const CMTQuotationPreview = ({ data }: CMTQuotationPreviewProps) => {
             <div className="bg-[#f9fafb] rounded-lg p-5 border border-[#e5e5e5]">
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-[#6b7280]">Total Stitching Cost</span>
+                  <span className="text-[#6b7280]">Total Operations Cost</span>
                   <span className="font-medium">Rs. {totalStitchingCost.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">

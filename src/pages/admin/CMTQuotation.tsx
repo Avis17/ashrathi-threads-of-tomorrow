@@ -25,6 +25,8 @@ const initialData: CMTQuotationData = {
   validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
   buyerName: '',
   buyerAddress: '',
+  contactPersonName: '',
+  contactPersonPhone: '',
   styleName: '',
   styleCode: '',
   fabricType: '',
@@ -166,7 +168,7 @@ export default function CMTQuotation() {
             </CardHeader>
             <CardContent className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="buyerName">Buyer Name</Label>
+                <Label htmlFor="buyerName">Buyer / Company Name</Label>
                 <Input
                   id="buyerName"
                   value={data.buyerName}
@@ -175,7 +177,25 @@ export default function CMTQuotation() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="buyerAddress">Buyer Address</Label>
+                <Label htmlFor="contactPersonName">Contact Person Name</Label>
+                <Input
+                  id="contactPersonName"
+                  value={data.contactPersonName}
+                  onChange={(e) => updateField('contactPersonName', e.target.value)}
+                  placeholder="e.g., Mr. John Doe"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="contactPersonPhone">Contact Person Phone</Label>
+                <Input
+                  id="contactPersonPhone"
+                  value={data.contactPersonPhone}
+                  onChange={(e) => updateField('contactPersonPhone', e.target.value)}
+                  placeholder="e.g., +91 98765 43210"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="buyerAddress">Address</Label>
                 <Textarea
                   id="buyerAddress"
                   value={data.buyerAddress}
