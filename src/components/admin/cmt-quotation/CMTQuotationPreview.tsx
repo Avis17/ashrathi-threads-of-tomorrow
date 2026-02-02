@@ -6,8 +6,9 @@ interface CMTQuotationPreviewProps {
 
 export const CMTQuotationPreview = ({ data }: CMTQuotationPreviewProps) => {
   const totalStitchingCost = data.operations.reduce((sum, op) => sum + op.ratePerPiece, 0);
-  const finalCMTPerPiece = totalStitchingCost + data.finishingPackingCost + data.overheadsCost;
-  const totalOrderValue = finalCMTPerPiece * data.orderQuantity;
+  const baseCMT = totalStitchingCost + data.finishingPackingCost + data.overheadsCost;
+  const profitAmount = baseCMT * (data.companyProfitPercent / 100);
+  const finalCMTPerPiece = baseCMT + profitAmount;
 
   return (
     <div
@@ -167,6 +168,10 @@ export const CMTQuotationPreview = ({ data }: CMTQuotationPreviewProps) => {
                   <span className="font-medium">Rs. {data.overheadsCost.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
+                  <span className="text-[#6b7280]">Company Profit</span>
+                  <span className="font-medium">{data.companyProfitPercent}% (Rs. {profitAmount.toFixed(2)})</span>
+                </div>
+                <div className="flex justify-between col-span-2">
                   <span className="text-[#6b7280]">Order Quantity</span>
                   <span className="font-medium">{data.orderQuantity > 0 ? `${data.orderQuantity.toLocaleString()} pcs` : '-'}</span>
                 </div>

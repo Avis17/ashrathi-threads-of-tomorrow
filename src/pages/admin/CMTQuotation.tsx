@@ -39,6 +39,7 @@ const initialData: CMTQuotationData = {
   totalStitchingCost: 0,
   finishingPackingCost: 0,
   overheadsCost: 0,
+  companyProfitPercent: 0,
   finalCMTPerPiece: 0,
   totalOrderValue: 0,
   termsAndConditions: defaultTermsAndConditions,
@@ -307,9 +308,11 @@ export default function CMTQuotation() {
                 totalStitchingCost={totalStitchingCost}
                 finishingPackingCost={data.finishingPackingCost}
                 overheadsCost={data.overheadsCost}
+                companyProfitPercent={data.companyProfitPercent}
                 orderQuantity={data.orderQuantity}
                 onFinishingPackingChange={(value) => updateField('finishingPackingCost', value)}
                 onOverheadsChange={(value) => updateField('overheadsCost', value)}
+                onCompanyProfitChange={(value) => updateField('companyProfitPercent', value)}
               />
             </CardContent>
           </Card>

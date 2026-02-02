@@ -37,8 +37,9 @@ export const generateCMTPdf = async (data: CMTQuotationData): Promise<void> => {
 
   // Calculate totals
   const totalStitchingCost = data.operations.reduce((sum, op) => sum + op.ratePerPiece, 0);
-  const finalCMTPerPiece = totalStitchingCost + data.finishingPackingCost + data.overheadsCost;
-  const totalOrderValue = finalCMTPerPiece * data.orderQuantity;
+  const baseCMT = totalStitchingCost + data.finishingPackingCost + data.overheadsCost;
+  const profitAmount = baseCMT * (data.companyProfitPercent / 100);
+  const finalCMTPerPiece = baseCMT + profitAmount;
   const totalSMV = data.operations.reduce((sum, op) => sum + op.smv, 0);
 
   // ===== HEADER SECTION =====
@@ -293,15 +294,16 @@ export const generateCMTPdf = async (data: CMTQuotationData): Promise<void> => {
 
   // Cost summary box
   doc.setFillColor(...COLORS.lightBg);
-  doc.roundedRect(margin, yPos, pageWidth - 2 * margin, 42, 2, 2, 'F');
+  doc.roundedRect(margin, yPos, pageWidth - 2 * margin, 52, 2, 2, 'F');
   doc.setDrawColor(...COLORS.border);
-  doc.roundedRect(margin, yPos, pageWidth - 2 * margin, 42, 2, 2, 'S');
+  doc.roundedRect(margin, yPos, pageWidth - 2 * margin, 52, 2, 2, 'S');
 
   // Cost details grid
   const costItems = [
     ['Total Operations Cost', `Rs ${totalStitchingCost.toFixed(2)}`],
     ['Finishing & Packing', `Rs ${data.finishingPackingCost.toFixed(2)}`],
     ['Overheads', `Rs ${data.overheadsCost.toFixed(2)}`],
+    ['Company Profit', `${data.companyProfitPercent}% (Rs ${profitAmount.toFixed(2)})`],
     ['Order Quantity', data.orderQuantity > 0 ? `${data.orderQuantity.toLocaleString()} pcs` : '-']
   ];
 
@@ -321,7 +323,7 @@ export const generateCMTPdf = async (data: CMTQuotationData): Promise<void> => {
   });
 
   // Final CMT Per Piece - centered
-  const boxY = yPos + 24;
+  const boxY = yPos + 32;
   const boxWidth = 80;
   const boxX = (pageWidth - boxWidth) / 2;
   
@@ -334,7 +336,7 @@ export const generateCMTPdf = async (data: CMTQuotationData): Promise<void> => {
   doc.setFont('helvetica', 'bold');
   doc.text(sanitizePdfText(`Rs ${finalCMTPerPiece.toFixed(2)}`), boxX + boxWidth / 2, boxY + 11, { align: 'center' });
 
-  yPos += 45;
+  yPos += 55;
 
   yPos += 8;
 
