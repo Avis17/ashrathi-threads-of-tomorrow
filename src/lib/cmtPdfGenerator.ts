@@ -153,7 +153,7 @@ export const generateCMTPdf = async (data: CMTQuotationData): Promise<void> => {
     ['Fabric', `${data.fabricType || '-'} ${data.gsm ? `(${data.gsm} GSM)` : ''}`],
     ['Fit', data.fitType || '-'],
     ['Size Range', data.sizeRange || '-'],
-    ['Order Qty', `${data.orderQuantity?.toLocaleString() || '0'} pcs`],
+    ['Order Qty', data.orderQuantity > 0 ? `${data.orderQuantity.toLocaleString()} pcs` : '-'],
   ];
 
   doc.setFontSize(8);
@@ -285,7 +285,7 @@ export const generateCMTPdf = async (data: CMTQuotationData): Promise<void> => {
     ['Total Stitching Cost', `Rs ${totalStitchingCost.toFixed(2)}`],
     ['Finishing & Packing', `Rs ${data.finishingPackingCost.toFixed(2)}`],
     ['Overheads', `Rs ${data.overheadsCost.toFixed(2)}`],
-    ['Order Quantity', `${data.orderQuantity.toLocaleString()} pcs`]
+    ['Order Quantity', data.orderQuantity > 0 ? `${data.orderQuantity.toLocaleString()} pcs` : '-']
   ];
 
   doc.setFontSize(8);
@@ -303,55 +303,21 @@ export const generateCMTPdf = async (data: CMTQuotationData): Promise<void> => {
     doc.setFont('helvetica', 'normal');
   });
 
-  // Final CMT and Total Order Value boxes
+  // Final CMT Per Piece - centered
   const boxY = yPos + 24;
-  const boxWidth = (pageWidth - 2 * margin - 20) / 2;
+  const boxWidth = 80;
+  const boxX = (pageWidth - boxWidth) / 2;
   
-  // Final CMT Per Piece
   doc.setFillColor(...COLORS.accent);
-  doc.roundedRect(margin + 5, boxY, boxWidth, 14, 2, 2, 'F');
+  doc.roundedRect(boxX, boxY, boxWidth, 14, 2, 2, 'F');
   doc.setTextColor(...COLORS.white);
   doc.setFontSize(7);
-  doc.text('FINAL CMT / PIECE', margin + 5 + boxWidth / 2, boxY + 5, { align: 'center' });
+  doc.text('FINAL CMT / PIECE', boxX + boxWidth / 2, boxY + 5, { align: 'center' });
   doc.setFontSize(12);
   doc.setFont('helvetica', 'bold');
-  doc.text(sanitizePdfText(`Rs ${finalCMTPerPiece.toFixed(2)}`), margin + 5 + boxWidth / 2, boxY + 11, { align: 'center' });
-  
-  // Total Order Value
-  doc.setFillColor(...COLORS.primary);
-  doc.roundedRect(margin + 10 + boxWidth, boxY, boxWidth, 14, 2, 2, 'F');
-  doc.setTextColor(...COLORS.white);
-  doc.setFontSize(7);
-  doc.setFont('helvetica', 'normal');
-  doc.text('TOTAL ORDER VALUE', margin + 10 + boxWidth + boxWidth / 2, boxY + 5, { align: 'center' });
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
-  doc.text(sanitizePdfText(`Rs ${totalOrderValue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`), margin + 10 + boxWidth + boxWidth / 2, boxY + 11, { align: 'center' });
+  doc.text(sanitizePdfText(`Rs ${finalCMTPerPiece.toFixed(2)}`), boxX + boxWidth / 2, boxY + 11, { align: 'center' });
 
-  yPos += 50;
-
-  // Check if we need a new page for terms
-  if (yPos > pageHeight - 80) {
-    doc.addPage();
-    yPos = margin;
-  }
-
-  // ===== TERMS & CONDITIONS =====
-  yPos = addSectionHeader('TERMS & CONDITIONS', yPos);
-
-  doc.setTextColor(...COLORS.muted);
-  doc.setFontSize(7);
-  doc.setFont('helvetica', 'normal');
-  
-  const terms = data.termsAndConditions.split('\n');
-  terms.forEach((term, i) => {
-    if (yPos > pageHeight - 30) {
-      doc.addPage();
-      yPos = margin;
-    }
-    doc.text(sanitizePdfText(term), margin, yPos);
-    yPos += 4;
-  });
+  yPos += 45;
 
   yPos += 8;
 

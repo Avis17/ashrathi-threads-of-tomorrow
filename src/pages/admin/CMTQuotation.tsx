@@ -294,19 +294,6 @@ export default function CMTQuotation() {
             </CardContent>
           </Card>
 
-          {/* Terms & Conditions */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Terms & Conditions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Textarea
-                value={data.termsAndConditions}
-                onChange={(e) => updateField('termsAndConditions', e.target.value)}
-                className="min-h-[200px] font-mono text-sm"
-              />
-            </CardContent>
-          </Card>
 
           {/* Signatory */}
           <Card>

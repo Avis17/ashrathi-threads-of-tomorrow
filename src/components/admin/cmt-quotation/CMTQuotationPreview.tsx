@@ -65,7 +65,7 @@ export const CMTQuotationPreview = ({ data }: CMTQuotationPreviewProps) => {
                 <p><span className="text-[#6b7280]">Fabric:</span> <span className="font-medium">{data.fabricType || '-'} {data.gsm ? `(${data.gsm} GSM)` : ''}</span></p>
                 <p><span className="text-[#6b7280]">Fit:</span> <span className="font-medium">{data.fitType || '-'}</span></p>
                 <p><span className="text-[#6b7280]">Size Range:</span> <span className="font-medium">{data.sizeRange || '-'}</span></p>
-                <p><span className="text-[#6b7280]">Quantity:</span> <span className="font-medium">{data.orderQuantity?.toLocaleString() || '0'} pcs</span></p>
+                <p><span className="text-[#6b7280]">Quantity:</span> <span className="font-medium">{data.orderQuantity > 0 ? `${data.orderQuantity.toLocaleString()} pcs` : '-'}</span></p>
               </div>
             </div>
           </section>
@@ -156,27 +156,15 @@ export const CMTQuotationPreview = ({ data }: CMTQuotationPreviewProps) => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-[#6b7280]">Order Quantity</span>
-                  <span className="font-medium">{data.orderQuantity.toLocaleString()} pcs</span>
+                  <span className="font-medium">{data.orderQuantity > 0 ? `${data.orderQuantity.toLocaleString()} pcs` : '-'}</span>
                 </div>
               </div>
-              <div className="mt-4 pt-4 border-t border-[#e5e5e5] grid grid-cols-2 gap-4">
-                <div className="bg-[#1a1a1a] text-white rounded-lg p-4 text-center">
+              <div className="mt-4 pt-4 border-t border-[#e5e5e5] flex justify-center">
+                <div className="bg-[#1a1a1a] text-white rounded-lg p-4 text-center min-w-[180px]">
                   <p className="text-xs uppercase tracking-wider opacity-80">Final CMT / Piece</p>
                   <p className="text-2xl font-bold mt-1">Rs. {finalCMTPerPiece.toFixed(2)}</p>
                 </div>
-                <div className="bg-[#1a1a1a] text-white rounded-lg p-4 text-center">
-                  <p className="text-xs uppercase tracking-wider opacity-80">Total Order Value</p>
-                  <p className="text-2xl font-bold mt-1">Rs. {totalOrderValue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                </div>
               </div>
-            </div>
-          </section>
-
-          {/* Terms & Conditions */}
-          <section className="py-6 border-b border-[#e5e5e5]">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-[#6b7280] mb-3">Terms & Conditions</h3>
-            <div className="text-xs text-[#6b7280] whitespace-pre-line leading-relaxed">
-              {data.termsAndConditions}
             </div>
           </section>
 
