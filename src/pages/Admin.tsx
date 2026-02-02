@@ -58,6 +58,7 @@ import SamplingPreparation from './admin/SamplingPreparation';
 import SamplingTermsGenerator from './admin/SamplingTermsGenerator';
 import QuotationGenerator from './admin/QuotationGenerator';
 import ExportersList from './admin/ExportersList';
+import CMTQuotation from './admin/CMTQuotation';
 const CompanyProfile = lazy(() => import('./admin/CompanyProfile'));
 
 const Admin = () => {
@@ -126,6 +127,7 @@ const Admin = () => {
               <Route path="/sampling" element={<SamplingPreparation />} />
               <Route path="/sampling-terms" element={<SamplingTermsGenerator />} />
               <Route path="/quotation" element={<QuotationGenerator />} />
+              <Route path="/cmt-quotation" element={<CMTQuotation />} />
               <Route path="/external-jobs" element={<ExternalJobOrders />} />
               <Route path="/external-jobs/register-company" element={<RegisterCompany />} />
               <Route path="/external-jobs/add-job" element={<AddJob />} />

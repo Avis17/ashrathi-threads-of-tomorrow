@@ -22,7 +22,8 @@ import {
   MessageCircle,
   Globe,
   FlaskConical,
-  Ship
+  Ship,
+  Scissors
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import {
@@ -43,6 +44,7 @@ const menuItems = [
   { title: 'Sampling Preparation', url: '/admin/sampling', icon: FlaskConical },
   { title: 'Sampling Terms', url: '/admin/sampling-terms', icon: FileText },
   { title: 'Quotation Generator', url: '/admin/quotation', icon: FileText },
+  { title: 'CMT Quotation', url: '/admin/cmt-quotation', icon: Scissors },
   { title: 'Orders', url: '/admin/orders', icon: ClipboardList },
   { title: 'External Job Orders', url: '/admin/external-jobs', icon: Briefcase },
   { title: 'Delivery Challan', url: '/admin/delivery-challan', icon: Truck },
