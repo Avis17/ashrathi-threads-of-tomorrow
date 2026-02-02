@@ -1,19 +1,17 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { Download, Eye, Save, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 import { CMTOperationsTable } from '@/components/admin/cmt-quotation/CMTOperationsTable';
 import { CMTTrimsTable } from '@/components/admin/cmt-quotation/CMTTrimsTable';
 import { CMTCostSummary } from '@/components/admin/cmt-quotation/CMTCostSummary';
 import { CMTQuotationPreview } from '@/components/admin/cmt-quotation/CMTQuotationPreview';
 import { CMTQuotationData, CMTOperation, CMTTrim, defaultTermsAndConditions } from '@/types/cmt-quotation';
+import { generateCMTPdf } from '@/lib/cmtPdfGenerator';
 
 const generateQuotationNo = () => {
   const year = new Date().getFullYear();
@@ -48,8 +46,6 @@ const initialData: CMTQuotationData = {
 export default function CMTQuotation() {
   const [data, setData] = useState<CMTQuotationData>(initialData);
   const [isGenerating, setIsGenerating] = useState(false);
-  const previewRef = useRef<HTMLDivElement>(null);
-
   const updateField = <K extends keyof CMTQuotationData>(field: K, value: CMTQuotationData[K]) => {
     setData(prev => ({ ...prev, [field]: value }));
   };
@@ -66,46 +62,11 @@ export default function CMTQuotation() {
   const totalStitchingCost = data.operations.reduce((sum, op) => sum + op.ratePerPiece, 0);
 
   const handleDownloadPDF = async () => {
-    if (!previewRef.current) return;
-    
     setIsGenerating(true);
     toast.info('Generating PDF...');
 
     try {
-      const canvas = await html2canvas(previewRef.current, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff',
-      });
-
-      const imgData = canvas.toDataURL('image/jpeg', 0.85);
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
-        compress: true,
-      });
-
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = pdfWidth;
-      const imgHeight = (canvas.height * pdfWidth) / canvas.width;
-
-      let heightLeft = imgHeight;
-      let position = 0;
-
-      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pdfHeight;
-
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pdfHeight;
-      }
-
-      pdf.save(`CMT-Quotation-${data.quotationNo}.pdf`);
+      await generateCMTPdf(data);
       toast.success('PDF downloaded successfully!');
     } catch (error) {
       console.error('PDF generation error:', error);
@@ -367,14 +328,15 @@ export default function CMTQuotation() {
         </div>
 
         {/* Right Panel - Preview */}
-        <div className="sticky top-20 h-fit">
+        <div className="sticky top-20 h-fit w-[420px] flex-shrink-0">
           <div className="flex items-center gap-2 mb-4">
             <Eye className="h-5 w-5 text-muted-foreground" />
             <h2 className="font-semibold text-lg">Live Preview</h2>
+            <span className="text-xs text-muted-foreground">(Scaled view)</span>
           </div>
           <div className="border rounded-lg overflow-hidden shadow-lg bg-white" style={{ maxHeight: 'calc(100vh - 140px)', overflowY: 'auto' }}>
-            <div className="transform scale-[0.5] origin-top-left" style={{ width: '200%' }}>
-              <CMTQuotationPreview ref={previewRef} data={data} />
+            <div className="origin-top-left scale-[0.5]" style={{ width: '794px', marginBottom: '-50%' }}>
+              <CMTQuotationPreview data={data} />
             </div>
           </div>
         </div>
