@@ -36,10 +36,11 @@ export const CMTQuotationPreview = forwardRef<HTMLDivElement, CMTQuotationPrevie
               </h1>
               <p className="text-sm text-[#6b7280] mt-0.5">Garment Manufacturing Unit</p>
               <p className="text-xs text-[#9ca3af] mt-2 max-w-[280px]">
-                No. 123, Industrial Area, Tirupur - 641604, Tamil Nadu, India
+                251/1, Vadivel Nagar, Thottipalayam,<br />
+                Pooluvapatti, Tiruppur, Tamil Nadu 641602, India
               </p>
               <p className="text-xs text-[#9ca3af] mt-1">
-                GST: 33AABCT1234A1ZV | Ph: +91 9876543210 | info@featherfashions.in
+                GST: 33FWTPS1281P1ZJ | Ph: +91 9789225510 | hello@featherfashions.in
               </p>
             </div>
             <div className="text-right">
