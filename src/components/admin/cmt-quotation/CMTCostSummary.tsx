@@ -5,20 +5,26 @@ interface CMTCostSummaryProps {
   totalStitchingCost: number;
   finishingPackingCost: number;
   overheadsCost: number;
+  companyProfitPercent: number;
   orderQuantity: number;
   onFinishingPackingChange: (value: number) => void;
   onOverheadsChange: (value: number) => void;
+  onCompanyProfitChange: (value: number) => void;
 }
 
 export function CMTCostSummary({
   totalStitchingCost,
   finishingPackingCost,
   overheadsCost,
+  companyProfitPercent,
   orderQuantity,
   onFinishingPackingChange,
   onOverheadsChange,
+  onCompanyProfitChange,
 }: CMTCostSummaryProps) {
-  const finalCMTPerPiece = totalStitchingCost + finishingPackingCost + overheadsCost;
+  const baseCMT = totalStitchingCost + finishingPackingCost + overheadsCost;
+  const profitAmount = baseCMT * (companyProfitPercent / 100);
+  const finalCMTPerPiece = baseCMT + profitAmount;
   const totalOrderValue = finalCMTPerPiece * orderQuantity;
 
   return (
@@ -66,6 +72,25 @@ export function CMTCostSummary({
                 placeholder="0.00"
               />
             </div>
+          </div>
+          
+          <div className="space-y-1">
+            <Label htmlFor="companyProfit" className="text-sm">Company Profit %</Label>
+            <div className="relative">
+              <Input
+                id="companyProfit"
+                type="number"
+                step="1"
+                min="0"
+                max="100"
+                value={companyProfitPercent || ''}
+                onChange={(e) => onCompanyProfitChange(parseFloat(e.target.value) || 0)}
+                className="pr-8"
+                placeholder="0"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
+            </div>
+            <p className="text-xs text-muted-foreground">Rent, electricity, maintenance, transport, etc.</p>
           </div>
           
           <div className="space-y-1">

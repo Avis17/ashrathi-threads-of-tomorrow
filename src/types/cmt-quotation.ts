@@ -53,6 +53,7 @@ export interface CMTQuotationData {
   totalStitchingCost: number;
   finishingPackingCost: number;
   overheadsCost: number;
+  companyProfitPercent: number;
   finalCMTPerPiece: number;
   totalOrderValue: number;
   
