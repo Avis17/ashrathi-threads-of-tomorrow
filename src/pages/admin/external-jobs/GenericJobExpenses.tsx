@@ -52,6 +52,7 @@ import {
   CreateGenericJobExpenseData
 } from "@/hooks/useGenericJobExpenses";
 import { EXPENSE_CATEGORIES, PAYMENT_METHODS } from "@/lib/expenseCategories";
+import { GenericExpenseDetailsDialog } from "@/components/admin/external-jobs/GenericExpenseDetailsDialog";
 import { 
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend
@@ -71,10 +72,12 @@ const GenericJobExpenses = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<GenericJobExpense | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [viewingExpense, setViewingExpense] = useState<GenericJobExpense | null>(null);
 
   // Form state
   const [formData, setFormData] = useState<CreateGenericJobExpenseData>({
     date: new Date().toISOString().split('T')[0],
+    expense_time: new Date().toTimeString().slice(0, 5),
     category: '',
     subcategory: null,
     description: '',
@@ -105,6 +108,7 @@ const GenericJobExpenses = () => {
       setEditingExpense(expense);
       setFormData({
         date: expense.date,
+        expense_time: expense.expense_time,
         category: expense.category,
         subcategory: expense.subcategory,
         description: expense.description,
@@ -118,6 +122,7 @@ const GenericJobExpenses = () => {
       setEditingExpense(null);
       setFormData({
         date: new Date().toISOString().split('T')[0],
+        expense_time: new Date().toTimeString().slice(0, 5),
         category: '',
         subcategory: null,
         description: '',
@@ -412,11 +417,20 @@ const GenericJobExpenses = () => {
                       {formatAmount(expense.amount, amountsVisible)}
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setViewingExpense(expense)}
+                          title="View details"
+                        >
+                          <Eye className="h-4 w-4 text-primary" />
+                        </Button>
                         <Button
                           variant="ghost"
                           size="icon"
                           onClick={() => handleOpenDialog(expense)}
+                          title="Edit"
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
@@ -424,6 +438,7 @@ const GenericJobExpenses = () => {
                           variant="ghost"
                           size="icon"
                           onClick={() => setDeleteId(expense.id)}
+                          title="Delete"
                         >
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
@@ -444,7 +459,7 @@ const GenericJobExpenses = () => {
             <DialogTitle>{editingExpense ? 'Edit Expense' : 'Add New Expense'}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="date">Date *</Label>
                 <Input
@@ -452,6 +467,15 @@ const GenericJobExpenses = () => {
                   type="date"
                   value={formData.date}
                   onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="expense_time">Time</Label>
+                <Input
+                  id="expense_time"
+                  type="time"
+                  value={formData.expense_time || ''}
+                  onChange={(e) => setFormData({ ...formData, expense_time: e.target.value || null })}
                 />
               </div>
               <div className="space-y-2">
@@ -595,6 +619,13 @@ const GenericJobExpenses = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* View Details Dialog */}
+      <GenericExpenseDetailsDialog
+        expense={viewingExpense}
+        open={!!viewingExpense}
+        onOpenChange={(open) => !open && setViewingExpense(null)}
+      />
     </div>
   );
 };
