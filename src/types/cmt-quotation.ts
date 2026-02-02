@@ -1,6 +1,6 @@
 export interface CMTOperation {
   id: string;
-  category: 'Cutting' | 'Stitching' | 'Finishing' | 'Packing' | 'Special';
+  category: 'Cutting' | 'Stitching' | 'Finishing' | 'Packing' | 'Accessories' | 'Special';
   machineType: string;
   description: string;
   smv: number;
@@ -63,7 +63,7 @@ export const defaultTermsAndConditions = `1. Delivery Timeline: 15-20 working da
 7. Fabric & Trims: To be provided by buyer unless mentioned
 8. Rate Revision: Subject to change based on order quantity variation`;
 
-export const operationCategories = ['Cutting', 'Stitching', 'Finishing', 'Packing', 'Special'] as const;
+export const operationCategories = ['Cutting', 'Stitching', 'Finishing', 'Packing', 'Accessories', 'Special'] as const;
 
 export const machineTypes = [
   'Single Needle',

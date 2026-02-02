@@ -71,21 +71,17 @@ export function CMTCostSummary({
           <div className="space-y-1">
             <Label className="text-muted-foreground text-sm">Order Quantity</Label>
             <div className="h-10 px-3 py-2 bg-muted rounded-md flex items-center font-medium">
-              {orderQuantity.toLocaleString()} pcs
+              {orderQuantity > 0 ? `${orderQuantity.toLocaleString()} pcs` : '-'}
             </div>
           </div>
         </div>
         
-        {/* Highlighted Final Values */}
+        {/* Highlighted Final Value */}
         <div className="mt-6 pt-4 border-t border-primary/20">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-primary text-primary-foreground rounded-lg p-4 text-center">
+          <div className="flex justify-center">
+            <div className="bg-primary text-primary-foreground rounded-lg p-6 text-center min-w-[200px]">
               <p className="text-sm opacity-90">Final CMT / Piece</p>
               <p className="text-3xl font-bold mt-1">₹{finalCMTPerPiece.toFixed(2)}</p>
-            </div>
-            <div className="bg-primary text-primary-foreground rounded-lg p-4 text-center">
-              <p className="text-sm opacity-90">Total Order Value</p>
-              <p className="text-3xl font-bold mt-1">₹{totalOrderValue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
             </div>
           </div>
         </div>
