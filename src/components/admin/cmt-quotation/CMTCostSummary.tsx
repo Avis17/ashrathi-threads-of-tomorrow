@@ -1,0 +1,95 @@
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+
+interface CMTCostSummaryProps {
+  totalStitchingCost: number;
+  finishingPackingCost: number;
+  overheadsCost: number;
+  orderQuantity: number;
+  onFinishingPackingChange: (value: number) => void;
+  onOverheadsChange: (value: number) => void;
+}
+
+export function CMTCostSummary({
+  totalStitchingCost,
+  finishingPackingCost,
+  overheadsCost,
+  orderQuantity,
+  onFinishingPackingChange,
+  onOverheadsChange,
+}: CMTCostSummaryProps) {
+  const finalCMTPerPiece = totalStitchingCost + finishingPackingCost + overheadsCost;
+  const totalOrderValue = finalCMTPerPiece * orderQuantity;
+
+  return (
+    <div className="space-y-4">
+      <h3 className="text-lg font-semibold text-foreground">Cost Summary</h3>
+      
+      <div className="border-2 border-primary/20 rounded-lg p-6 bg-primary/5">
+        <div className="grid grid-cols-2 gap-4">
+          {/* Read-only calculated fields */}
+          <div className="space-y-1">
+            <Label className="text-muted-foreground text-sm">Total Stitching Cost (from operations)</Label>
+            <div className="h-10 px-3 py-2 bg-muted rounded-md flex items-center font-medium">
+              ₹{totalStitchingCost.toFixed(2)}
+            </div>
+          </div>
+          
+          {/* Editable fields */}
+          <div className="space-y-1">
+            <Label htmlFor="finishingPacking" className="text-sm">Finishing & Packing</Label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₹</span>
+              <Input
+                id="finishingPacking"
+                type="number"
+                step="0.01"
+                value={finishingPackingCost || ''}
+                onChange={(e) => onFinishingPackingChange(parseFloat(e.target.value) || 0)}
+                className="pl-7"
+                placeholder="0.00"
+              />
+            </div>
+          </div>
+          
+          <div className="space-y-1">
+            <Label htmlFor="overheads" className="text-sm">Overheads</Label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₹</span>
+              <Input
+                id="overheads"
+                type="number"
+                step="0.01"
+                value={overheadsCost || ''}
+                onChange={(e) => onOverheadsChange(parseFloat(e.target.value) || 0)}
+                className="pl-7"
+                placeholder="0.00"
+              />
+            </div>
+          </div>
+          
+          <div className="space-y-1">
+            <Label className="text-muted-foreground text-sm">Order Quantity</Label>
+            <div className="h-10 px-3 py-2 bg-muted rounded-md flex items-center font-medium">
+              {orderQuantity.toLocaleString()} pcs
+            </div>
+          </div>
+        </div>
+        
+        {/* Highlighted Final Values */}
+        <div className="mt-6 pt-4 border-t border-primary/20">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-primary text-primary-foreground rounded-lg p-4 text-center">
+              <p className="text-sm opacity-90">Final CMT / Piece</p>
+              <p className="text-3xl font-bold mt-1">₹{finalCMTPerPiece.toFixed(2)}</p>
+            </div>
+            <div className="bg-primary text-primary-foreground rounded-lg p-4 text-center">
+              <p className="text-sm opacity-90">Total Order Value</p>
+              <p className="text-3xl font-bold mt-1">₹{totalOrderValue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
