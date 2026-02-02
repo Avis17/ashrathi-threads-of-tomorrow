@@ -1,28 +1,25 @@
-import { forwardRef } from 'react';
 import { CMTQuotationData } from '@/types/cmt-quotation';
 
 interface CMTQuotationPreviewProps {
   data: CMTQuotationData;
 }
 
-export const CMTQuotationPreview = forwardRef<HTMLDivElement, CMTQuotationPreviewProps>(
-  ({ data }, ref) => {
-    const totalStitchingCost = data.operations.reduce((sum, op) => sum + op.ratePerPiece, 0);
-    const finalCMTPerPiece = totalStitchingCost + data.finishingPackingCost + data.overheadsCost;
-    const totalOrderValue = finalCMTPerPiece * data.orderQuantity;
+export const CMTQuotationPreview = ({ data }: CMTQuotationPreviewProps) => {
+  const totalStitchingCost = data.operations.reduce((sum, op) => sum + op.ratePerPiece, 0);
+  const finalCMTPerPiece = totalStitchingCost + data.finishingPackingCost + data.overheadsCost;
+  const totalOrderValue = finalCMTPerPiece * data.orderQuantity;
 
-    return (
-      <div
-        ref={ref}
-        className="bg-white text-[#1a1a1a] w-[794px] min-h-[1123px] mx-auto shadow-lg"
-        style={{ fontFamily: "'Inter', 'Source Sans Pro', sans-serif" }}
-      >
-        {/* Watermark */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.02] overflow-hidden">
-          <span className="text-[200px] font-bold tracking-widest rotate-[-30deg] text-[#1a1a1a] whitespace-nowrap">
-            FEATHER FASHIONS
-          </span>
-        </div>
+  return (
+    <div
+      className="bg-white text-[#1a1a1a] w-[794px] min-h-[1123px] mx-auto shadow-lg relative"
+      style={{ fontFamily: "'Inter', 'Source Sans Pro', sans-serif" }}
+    >
+      {/* Watermark */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.02] overflow-hidden">
+        <span className="text-[200px] font-bold tracking-widest rotate-[-30deg] text-[#1a1a1a] whitespace-nowrap">
+          FEATHER FASHIONS
+        </span>
+      </div>
 
         <div className="relative p-10">
           {/* Header */}
@@ -194,11 +191,8 @@ export const CMTQuotationPreview = forwardRef<HTMLDivElement, CMTQuotationPrevie
               <p className="text-sm font-semibold text-[#374151]">{data.signatoryName || 'Authorized Signatory'}</p>
               <p className="text-xs text-[#6b7280]">Feather Fashions</p>
             </div>
-          </footer>
-        </div>
+        </footer>
       </div>
-    );
-  }
-);
-
-CMTQuotationPreview.displayName = 'CMTQuotationPreview';
+    </div>
+  );
+};
