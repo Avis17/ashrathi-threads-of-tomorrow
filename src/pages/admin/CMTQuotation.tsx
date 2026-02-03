@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Download, Eye, Save, FileText } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Download, Save, FileText, List, ArrowLeft, DatabaseBackup } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,8 +10,10 @@ import { CMTOperationsTable } from '@/components/admin/cmt-quotation/CMTOperatio
 import { CMTTrimsTable } from '@/components/admin/cmt-quotation/CMTTrimsTable';
 import { CMTCostSummary } from '@/components/admin/cmt-quotation/CMTCostSummary';
 import { CMTQuotationPreview } from '@/components/admin/cmt-quotation/CMTQuotationPreview';
+import { CMTQuotationsList } from '@/components/admin/cmt-quotation/CMTQuotationsList';
 import { CMTQuotationData, CMTOperation, CMTTrim, defaultTermsAndConditions } from '@/types/cmt-quotation';
 import { generateCMTPdf } from '@/lib/cmtPdfGenerator';
+import { useSaveCMTQuotation, CMTQuotationRecord, recordToQuotationData } from '@/hooks/useCMTQuotations';
 
 const generateQuotationNo = () => {
   const year = new Date().getFullYear();
@@ -19,7 +21,7 @@ const generateQuotationNo = () => {
   return `CMT-${year}-${random}`;
 };
 
-const initialData: CMTQuotationData = {
+const getInitialData = (): CMTQuotationData => ({
   quotationNo: generateQuotationNo(),
   date: new Date().toISOString().split('T')[0],
   validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -44,11 +46,18 @@ const initialData: CMTQuotationData = {
   totalOrderValue: 0,
   termsAndConditions: defaultTermsAndConditions,
   signatoryName: 'For Feather Fashions',
-};
+});
+
+type ViewMode = 'list' | 'editor';
 
 export default function CMTQuotation() {
-  const [data, setData] = useState<CMTQuotationData>(initialData);
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [data, setData] = useState<CMTQuotationData>(getInitialData());
   const [isGenerating, setIsGenerating] = useState(false);
+  
+  const saveQuotation = useSaveCMTQuotation();
+
   const updateField = <K extends keyof CMTQuotationData>(field: K, value: CMTQuotationData[K]) => {
     setData(prev => ({ ...prev, [field]: value }));
   };
@@ -79,20 +88,56 @@ export default function CMTQuotation() {
     }
   };
 
-  const handleSaveDraft = () => {
-    localStorage.setItem('cmt-quotation-draft', JSON.stringify(data));
-    toast.success('Draft saved successfully!');
+  const handleSaveToDatabase = () => {
+    // Calculate final values before saving
+    const baseCMT = totalStitchingCost + data.finishingPackingCost + data.overheadsCost;
+    const profitAmount = baseCMT * (data.companyProfitPercent / 100);
+    const finalCMTPerPiece = baseCMT + profitAmount;
+    const totalOrderValue = finalCMTPerPiece * data.orderQuantity;
+
+    const dataToSave = {
+      ...data,
+      totalStitchingCost,
+      finalCMTPerPiece,
+      totalOrderValue,
+    };
+
+    saveQuotation.mutate(
+      { id: editingId || undefined, data: dataToSave },
+      {
+        onSuccess: (result) => {
+          if (!editingId && result?.id) {
+            setEditingId(result.id);
+          }
+        },
+      }
+    );
   };
 
-  const handleLoadDraft = () => {
-    const draft = localStorage.getItem('cmt-quotation-draft');
-    if (draft) {
-      setData(JSON.parse(draft));
-      toast.success('Draft loaded!');
-    } else {
-      toast.info('No draft found');
-    }
+  const handleEdit = (record: CMTQuotationRecord) => {
+    setEditingId(record.id);
+    setData(recordToQuotationData(record));
+    setViewMode('editor');
   };
+
+  const handleCreateNew = () => {
+    setEditingId(null);
+    setData(getInitialData());
+    setViewMode('editor');
+  };
+
+  const handleBackToList = () => {
+    setViewMode('list');
+    setEditingId(null);
+  };
+
+  if (viewMode === 'list') {
+    return (
+      <div className="min-h-screen bg-background p-6">
+        <CMTQuotationsList onEdit={handleEdit} onCreateNew={handleCreateNew} />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -100,16 +145,27 @@ export default function CMTQuotation() {
       <div className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
         <div className="flex items-center justify-between px-6 py-3">
           <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" onClick={handleBackToList}>
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
             <FileText className="h-6 w-6 text-primary" />
-            <h1 className="text-xl font-semibold">CMT Quotation Generator</h1>
+            <h1 className="text-xl font-semibold">
+              {editingId ? 'Edit Quotation' : 'New CMT Quotation'}
+            </h1>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={handleLoadDraft}>
-              Load Draft
+            <Button variant="outline" size="sm" onClick={handleBackToList}>
+              <List className="h-4 w-4 mr-2" />
+              All Quotations
             </Button>
-            <Button variant="outline" size="sm" onClick={handleSaveDraft}>
-              <Save className="h-4 w-4 mr-2" />
-              Save Draft
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleSaveToDatabase}
+              disabled={saveQuotation.isPending || !data.buyerName || !data.styleName}
+            >
+              <DatabaseBackup className="h-4 w-4 mr-2" />
+              {saveQuotation.isPending ? 'Saving...' : 'Save to Database'}
             </Button>
             <Button 
               onClick={handleDownloadPDF} 
@@ -169,7 +225,7 @@ export default function CMTQuotation() {
             </CardHeader>
             <CardContent className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="buyerName">Buyer / Company Name</Label>
+                <Label htmlFor="buyerName">Buyer / Company Name *</Label>
                 <Input
                   id="buyerName"
                   value={data.buyerName}
@@ -215,7 +271,7 @@ export default function CMTQuotation() {
             </CardHeader>
             <CardContent className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="styleName">Style Name</Label>
+                <Label htmlFor="styleName">Style Name *</Label>
                 <Input
                   id="styleName"
                   value={data.styleName}
@@ -340,7 +396,7 @@ export default function CMTQuotation() {
         {/* Right Panel - Preview */}
         <div className="sticky top-20 h-fit w-[420px] flex-shrink-0">
           <div className="flex items-center gap-2 mb-4">
-            <Eye className="h-5 w-5 text-muted-foreground" />
+            <FileText className="h-5 w-5 text-muted-foreground" />
             <h2 className="font-semibold text-lg">Live Preview</h2>
             <span className="text-xs text-muted-foreground">(Scaled view)</span>
           </div>
