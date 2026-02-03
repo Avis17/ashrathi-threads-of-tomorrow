@@ -28,7 +28,7 @@ export function CMTOperationsTable({ operations, onOperationsChange }: CMTOperat
     const newOperation: CMTOperation = {
       id: crypto.randomUUID(),
       category: 'Stitching',
-      machineType: 'Single Needle',
+      machineType: 'Not Defined',
       description: '',
       smv: 0,
       ratePerPiece: 0,
@@ -109,19 +109,35 @@ export function CMTOperationsTable({ operations, onOperationsChange }: CMTOperat
                     </Select>
                   </TableCell>
                   <TableCell>
-                    <Select
-                      value={operation.machineType}
-                      onValueChange={(value) => updateOperation(operation.id, 'machineType', value)}
-                    >
-                      <SelectTrigger className="h-9">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {machineTypes.map(type => (
-                          <SelectItem key={type} value={type}>{type}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    {operation.machineType === 'Not Defined' ? (
+                      <Select
+                        value={operation.machineType}
+                        onValueChange={(value) => updateOperation(operation.id, 'machineType', value)}
+                      >
+                        <SelectTrigger className="h-9 text-muted-foreground">
+                          <SelectValue placeholder="Not Defined" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {machineTypes.map(type => (
+                            <SelectItem key={type} value={type}>{type === 'Not Defined' ? '— Not Defined —' : type}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Select
+                        value={operation.machineType}
+                        onValueChange={(value) => updateOperation(operation.id, 'machineType', value)}
+                      >
+                        <SelectTrigger className="h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {machineTypes.map(type => (
+                            <SelectItem key={type} value={type}>{type === 'Not Defined' ? '— Not Defined —' : type}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
                   </TableCell>
                   <TableCell>
                     <Input
