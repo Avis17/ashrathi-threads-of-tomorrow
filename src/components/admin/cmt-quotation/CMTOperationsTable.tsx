@@ -17,13 +17,155 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { CMTOperation, operationCategories, machineTypes } from '@/types/cmt-quotation';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface CMTOperationsTableProps {
   operations: CMTOperation[];
   onOperationsChange: (operations: CMTOperation[]) => void;
 }
 
+interface SortableRowProps {
+  operation: CMTOperation;
+  updateOperation: (id: string, field: keyof CMTOperation, value: string | number) => void;
+  removeOperation: (id: string) => void;
+}
+
+function SortableRow({ operation, updateOperation, removeOperation }: SortableRowProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: operation.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <TableRow ref={setNodeRef} style={style} className="group">
+      <TableCell className="cursor-grab" {...attributes} {...listeners}>
+        <GripVertical className="h-4 w-4 text-muted-foreground" />
+      </TableCell>
+      <TableCell>
+        <Select
+          value={operation.category}
+          onValueChange={(value) => updateOperation(operation.id, 'category', value)}
+        >
+          <SelectTrigger className="h-9">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {operationCategories.map(cat => (
+              <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </TableCell>
+      <TableCell>
+        {operation.machineType === 'Not Defined' ? (
+          <Select
+            value={operation.machineType}
+            onValueChange={(value) => updateOperation(operation.id, 'machineType', value)}
+          >
+            <SelectTrigger className="h-9 text-muted-foreground">
+              <SelectValue placeholder="Not Defined" />
+            </SelectTrigger>
+            <SelectContent>
+              {machineTypes.map(type => (
+                <SelectItem key={type} value={type}>{type === 'Not Defined' ? '— Not Defined —' : type}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <Select
+            value={operation.machineType}
+            onValueChange={(value) => updateOperation(operation.id, 'machineType', value)}
+          >
+            <SelectTrigger className="h-9">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {machineTypes.map(type => (
+                <SelectItem key={type} value={type}>{type === 'Not Defined' ? '— Not Defined —' : type}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+      </TableCell>
+      <TableCell>
+        <Input
+          value={operation.description}
+          onChange={(e) => updateOperation(operation.id, 'description', e.target.value)}
+          placeholder="e.g., Shoulder attach with piping"
+          className="h-9"
+        />
+      </TableCell>
+      <TableCell>
+        <Input
+          type="number"
+          step="0.01"
+          value={operation.smv || ''}
+          onChange={(e) => updateOperation(operation.id, 'smv', parseFloat(e.target.value) || 0)}
+          className="h-9 text-right"
+          placeholder="0.00"
+        />
+      </TableCell>
+      <TableCell>
+        <Input
+          type="number"
+          step="0.01"
+          value={operation.ratePerPiece || ''}
+          onChange={(e) => updateOperation(operation.id, 'ratePerPiece', parseFloat(e.target.value) || 0)}
+          className="h-9 text-right"
+          placeholder="0.00"
+        />
+      </TableCell>
+      <TableCell className="text-right font-medium">
+        ₹{operation.ratePerPiece.toFixed(2)}
+      </TableCell>
+      <TableCell>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive"
+          onClick={() => removeOperation(operation.id)}
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </TableCell>
+    </TableRow>
+  );
+}
+
 export function CMTOperationsTable({ operations, onOperationsChange }: CMTOperationsTableProps) {
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
   const addOperation = () => {
     const newOperation: CMTOperation = {
       id: crypto.randomUUID(),
@@ -54,6 +196,16 @@ export function CMTOperationsTable({ operations, onOperationsChange }: CMTOperat
       return op;
     });
     onOperationsChange(updated);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = operations.findIndex((op) => op.id === active.id);
+      const newIndex = operations.findIndex((op) => op.id === over.id);
+      onOperationsChange(arrayMove(operations, oldIndex, newIndex));
+    }
   };
 
   return (
@@ -88,100 +240,25 @@ export function CMTOperationsTable({ operations, onOperationsChange }: CMTOperat
                 </TableCell>
               </TableRow>
             ) : (
-              operations.map((operation, index) => (
-                <TableRow key={operation.id} className="group">
-                  <TableCell className="cursor-grab">
-                    <GripVertical className="h-4 w-4 text-muted-foreground" />
-                  </TableCell>
-                  <TableCell>
-                    <Select
-                      value={operation.category}
-                      onValueChange={(value) => updateOperation(operation.id, 'category', value)}
-                    >
-                      <SelectTrigger className="h-9">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {operationCategories.map(cat => (
-                          <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell>
-                    {operation.machineType === 'Not Defined' ? (
-                      <Select
-                        value={operation.machineType}
-                        onValueChange={(value) => updateOperation(operation.id, 'machineType', value)}
-                      >
-                        <SelectTrigger className="h-9 text-muted-foreground">
-                          <SelectValue placeholder="Not Defined" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {machineTypes.map(type => (
-                            <SelectItem key={type} value={type}>{type === 'Not Defined' ? '— Not Defined —' : type}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <Select
-                        value={operation.machineType}
-                        onValueChange={(value) => updateOperation(operation.id, 'machineType', value)}
-                      >
-                        <SelectTrigger className="h-9">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {machineTypes.map(type => (
-                            <SelectItem key={type} value={type}>{type === 'Not Defined' ? '— Not Defined —' : type}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      value={operation.description}
-                      onChange={(e) => updateOperation(operation.id, 'description', e.target.value)}
-                      placeholder="e.g., Shoulder attach with piping"
-                      className="h-9"
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={operations.map(op => op.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {operations.map((operation) => (
+                    <SortableRow
+                      key={operation.id}
+                      operation={operation}
+                      updateOperation={updateOperation}
+                      removeOperation={removeOperation}
                     />
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={operation.smv || ''}
-                      onChange={(e) => updateOperation(operation.id, 'smv', parseFloat(e.target.value) || 0)}
-                      className="h-9 text-right"
-                      placeholder="0.00"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={operation.ratePerPiece || ''}
-                      onChange={(e) => updateOperation(operation.id, 'ratePerPiece', parseFloat(e.target.value) || 0)}
-                      className="h-9 text-right"
-                      placeholder="0.00"
-                    />
-                  </TableCell>
-                  <TableCell className="text-right font-medium">
-                    ₹{operation.ratePerPiece.toFixed(2)}
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive"
-                      onClick={() => removeOperation(operation.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))
+                  ))}
+                </SortableContext>
+              </DndContext>
             )}
           </TableBody>
         </Table>
