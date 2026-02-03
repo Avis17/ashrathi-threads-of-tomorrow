@@ -452,6 +452,102 @@ export type Database = {
           },
         ]
       }
+      cmt_quotations: {
+        Row: {
+          buyer_address: string | null
+          buyer_name: string
+          company_profit_percent: number | null
+          contact_person_name: string | null
+          contact_person_phone: string | null
+          created_at: string
+          created_by: string | null
+          date: string
+          fabric_type: string | null
+          final_cmt_per_piece: number | null
+          finishing_packing_cost: number | null
+          fit_type: string | null
+          gsm: string | null
+          id: string
+          operations: Json | null
+          order_quantity: number | null
+          overheads_cost: number | null
+          quotation_no: string
+          signatory_name: string | null
+          size_range: string | null
+          status: string | null
+          style_code: string | null
+          style_name: string
+          terms_and_conditions: string | null
+          total_order_value: number | null
+          total_stitching_cost: number | null
+          trims: Json | null
+          updated_at: string
+          valid_until: string
+        }
+        Insert: {
+          buyer_address?: string | null
+          buyer_name: string
+          company_profit_percent?: number | null
+          contact_person_name?: string | null
+          contact_person_phone?: string | null
+          created_at?: string
+          created_by?: string | null
+          date: string
+          fabric_type?: string | null
+          final_cmt_per_piece?: number | null
+          finishing_packing_cost?: number | null
+          fit_type?: string | null
+          gsm?: string | null
+          id?: string
+          operations?: Json | null
+          order_quantity?: number | null
+          overheads_cost?: number | null
+          quotation_no: string
+          signatory_name?: string | null
+          size_range?: string | null
+          status?: string | null
+          style_code?: string | null
+          style_name: string
+          terms_and_conditions?: string | null
+          total_order_value?: number | null
+          total_stitching_cost?: number | null
+          trims?: Json | null
+          updated_at?: string
+          valid_until: string
+        }
+        Update: {
+          buyer_address?: string | null
+          buyer_name?: string
+          company_profit_percent?: number | null
+          contact_person_name?: string | null
+          contact_person_phone?: string | null
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          fabric_type?: string | null
+          final_cmt_per_piece?: number | null
+          finishing_packing_cost?: number | null
+          fit_type?: string | null
+          gsm?: string | null
+          id?: string
+          operations?: Json | null
+          order_quantity?: number | null
+          overheads_cost?: number | null
+          quotation_no?: string
+          signatory_name?: string | null
+          size_range?: string | null
+          status?: string | null
+          style_code?: string | null
+          style_name?: string
+          terms_and_conditions?: string | null
+          total_order_value?: number | null
+          total_stitching_cost?: number | null
+          trims?: Json | null
+          updated_at?: string
+          valid_until?: string
+        }
+        Relationships: []
+      }
       company_letterheads: {
         Row: {
           closing: string | null
