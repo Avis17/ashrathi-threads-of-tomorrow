@@ -76,6 +76,9 @@ export const defaultTermsAndConditions = `1. Delivery Timeline: 15-20 working da
 export const operationCategories = ['Cutting', 'Stitching', 'Finishing', 'Packing', 'Accessories', 'Checking', 'Special'] as const;
 
 export const machineTypes = [
+  'Not Defined',
+  'Singer',
+  'Power Table',
   'Single Needle',
   'Double Needle', 
   'Overlock 3T',
