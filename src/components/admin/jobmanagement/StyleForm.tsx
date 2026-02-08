@@ -15,6 +15,7 @@ import { useCreateJobStyle, useUpdateJobStyle, type JobStyle } from '@/hooks/use
 import { supabase } from '@/integrations/supabase/client';
 import { Upload, Link as LinkIcon, X, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { Switch } from '@/components/ui/switch';
 
 const CATEGORIES = ['Men', 'Women', 'Kids', 'Unisex'];
 const STYLE_NAMES = [
@@ -47,6 +48,7 @@ interface StyleFormProps {
 type OperationRate = {
   operation: string;
   rate: number;
+  description: string;
 };
 
 type FormData = {
@@ -61,6 +63,7 @@ type FormData = {
   min_order_qty: number;
   remarks: string;
   style_image_url: string;
+  is_set_item: boolean;
   operations: OperationRate[];
   accessories_amount: number;
   accessories_description: string;
@@ -72,13 +75,23 @@ type FormData = {
 // Helper to parse existing process_rate_details into operations array
 const parseExistingOperations = (style?: JobStyle | null): OperationRate[] => {
   if (!style?.process_rate_details || !Array.isArray(style.process_rate_details)) {
-    return [{ operation: '', rate: 0 }];
+    // Try to parse from object format
+    const details = style?.process_rate_details as any;
+    if (details?.operations && Array.isArray(details.operations)) {
+      return details.operations.map((op: any) => ({
+        operation: op.operation || '',
+        rate: op.rate || 0,
+        description: op.description || '',
+      }));
+    }
+    return [{ operation: '', rate: 0, description: '' }];
   }
   const ops = (style.process_rate_details as any[]).map((op: any) => ({
     operation: op.operation || '',
     rate: op.rate || 0,
+    description: op.description || '',
   }));
-  return ops.length > 0 ? ops : [{ operation: '', rate: 0 }];
+  return ops.length > 0 ? ops : [{ operation: '', rate: 0, description: '' }];
 };
 
 // Helper to parse additional costs from process_rate_details
@@ -91,6 +104,7 @@ const parseAdditionalCosts = (style?: JobStyle | null) => {
       transportation_amount: details.transportation_amount || 0,
       transportation_notes: details.transportation_notes || '',
       company_profit: details.company_profit || 0,
+      is_set_item: details.is_set_item || false,
     };
   }
   return {
@@ -99,6 +113,7 @@ const parseAdditionalCosts = (style?: JobStyle | null) => {
     transportation_amount: 0,
     transportation_notes: '',
     company_profit: 0,
+    is_set_item: false,
   };
 };
 
@@ -131,6 +146,7 @@ const StyleForm = ({ style, onClose }: StyleFormProps) => {
       min_order_qty: style?.min_order_qty || 0,
       remarks: style?.remarks || '',
       style_image_url: style?.style_image_url || '',
+      is_set_item: additionalCosts.is_set_item,
       operations: parseExistingOperations(style),
       accessories_amount: additionalCosts.accessories_amount,
       accessories_description: additionalCosts.accessories_description,
@@ -149,6 +165,7 @@ const StyleForm = ({ style, onClose }: StyleFormProps) => {
   const watchAccessories = watch('accessories_amount') || 0;
   const watchTransportation = watch('transportation_amount') || 0;
   const watchCompanyProfit = watch('company_profit') || 0;
+  const watchIsSetItem = watch('is_set_item');
 
   // Calculate totals
   const operationsTotal = watchOperations?.reduce((sum, op) => sum + (op.rate || 0), 0) || 0;
@@ -240,7 +257,12 @@ const StyleForm = ({ style, onClose }: StyleFormProps) => {
 
     // Build process_rate_details with operations and additional costs
     const processRateDetails = {
-      operations: data.operations.filter(op => op.operation && op.rate > 0),
+      operations: data.operations.filter(op => op.operation && op.rate > 0).map(op => ({
+        operation: op.operation,
+        rate: op.rate,
+        description: op.description || '',
+      })),
+      is_set_item: data.is_set_item || false,
       accessories_amount: data.accessories_amount || 0,
       accessories_description: data.accessories_description || '',
       transportation_amount: data.transportation_amount || 0,
@@ -318,6 +340,19 @@ const StyleForm = ({ style, onClose }: StyleFormProps) => {
           <div className="space-y-2">
             <Label>Style Code *</Label>
             <Input {...register('style_code')} required placeholder="FF-001" disabled={!style} />
+          </div>
+          <div className="space-y-2 md:col-span-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="is_set_item">Set Item</Label>
+              <Switch
+                id="is_set_item"
+                checked={watchIsSetItem}
+                onCheckedChange={(checked) => setValue('is_set_item', checked)}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Enable if this style is a SET (e.g., Top + Bottom combo)
+            </p>
           </div>
           <div className="space-y-2">
             <Label>Style Name *</Label>
@@ -462,50 +497,57 @@ const StyleForm = ({ style, onClose }: StyleFormProps) => {
         <div className="space-y-3">
           <Label className="text-sm text-muted-foreground">Operations</Label>
           {fields.map((field, index) => (
-            <div key={field.id} className="flex items-center gap-3">
-              <Select
-                value={watchOperations?.[index]?.operation || ''}
-                onValueChange={(value) => setValue(`operations.${index}.operation`, value)}
-              >
-                <SelectTrigger className="flex-1">
-                  <SelectValue placeholder="Select operation" />
-                </SelectTrigger>
-                <SelectContent>
-                  {OPERATIONS.map((op) => (
-                    <SelectItem key={op} value={op}>
-                      {op}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <div className="relative w-32">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₹</span>
-                <Input
-                  type="number"
-                  step="0.01"
-                  placeholder="0.00"
-                  className="pl-7"
-                  {...register(`operations.${index}.rate`, { valueAsNumber: true })}
-                />
-              </div>
-              {fields.length > 1 && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => remove(index)}
-                  className="text-destructive hover:text-destructive"
+            <div key={field.id} className="space-y-2 p-3 bg-muted/50 rounded-lg">
+              <div className="flex items-center gap-3">
+                <Select
+                  value={watchOperations?.[index]?.operation || ''}
+                  onValueChange={(value) => setValue(`operations.${index}.operation`, value)}
                 >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              )}
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="Select operation" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {OPERATIONS.map((op) => (
+                      <SelectItem key={op} value={op}>
+                        {op}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <div className="relative w-28">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₹</span>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    className="pl-7"
+                    {...register(`operations.${index}.rate`, { valueAsNumber: true })}
+                  />
+                </div>
+                {fields.length > 1 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => remove(index)}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+              <Input
+                placeholder="Description (optional) - e.g., includes overlock, hemming..."
+                className="text-sm"
+                {...register(`operations.${index}.description`)}
+              />
             </div>
           ))}
           <Button
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => append({ operation: '', rate: 0 })}
+            onClick={() => append({ operation: '', rate: 0, description: '' })}
             className="gap-2"
           >
             <Plus className="h-4 w-4" />
