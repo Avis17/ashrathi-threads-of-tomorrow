@@ -59,6 +59,8 @@ import SamplingTermsGenerator from './admin/SamplingTermsGenerator';
 import QuotationGenerator from './admin/QuotationGenerator';
 import ExportersList from './admin/ExportersList';
 import CMTQuotation from './admin/CMTQuotation';
+import CMTQuotationView from './admin/CMTQuotationView';
+import StyleDetailsPage from './admin/StyleDetailsPage';
 const CompanyProfile = lazy(() => import('./admin/CompanyProfile'));
 
 const Admin = () => {
@@ -98,6 +100,7 @@ const Admin = () => {
               <Route path="/production" element={<Production />} />
               <Route path="/job-orders" element={<JobOrders />} />
               <Route path="/job-management" element={<JobManagement />} />
+              <Route path="/job-management/style/:id" element={<StyleDetailsPage />} />
               <Route path="/job-management/employee/:id" element={<EmployeeDetailsPage />} />
               <Route path="/branches" element={<BranchesManager />} />
               <Route path="/expenses" element={<ExpensesManager />} />
@@ -128,6 +131,7 @@ const Admin = () => {
               <Route path="/sampling-terms" element={<SamplingTermsGenerator />} />
               <Route path="/quotation" element={<QuotationGenerator />} />
               <Route path="/cmt-quotation" element={<CMTQuotation />} />
+              <Route path="/cmt-quotation/view/:id" element={<CMTQuotationView />} />
               <Route path="/external-jobs" element={<ExternalJobOrders />} />
               <Route path="/external-jobs/register-company" element={<RegisterCompany />} />
               <Route path="/external-jobs/add-job" element={<AddJob />} />
