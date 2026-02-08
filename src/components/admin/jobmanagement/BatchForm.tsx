@@ -29,14 +29,17 @@ interface VariationData {
 }
 
 interface TypeData {
+  style_id: string;
   fabric_type: string;
   gsm: string;
+  planned_start_date: string;
+  estimated_delivery_date: string;
+  notes: string;
   variations: VariationData[];
 }
 
 interface FormData {
-  style_id: string;
-  date_created: string;
+  date_taken: string;
   types: TypeData[];
   supplier_name: string;
   lot_number: string;
@@ -50,11 +53,14 @@ const BatchForm = ({ onClose }: BatchFormProps) => {
   
   const { register, handleSubmit, setValue, watch, control } = useForm<FormData>({
     defaultValues: {
-      style_id: '',
-      date_created: new Date().toISOString().split('T')[0],
+      date_taken: new Date().toISOString().split('T')[0],
       types: [{
+        style_id: '',
         fabric_type: '',
         gsm: '',
+        planned_start_date: '',
+        estimated_delivery_date: '',
+        notes: '',
         variations: [{ color: '', fabric_width: '', weight: 0, number_of_rolls: 1 }]
       }],
       supplier_name: '',
@@ -68,9 +74,7 @@ const BatchForm = ({ onClose }: BatchFormProps) => {
     name: 'types',
   });
 
-  const selectedStyleId = watch('style_id');
   const types = watch('types');
-  const selectedStyle = styles?.find(s => s.id === selectedStyleId);
 
   // Calculate total weight across all types and variations
   const totalWeight = types?.reduce((typeSum, type) => 
@@ -81,6 +85,8 @@ const BatchForm = ({ onClose }: BatchFormProps) => {
   const totalRolls = types?.reduce((typeSum, type) => 
     typeSum + (type.variations?.reduce((varSum, variation) => 
       varSum + (Number(variation.number_of_rolls) || 0), 0) || 0), 0) || 0;
+
+  const getSelectedStyle = (styleId: string) => styles?.find(s => s.id === styleId);
 
   const toggleTypeCollapse = (index: number) => {
     setCollapsedTypes(prev => ({ ...prev, [index]: !prev[index] }));
@@ -109,15 +115,19 @@ const BatchForm = ({ onClose }: BatchFormProps) => {
 
   const onSubmit = async (data: FormData) => {
     // Generate batch number: FF-01-YYYYMMDD-RRR (RRR = random 3 digits)
-    const dateStr = data.date_created.replace(/-/g, '');
+    const dateStr = data.date_taken.replace(/-/g, '');
     const randomDigits = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
     const batchNumber = `FF-01-${dateStr}-${randomDigits}`;
     
-    // Flatten types and variations into rolls_data format for backward compatibility
+    // Flatten types and variations into rolls_data format with additional fields
     const flattenedRolls = data.types.flatMap(type => 
       type.variations.map(variation => ({
+        style_id: type.style_id,
         fabric_type: type.fabric_type,
         gsm: type.gsm,
+        planned_start_date: type.planned_start_date,
+        estimated_delivery_date: type.estimated_delivery_date,
+        notes: type.notes,
         color: variation.color,
         fabric_width: variation.fabric_width,
         weight: variation.weight,
@@ -126,8 +136,8 @@ const BatchForm = ({ onClose }: BatchFormProps) => {
     );
 
     const batchData = {
-      style_id: data.style_id,
-      date_created: data.date_created,
+      style_id: data.types[0]?.style_id || '',
+      date_created: data.date_taken,
       fabric_type: data.types[0]?.fabric_type || '',
       number_of_rolls: totalRolls,
       rolls_data: flattenedRolls,
@@ -157,45 +167,13 @@ const BatchForm = ({ onClose }: BatchFormProps) => {
         </p>
       </div>
 
-      {/* Select Style */}
-      <div className="space-y-2 p-4 bg-muted/30 rounded-lg">
-        <Label>Select Style *</Label>
-        <Controller
-          name="style_id"
-          control={control}
-          render={({ field }) => (
-            <Select value={field.value} onValueChange={field.onChange}>
-              <SelectTrigger className="bg-background">
-                <SelectValue placeholder="Choose a style..." />
-              </SelectTrigger>
-              <SelectContent className="bg-popover z-50">
-                {styles?.filter(s => s.is_active).map((style) => (
-                  <SelectItem key={style.id} value={style.id}>
-                    {style.style_code} - {style.style_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        />
-        {selectedStyle && (
-          <div className="mt-2 p-3 bg-primary/5 rounded border border-primary/20">
-            <div className="text-sm space-y-1">
-              <div><span className="font-semibold">Pattern:</span> {selectedStyle.pattern_number}</div>
-              <div><span className="font-semibold">Fabric:</span> {selectedStyle.fabric_type}</div>
-              <div><span className="font-semibold">GSM Range:</span> {selectedStyle.gsm_range}</div>
-            </div>
-          </div>
-        )}
-      </div>
-
       {/* Basic Details */}
       <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
         <h3 className="font-semibold text-foreground">Basic Details</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="date_created">Production Date *</Label>
-            <Input id="date_created" type="date" {...register('date_created')} required />
+            <Label htmlFor="date_taken">Taken Date *</Label>
+            <Input id="date_taken" type="date" {...register('date_taken')} required />
           </div>
           <div className="space-y-2">
             <Label className="text-muted-foreground">Summary</Label>
@@ -224,6 +202,7 @@ const BatchForm = ({ onClose }: BatchFormProps) => {
               sum + ((Number(v.weight) || 0) * (Number(v.number_of_rolls) || 0)), 0);
             const typeRolls = typeVariations.reduce((sum, v) => sum + (Number(v.number_of_rolls) || 0), 0);
             const isCollapsed = collapsedTypes[typeIndex];
+            const selectedStyle = getSelectedStyle(types[typeIndex]?.style_id);
 
             return (
               <Card key={typeField.id} className="border-primary/20 overflow-hidden">
@@ -240,9 +219,14 @@ const BatchForm = ({ onClose }: BatchFormProps) => {
                       )}
                       <h4 className="font-medium">
                         Type {typeIndex + 1}
+                        {selectedStyle && (
+                          <span className="text-primary ml-2">
+                            — {selectedStyle.style_code}
+                          </span>
+                        )}
                         {types[typeIndex]?.fabric_type && (
-                          <span className="text-muted-foreground ml-2">
-                            — {types[typeIndex].fabric_type}
+                          <span className="text-muted-foreground ml-1">
+                            • {types[typeIndex].fabric_type}
                             {types[typeIndex]?.gsm && ` (${types[typeIndex].gsm} GSM)`}
                           </span>
                         )}
@@ -271,7 +255,39 @@ const BatchForm = ({ onClose }: BatchFormProps) => {
                 </CardHeader>
                 
                 <CardContent className={cn("p-4 space-y-4", isCollapsed && "hidden")}>
-                  {/* Common Fields for this Type */}
+                  {/* Style Selection for this Type */}
+                  <div className="space-y-2 pb-3 border-b">
+                    <Label>Select Style *</Label>
+                    <Controller
+                      name={`types.${typeIndex}.style_id`}
+                      control={control}
+                      render={({ field }) => (
+                        <Select value={field.value} onValueChange={field.onChange}>
+                          <SelectTrigger className="bg-background">
+                            <SelectValue placeholder="Choose a style..." />
+                          </SelectTrigger>
+                          <SelectContent className="bg-popover z-50">
+                            {styles?.filter(s => s.is_active).map((style) => (
+                              <SelectItem key={style.id} value={style.id}>
+                                {style.style_code} - {style.style_name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                    {selectedStyle && (
+                      <div className="mt-2 p-3 bg-primary/5 rounded border border-primary/20">
+                        <div className="text-sm grid grid-cols-3 gap-2">
+                          <div><span className="font-semibold">Pattern:</span> {selectedStyle.pattern_number}</div>
+                          <div><span className="font-semibold">Fabric:</span> {selectedStyle.fabric_type}</div>
+                          <div><span className="font-semibold">GSM Range:</span> {selectedStyle.gsm_range}</div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Fabric Details */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pb-3 border-b">
                     <div className="space-y-2">
                       <Label htmlFor={`types.${typeIndex}.fabric_type`}>Fabric Type *</Label>
@@ -288,6 +304,26 @@ const BatchForm = ({ onClose }: BatchFormProps) => {
                         id={`types.${typeIndex}.gsm`}
                         {...register(`types.${typeIndex}.gsm`)}
                         placeholder="e.g., 220"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Dates */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pb-3 border-b">
+                    <div className="space-y-2">
+                      <Label htmlFor={`types.${typeIndex}.planned_start_date`}>Planned Start Date</Label>
+                      <Input
+                        id={`types.${typeIndex}.planned_start_date`}
+                        type="date"
+                        {...register(`types.${typeIndex}.planned_start_date`)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor={`types.${typeIndex}.estimated_delivery_date`}>Estimated Delivery Date</Label>
+                      <Input
+                        id={`types.${typeIndex}.estimated_delivery_date`}
+                        type="date"
+                        {...register(`types.${typeIndex}.estimated_delivery_date`)}
                       />
                     </div>
                   </div>
@@ -381,6 +417,17 @@ const BatchForm = ({ onClose }: BatchFormProps) => {
                       </div>
                     ))}
                   </div>
+
+                  {/* Notes for this type */}
+                  <div className="space-y-2 pt-2 border-t">
+                    <Label htmlFor={`types.${typeIndex}.notes`}>Notes</Label>
+                    <Textarea
+                      id={`types.${typeIndex}.notes`}
+                      {...register(`types.${typeIndex}.notes`)}
+                      placeholder="Additional notes for this type..."
+                      className="min-h-[60px]"
+                    />
+                  </div>
                 </CardContent>
               </Card>
             );
@@ -392,8 +439,12 @@ const BatchForm = ({ onClose }: BatchFormProps) => {
           variant="outline"
           onClick={() => {
             appendType({
+              style_id: '',
               fabric_type: '',
               gsm: '',
+              planned_start_date: '',
+              estimated_delivery_date: '',
+              notes: '',
               variations: [{ color: '', fabric_width: '', weight: 0, number_of_rolls: 1 }]
             });
           }}

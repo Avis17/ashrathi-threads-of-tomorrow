@@ -201,7 +201,7 @@ const BatchesManager = () => {
 
       {/* Batch Form Dialog */}
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
           <BatchForm onClose={() => setIsFormOpen(false)} />
         </DialogContent>
       </Dialog>
