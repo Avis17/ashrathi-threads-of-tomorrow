@@ -49,20 +49,30 @@ const StyleDetailsPage = () => {
   const processRateDetails = style.process_rate_details as any;
   const operations = processRateDetails?.operations || [];
   
-  // Handle accessories - could be object or number
+  // Handle accessories - check both flat and nested formats
   let accessoriesAmount = 0;
   let accessoriesDescription = '';
-  if (typeof processRateDetails?.accessories === 'object' && processRateDetails?.accessories !== null) {
+  if (processRateDetails?.accessories_amount !== undefined) {
+    // Flat format: accessories_amount, accessories_description
+    accessoriesAmount = Number(processRateDetails.accessories_amount) || 0;
+    accessoriesDescription = processRateDetails.accessories_description || '';
+  } else if (typeof processRateDetails?.accessories === 'object' && processRateDetails?.accessories !== null) {
+    // Nested format: accessories.amount, accessories.description
     accessoriesAmount = processRateDetails.accessories.amount || 0;
     accessoriesDescription = processRateDetails.accessories.description || '';
   } else if (typeof processRateDetails?.accessories === 'number') {
     accessoriesAmount = processRateDetails.accessories;
   }
   
-  // Handle transportation - could be object or number
+  // Handle transportation - check both flat and nested formats
   let transportationAmount = 0;
   let transportationNotes = '';
-  if (typeof processRateDetails?.transportation === 'object' && processRateDetails?.transportation !== null) {
+  if (processRateDetails?.transportation_amount !== undefined) {
+    // Flat format: transportation_amount, transportation_notes
+    transportationAmount = Number(processRateDetails.transportation_amount) || 0;
+    transportationNotes = processRateDetails.transportation_notes || '';
+  } else if (typeof processRateDetails?.transportation === 'object' && processRateDetails?.transportation !== null) {
+    // Nested format: transportation.amount, transportation.notes
     transportationAmount = processRateDetails.transportation.amount || 0;
     transportationNotes = processRateDetails.transportation.notes || '';
   } else if (typeof processRateDetails?.transportation === 'number') {
@@ -74,7 +84,8 @@ const StyleDetailsPage = () => {
 
   // Calculate totals
   const operationsTotal = operations.reduce((sum: number, op: any) => sum + (op.rate || 0), 0);
-  const finalRate = operationsTotal + accessoriesAmount + transportationAmount + companyProfit;
+  const finalRate = processRateDetails?.final_rate_per_piece || 
+    (operationsTotal + accessoriesAmount + transportationAmount + companyProfit);
 
   // Legacy rates fallback
   const legacyRates = [
@@ -91,6 +102,12 @@ const StyleDetailsPage = () => {
 
   const linkedQuotation = quotations?.find(q => q.id === style.linked_cmt_quotation_id);
   const isQuotationApproved = linkedQuotation?.status === 'approved';
+  
+  // Get the approved final CMT rate if available
+  const approvedRates = linkedQuotation?.approved_rates as any;
+  const displayCMTRate = isQuotationApproved && approvedRates?.finalCMTPerPiece 
+    ? approvedRates.finalCMTPerPiece 
+    : linkedQuotation?.final_cmt_per_piece;
 
   const handleLinkQuotation = (quotationId: string) => {
     updateStyle.mutate({
@@ -337,12 +354,23 @@ const StyleDetailsPage = () => {
                   <div className="text-sm text-muted-foreground">
                     <p>Buyer: {linkedQuotation.buyer_name}</p>
                     <p className={isQuotationApproved ? 'text-green-600 dark:text-green-400 font-medium' : ''}>
-                      Final CMT: ₹{Number(linkedQuotation.final_cmt_per_piece).toFixed(2)}
+                      {isQuotationApproved ? 'Approved CMT' : 'Quoted CMT'}: ₹{Number(displayCMTRate || 0).toFixed(2)}
                     </p>
+                    {isQuotationApproved && !approvedRates?.finalCMTPerPiece && linkedQuotation.final_cmt_per_piece && (
+                      <p className="text-xs text-muted-foreground">
+                        (Original Quote: ₹{Number(linkedQuotation.final_cmt_per_piece).toFixed(2)})
+                      </p>
+                    )}
+                    {isQuotationApproved && approvedRates?.finalCMTPerPiece && linkedQuotation.final_cmt_per_piece && 
+                      approvedRates.finalCMTPerPiece !== linkedQuotation.final_cmt_per_piece && (
+                      <p className="text-xs text-muted-foreground line-through">
+                        Original: ₹{Number(linkedQuotation.final_cmt_per_piece).toFixed(2)}
+                      </p>
+                    )}
                     {isQuotationApproved && linkedQuotation.approved_rates && (
                       <div className="mt-2 pt-2 border-t border-green-200 dark:border-green-800">
                         <p className="text-xs font-medium text-green-600 dark:text-green-400">
-                          Approved Rates Confirmed
+                          ✓ Approved Rates Confirmed
                         </p>
                       </div>
                     )}
