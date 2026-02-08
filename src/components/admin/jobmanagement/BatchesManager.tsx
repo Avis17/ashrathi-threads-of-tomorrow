@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Plus, Search, Package, Eye, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,17 +24,15 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import BatchForm from './BatchForm';
-import BatchDetails from './BatchDetails';
 import { format } from 'date-fns';
 
 const BatchesManager = () => {
+  const navigate = useNavigate();
   const { data: batches, isLoading } = useJobBatches();
   const deleteBatchMutation = useDeleteJobBatch();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [selectedBatchId, setSelectedBatchId] = useState<string | null>(null);
-  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [deleteBatchId, setDeleteBatchId] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
@@ -60,8 +59,7 @@ const BatchesManager = () => {
   };
 
   const handleViewDetails = (batch: any) => {
-    setSelectedBatchId(batch.id);
-    setIsDetailsOpen(true);
+    navigate(`/admin/job-management/batch/${batch.id}`);
   };
 
   const handleDeleteClick = (batchId: string) => {
@@ -203,13 +201,6 @@ const BatchesManager = () => {
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
           <BatchForm onClose={() => setIsFormOpen(false)} />
-        </DialogContent>
-      </Dialog>
-
-      {/* Batch Details Dialog */}
-      <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-          {selectedBatchId && <BatchDetails batchId={selectedBatchId} onClose={() => setIsDetailsOpen(false)} />}
         </DialogContent>
       </Dialog>
 

@@ -145,6 +145,60 @@ export type Database = {
           },
         ]
       }
+      batch_cutting_logs: {
+        Row: {
+          batch_id: string
+          color: string
+          created_at: string
+          id: string
+          log_date: string
+          notes: string | null
+          pieces_cut: number
+          style_id: string | null
+          type_index: number
+          updated_at: string
+        }
+        Insert: {
+          batch_id: string
+          color: string
+          created_at?: string
+          id?: string
+          log_date?: string
+          notes?: string | null
+          pieces_cut?: number
+          style_id?: string | null
+          type_index: number
+          updated_at?: string
+        }
+        Update: {
+          batch_id?: string
+          color?: string
+          created_at?: string
+          id?: string
+          log_date?: string
+          notes?: string | null
+          pieces_cut?: number
+          style_id?: string | null
+          type_index?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "batch_cutting_logs_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "job_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "batch_cutting_logs_style_id_fkey"
+            columns: ["style_id"]
+            isOneToOne: false
+            referencedRelation: "job_styles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       batch_materials: {
         Row: {
           batch_id: string
