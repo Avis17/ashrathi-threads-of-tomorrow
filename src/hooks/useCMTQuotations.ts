@@ -29,7 +29,8 @@ export interface CMTQuotationRecord {
   total_order_value: number;
   terms_and_conditions: string | null;
   signatory_name: string;
-  status: 'draft' | 'sent' | 'accepted' | 'rejected';
+  status: string;
+  approved_rates: any | null;
   created_at: string;
   updated_at: string;
 }

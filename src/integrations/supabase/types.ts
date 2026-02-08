@@ -454,6 +454,7 @@ export type Database = {
       }
       cmt_quotations: {
         Row: {
+          approved_rates: Json | null
           buyer_address: string | null
           buyer_name: string
           company_profit_percent: number | null
@@ -485,6 +486,7 @@ export type Database = {
           valid_until: string
         }
         Insert: {
+          approved_rates?: Json | null
           buyer_address?: string | null
           buyer_name: string
           company_profit_percent?: number | null
@@ -516,6 +518,7 @@ export type Database = {
           valid_until: string
         }
         Update: {
+          approved_rates?: Json | null
           buyer_address?: string | null
           buyer_name?: string
           company_profit_percent?: number | null
@@ -2855,6 +2858,7 @@ export type Database = {
           gsm_range: string | null
           id: string
           is_active: boolean | null
+          linked_cmt_quotation_id: string | null
           min_order_qty: number | null
           pattern_number: string
           process_rate_details: Json | null
@@ -2882,6 +2886,7 @@ export type Database = {
           gsm_range?: string | null
           id?: string
           is_active?: boolean | null
+          linked_cmt_quotation_id?: string | null
           min_order_qty?: number | null
           pattern_number: string
           process_rate_details?: Json | null
@@ -2909,6 +2914,7 @@ export type Database = {
           gsm_range?: string | null
           id?: string
           is_active?: boolean | null
+          linked_cmt_quotation_id?: string | null
           min_order_qty?: number | null
           pattern_number?: string
           process_rate_details?: Json | null
@@ -2925,7 +2931,15 @@ export type Database = {
           style_name?: string
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "job_styles_linked_cmt_quotation_id_fkey"
+            columns: ["linked_cmt_quotation_id"]
+            isOneToOne: false
+            referencedRelation: "cmt_quotations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       job_weekly_settlements: {
         Row: {

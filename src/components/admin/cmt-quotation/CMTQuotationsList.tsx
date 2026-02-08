@@ -1,6 +1,7 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
-import { Edit2, Trash2, Plus, FileText, Download, Search } from 'lucide-react';
+import { Edit2, Trash2, Plus, FileText, Download, Search, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -32,6 +33,7 @@ interface CMTQuotationsListProps {
 }
 
 export function CMTQuotationsList({ onEdit, onCreateNew }: CMTQuotationsListProps) {
+  const navigate = useNavigate();
   const { data: quotations, isLoading } = useCMTQuotations();
   const deleteQuotation = useDeleteCMTQuotation();
   const [searchQuery, setSearchQuery] = useState('');
@@ -61,10 +63,23 @@ export function CMTQuotationsList({ onEdit, onCreateNew }: CMTQuotationsListProp
     const variants: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
       draft: 'secondary',
       sent: 'default',
+      in_progress: 'outline',
+      approved: 'default',
       accepted: 'default',
       rejected: 'destructive',
     };
-    return <Badge variant={variants[status] || 'outline'}>{status}</Badge>;
+    const colors: Record<string, string> = {
+      approved: 'bg-green-500 text-white hover:bg-green-600',
+      in_progress: 'bg-yellow-500 text-white hover:bg-yellow-600',
+    };
+    return (
+      <Badge 
+        variant={variants[status] || 'outline'} 
+        className={colors[status] || ''}
+      >
+        {status.replace('_', ' ')}
+      </Badge>
+    );
   };
 
   if (isLoading) {
@@ -136,6 +151,14 @@ export function CMTQuotationsList({ onEdit, onCreateNew }: CMTQuotationsListProp
                   <TableCell>{getStatusBadge(q.status)}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => navigate(`/admin/cmt-quotation/view/${q.id}`)}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
                       <Button
                         variant="ghost"
                         size="icon"

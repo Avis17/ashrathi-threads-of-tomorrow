@@ -1,11 +1,11 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Plus, Search, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useJobStyles } from '@/hooks/useJobStyles';
 import StyleCard from './StyleCard';
 import StyleForm from './StyleForm';
-import StyleDetails from './StyleDetails';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import {
   Select,
@@ -16,13 +16,12 @@ import {
 } from '@/components/ui/select';
 
 const StylesManager = () => {
+  const navigate = useNavigate();
   const { data: styles, isLoading } = useJobStyles();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [editingStyle, setEditingStyle] = useState<any>(null);
-  const [viewingStyle, setViewingStyle] = useState<any>(null);
 
   const filteredStyles = styles?.filter((style) => {
     const matchesSearch = 
@@ -38,8 +37,7 @@ const StylesManager = () => {
   });
 
   const handleView = (style: any) => {
-    setViewingStyle(style);
-    setIsDetailsOpen(true);
+    navigate(`/admin/job-management/style/${style.id}`);
   };
 
   const handleEdit = (style: any) => {
@@ -50,17 +48,6 @@ const StylesManager = () => {
   const handleCloseForm = () => {
     setIsFormOpen(false);
     setEditingStyle(null);
-  };
-
-  const handleCloseDetails = () => {
-    setIsDetailsOpen(false);
-    setViewingStyle(null);
-  };
-
-  const handleEditFromDetails = () => {
-    setEditingStyle(viewingStyle);
-    setIsDetailsOpen(false);
-    setIsFormOpen(true);
   };
 
   return (
@@ -124,14 +111,6 @@ const StylesManager = () => {
           <p className="text-muted-foreground">No styles found</p>
         </div>
       )}
-
-      {/* Style Details Dialog */}
-      <StyleDetails
-        style={viewingStyle}
-        open={isDetailsOpen}
-        onClose={handleCloseDetails}
-        onEdit={handleEditFromDetails}
-      />
 
       {/* Style Form Dialog */}
       <Dialog open={isFormOpen} onOpenChange={handleCloseForm}>
