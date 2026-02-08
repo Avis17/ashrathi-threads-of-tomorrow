@@ -26,13 +26,25 @@ const StyleCard = ({ style, onView, onEdit }: StyleCardProps) => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const deleteMutation = useDeleteJobStyle();
 
-  const totalRate = 
-    style.rate_cutting +
-    style.rate_stitching_singer +
-    style.rate_stitching_power_table +
-    style.rate_ironing +
-    style.rate_checking +
-    style.rate_packing;
+  // Calculate total operations rate (excluding company profit, accessories, transportation)
+  const processRateDetails = style.process_rate_details as any;
+  const operations = processRateDetails?.operations || [];
+  const hasNewOperations = operations.length > 0;
+  
+  let totalRate: number;
+  if (hasNewOperations) {
+    // Sum only operations (exclude accessories, transportation, company profit)
+    totalRate = operations.reduce((sum: number, op: any) => sum + (op.rate || 0), 0);
+  } else {
+    // Legacy: sum all process rates
+    totalRate = 
+      style.rate_cutting +
+      style.rate_stitching_singer +
+      style.rate_stitching_power_table +
+      style.rate_ironing +
+      style.rate_checking +
+      style.rate_packing;
+  }
 
   const handleDelete = async () => {
     await deleteMutation.mutateAsync(style.id);

@@ -48,14 +48,33 @@ const StyleDetailsPage = () => {
   // Parse process_rate_details
   const processRateDetails = style.process_rate_details as any;
   const operations = processRateDetails?.operations || [];
-  const accessories = processRateDetails?.accessories || { amount: 0, description: '' };
-  const transportation = processRateDetails?.transportation || { amount: 0, notes: '' };
+  
+  // Handle accessories - could be object or number
+  let accessoriesAmount = 0;
+  let accessoriesDescription = '';
+  if (typeof processRateDetails?.accessories === 'object' && processRateDetails?.accessories !== null) {
+    accessoriesAmount = processRateDetails.accessories.amount || 0;
+    accessoriesDescription = processRateDetails.accessories.description || '';
+  } else if (typeof processRateDetails?.accessories === 'number') {
+    accessoriesAmount = processRateDetails.accessories;
+  }
+  
+  // Handle transportation - could be object or number
+  let transportationAmount = 0;
+  let transportationNotes = '';
+  if (typeof processRateDetails?.transportation === 'object' && processRateDetails?.transportation !== null) {
+    transportationAmount = processRateDetails.transportation.amount || 0;
+    transportationNotes = processRateDetails.transportation.notes || '';
+  } else if (typeof processRateDetails?.transportation === 'number') {
+    transportationAmount = processRateDetails.transportation;
+  }
+  
   const companyProfit = processRateDetails?.company_profit || 0;
   const isSetItem = processRateDetails?.is_set_item || false;
 
   // Calculate totals
   const operationsTotal = operations.reduce((sum: number, op: any) => sum + (op.rate || 0), 0);
-  const finalRate = operationsTotal + (accessories.amount || 0) + (transportation.amount || 0) + companyProfit;
+  const finalRate = operationsTotal + accessoriesAmount + transportationAmount + companyProfit;
 
   // Legacy rates fallback
   const legacyRates = [
@@ -71,6 +90,7 @@ const StyleDetailsPage = () => {
   const hasNewOperations = operations.length > 0;
 
   const linkedQuotation = quotations?.find(q => q.id === style.linked_cmt_quotation_id);
+  const isQuotationApproved = linkedQuotation?.status === 'approved';
 
   const handleLinkQuotation = (quotationId: string) => {
     updateStyle.mutate({
@@ -208,16 +228,16 @@ const StyleDetailsPage = () => {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="bg-muted/30 rounded-lg p-4">
                       <p className="text-sm text-muted-foreground">Accessories</p>
-                      <p className="text-lg font-semibold">₹{(accessories.amount || 0).toFixed(2)}</p>
-                      {accessories.description && (
-                        <p className="text-xs text-muted-foreground mt-1">{accessories.description}</p>
+                      <p className="text-lg font-semibold">₹{accessoriesAmount.toFixed(2)}</p>
+                      {accessoriesDescription && (
+                        <p className="text-xs text-muted-foreground mt-1">{accessoriesDescription}</p>
                       )}
                     </div>
                     <div className="bg-muted/30 rounded-lg p-4">
                       <p className="text-sm text-muted-foreground">Transportation</p>
-                      <p className="text-lg font-semibold">₹{(transportation.amount || 0).toFixed(2)}</p>
-                      {transportation.notes && (
-                        <p className="text-xs text-muted-foreground mt-1">{transportation.notes}</p>
+                      <p className="text-lg font-semibold">₹{transportationAmount.toFixed(2)}</p>
+                      {transportationNotes && (
+                        <p className="text-xs text-muted-foreground mt-1">{transportationNotes}</p>
                       )}
                     </div>
                     <div className="bg-muted/30 rounded-lg p-4">
@@ -300,16 +320,39 @@ const StyleDetailsPage = () => {
               </div>
 
               {linkedQuotation && (
-                <div className="bg-muted/30 rounded-lg p-4 space-y-3">
+                <div className={`rounded-lg p-4 space-y-3 border-2 ${
+                  isQuotationApproved 
+                    ? 'bg-green-50 dark:bg-green-950/30 border-green-500' 
+                    : 'bg-muted/30 border-transparent'
+                }`}>
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">{linkedQuotation.quotation_no}</span>
-                    <Badge variant="outline">{linkedQuotation.status}</Badge>
+                    <Badge 
+                      variant={isQuotationApproved ? 'default' : 'outline'}
+                      className={isQuotationApproved ? 'bg-green-500 hover:bg-green-600' : ''}
+                    >
+                      {isQuotationApproved ? '✓ Approved' : linkedQuotation.status}
+                    </Badge>
                   </div>
                   <div className="text-sm text-muted-foreground">
                     <p>Buyer: {linkedQuotation.buyer_name}</p>
-                    <p>Final CMT: ₹{Number(linkedQuotation.final_cmt_per_piece).toFixed(2)}</p>
+                    <p className={isQuotationApproved ? 'text-green-600 dark:text-green-400 font-medium' : ''}>
+                      Final CMT: ₹{Number(linkedQuotation.final_cmt_per_piece).toFixed(2)}
+                    </p>
+                    {isQuotationApproved && linkedQuotation.approved_rates && (
+                      <div className="mt-2 pt-2 border-t border-green-200 dark:border-green-800">
+                        <p className="text-xs font-medium text-green-600 dark:text-green-400">
+                          Approved Rates Confirmed
+                        </p>
+                      </div>
+                    )}
                   </div>
-                  <Button variant="outline" size="sm" className="w-full" asChild>
+                  <Button 
+                    variant={isQuotationApproved ? 'default' : 'outline'} 
+                    size="sm" 
+                    className={`w-full ${isQuotationApproved ? 'bg-green-500 hover:bg-green-600' : ''}`}
+                    asChild
+                  >
                     <Link to={`/admin/cmt-quotation/view/${linkedQuotation.id}`}>
                       <ExternalLink className="h-4 w-4 mr-2" />
                       View Quotation
