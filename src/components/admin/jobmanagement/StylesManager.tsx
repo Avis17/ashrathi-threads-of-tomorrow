@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Filter } from 'lucide-react';
+import { Plus, Search, Filter, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { useJobStyles } from '@/hooks/useJobStyles';
 import StyleCard from './StyleCard';
 import StyleForm from './StyleForm';
@@ -20,8 +21,15 @@ const StylesManager = () => {
   const { data: styles, isLoading } = useJobStyles();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
+  const [filterCategory, setFilterCategory] = useState('all');
+  const [filterFit, setFilterFit] = useState('all');
+  const [filterSetItem, setFilterSetItem] = useState('all');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingStyle, setEditingStyle] = useState<any>(null);
+
+  // Extract unique categories and fits from styles
+  const uniqueCategories = [...new Set(styles?.map(s => s.category).filter(Boolean))] as string[];
+  const uniqueFits = [...new Set(styles?.map(s => s.fit).filter(Boolean))] as string[];
 
   const filteredStyles = styles?.filter((style) => {
     const matchesSearch = 
@@ -29,12 +37,36 @@ const StylesManager = () => {
       style.style_code.toLowerCase().includes(searchTerm.toLowerCase()) ||
       style.pattern_number.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesFilter = 
+    const matchesType = 
       filterType === 'all' ||
       style.garment_type?.toLowerCase() === filterType.toLowerCase();
     
-    return matchesSearch && matchesFilter && style.is_active;
+    const matchesCategory =
+      filterCategory === 'all' ||
+      style.category === filterCategory;
+    
+    const matchesFit =
+      filterFit === 'all' ||
+      style.fit === filterFit;
+    
+    const processRateDetails = style.process_rate_details as any;
+    const isSetItem = processRateDetails?.is_set_item || false;
+    const matchesSetItem =
+      filterSetItem === 'all' ||
+      (filterSetItem === 'set' && isSetItem) ||
+      (filterSetItem === 'single' && !isSetItem);
+    
+    return matchesSearch && matchesType && matchesCategory && matchesFit && matchesSetItem && style.is_active;
   });
+
+  const hasActiveFilters = filterType !== 'all' || filterCategory !== 'all' || filterFit !== 'all' || filterSetItem !== 'all';
+  
+  const clearAllFilters = () => {
+    setFilterType('all');
+    setFilterCategory('all');
+    setFilterFit('all');
+    setFilterSetItem('all');
+  };
 
   const handleView = (style: any) => {
     navigate(`/admin/job-management/style/${style.id}`);
@@ -53,8 +85,8 @@ const StylesManager = () => {
   return (
     <div className="space-y-6">
       {/* Header Actions */}
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <div className="flex-1 flex gap-4 w-full sm:w-auto">
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -64,10 +96,25 @@ const StylesManager = () => {
               className="pl-10"
             />
           </div>
+          <Button 
+            onClick={() => setIsFormOpen(true)}
+            className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add New Style
+          </Button>
+        </div>
+
+        {/* Filters Row */}
+        <div className="flex flex-wrap gap-3 items-center">
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">Filters:</span>
+          </div>
+          
           <Select value={filterType} onValueChange={setFilterType}>
-            <SelectTrigger className="w-[150px]">
-              <Filter className="h-4 w-4 mr-2" />
-              <SelectValue />
+            <SelectTrigger className="w-[130px] h-9">
+              <SelectValue placeholder="Type" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Types</SelectItem>
@@ -76,14 +123,79 @@ const StylesManager = () => {
               <SelectItem value="men">Men</SelectItem>
             </SelectContent>
           </Select>
+
+          <Select value={filterCategory} onValueChange={setFilterCategory}>
+            <SelectTrigger className="w-[140px] h-9">
+              <SelectValue placeholder="Category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              {uniqueCategories.map(cat => (
+                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={filterFit} onValueChange={setFilterFit}>
+            <SelectTrigger className="w-[120px] h-9">
+              <SelectValue placeholder="Fit" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Fits</SelectItem>
+              {uniqueFits.map(fit => (
+                <SelectItem key={fit} value={fit}>{fit}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={filterSetItem} onValueChange={setFilterSetItem}>
+            <SelectTrigger className="w-[130px] h-9">
+              <SelectValue placeholder="Set/Single" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Items</SelectItem>
+              <SelectItem value="set">Set Items</SelectItem>
+              <SelectItem value="single">Single Items</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {hasActiveFilters && (
+            <Button variant="ghost" size="sm" onClick={clearAllFilters} className="h-9 px-2">
+              <X className="h-4 w-4 mr-1" />
+              Clear
+            </Button>
+          )}
         </div>
-        <Button 
-          onClick={() => setIsFormOpen(true)}
-          className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Add New Style
-        </Button>
+
+        {/* Active Filters Display */}
+        {hasActiveFilters && (
+          <div className="flex flex-wrap gap-2">
+            {filterType !== 'all' && (
+              <Badge variant="secondary" className="gap-1">
+                Type: {filterType}
+                <X className="h-3 w-3 cursor-pointer" onClick={() => setFilterType('all')} />
+              </Badge>
+            )}
+            {filterCategory !== 'all' && (
+              <Badge variant="secondary" className="gap-1">
+                Category: {filterCategory}
+                <X className="h-3 w-3 cursor-pointer" onClick={() => setFilterCategory('all')} />
+              </Badge>
+            )}
+            {filterFit !== 'all' && (
+              <Badge variant="secondary" className="gap-1">
+                Fit: {filterFit}
+                <X className="h-3 w-3 cursor-pointer" onClick={() => setFilterFit('all')} />
+              </Badge>
+            )}
+            {filterSetItem !== 'all' && (
+              <Badge variant="secondary" className="gap-1">
+                {filterSetItem === 'set' ? 'Set Items' : 'Single Items'}
+                <X className="h-3 w-3 cursor-pointer" onClick={() => setFilterSetItem('all')} />
+              </Badge>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Styles Grid */}
