@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
@@ -16,7 +15,6 @@ import { useCreateJobStyle, useUpdateJobStyle, type JobStyle } from '@/hooks/use
 import { supabase } from '@/integrations/supabase/client';
 import { Upload, Link as LinkIcon, X, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { JOB_ORDER_CATEGORIES, OPERATIONS } from '@/lib/jobOrderCategories';
 
 const CATEGORIES = ['Men', 'Women', 'Kids', 'Unisex'];
 const STYLE_NAMES = [
@@ -32,15 +30,23 @@ const STYLE_NAMES = [
 ];
 const FIT_OPTIONS = ['Regular', 'Slim', 'Relaxed', 'Loose', 'Tight'];
 
+const OPERATIONS = [
+  'Cutting',
+  'Stitching (Singer)',
+  'Stitching (Power Table)',
+  'Checking',
+  'Ironing',
+  'Packing',
+];
+
 interface StyleFormProps {
   style?: JobStyle | null;
   onClose: () => void;
 }
 
-type CategoryItem = { 
-  name: string; 
+type OperationRate = {
+  operation: string;
   rate: number;
-  customName?: string;
 };
 
 type FormData = {
@@ -52,15 +58,48 @@ type FormData = {
   category: string;
   season: string;
   fit: string;
-  rate_cutting: number;
-  rate_stitching_singer: number;
-  rate_stitching_power_table: number;
-  rate_ironing: number;
-  rate_checking: number;
-  rate_packing: number;
   min_order_qty: number;
   remarks: string;
   style_image_url: string;
+  operations: OperationRate[];
+  accessories_amount: number;
+  accessories_description: string;
+  transportation_amount: number;
+  transportation_notes: string;
+  company_profit: number;
+};
+
+// Helper to parse existing process_rate_details into operations array
+const parseExistingOperations = (style?: JobStyle | null): OperationRate[] => {
+  if (!style?.process_rate_details || !Array.isArray(style.process_rate_details)) {
+    return [{ operation: '', rate: 0 }];
+  }
+  const ops = (style.process_rate_details as any[]).map((op: any) => ({
+    operation: op.operation || '',
+    rate: op.rate || 0,
+  }));
+  return ops.length > 0 ? ops : [{ operation: '', rate: 0 }];
+};
+
+// Helper to parse additional costs from process_rate_details
+const parseAdditionalCosts = (style?: JobStyle | null) => {
+  const details = style?.process_rate_details as any;
+  if (details && typeof details === 'object' && !Array.isArray(details)) {
+    return {
+      accessories_amount: details.accessories_amount || 0,
+      accessories_description: details.accessories_description || '',
+      transportation_amount: details.transportation_amount || 0,
+      transportation_notes: details.transportation_notes || '',
+      company_profit: details.company_profit || 0,
+    };
+  }
+  return {
+    accessories_amount: 0,
+    accessories_description: '',
+    transportation_amount: 0,
+    transportation_notes: '',
+    company_profit: 0,
+  };
 };
 
 const StyleForm = ({ style, onClose }: StyleFormProps) => {
@@ -69,48 +108,51 @@ const StyleForm = ({ style, onClose }: StyleFormProps) => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>(style?.style_image_url || '');
   const [uploadMode, setUploadMode] = useState<'file' | 'url'>('file');
-  const [showCustomStyleName, setShowCustomStyleName] = useState(false);
-  
-  // State for operations and categories
-  const [selectedOperations, setSelectedOperations] = useState<string[]>(() => {
-    if (style?.process_rate_details && Array.isArray(style.process_rate_details)) {
-      return (style.process_rate_details as any[]).map((op: any) => op.operation);
-    }
-    return [];
-  });
-  
-  const [operationCategories, setOperationCategories] = useState<Record<string, CategoryItem[]>>(() => {
-    if (style?.process_rate_details && Array.isArray(style.process_rate_details)) {
-      const result: Record<string, CategoryItem[]> = {};
-      (style.process_rate_details as any[]).forEach((op: any) => {
-        result[op.operation] = op.categories || [];
-      });
-      return result;
-    }
-    return {};
-  });
+  const [showCustomStyleName, setShowCustomStyleName] = useState(
+    style?.style_name && !STYLE_NAMES.includes(style.style_name)
+  );
 
-  const { register, handleSubmit, setValue, watch } = useForm<FormData>({
+  const additionalCosts = parseAdditionalCosts(style);
+
+  const { register, handleSubmit, setValue, watch, control } = useForm<FormData>({
     defaultValues: {
       style_code: style?.style_code || '',
       pattern_number: style?.pattern_number || '',
-      style_name: style?.style_name || '',
-      custom_style_name: '',
+      style_name: style?.style_name && STYLE_NAMES.includes(style.style_name) 
+        ? style.style_name 
+        : (style?.style_name ? 'Other' : ''),
+      custom_style_name: style?.style_name && !STYLE_NAMES.includes(style.style_name) 
+        ? style.style_name 
+        : '',
       garment_type: style?.garment_type || '',
       category: style?.category || '',
       season: style?.season || '',
       fit: style?.fit || '',
-      rate_cutting: style?.rate_cutting || 0,
-      rate_stitching_singer: style?.rate_stitching_singer || 0,
-      rate_stitching_power_table: style?.rate_stitching_power_table || 0,
-      rate_ironing: style?.rate_ironing || 0,
-      rate_checking: style?.rate_checking || 0,
-      rate_packing: style?.rate_packing || 0,
       min_order_qty: style?.min_order_qty || 0,
       remarks: style?.remarks || '',
       style_image_url: style?.style_image_url || '',
+      operations: parseExistingOperations(style),
+      accessories_amount: additionalCosts.accessories_amount,
+      accessories_description: additionalCosts.accessories_description,
+      transportation_amount: additionalCosts.transportation_amount,
+      transportation_notes: additionalCosts.transportation_notes,
+      company_profit: additionalCosts.company_profit,
     },
   });
+
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: 'operations',
+  });
+
+  const watchOperations = watch('operations');
+  const watchAccessories = watch('accessories_amount') || 0;
+  const watchTransportation = watch('transportation_amount') || 0;
+  const watchCompanyProfit = watch('company_profit') || 0;
+
+  // Calculate totals
+  const operationsTotal = watchOperations?.reduce((sum, op) => sum + (op.rate || 0), 0) || 0;
+  const finalRatePerPiece = operationsTotal + watchAccessories + watchTransportation + watchCompanyProfit;
 
   // Auto-generate style code when category changes (only for new styles)
   useEffect(() => {
@@ -162,57 +204,6 @@ const StyleForm = ({ style, onClose }: StyleFormProps) => {
     setValue('style_image_url', url);
   };
 
-  const toggleOperation = (operation: string) => {
-    if (selectedOperations.includes(operation)) {
-      setSelectedOperations(selectedOperations.filter((op) => op !== operation));
-      const newCategories = { ...operationCategories };
-      delete newCategories[operation];
-      setOperationCategories(newCategories);
-    } else {
-      setSelectedOperations([...selectedOperations, operation]);
-      setOperationCategories({
-        ...operationCategories,
-        [operation]: [],
-      });
-    }
-  };
-
-  const addCategory = (operation: string) => {
-    setOperationCategories({
-      ...operationCategories,
-      [operation]: [
-        ...(operationCategories[operation] || []),
-        { name: "", rate: 0, customName: "" },
-      ],
-    });
-  };
-
-  const updateCategory = (operation: string, index: number, field: "name" | "rate" | "customName", value: string | number) => {
-    const newCategories = { ...operationCategories };
-    if (field === "name") {
-      newCategories[operation][index].name = value as string;
-      if (value !== "Other") {
-        newCategories[operation][index].customName = "";
-      }
-    } else if (field === "rate") {
-      newCategories[operation][index].rate = value as number;
-    } else if (field === "customName") {
-      newCategories[operation][index].customName = value as string;
-    }
-    setOperationCategories(newCategories);
-  };
-
-  const removeCategory = (operation: string, index: number) => {
-    const newCategories = { ...operationCategories };
-    newCategories[operation].splice(index, 1);
-    setOperationCategories(newCategories);
-  };
-
-  const calculateOperationTotal = (operation: string): number => {
-    const cats = operationCategories[operation] || [];
-    return cats.reduce((sum, cat) => sum + (cat.rate || 0), 0);
-  };
-
   const uploadImage = async (): Promise<string | null> => {
     if (!imageFile) return null;
 
@@ -247,25 +238,21 @@ const StyleForm = ({ style, onClose }: StyleFormProps) => {
       }
     }
 
-    // Build process_rate_details from selected operations
-    const processRateDetails = selectedOperations.map((op) => ({
-      operation: op,
-      categories: (operationCategories[op] || []).map((cat) => ({
-        name: cat.name === "Other" && cat.customName ? cat.customName : cat.name,
-        rate: cat.rate,
-      })),
-    }));
+    // Build process_rate_details with operations and additional costs
+    const processRateDetails = {
+      operations: data.operations.filter(op => op.operation && op.rate > 0),
+      accessories_amount: data.accessories_amount || 0,
+      accessories_description: data.accessories_description || '',
+      transportation_amount: data.transportation_amount || 0,
+      transportation_notes: data.transportation_notes || '',
+      company_profit: data.company_profit || 0,
+      final_rate_per_piece: finalRatePerPiece,
+    };
 
-    // Calculate total rates for each operation
-    const rates = {
-      rate_cutting: calculateOperationTotal("Cutting"),
-      rate_stitching_singer: calculateOperationTotal("Stitching (Singer)"),
-      rate_stitching_power_table: 
-        calculateOperationTotal("Stitching (Power Table) - Overlock") + 
-        calculateOperationTotal("Stitching (Power Table) - Flatlock"),
-      rate_ironing: calculateOperationTotal("Ironing"),
-      rate_checking: calculateOperationTotal("Checking"),
-      rate_packing: calculateOperationTotal("Packing"),
+    // Calculate individual operation rates for legacy fields
+    const getOperationRate = (opName: string) => {
+      const op = data.operations.find(o => o.operation === opName);
+      return op?.rate || 0;
     };
 
     // Use custom style name if "Other" is selected
@@ -274,10 +261,22 @@ const StyleForm = ({ style, onClose }: StyleFormProps) => {
       : data.style_name;
 
     const submitData = {
-      ...data,
+      style_code: data.style_code,
+      pattern_number: data.pattern_number,
       style_name: finalStyleName,
-      ...rates,
+      garment_type: data.garment_type,
+      category: data.category,
+      season: data.season,
+      fit: data.fit,
+      min_order_qty: data.min_order_qty,
+      remarks: data.remarks,
       style_image_url: imageUrl || null,
+      rate_cutting: getOperationRate('Cutting'),
+      rate_stitching_singer: getOperationRate('Stitching (Singer)'),
+      rate_stitching_power_table: getOperationRate('Stitching (Power Table)'),
+      rate_checking: getOperationRate('Checking'),
+      rate_ironing: getOperationRate('Ironing'),
+      rate_packing: getOperationRate('Packing'),
       process_rate_details: processRateDetails as any,
     };
 
@@ -455,89 +454,144 @@ const StyleForm = ({ style, onClose }: StyleFormProps) => {
         </div>
       </div>
 
-      {/* Process Rates */}
+      {/* Process Rates - Simplified */}
       <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
         <h3 className="font-semibold">Process Rates (₹ per piece)</h3>
-        <p className="text-sm text-muted-foreground">
-          Select operations and add categories with rates. Total rate per operation will be calculated automatically.
-        </p>
-        <div className="space-y-6">
-          {OPERATIONS.map((operation) => (
-            <div key={operation} className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  checked={selectedOperations.includes(operation)}
-                  onCheckedChange={() => toggleOperation(operation)}
-                />
-                <span className="font-medium">{operation}</span>
-                {selectedOperations.includes(operation) && (
-                  <span className="ml-auto text-sm font-semibold text-primary">
-                    Total: ₹{calculateOperationTotal(operation).toFixed(2)}
-                  </span>
-                )}
-              </div>
-
-              {selectedOperations.includes(operation) && (
-                <div className="ml-6 space-y-2">
-                  {operationCategories[operation]?.map((category, index) => (
-                    <div key={index} className="space-y-2">
-                      <div className="flex gap-2">
-                        <Select
-                          value={category.name}
-                          onValueChange={(value) => updateCategory(operation, index, "name", value)}
-                        >
-                          <SelectTrigger className="flex-1">
-                            <SelectValue placeholder="Select category" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {JOB_ORDER_CATEGORIES[operation as keyof typeof JOB_ORDER_CATEGORIES]?.map((cat) => (
-                              <SelectItem key={cat} value={cat}>
-                                {cat}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          placeholder="Rate ₹"
-                          value={category.rate || ''}
-                          onChange={(e) => updateCategory(operation, index, "rate", parseFloat(e.target.value) || 0)}
-                          className="w-32"
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => removeCategory(operation, index)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      {category.name === "Other" && (
-                        <Input
-                          placeholder="Enter custom category name"
-                          value={category.customName || ""}
-                          onChange={(e) => updateCategory(operation, index, "customName", e.target.value)}
-                          className="ml-0"
-                        />
-                      )}
-                    </div>
+        
+        {/* Operations */}
+        <div className="space-y-3">
+          <Label className="text-sm text-muted-foreground">Operations</Label>
+          {fields.map((field, index) => (
+            <div key={field.id} className="flex items-center gap-3">
+              <Select
+                value={watchOperations?.[index]?.operation || ''}
+                onValueChange={(value) => setValue(`operations.${index}.operation`, value)}
+              >
+                <SelectTrigger className="flex-1">
+                  <SelectValue placeholder="Select operation" />
+                </SelectTrigger>
+                <SelectContent>
+                  {OPERATIONS.map((op) => (
+                    <SelectItem key={op} value={op}>
+                      {op}
+                    </SelectItem>
                   ))}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => addCategory(operation)}
-                    className="gap-2"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Add Category
-                  </Button>
-                </div>
+                </SelectContent>
+              </Select>
+              <div className="relative w-32">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₹</span>
+                <Input
+                  type="number"
+                  step="0.01"
+                  placeholder="0.00"
+                  className="pl-7"
+                  {...register(`operations.${index}.rate`, { valueAsNumber: true })}
+                />
+              </div>
+              {fields.length > 1 && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => remove(index)}
+                  className="text-destructive hover:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               )}
             </div>
           ))}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => append({ operation: '', rate: 0 })}
+            className="gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Add Operation
+          </Button>
+        </div>
+
+        {/* Accessories */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
+          <div className="space-y-2">
+            <Label>Accessories Amount (₹)</Label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₹</span>
+              <Input
+                type="number"
+                step="0.01"
+                placeholder="0.00"
+                className="pl-7"
+                {...register('accessories_amount', { valueAsNumber: true })}
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label>Accessories Description</Label>
+            <Input
+              placeholder="e.g., Buttons, zippers, labels..."
+              {...register('accessories_description')}
+            />
+          </div>
+        </div>
+
+        {/* Transportation */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
+          <div className="space-y-2">
+            <Label>Transportation Amount (₹)</Label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₹</span>
+              <Input
+                type="number"
+                step="0.01"
+                placeholder="0.00"
+                className="pl-7"
+                {...register('transportation_amount', { valueAsNumber: true })}
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label>Transportation Notes</Label>
+            <Input
+              placeholder="e.g., Delivery charges, pickup..."
+              {...register('transportation_notes')}
+            />
+          </div>
+        </div>
+
+        {/* Company Profit */}
+        <div className="pt-4 border-t">
+          <div className="space-y-2 max-w-xs">
+            <Label>Company Profit (₹)</Label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₹</span>
+              <Input
+                type="number"
+                step="0.01"
+                placeholder="0.00"
+                className="pl-7"
+                {...register('company_profit', { valueAsNumber: true })}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Final Rate Display */}
+        <div className="pt-4 border-t bg-primary/5 -mx-4 px-4 py-4 -mb-4 rounded-b-lg">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <p className="text-sm text-muted-foreground">Final Job Work Rate Per Piece</p>
+              <div className="text-xs text-muted-foreground">
+                Operations (₹{operationsTotal.toFixed(2)}) + Accessories (₹{watchAccessories.toFixed(2)}) + 
+                Transportation (₹{watchTransportation.toFixed(2)}) + Profit (₹{watchCompanyProfit.toFixed(2)})
+              </div>
+            </div>
+            <div className="text-3xl font-bold text-primary">
+              ₹{finalRatePerPiece.toFixed(2)}
+            </div>
+          </div>
         </div>
       </div>
 
