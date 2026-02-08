@@ -1,9 +1,9 @@
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Copy, ChevronDown, ChevronUp } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -11,90 +11,134 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { useJobStyles } from '@/hooks/useJobStyles';
 import { useCreateJobBatch } from '@/hooks/useJobBatches';
-import { useEffect } from 'react';
+import { useState } from 'react';
+import { cn } from '@/lib/utils';
 
 interface BatchFormProps {
   onClose: () => void;
 }
 
-interface RollData {
-  fabric_type: string;
-  gsm: string;
+interface VariationData {
   color: string;
+  fabric_width: string;
   weight: number;
   number_of_rolls: number;
-  fabric_width: string;
+}
+
+interface TypeData {
+  fabric_type: string;
+  gsm: string;
+  variations: VariationData[];
+}
+
+interface FormData {
+  style_id: string;
+  date_created: string;
+  types: TypeData[];
+  supplier_name: string;
+  lot_number: string;
+  remarks: string;
 }
 
 const BatchForm = ({ onClose }: BatchFormProps) => {
   const { data: styles } = useJobStyles();
   const createMutation = useCreateJobBatch();
+  const [collapsedTypes, setCollapsedTypes] = useState<Record<number, boolean>>({});
   
-  const { register, handleSubmit, setValue, watch, control } = useForm({
+  const { register, handleSubmit, setValue, watch, control } = useForm<FormData>({
     defaultValues: {
       style_id: '',
       date_created: new Date().toISOString().split('T')[0],
-      number_of_types: 1,
-      rolls: [{ fabric_type: '', gsm: '', color: '', weight: 0, number_of_rolls: 1, fabric_width: '' }] as RollData[],
+      types: [{
+        fabric_type: '',
+        gsm: '',
+        variations: [{ color: '', fabric_width: '', weight: 0, number_of_rolls: 1 }]
+      }],
       supplier_name: '',
       lot_number: '',
       remarks: '',
     },
   });
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields: typeFields, append: appendType, remove: removeType } = useFieldArray({
     control,
-    name: 'rolls',
+    name: 'types',
   });
 
   const selectedStyleId = watch('style_id');
-  const numberOfTypes = watch('number_of_types');
-  const rolls = watch('rolls');
+  const types = watch('types');
   const selectedStyle = styles?.find(s => s.id === selectedStyleId);
 
-  // Calculate total weight (weight * number_of_rolls for each type)
-  const totalWeight = rolls?.reduce((sum, roll) => sum + ((Number(roll.weight) || 0) * (Number(roll.number_of_rolls) || 0)), 0) || 0;
+  // Calculate total weight across all types and variations
+  const totalWeight = types?.reduce((typeSum, type) => 
+    typeSum + (type.variations?.reduce((varSum, variation) => 
+      varSum + ((Number(variation.weight) || 0) * (Number(variation.number_of_rolls) || 0)), 0) || 0), 0) || 0;
 
-  // Update rolls array when number_of_types changes
-  useEffect(() => {
-    const currentTypes = fields.length;
-    const targetTypes = Number(numberOfTypes) || 1;
+  // Calculate total rolls across all types and variations
+  const totalRolls = types?.reduce((typeSum, type) => 
+    typeSum + (type.variations?.reduce((varSum, variation) => 
+      varSum + (Number(variation.number_of_rolls) || 0), 0) || 0), 0) || 0;
 
-    if (targetTypes > currentTypes) {
-      for (let i = currentTypes; i < targetTypes; i++) {
-        append({ fabric_type: '', gsm: '', color: '', weight: 0, number_of_rolls: 1, fabric_width: '' });
-      }
-    } else if (targetTypes < currentTypes) {
-      for (let i = currentTypes - 1; i >= targetTypes; i--) {
-        remove(i);
-      }
+  const toggleTypeCollapse = (index: number) => {
+    setCollapsedTypes(prev => ({ ...prev, [index]: !prev[index] }));
+  };
+
+  const addVariation = (typeIndex: number) => {
+    const currentTypes = [...types];
+    currentTypes[typeIndex].variations.push({ color: '', fabric_width: '', weight: 0, number_of_rolls: 1 });
+    setValue('types', currentTypes);
+  };
+
+  const removeVariation = (typeIndex: number, variationIndex: number) => {
+    const currentTypes = [...types];
+    if (currentTypes[typeIndex].variations.length > 1) {
+      currentTypes[typeIndex].variations.splice(variationIndex, 1);
+      setValue('types', currentTypes);
     }
-  }, [numberOfTypes, fields.length, append, remove]);
+  };
 
-  const onSubmit = async (data: any) => {
+  const duplicateVariation = (typeIndex: number, variationIndex: number) => {
+    const currentTypes = [...types];
+    const variationToCopy = { ...currentTypes[typeIndex].variations[variationIndex] };
+    currentTypes[typeIndex].variations.push(variationToCopy);
+    setValue('types', currentTypes);
+  };
+
+  const onSubmit = async (data: FormData) => {
     // Generate batch number: FF-01-YYYYMMDD-RRR (RRR = random 3 digits)
     const dateStr = data.date_created.replace(/-/g, '');
     const randomDigits = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
     const batchNumber = `FF-01-${dateStr}-${randomDigits}`;
     
+    // Flatten types and variations into rolls_data format for backward compatibility
+    const flattenedRolls = data.types.flatMap(type => 
+      type.variations.map(variation => ({
+        fabric_type: type.fabric_type,
+        gsm: type.gsm,
+        color: variation.color,
+        fabric_width: variation.fabric_width,
+        weight: variation.weight,
+        number_of_rolls: variation.number_of_rolls,
+      }))
+    );
+
     const batchData = {
       style_id: data.style_id,
       date_created: data.date_created,
-      fabric_type: data.rolls[0]?.fabric_type || '', // Take first type's fabric for backward compatibility
-      number_of_rolls: data.rolls.reduce((sum: number, roll: any) => sum + (Number(roll.number_of_rolls) || 0), 0), // Total rolls across all types
-      rolls_data: data.rolls,
+      fabric_type: data.types[0]?.fabric_type || '',
+      number_of_rolls: totalRolls,
+      rolls_data: flattenedRolls,
       total_fabric_received_kg: totalWeight,
       supplier_name: data.supplier_name || null,
       lot_number: data.lot_number || null,
       remarks: data.remarks || null,
-      // Set first roll's data as default values for backward compatibility
-      gsm: data.rolls[0]?.gsm || '',
-      color: data.rolls[0]?.color || '',
-      fabric_width: data.rolls[0]?.fabric_width || '',
-      expected_pieces: 0, // Default value since we're not using it now
+      gsm: data.types[0]?.gsm || '',
+      color: data.types[0]?.variations[0]?.color || '',
+      fabric_width: data.types[0]?.variations[0]?.fabric_width || '',
+      expected_pieces: 0,
       batch_number: batchNumber,
     };
 
@@ -116,18 +160,24 @@ const BatchForm = ({ onClose }: BatchFormProps) => {
       {/* Select Style */}
       <div className="space-y-2 p-4 bg-muted/30 rounded-lg">
         <Label>Select Style *</Label>
-        <Select value={selectedStyleId} onValueChange={(value) => setValue('style_id', value)}>
-          <SelectTrigger className="bg-background">
-            <SelectValue placeholder="Choose a style..." />
-          </SelectTrigger>
-          <SelectContent className="bg-popover z-50">
-            {styles?.filter(s => s.is_active).map((style) => (
-              <SelectItem key={style.id} value={style.id}>
-                {style.style_code} - {style.style_name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Controller
+          name="style_id"
+          control={control}
+          render={({ field }) => (
+            <Select value={field.value} onValueChange={field.onChange}>
+              <SelectTrigger className="bg-background">
+                <SelectValue placeholder="Choose a style..." />
+              </SelectTrigger>
+              <SelectContent className="bg-popover z-50">
+                {styles?.filter(s => s.is_active).map((style) => (
+                  <SelectItem key={style.id} value={style.id}>
+                    {style.style_code} - {style.style_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        />
         {selectedStyle && (
           <div className="mt-2 p-3 bg-primary/5 rounded border border-primary/20">
             <div className="text-sm space-y-1">
@@ -148,15 +198,12 @@ const BatchForm = ({ onClose }: BatchFormProps) => {
             <Input id="date_created" type="date" {...register('date_created')} required />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="number_of_types">Number of Types *</Label>
-            <Input 
-              id="number_of_types" 
-              type="number" 
-              min="1"
-              max="50"
-              {...register('number_of_types', { valueAsNumber: true })} 
-              required 
-            />
+            <Label className="text-muted-foreground">Summary</Label>
+            <div className="h-10 flex items-center gap-4 px-3 bg-muted rounded-md text-sm">
+              <span><strong>{typeFields.length}</strong> Type(s)</span>
+              <span><strong>{totalRolls}</strong> Roll(s)</span>
+              <span className="font-semibold text-primary">{totalWeight.toFixed(2)} kg</span>
+            </div>
           </div>
         </div>
       </div>
@@ -171,106 +218,190 @@ const BatchForm = ({ onClose }: BatchFormProps) => {
         </div>
         
         <div className="space-y-4">
-          {fields.map((field, index) => (
-            <Card key={field.id} className="border-primary/20">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-medium text-sm">Type {index + 1}</h4>
-                  {fields.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        remove(index);
-                        setValue('number_of_types', fields.length - 1);
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  )}
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <div className="space-y-2 md:col-span-3">
-                    <Label htmlFor={`rolls.${index}.fabric_type`}>Fabric Type *</Label>
-                    <Input
-                      id={`rolls.${index}.fabric_type`}
-                      {...register(`rolls.${index}.fabric_type`)}
-                      required
-                      placeholder="Airtex Cotton"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor={`rolls.${index}.gsm`}>GSM</Label>
-                    <Input
-                      id={`rolls.${index}.gsm`}
-                      {...register(`rolls.${index}.gsm`)}
-                      placeholder="220"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor={`rolls.${index}.color`}>Color</Label>
-                    <Input
-                      id={`rolls.${index}.color`}
-                      {...register(`rolls.${index}.color`)}
-                      placeholder="Red"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor={`rolls.${index}.fabric_width`}>Fabric Width</Label>
-                    <Input
-                      id={`rolls.${index}.fabric_width`}
-                      {...register(`rolls.${index}.fabric_width`)}
-                      placeholder='60"'
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor={`rolls.${index}.weight`}>Weight per Roll (kg)</Label>
-                    <Input
-                      id={`rolls.${index}.weight`}
-                      type="number"
-                      step="0.01"
-                      {...register(`rolls.${index}.weight`, { valueAsNumber: true })}
-                      placeholder="25"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor={`rolls.${index}.number_of_rolls`}>Number of Rolls</Label>
-                    <Input
-                      id={`rolls.${index}.number_of_rolls`}
-                      type="number"
-                      min="1"
-                      {...register(`rolls.${index}.number_of_rolls`, { valueAsNumber: true })}
-                      placeholder="3"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-muted-foreground">Total Weight</Label>
-                    <div className="h-10 flex items-center px-3 bg-muted rounded-md font-semibold text-primary">
-                      {((Number(rolls[index]?.weight) || 0) * (Number(rolls[index]?.number_of_rolls) || 0)).toFixed(2)} kg
+          {typeFields.map((typeField, typeIndex) => {
+            const typeVariations = types[typeIndex]?.variations || [];
+            const typeWeight = typeVariations.reduce((sum, v) => 
+              sum + ((Number(v.weight) || 0) * (Number(v.number_of_rolls) || 0)), 0);
+            const typeRolls = typeVariations.reduce((sum, v) => sum + (Number(v.number_of_rolls) || 0), 0);
+            const isCollapsed = collapsedTypes[typeIndex];
+
+            return (
+              <Card key={typeField.id} className="border-primary/20 overflow-hidden">
+                <CardHeader 
+                  className="p-3 bg-primary/5 cursor-pointer hover:bg-primary/10 transition-colors"
+                  onClick={() => toggleTypeCollapse(typeIndex)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      {isCollapsed ? (
+                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                      )}
+                      <h4 className="font-medium">
+                        Type {typeIndex + 1}
+                        {types[typeIndex]?.fabric_type && (
+                          <span className="text-muted-foreground ml-2">
+                            — {types[typeIndex].fabric_type}
+                            {types[typeIndex]?.gsm && ` (${types[typeIndex].gsm} GSM)`}
+                          </span>
+                        )}
+                      </h4>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <span className="text-xs text-muted-foreground">
+                        {typeVariations.length} variation(s) • {typeRolls} roll(s) • {typeWeight.toFixed(2)} kg
+                      </span>
+                      {typeFields.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeType(typeIndex);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      )}
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardHeader>
+                
+                <CardContent className={cn("p-4 space-y-4", isCollapsed && "hidden")}>
+                  {/* Common Fields for this Type */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pb-3 border-b">
+                    <div className="space-y-2">
+                      <Label htmlFor={`types.${typeIndex}.fabric_type`}>Fabric Type *</Label>
+                      <Input
+                        id={`types.${typeIndex}.fabric_type`}
+                        {...register(`types.${typeIndex}.fabric_type`)}
+                        required
+                        placeholder="e.g., Airtex Cotton"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor={`types.${typeIndex}.gsm`}>GSM</Label>
+                      <Input
+                        id={`types.${typeIndex}.gsm`}
+                        {...register(`types.${typeIndex}.gsm`)}
+                        placeholder="e.g., 220"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Variations */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-medium">Variations</Label>
+                      <Button
+                        type="button"
+                        variant="link"
+                        size="sm"
+                        className="h-auto p-0 text-primary"
+                        onClick={() => addVariation(typeIndex)}
+                      >
+                        <Plus className="h-3 w-3 mr-1" />
+                        Add Variation
+                      </Button>
+                    </div>
+
+                    {typeVariations.map((variation, varIndex) => (
+                      <div 
+                        key={varIndex} 
+                        className="grid grid-cols-2 md:grid-cols-6 gap-2 p-3 bg-muted/50 rounded-lg items-end"
+                      >
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Color</Label>
+                          <Input
+                            {...register(`types.${typeIndex}.variations.${varIndex}.color`)}
+                            placeholder="Red"
+                            className="h-9"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Fabric Width</Label>
+                          <Input
+                            {...register(`types.${typeIndex}.variations.${varIndex}.fabric_width`)}
+                            placeholder='60"'
+                            className="h-9"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Weight/Roll (kg)</Label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            {...register(`types.${typeIndex}.variations.${varIndex}.weight`, { valueAsNumber: true })}
+                            placeholder="25"
+                            className="h-9"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">No. of Rolls</Label>
+                          <Input
+                            type="number"
+                            min="1"
+                            {...register(`types.${typeIndex}.variations.${varIndex}.number_of_rolls`, { valueAsNumber: true })}
+                            placeholder="3"
+                            className="h-9"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Total</Label>
+                          <div className="h-9 flex items-center px-2 bg-background rounded-md text-sm font-semibold text-primary">
+                            {((Number(variation.weight) || 0) * (Number(variation.number_of_rolls) || 0)).toFixed(2)} kg
+                          </div>
+                        </div>
+                        <div className="flex gap-1">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-9 w-9"
+                            onClick={() => duplicateVariation(typeIndex, varIndex)}
+                            title="Duplicate variation"
+                          >
+                            <Copy className="h-3.5 w-3.5 text-muted-foreground" />
+                          </Button>
+                          {typeVariations.length > 1 && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-9 w-9"
+                              onClick={() => removeVariation(typeIndex, varIndex)}
+                            >
+                              <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
 
-        {fields.length < 50 && (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => {
-              append({ fabric_type: '', gsm: '', color: '', weight: 0, number_of_rolls: 1, fabric_width: '' });
-              setValue('number_of_types', fields.length + 1);
-            }}
-            className="w-full"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Type
-          </Button>
-        )}
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => {
+            appendType({
+              fabric_type: '',
+              gsm: '',
+              variations: [{ color: '', fabric_width: '', weight: 0, number_of_rolls: 1 }]
+            });
+          }}
+          className="w-full"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Add New Type
+        </Button>
       </div>
 
       {/* Supplier & Additional Info */}
