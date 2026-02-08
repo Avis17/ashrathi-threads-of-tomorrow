@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Download, Edit, CheckCircle, Clock, FileText, Save } from 'lucide-react';
+import { ArrowLeft, Download, Edit, CheckCircle, Clock, FileText, Save, Plus, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,10 +16,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useCMTQuotation, recordToQuotationData } from '@/hooks/useCMTQuotations';
+import { useCMTQuotation, useSaveCMTQuotation, recordToQuotationData } from '@/hooks/useCMTQuotations';
 import { useUpdateCMTQuotationStatus, ApprovedRates } from '@/hooks/useCMTQuotationStatus';
 import { generateCMTPdf } from '@/lib/cmtPdfGenerator';
 import { toast } from 'sonner';
+import { CMTOperation, operationCategories, machineTypes } from '@/types/cmt-quotation';
 
 const STATUS_OPTIONS = [
   { value: 'draft', label: 'Draft', icon: FileText, color: 'bg-muted-foreground' },
@@ -32,31 +33,54 @@ const STATUS_OPTIONS = [
 const CMTQuotationView = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { data: quotation, isLoading } = useCMTQuotation(id || null);
+  const { data: quotation, isLoading, refetch } = useCMTQuotation(id || null);
   const updateStatus = useUpdateCMTQuotationStatus();
+  const saveQuotation = useSaveCMTQuotation();
 
   const [selectedStatus, setSelectedStatus] = useState<string>('');
   const [approvedRates, setApprovedRates] = useState<ApprovedRates | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  
+  // Operations editing state
+  const [operations, setOperations] = useState<CMTOperation[]>([]);
+  const [isEditingOperations, setIsEditingOperations] = useState(false);
+  
+  // Company profit in rupees (for approved rates)
+  const [companyProfitRupees, setCompanyProfitRupees] = useState<number>(0);
 
   useEffect(() => {
     if (quotation) {
       setSelectedStatus(quotation.status);
+      setOperations(quotation.operations || []);
       
       // Initialize approved rates from existing data or quotation values
       const existingApproved = quotation.approved_rates as ApprovedRates | null;
       if (existingApproved) {
         setApprovedRates(existingApproved);
+        // Calculate rupee value from percent
+        const ops = existingApproved.operations || [];
+        const opsTotal = ops.reduce((sum, op) => sum + op.rate, 0);
+        const base = opsTotal + existingApproved.finishingPackingCost + existingApproved.overheadsCost;
+        const profitRupees = base * (existingApproved.companyProfitPercent / 100);
+        setCompanyProfitRupees(profitRupees);
       } else {
         // Initialize with current quotation values
         const ops = quotation.operations || [];
+        const opsTotal = ops.reduce((sum: number, op: any) => sum + (op.ratePerPiece || 0), 0);
+        const finPack = Number(quotation.finishing_packing_cost) || 0;
+        const overheads = Number(quotation.overheads_cost) || 0;
+        const profitPercent = Number(quotation.company_profit_percent) || 0;
+        const base = opsTotal + finPack + overheads;
+        const profitRupees = base * (profitPercent / 100);
+        
         setApprovedRates({
           operations: ops.map((op: any) => ({ category: op.category, rate: op.ratePerPiece })),
-          finishingPackingCost: Number(quotation.finishing_packing_cost) || 0,
-          overheadsCost: Number(quotation.overheads_cost) || 0,
-          companyProfitPercent: Number(quotation.company_profit_percent) || 0,
+          finishingPackingCost: finPack,
+          overheadsCost: overheads,
+          companyProfitPercent: profitPercent,
           finalCMTPerPiece: Number(quotation.final_cmt_per_piece) || 0,
         });
+        setCompanyProfitRupees(profitRupees);
       }
     }
   }, [quotation]);
@@ -106,6 +130,23 @@ const CMTQuotationView = () => {
     }
   };
 
+  // Calculate profit percent from rupees
+  const calculateProfitPercent = (profitRupees: number, rates: ApprovedRates | null) => {
+    if (!rates) return 0;
+    const opsTotal = rates.operations.reduce((sum, op) => sum + op.rate, 0);
+    const base = opsTotal + rates.finishingPackingCost + rates.overheadsCost;
+    if (base === 0) return 0;
+    return (profitRupees / base) * 100;
+  };
+
+  const handleProfitRupeesChange = (rupees: number) => {
+    setCompanyProfitRupees(rupees);
+    if (approvedRates) {
+      const percent = calculateProfitPercent(rupees, approvedRates);
+      setApprovedRates({ ...approvedRates, companyProfitPercent: percent });
+    }
+  };
+
   const handleSaveStatus = () => {
     const payload: { status: string; approved_rates?: ApprovedRates } = {
       status: selectedStatus,
@@ -139,6 +180,91 @@ const CMTQuotationView = () => {
     const newOps = [...approvedRates.operations];
     newOps[index] = { ...newOps[index], rate };
     setApprovedRates({ ...approvedRates, operations: newOps });
+  };
+
+  // Operations CRUD
+  const addOperation = () => {
+    const newOp: CMTOperation = {
+      id: crypto.randomUUID(),
+      category: 'Stitching',
+      machineType: 'Not Defined',
+      description: '',
+      smv: 0,
+      ratePerPiece: 0,
+      amount: 0,
+    };
+    setOperations([...operations, newOp]);
+    
+    // Also add to approved rates
+    if (approvedRates) {
+      setApprovedRates({
+        ...approvedRates,
+        operations: [...approvedRates.operations, { category: 'Stitching', rate: 0 }],
+      });
+    }
+  };
+
+  const removeOperation = (opId: string) => {
+    const idx = operations.findIndex(op => op.id === opId);
+    setOperations(operations.filter(op => op.id !== opId));
+    
+    // Remove from approved rates
+    if (approvedRates && idx >= 0) {
+      const newOps = [...approvedRates.operations];
+      newOps.splice(idx, 1);
+      setApprovedRates({ ...approvedRates, operations: newOps });
+    }
+  };
+
+  const updateOperation = (opId: string, field: keyof CMTOperation, value: string | number) => {
+    const idx = operations.findIndex(op => op.id === opId);
+    setOperations(operations.map(op => {
+      if (op.id === opId) {
+        const updated = { ...op, [field]: value };
+        if (field === 'ratePerPiece') {
+          updated.amount = updated.ratePerPiece;
+        }
+        return updated;
+      }
+      return op;
+    }));
+
+    // Update approved rates
+    if (approvedRates && idx >= 0 && field === 'ratePerPiece') {
+      const newOps = [...approvedRates.operations];
+      newOps[idx] = { ...newOps[idx], rate: value as number };
+      setApprovedRates({ ...approvedRates, operations: newOps });
+    }
+    if (approvedRates && idx >= 0 && field === 'category') {
+      const newOps = [...approvedRates.operations];
+      newOps[idx] = { ...newOps[idx], category: value as string };
+      setApprovedRates({ ...approvedRates, operations: newOps });
+    }
+  };
+
+  const saveOperations = async () => {
+    if (!quotation) return;
+    
+    const updatedData = recordToQuotationData(quotation);
+    updatedData.operations = operations;
+    
+    // Recalculate totals
+    const totalOps = operations.reduce((sum, op) => sum + op.ratePerPiece, 0);
+    updatedData.totalStitchingCost = totalOps;
+    const baseCost = totalOps + updatedData.finishingPackingCost + updatedData.overheadsCost;
+    const profit = baseCost * (updatedData.companyProfitPercent / 100);
+    updatedData.finalCMTPerPiece = baseCost + profit;
+    updatedData.totalOrderValue = updatedData.finalCMTPerPiece * updatedData.orderQuantity;
+
+    saveQuotation.mutate(
+      { id: quotation.id, data: updatedData },
+      {
+        onSuccess: () => {
+          setIsEditingOperations(false);
+          refetch();
+        },
+      }
+    );
   };
 
   const getStatusBadge = (status: string) => {
@@ -223,8 +349,41 @@ const CMTQuotationView = () => {
 
           {/* Operations */}
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Operations Breakdown</CardTitle>
+              <div className="flex items-center gap-2">
+                {isEditingOperations ? (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setOperations(quotation.operations || []);
+                        setIsEditingOperations(false);
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={saveOperations}
+                      disabled={saveQuotation.isPending}
+                    >
+                      <Save className="h-4 w-4 mr-1" />
+                      {saveQuotation.isPending ? 'Saving...' : 'Save'}
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsEditingOperations(true)}
+                  >
+                    <Edit className="h-4 w-4 mr-1" />
+                    Edit Operations
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               <div className="border rounded-lg overflow-hidden">
@@ -235,60 +394,151 @@ const CMTQuotationView = () => {
                       <th className="text-left p-3 font-medium">Machine</th>
                       <th className="text-left p-3 font-medium">Description</th>
                       <th className="text-right p-3 font-medium">SMV</th>
-                      <th className="text-right p-3 font-medium">Quoted Rate</th>
+                      <th className="text-right p-3 font-medium">Rate/Pc (₹)</th>
                       {showApprovalForm && (
-                        <th className="text-right p-3 font-medium text-green-600">Approved Rate</th>
+                        <th className="text-right p-3 font-medium text-primary">Approved Rate</th>
                       )}
+                      {isEditingOperations && <th className="w-10"></th>}
                     </tr>
                   </thead>
                   <tbody>
-                    {data.operations.length === 0 ? (
+                    {(isEditingOperations ? operations : data.operations).length === 0 ? (
                       <tr>
-                        <td colSpan={showApprovalForm ? 6 : 5} className="text-center py-4 text-muted-foreground">
+                        <td colSpan={isEditingOperations ? 7 : (showApprovalForm ? 6 : 5)} className="text-center py-4 text-muted-foreground">
                           No operations added
                         </td>
                       </tr>
                     ) : (
-                      data.operations.map((op, idx) => (
-                        <tr key={op.id} className="border-t">
-                          <td className="p-3">{op.category}</td>
-                          <td className="p-3 text-muted-foreground">{op.machineType}</td>
-                          <td className="p-3 text-muted-foreground">{op.description || '-'}</td>
-                          <td className="p-3 text-right">{op.smv.toFixed(2)}</td>
-                          <td className="p-3 text-right font-medium">₹{op.ratePerPiece.toFixed(2)}</td>
-                          {showApprovalForm && approvedRates && (
-                            <td className="p-3 text-right">
-                              <Input
-                                type="number"
-                                step="0.01"
-                                value={approvedRates.operations[idx]?.rate || 0}
-                                onChange={(e) => updateApprovedOperationRate(idx, parseFloat(e.target.value) || 0)}
-                                className="w-24 ml-auto text-right border-green-300 focus:ring-green-500"
-                              />
-                            </td>
+                      (isEditingOperations ? operations : data.operations).map((op, idx) => (
+                        <tr key={op.id} className="border-t group">
+                          {isEditingOperations ? (
+                            <>
+                              <td className="p-2">
+                                <Select
+                                  value={op.category}
+                                  onValueChange={(v) => updateOperation(op.id, 'category', v)}
+                                >
+                                  <SelectTrigger className="h-8">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {operationCategories.map(cat => (
+                                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </td>
+                              <td className="p-2">
+                                <Select
+                                  value={op.machineType}
+                                  onValueChange={(v) => updateOperation(op.id, 'machineType', v)}
+                                >
+                                  <SelectTrigger className="h-8">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {machineTypes.map(type => (
+                                      <SelectItem key={type} value={type}>
+                                        {type === 'Not Defined' ? '— Not Defined —' : type}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </td>
+                              <td className="p-2">
+                                <Input
+                                  value={op.description}
+                                  onChange={(e) => updateOperation(op.id, 'description', e.target.value)}
+                                  placeholder="Description"
+                                  className="h-8"
+                                />
+                              </td>
+                              <td className="p-2">
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  value={op.smv || ''}
+                                  onChange={(e) => updateOperation(op.id, 'smv', parseFloat(e.target.value) || 0)}
+                                  className="h-8 w-20 text-right"
+                                />
+                              </td>
+                              <td className="p-2">
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  value={op.ratePerPiece || ''}
+                                  onChange={(e) => updateOperation(op.id, 'ratePerPiece', parseFloat(e.target.value) || 0)}
+                                  className="h-8 w-24 text-right"
+                                />
+                              </td>
+                              <td className="p-2">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-destructive hover:text-destructive"
+                                  onClick={() => removeOperation(op.id)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </td>
+                            </>
+                          ) : (
+                            <>
+                              <td className="p-3">{op.category}</td>
+                              <td className="p-3 text-muted-foreground">{op.machineType}</td>
+                              <td className="p-3 text-muted-foreground">{op.description || '-'}</td>
+                              <td className="p-3 text-right">{op.smv.toFixed(2)}</td>
+                              <td className="p-3 text-right font-medium">₹{op.ratePerPiece.toFixed(2)}</td>
+                              {showApprovalForm && approvedRates && (
+                                <td className="p-3 text-right">
+                                  <Input
+                                    type="number"
+                                    step="0.01"
+                                    value={approvedRates.operations[idx]?.rate || 0}
+                                    onChange={(e) => updateApprovedOperationRate(idx, parseFloat(e.target.value) || 0)}
+                                    className="w-24 ml-auto text-right border-primary/30 focus:ring-primary"
+                                  />
+                                </td>
+                              )}
+                            </>
                           )}
                         </tr>
                       ))
                     )}
                   </tbody>
-                  {data.operations.length > 0 && (
+                  {(isEditingOperations ? operations : data.operations).length > 0 && (
                     <tfoot>
                       <tr className="border-t bg-muted/30">
                         <td colSpan={3} className="p-3 text-right font-semibold">Total Operations</td>
                         <td className="p-3 text-right font-semibold">
-                          {data.operations.reduce((sum, op) => sum + op.smv, 0).toFixed(2)}
+                          {(isEditingOperations ? operations : data.operations).reduce((sum, op) => sum + op.smv, 0).toFixed(2)}
                         </td>
-                        <td className="p-3 text-right font-bold">₹{totalStitchingCost.toFixed(2)}</td>
+                        <td className="p-3 text-right font-bold">
+                          ₹{(isEditingOperations ? operations : data.operations).reduce((sum, op) => sum + op.ratePerPiece, 0).toFixed(2)}
+                        </td>
                         {showApprovalForm && approvedRates && (
                           <td className="p-3 text-right font-bold text-primary">
                             ₹{approvedRates.operations.reduce((sum, op) => sum + op.rate, 0).toFixed(2)}
                           </td>
                         )}
+                        {isEditingOperations && <td></td>}
                       </tr>
                     </tfoot>
                   )}
                 </table>
               </div>
+              
+              {isEditingOperations && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-4"
+                  onClick={addOperation}
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add Operation
+                </Button>
+              )}
             </CardContent>
           </Card>
 
@@ -317,7 +567,7 @@ const CMTQuotationView = () => {
                     </div>
                     <div className="flex justify-between">
                       <span>Company Profit</span>
-                      <span className="font-medium">{data.companyProfitPercent}%</span>
+                      <span className="font-medium">₹{profitAmount.toFixed(2)} ({data.companyProfitPercent}%)</span>
                     </div>
                     <Separator />
                     <div className="flex justify-between text-lg font-bold">
@@ -365,16 +615,19 @@ const CMTQuotationView = () => {
                         />
                       </div>
                       <div className="flex justify-between items-center">
-                        <Label>Company Profit %</Label>
+                        <div>
+                          <Label>Company Profit (₹)</Label>
+                          <p className="text-xs text-muted-foreground">
+                            = {approvedRates.companyProfitPercent.toFixed(2)}%
+                          </p>
+                        </div>
                         <Input
                           type="number"
-                          step="0.1"
-                          value={approvedRates.companyProfitPercent}
-                          onChange={(e) => setApprovedRates({
-                            ...approvedRates,
-                            companyProfitPercent: parseFloat(e.target.value) || 0
-                          })}
+                          step="0.01"
+                          value={companyProfitRupees || ''}
+                          onChange={(e) => handleProfitRupeesChange(parseFloat(e.target.value) || 0)}
                           className="w-24 text-right"
+                          placeholder="0.00"
                         />
                       </div>
                       <Separator />
