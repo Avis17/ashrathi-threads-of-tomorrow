@@ -1,9 +1,12 @@
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useCreateJobContractor, useUpdateJobContractor } from '@/hooks/useJobContractors';
+import { JOB_DEPARTMENTS } from '@/lib/jobDepartments';
 
 interface ContractorFormProps {
   contractor?: any;
@@ -17,6 +20,18 @@ const ContractorForm = ({ contractor, onSuccess, onCancel }: ContractorFormProps
   });
   const createContractor = useCreateJobContractor();
   const updateContractor = useUpdateJobContractor();
+  
+  const [selectedOperations, setSelectedOperations] = useState<string[]>(
+    contractor?.operations || []
+  );
+
+  const toggleOperation = (operation: string) => {
+    setSelectedOperations(prev =>
+      prev.includes(operation)
+        ? prev.filter(op => op !== operation)
+        : [...prev, operation]
+    );
+  };
 
   const onSubmit = async (formData: any) => {
     if (contractor) {
@@ -31,6 +46,7 @@ const ContractorForm = ({ contractor, onSuccess, onCancel }: ContractorFormProps
           address: formData.address || null,
           gst_number: formData.gst_number || null,
           payment_terms: formData.payment_terms || null,
+          operations: selectedOperations,
         }
       });
       onSuccess();
@@ -46,6 +62,7 @@ const ContractorForm = ({ contractor, onSuccess, onCancel }: ContractorFormProps
         address: formData.address || null,
         gst_number: formData.gst_number || null,
         payment_terms: formData.payment_terms || null,
+        operations: selectedOperations,
       });
       onSuccess(newContractor.id);
     }
@@ -113,6 +130,29 @@ const ContractorForm = ({ contractor, onSuccess, onCancel }: ContractorFormProps
             placeholder="Enter full address"
             rows={2}
           />
+        </div>
+
+        {/* Operations Selection */}
+        <div className="space-y-3 col-span-2 p-4 bg-muted/30 rounded-lg">
+          <Label className="text-base font-semibold">Operations / Departments</Label>
+          <p className="text-sm text-muted-foreground">Select the operations this contractor handles</p>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {JOB_DEPARTMENTS.map((operation) => (
+              <div key={operation} className="flex items-center space-x-2">
+                <Checkbox
+                  id={`op-${operation}`}
+                  checked={selectedOperations.includes(operation)}
+                  onCheckedChange={() => toggleOperation(operation)}
+                />
+                <Label 
+                  htmlFor={`op-${operation}`} 
+                  className="cursor-pointer text-sm font-normal"
+                >
+                  {operation}
+                </Label>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
