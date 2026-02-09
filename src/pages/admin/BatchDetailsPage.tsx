@@ -1,10 +1,9 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Package, Calendar, Scissors, FileText, DollarSign, Users, Truck, Settings } from 'lucide-react';
+import { ArrowLeft, Package, Scissors, FileText, DollarSign, Users, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Progress } from '@/components/ui/progress';
 import { useJobBatch } from '@/hooks/useJobBatches';
 import { useJobProductionEntries } from '@/hooks/useJobProduction';
 import { useJobBatchExpenses } from '@/hooks/useJobExpenses';
@@ -13,6 +12,8 @@ import { format } from 'date-fns';
 import { BatchCuttingSection } from '@/components/admin/jobmanagement/batch-details/BatchCuttingSection';
 import { BatchOverviewSection } from '@/components/admin/jobmanagement/batch-details/BatchOverviewSection';
 import { BatchTypesTable } from '@/components/admin/jobmanagement/batch-details/BatchTypesTable';
+import { BatchProductionSection } from '@/components/admin/jobmanagement/batch-details/BatchProductionSection';
+import { BatchExpensesSection } from '@/components/admin/jobmanagement/batch-details/BatchExpensesSection';
 
 const BatchDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -58,6 +59,9 @@ const BatchDetailsPage = () => {
   });
   const totalCutPieces = Object.values(cuttingSummary).reduce((sum, val) => sum + val, 0);
 
+  // Calculate production progress
+  const totalProductionPieces = productionEntries?.reduce((sum, e) => sum + e.quantity_completed, 0) || 0;
+
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
       'created': 'bg-blue-500',
@@ -69,6 +73,16 @@ const BatchDetailsPage = () => {
     };
     return colors[status] || 'bg-gray-500';
   };
+
+  // Calculate overall progress based on cutting and production
+  const calculateProgress = () => {
+    if (totalCutPieces === 0) return 0;
+    // Progress is the ratio of production pieces to cut pieces (capped at 100%)
+    const progress = Math.min((totalProductionPieces / totalCutPieces) * 100, 100);
+    return Math.round(progress);
+  };
+
+  const currentProgress = calculateProgress();
 
   return (
     <div className="space-y-6">
@@ -93,7 +107,7 @@ const BatchDetailsPage = () => {
             {batch.status.toUpperCase()}
           </Badge>
           <Badge variant="outline" className="px-3 py-1">
-            Progress: {batch.overall_progress || 0}%
+            Cut: {totalCutPieces} | Prod: {totalProductionPieces} | {currentProgress}%
           </Badge>
         </div>
       </div>
@@ -104,6 +118,7 @@ const BatchDetailsPage = () => {
         rollsData={rollsData}
         totalCutPieces={totalCutPieces}
         totalCost={totalCost}
+        totalProductionPieces={totalProductionPieces}
       />
 
       {/* Main Tabs */}
@@ -148,66 +163,11 @@ const BatchDetailsPage = () => {
         </TabsContent>
 
         <TabsContent value="production" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-primary" />
-                Production Entries
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {productionEntries && productionEntries.length > 0 ? (
-                <div className="space-y-3">
-                  {productionEntries.map((entry) => (
-                    <div key={entry.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                      <div>
-                        <div className="font-medium">{entry.employee_name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {entry.section} • {format(new Date(entry.date), 'MMM dd, yyyy')}
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-semibold">{entry.quantity_completed} pcs</div>
-                        <div className="text-sm text-muted-foreground">₹{entry.total_amount.toFixed(2)}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-center text-muted-foreground py-8">No production entries yet</p>
-              )}
-            </CardContent>
-          </Card>
+          <BatchProductionSection batchId={id || ''} />
         </TabsContent>
 
         <TabsContent value="expenses" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <DollarSign className="h-5 w-5 text-green-500" />
-                Expenses
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {expenses && expenses.length > 0 ? (
-                <div className="space-y-3">
-                  {expenses.map((expense) => (
-                    <div key={expense.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                      <div>
-                        <div className="font-medium">{expense.item_name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {expense.expense_type} • {format(new Date(expense.date), 'MMM dd, yyyy')}
-                        </div>
-                      </div>
-                      <div className="font-semibold text-lg">₹{expense.amount.toFixed(2)}</div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-center text-muted-foreground py-8">No expenses recorded</p>
-              )}
-            </CardContent>
-          </Card>
+          <BatchExpensesSection batchId={id || ''} />
         </TabsContent>
 
         <TabsContent value="info" className="mt-6">
