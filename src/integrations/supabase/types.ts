@@ -2439,6 +2439,7 @@ export type Database = {
           gst_number: string | null
           id: string
           is_active: boolean | null
+          operations: string[] | null
           payment_terms: string | null
           phone: string | null
           updated_at: string | null
@@ -2453,6 +2454,7 @@ export type Database = {
           gst_number?: string | null
           id?: string
           is_active?: boolean | null
+          operations?: string[] | null
           payment_terms?: string | null
           phone?: string | null
           updated_at?: string | null
@@ -2467,6 +2469,7 @@ export type Database = {
           gst_number?: string | null
           id?: string
           is_active?: boolean | null
+          operations?: string[] | null
           payment_terms?: string | null
           phone?: string | null
           updated_at?: string | null

@@ -85,6 +85,21 @@ const ContractorsManager = () => {
               </div>
 
               <div className="space-y-2 text-sm">
+                {/* Operations Badges */}
+                {(contractor as any).operations && (contractor as any).operations.length > 0 && (
+                  <div className="flex flex-wrap gap-1 pb-2">
+                    {(contractor as any).operations.map((op: string) => (
+                      <Badge
+                        key={op}
+                        variant="outline"
+                        className="text-xs bg-primary/10 text-primary border-primary/20"
+                      >
+                        {op}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+                
                 {contractor.contact_person && (
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <span className="font-medium">Contact:</span>
