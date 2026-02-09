@@ -14,16 +14,18 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useJobEmployees } from '@/hooks/useJobEmployees';
+import { useAllEmployeeReviews, calculateAverageRating } from '@/hooks/useJobEmployeeReviews';
 import EmployeeForm from './EmployeeForm';
 import EmployeeStatsCards from './EmployeeStatsCards';
 import EmployeeDetails from './EmployeeDetails';
 import EmployeePaymentRecords from './EmployeePaymentRecords';
-import { UserPlus, Edit, Phone, MapPin, Briefcase, Users, Eye, Receipt } from 'lucide-react';
+import { UserPlus, Edit, Phone, MapPin, Briefcase, Users, Eye, Receipt, Star } from 'lucide-react';
 import { JOB_DEPARTMENTS } from '@/lib/jobDepartments';
 
 const EmployeesManager = () => {
   const navigate = useNavigate();
   const { data: employees, isLoading } = useJobEmployees();
+  const { data: allReviews } = useAllEmployeeReviews();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedJobType, setSelectedJobType] = useState<string>('all');
   const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
@@ -141,6 +143,9 @@ const EmployeesManager = () => {
           {filteredEmployees.map((employee: any) => {
             const departments = (employee.departments as string[]) || [];
             const contractor = employee.contractor;
+            const employeeReviews = allReviews?.filter(r => r.employee_id === employee.id) || [];
+            const avgRating = calculateAverageRating(employeeReviews);
+            
             return (
               <Card key={employee.id} className="p-6 hover:shadow-lg transition-all">
                 <div className="space-y-4">
@@ -148,6 +153,24 @@ const EmployeesManager = () => {
                     <div className="flex-1">
                       <h3 className="font-semibold text-lg">{employee.name}</h3>
                       <p className="text-sm text-muted-foreground">{employee.employee_code}</p>
+                      {/* Star Rating */}
+                      {avgRating !== null && (
+                        <div className="flex items-center gap-0.5 mt-1">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={star}
+                              className={`h-3.5 w-3.5 ${
+                                star <= Math.round(avgRating)
+                                  ? 'fill-yellow-400 text-yellow-400'
+                                  : 'text-muted-foreground/30'
+                              }`}
+                            />
+                          ))}
+                          <span className="text-xs text-muted-foreground ml-1">
+                            {avgRating.toFixed(1)}
+                          </span>
+                        </div>
+                      )}
                     </div>
                     <Badge className={employee.employee_type === 'direct' ? "bg-blue-500 text-white" : "bg-purple-500 text-white"}>
                       {employee.employee_type === 'direct' ? 'Direct' : 'Contract'}

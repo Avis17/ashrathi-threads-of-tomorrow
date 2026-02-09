@@ -5,17 +5,20 @@ import { usePartPayments } from '@/hooks/usePartPayments';
 import { useWeeklySettlements } from '@/hooks/useWeeklySettlements';
 import { useJobProductionEntries } from '@/hooks/useJobProduction';
 import { useJobBatches } from '@/hooks/useJobBatches';
+import { useEmployeeReviews, calculateAverageRating } from '@/hooks/useJobEmployeeReviews';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Edit, DollarSign, User, Phone, MapPin, Briefcase, Trash2, CheckCircle2, TrendingUp } from 'lucide-react';
+import { Edit, DollarSign, User, Phone, MapPin, Briefcase, Trash2, CheckCircle2, TrendingUp, Star, ClipboardCheck } from 'lucide-react';
 import { format } from 'date-fns';
 import PartPaymentForm from './PartPaymentForm';
 import MultiLineSettlementForm from './MultiLineSettlementForm';
 import EmployeeForm from './EmployeeForm';
 import EmployeePaymentRecords from './EmployeePaymentRecords';
+import EmployeeReviewForm from './EmployeeReviewForm';
+import EmployeeReviewsList from './EmployeeReviewsList';
 
 interface EmployeeDetailsProps {
   employeeId: string;
@@ -30,11 +33,15 @@ const EmployeeDetails = ({ employeeId, onClose, onEdit }: EmployeeDetailsProps) 
   const { data: settlements } = useWeeklySettlements(employeeId);
   const { data: production } = useJobProductionEntries();
   const { data: batches } = useJobBatches();
+  const { data: reviews } = useEmployeeReviews(employeeId);
   const deleteMutation = useDeleteJobEmployee();
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [showSettlementForm, setShowSettlementForm] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+
+  const avgRating = calculateAverageRating(reviews);
 
   // Calculate accumulated unsettled advances with batch info
   const unsettledAdvancesWithBatch = useMemo(() => 
@@ -103,10 +110,27 @@ const EmployeeDetails = ({ employeeId, onClose, onEdit }: EmployeeDetailsProps) 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">{employee.name}</h2>
-          <p className="text-muted-foreground">{employee.employee_code}</p>
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div className="flex items-center gap-4">
+          <div>
+            <h2 className="text-2xl font-bold">{employee.name}</h2>
+            <p className="text-muted-foreground">{employee.employee_code}</p>
+          </div>
+          {avgRating !== null && (
+            <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-yellow-500/10 border border-yellow-500/20">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <Star
+                  key={star}
+                  className={`h-4 w-4 ${
+                    star <= Math.round(avgRating)
+                      ? 'fill-yellow-400 text-yellow-400'
+                      : 'text-muted-foreground/30'
+                  }`}
+                />
+              ))}
+              <span className="ml-1 text-sm font-medium">{avgRating.toFixed(1)}</span>
+            </div>
+          )}
         </div>
         <div className="flex gap-2 flex-wrap">
           <Button variant="outline" onClick={() => setShowEditForm(true)} className="gap-2">
@@ -120,6 +144,10 @@ const EmployeeDetails = ({ employeeId, onClose, onEdit }: EmployeeDetailsProps) 
           <Button onClick={() => setShowSettlementForm(true)}>
             <CheckCircle2 className="h-4 w-4 mr-2" />
             Record Settlement
+          </Button>
+          <Button variant="secondary" onClick={() => setShowReviewForm(true)}>
+            <ClipboardCheck className="h-4 w-4 mr-2" />
+            Monthly Review
           </Button>
           <Button variant="destructive" onClick={() => setShowDeleteDialog(true)} className="gap-2">
             <Trash2 className="h-4 w-4" />
@@ -319,6 +347,21 @@ const EmployeeDetails = ({ employeeId, onClose, onEdit }: EmployeeDetailsProps) 
         </div>
       </div>
 
+      {/* Monthly Reviews Section */}
+      <Card className="p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold flex items-center gap-2">
+            <Star className="h-5 w-5 text-yellow-500" />
+            Monthly Reviews
+          </h3>
+          <Button variant="outline" size="sm" onClick={() => setShowReviewForm(true)}>
+            <ClipboardCheck className="h-4 w-4 mr-2" />
+            Add Review
+          </Button>
+        </div>
+        <EmployeeReviewsList employeeId={employeeId} />
+      </Card>
+
       {/* Payment Records */}
       <EmployeePaymentRecords 
         employeeId={employeeId} 
@@ -356,6 +399,22 @@ const EmployeeDetails = ({ employeeId, onClose, onEdit }: EmployeeDetailsProps) 
             employeeId={employeeId}
             employeeName={employee.name}
             onClose={() => setShowSettlementForm(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Monthly Review Dialog */}
+      <Dialog open={showReviewForm} onOpenChange={setShowReviewForm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Monthly Review - {employee.name}</DialogTitle>
+            <DialogDescription>
+              Add a monthly performance review
+            </DialogDescription>
+          </DialogHeader>
+          <EmployeeReviewForm 
+            employeeId={employeeId}
+            onClose={() => setShowReviewForm(false)}
           />
         </DialogContent>
       </Dialog>
