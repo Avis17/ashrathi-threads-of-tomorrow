@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/select';
 import { useJobEmployees } from '@/hooks/useJobEmployees';
 import EmployeeForm from './EmployeeForm';
+import EmployeeStatsCards from './EmployeeStatsCards';
 import EmployeeDetails from './EmployeeDetails';
 import EmployeePaymentRecords from './EmployeePaymentRecords';
 import { UserPlus, Edit, Phone, MapPin, Briefcase, Users, Eye, Receipt } from 'lucide-react';
@@ -85,6 +86,9 @@ const EmployeesManager = () => {
           Add Employee
         </Button>
       </div>
+
+      {/* Stats Cards */}
+      <EmployeeStatsCards employees={employees} />
 
       {/* Filters */}
       <Card className="p-4">
