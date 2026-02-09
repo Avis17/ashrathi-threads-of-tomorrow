@@ -54,6 +54,8 @@ import DeliveryChallanList from './admin/delivery-challan/DeliveryChallanList';
 import CreateDeliveryChallan from './admin/delivery-challan/CreateDeliveryChallan';
 import DeliveryChallanView from './admin/delivery-challan/DeliveryChallanView';
 import PrintDeliveryChallan from './admin/delivery-challan/PrintDeliveryChallan';
+import EwayBillForm from './admin/delivery-challan/EwayBillForm';
+import ProductionPlanForm from './admin/delivery-challan/ProductionPlanForm';
 import SamplingPreparation from './admin/SamplingPreparation';
 import SamplingTermsGenerator from './admin/SamplingTermsGenerator';
 import QuotationGenerator from './admin/QuotationGenerator';
@@ -156,6 +158,10 @@ const Admin = () => {
               <Route path="/delivery-challan/:id" element={<DeliveryChallanView />} />
               <Route path="/delivery-challan/edit/:id" element={<CreateDeliveryChallan />} />
               <Route path="/delivery-challan/print/:id" element={<PrintDeliveryChallan />} />
+              <Route path="/delivery-challan/:dcId/eway-bill/new" element={<EwayBillForm />} />
+              <Route path="/delivery-challan/:dcId/eway-bill/:ewayId" element={<EwayBillForm />} />
+              <Route path="/delivery-challan/:dcId/production-plan/new" element={<ProductionPlanForm />} />
+              <Route path="/delivery-challan/:dcId/production-plan/:planId" element={<ProductionPlanForm />} />
             </Routes>
           </main>
         </div>

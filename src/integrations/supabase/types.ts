@@ -1052,6 +1052,340 @@ export type Database = {
         }
         Relationships: []
       }
+      dc_eway_bills: {
+        Row: {
+          ack_date: string | null
+          ack_no: string | null
+          approx_distance: string | null
+          cewb_no: string | null
+          cgst_amount: number | null
+          created_at: string
+          delivery_challan_id: string
+          dispatch_from: string | null
+          doc_date: string | null
+          doc_no: string | null
+          eway_bill_date: string | null
+          eway_bill_no: string | null
+          from_address: string | null
+          from_gstin: string | null
+          from_name: string | null
+          from_state: string | null
+          generated_by_gstin: string | null
+          hsn_code: string | null
+          id: string
+          irn: string | null
+          mode: string | null
+          notes: string | null
+          other_amount: number | null
+          product_description: string | null
+          quantity: number | null
+          sgst_amount: number | null
+          ship_to: string | null
+          supply_type: string | null
+          tax_invoice_date: string | null
+          tax_invoice_no: string | null
+          tax_rate_cgst: number | null
+          tax_rate_sgst: number | null
+          taxable_amount: number | null
+          to_address: string | null
+          to_gstin: string | null
+          to_name: string | null
+          to_state: string | null
+          total_invoice_amount: number | null
+          transaction_type: string | null
+          transporter_id: string | null
+          transporter_name: string | null
+          uom: string | null
+          updated_at: string
+          valid_upto: string | null
+          vehicle_from: string | null
+          vehicle_no: string | null
+        }
+        Insert: {
+          ack_date?: string | null
+          ack_no?: string | null
+          approx_distance?: string | null
+          cewb_no?: string | null
+          cgst_amount?: number | null
+          created_at?: string
+          delivery_challan_id: string
+          dispatch_from?: string | null
+          doc_date?: string | null
+          doc_no?: string | null
+          eway_bill_date?: string | null
+          eway_bill_no?: string | null
+          from_address?: string | null
+          from_gstin?: string | null
+          from_name?: string | null
+          from_state?: string | null
+          generated_by_gstin?: string | null
+          hsn_code?: string | null
+          id?: string
+          irn?: string | null
+          mode?: string | null
+          notes?: string | null
+          other_amount?: number | null
+          product_description?: string | null
+          quantity?: number | null
+          sgst_amount?: number | null
+          ship_to?: string | null
+          supply_type?: string | null
+          tax_invoice_date?: string | null
+          tax_invoice_no?: string | null
+          tax_rate_cgst?: number | null
+          tax_rate_sgst?: number | null
+          taxable_amount?: number | null
+          to_address?: string | null
+          to_gstin?: string | null
+          to_name?: string | null
+          to_state?: string | null
+          total_invoice_amount?: number | null
+          transaction_type?: string | null
+          transporter_id?: string | null
+          transporter_name?: string | null
+          uom?: string | null
+          updated_at?: string
+          valid_upto?: string | null
+          vehicle_from?: string | null
+          vehicle_no?: string | null
+        }
+        Update: {
+          ack_date?: string | null
+          ack_no?: string | null
+          approx_distance?: string | null
+          cewb_no?: string | null
+          cgst_amount?: number | null
+          created_at?: string
+          delivery_challan_id?: string
+          dispatch_from?: string | null
+          doc_date?: string | null
+          doc_no?: string | null
+          eway_bill_date?: string | null
+          eway_bill_no?: string | null
+          from_address?: string | null
+          from_gstin?: string | null
+          from_name?: string | null
+          from_state?: string | null
+          generated_by_gstin?: string | null
+          hsn_code?: string | null
+          id?: string
+          irn?: string | null
+          mode?: string | null
+          notes?: string | null
+          other_amount?: number | null
+          product_description?: string | null
+          quantity?: number | null
+          sgst_amount?: number | null
+          ship_to?: string | null
+          supply_type?: string | null
+          tax_invoice_date?: string | null
+          tax_invoice_no?: string | null
+          tax_rate_cgst?: number | null
+          tax_rate_sgst?: number | null
+          taxable_amount?: number | null
+          to_address?: string | null
+          to_gstin?: string | null
+          to_name?: string | null
+          to_state?: string | null
+          total_invoice_amount?: number | null
+          transaction_type?: string | null
+          transporter_id?: string | null
+          transporter_name?: string | null
+          uom?: string | null
+          updated_at?: string
+          valid_upto?: string | null
+          vehicle_from?: string | null
+          vehicle_no?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dc_eway_bills_delivery_challan_id_fkey"
+            columns: ["delivery_challan_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_challans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dc_production_plans: {
+        Row: {
+          atta: boolean | null
+          authorised_sign_1: string | null
+          authorised_sign_2: string | null
+          box: boolean | null
+          button: boolean | null
+          care_label: boolean | null
+          coin_detail: string | null
+          created_at: string
+          delivery_challan_id: string
+          embroidery_detail: string | null
+          fabric_details: string | null
+          first_sample_approval: boolean | null
+          flag_label: boolean | null
+          follow_up_by: string | null
+          follow_up_person: string | null
+          fusing_detail: string | null
+          fusing_sticker: boolean | null
+          ic_no: string | null
+          ic_original: boolean | null
+          ic_traced: boolean | null
+          id: string
+          item_name: string | null
+          main_label: boolean | null
+          mchart_original: boolean | null
+          mchart_traced: boolean | null
+          metal_badges: boolean | null
+          name_original: string | null
+          name_traced: string | null
+          notes: string | null
+          original_pattern: boolean | null
+          original_sample: boolean | null
+          others_detail: string | null
+          others_post_production: string | null
+          packing_type: string | null
+          pgm_no: string | null
+          photo: boolean | null
+          plan_date: string | null
+          poly_bag: boolean | null
+          print_detail: string | null
+          qc_person: string | null
+          rope: boolean | null
+          seal_original: boolean | null
+          seal_traced: boolean | null
+          side_cut_style: string | null
+          sign_original: string | null
+          sign_traced: string | null
+          sizes: string | null
+          special_instructions: string | null
+          stone_detail: string | null
+          supplier: string | null
+          tag: boolean | null
+          traced_pattern: boolean | null
+          updated_at: string
+          zippers: boolean | null
+        }
+        Insert: {
+          atta?: boolean | null
+          authorised_sign_1?: string | null
+          authorised_sign_2?: string | null
+          box?: boolean | null
+          button?: boolean | null
+          care_label?: boolean | null
+          coin_detail?: string | null
+          created_at?: string
+          delivery_challan_id: string
+          embroidery_detail?: string | null
+          fabric_details?: string | null
+          first_sample_approval?: boolean | null
+          flag_label?: boolean | null
+          follow_up_by?: string | null
+          follow_up_person?: string | null
+          fusing_detail?: string | null
+          fusing_sticker?: boolean | null
+          ic_no?: string | null
+          ic_original?: boolean | null
+          ic_traced?: boolean | null
+          id?: string
+          item_name?: string | null
+          main_label?: boolean | null
+          mchart_original?: boolean | null
+          mchart_traced?: boolean | null
+          metal_badges?: boolean | null
+          name_original?: string | null
+          name_traced?: string | null
+          notes?: string | null
+          original_pattern?: boolean | null
+          original_sample?: boolean | null
+          others_detail?: string | null
+          others_post_production?: string | null
+          packing_type?: string | null
+          pgm_no?: string | null
+          photo?: boolean | null
+          plan_date?: string | null
+          poly_bag?: boolean | null
+          print_detail?: string | null
+          qc_person?: string | null
+          rope?: boolean | null
+          seal_original?: boolean | null
+          seal_traced?: boolean | null
+          side_cut_style?: string | null
+          sign_original?: string | null
+          sign_traced?: string | null
+          sizes?: string | null
+          special_instructions?: string | null
+          stone_detail?: string | null
+          supplier?: string | null
+          tag?: boolean | null
+          traced_pattern?: boolean | null
+          updated_at?: string
+          zippers?: boolean | null
+        }
+        Update: {
+          atta?: boolean | null
+          authorised_sign_1?: string | null
+          authorised_sign_2?: string | null
+          box?: boolean | null
+          button?: boolean | null
+          care_label?: boolean | null
+          coin_detail?: string | null
+          created_at?: string
+          delivery_challan_id?: string
+          embroidery_detail?: string | null
+          fabric_details?: string | null
+          first_sample_approval?: boolean | null
+          flag_label?: boolean | null
+          follow_up_by?: string | null
+          follow_up_person?: string | null
+          fusing_detail?: string | null
+          fusing_sticker?: boolean | null
+          ic_no?: string | null
+          ic_original?: boolean | null
+          ic_traced?: boolean | null
+          id?: string
+          item_name?: string | null
+          main_label?: boolean | null
+          mchart_original?: boolean | null
+          mchart_traced?: boolean | null
+          metal_badges?: boolean | null
+          name_original?: string | null
+          name_traced?: string | null
+          notes?: string | null
+          original_pattern?: boolean | null
+          original_sample?: boolean | null
+          others_detail?: string | null
+          others_post_production?: string | null
+          packing_type?: string | null
+          pgm_no?: string | null
+          photo?: boolean | null
+          plan_date?: string | null
+          poly_bag?: boolean | null
+          print_detail?: string | null
+          qc_person?: string | null
+          rope?: boolean | null
+          seal_original?: boolean | null
+          seal_traced?: boolean | null
+          side_cut_style?: string | null
+          sign_original?: string | null
+          sign_traced?: string | null
+          sizes?: string | null
+          special_instructions?: string | null
+          stone_detail?: string | null
+          supplier?: string | null
+          tag?: boolean | null
+          traced_pattern?: boolean | null
+          updated_at?: string
+          zippers?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dc_production_plans_delivery_challan_id_fkey"
+            columns: ["delivery_challan_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_challans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       delivery_challan_items: {
         Row: {
           color: string | null

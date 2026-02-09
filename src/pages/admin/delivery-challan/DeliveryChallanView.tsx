@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { format } from 'date-fns';
-import { ArrowLeft, Printer, Edit, Truck, User, Package, Calendar, FileText, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { ArrowLeft, Printer, Edit, Truck, User, Package, Calendar, FileText, CheckCircle, Clock, XCircle, FileBarChart, ClipboardList, Eye, Plus, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -23,6 +23,7 @@ import {
 import { useDeliveryChallan, useDeliveryChallanItems, useUpdateDeliveryChallanStatus } from '@/hooks/useDeliveryChallans';
 import { DC_TYPE_LABELS, PURPOSE_LABELS, STATUS_LABELS } from '@/types/deliveryChallan';
 import type { DeliveryChallan } from '@/types/deliveryChallan';
+import { useEwayBills, useProductionPlans } from '@/hooks/useDCDocuments';
 
 const statusColors: Record<DeliveryChallan['status'], string> = {
   created: 'bg-amber-500/10 text-amber-600 border-amber-500/30',
@@ -42,6 +43,8 @@ export default function DeliveryChallanView() {
   const { data: dc, isLoading: dcLoading } = useDeliveryChallan(id || '');
   const { data: items = [], isLoading: itemsLoading } = useDeliveryChallanItems(id || '');
   const updateStatus = useUpdateDeliveryChallanStatus();
+  const { data: ewayBills = [] } = useEwayBills(id || '');
+  const { data: productionPlans = [] } = useProductionPlans(id || '');
 
   if (dcLoading || itemsLoading) {
     return (
@@ -253,6 +256,77 @@ export default function DeliveryChallanView() {
           </CardContent>
         </Card>
       )}
+
+      {/* Documents Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* E-Way Bills */}
+        <Card className="border-0 shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <FileBarChart className="h-5 w-5" />
+              E-Way Bills
+            </CardTitle>
+            <Button size="sm" onClick={() => navigate(`/admin/delivery-challan/${id}/eway-bill/new`)}>
+              <Plus className="h-4 w-4 mr-1" />New
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {ewayBills.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">No e-way bills created yet</p>
+            ) : (
+              <div className="space-y-2">
+                {ewayBills.map(bill => (
+                  <div key={bill.id} className="flex items-center justify-between p-3 rounded-lg border bg-muted/20">
+                    <div>
+                      <p className="font-medium text-sm">{bill.eway_bill_no || 'Draft'}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {bill.from_name} → {bill.to_name} | ₹{(bill.total_invoice_amount || 0).toLocaleString('en-IN')}
+                      </p>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={() => navigate(`/admin/delivery-challan/${id}/eway-bill/${bill.id}`)}>
+                      <Pencil className="h-4 w-4 mr-1" />Edit
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Production Plans */}
+        <Card className="border-0 shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <ClipboardList className="h-5 w-5" />
+              Production Planning Sheets
+            </CardTitle>
+            <Button size="sm" onClick={() => navigate(`/admin/delivery-challan/${id}/production-plan/new`)}>
+              <Plus className="h-4 w-4 mr-1" />New
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {productionPlans.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">No production plans created yet</p>
+            ) : (
+              <div className="space-y-2">
+                {productionPlans.map(plan => (
+                  <div key={plan.id} className="flex items-center justify-between p-3 rounded-lg border bg-muted/20">
+                    <div>
+                      <p className="font-medium text-sm">PGM: {plan.pgm_no || 'Draft'}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {plan.item_name} | {plan.sizes}
+                      </p>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={() => navigate(`/admin/delivery-challan/${id}/production-plan/${plan.id}`)}>
+                      <Pencil className="h-4 w-4 mr-1" />Edit
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Declaration */}
       <Card className="border-0 shadow-sm bg-amber-50/50 dark:bg-amber-900/10">
