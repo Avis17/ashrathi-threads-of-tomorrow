@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useCreateJobEmployee, useUpdateJobEmployee, type JobEmployee } from '@/hooks/useJobEmployees';
+import { useCreateJobEmployee, useUpdateJobEmployee, useJobEmployees, type JobEmployee } from '@/hooks/useJobEmployees';
 import { useJobContractors } from '@/hooks/useJobContractors';
 import { JOB_DEPARTMENTS } from '@/lib/jobDepartments';
 import ContractorForm from './ContractorForm';
@@ -42,15 +42,31 @@ const EmployeeForm = ({ employee, onClose }: EmployeeFormProps) => {
   const createMutation = useCreateJobEmployee();
   const updateMutation = useUpdateJobEmployee();
   const { data: contractors } = useJobContractors();
+  const { data: allEmployees } = useJobEmployees();
+
+  // Generate next employee code
+  const generateNextCode = () => {
+    if (!allEmployees || allEmployees.length === 0) return 'E001';
+    
+    const codes = allEmployees
+      .map(emp => emp.employee_code)
+      .filter(code => code && /^E\d+$/.test(code))
+      .map(code => parseInt(code.replace('E', ''), 10));
+    
+    const maxCode = codes.length > 0 ? Math.max(...codes) : 0;
+    return `E${String(maxCode + 1).padStart(3, '0')}`;
+  };
   
   const [showContractorForm, setShowContractorForm] = useState(false);
   const [selectedDepartments, setSelectedDepartments] = useState<string[]>(
     employee?.departments ? (employee.departments as string[]) : []
   );
 
+  const nextCode = !employee ? generateNextCode() : '';
+  
   const { register, handleSubmit, setValue, watch } = useForm<FormData>({
     defaultValues: {
-      employee_code: employee?.employee_code || '',
+      employee_code: employee?.employee_code || nextCode,
       name: employee?.name || '',
       employee_type: employee?.employee_type || 'direct',
       phone: employee?.phone || '',
