@@ -1,5 +1,5 @@
 import { Card, CardContent } from '@/components/ui/card';
-import { Package, Scissors, DollarSign, Scale } from 'lucide-react';
+import { Package, Scissors, DollarSign, Scale, Users } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 
 interface BatchOverviewSectionProps {
@@ -7,14 +7,30 @@ interface BatchOverviewSectionProps {
   rollsData: any[];
   totalCutPieces: number;
   totalCost: number;
+  totalProductionPieces?: number;
 }
 
-export const BatchOverviewSection = ({ batch, rollsData, totalCutPieces, totalCost }: BatchOverviewSectionProps) => {
+export const BatchOverviewSection = ({ 
+  batch, 
+  rollsData, 
+  totalCutPieces, 
+  totalCost,
+  totalProductionPieces = 0 
+}: BatchOverviewSectionProps) => {
   const totalFabric = batch.total_fabric_received_kg || 0;
   const numberOfTypes = rollsData.length;
   
   // Get unique styles
   const uniqueStyles = new Set(rollsData.map(r => r.style_id)).size;
+
+  // Calculate progress based on cutting and production
+  const calculateProgress = () => {
+    if (totalCutPieces === 0) return 0;
+    const progress = Math.min((totalProductionPieces / totalCutPieces) * 100, 100);
+    return Math.round(progress);
+  };
+
+  const currentProgress = calculateProgress();
 
   const stats = [
     {
@@ -42,9 +58,17 @@ export const BatchOverviewSection = ({ batch, rollsData, totalCutPieces, totalCo
       bgColor: 'bg-green-500/10',
     },
     {
+      title: 'Production Done',
+      value: totalProductionPieces,
+      subtitle: totalCutPieces > 0 ? `${currentProgress}% of cut` : 'No cut pieces yet',
+      icon: Users,
+      color: 'text-orange-500',
+      bgColor: 'bg-orange-500/10',
+    },
+    {
       title: 'Total Cost',
       value: `₹${totalCost.toFixed(2)}`,
-      subtitle: batch.final_quantity > 0 ? `₹${(totalCost / batch.final_quantity).toFixed(2)}/pc` : 'Per piece: TBD',
+      subtitle: totalProductionPieces > 0 ? `₹${(totalCost / totalProductionPieces).toFixed(2)}/pc` : 'Per piece: TBD',
       icon: DollarSign,
       color: 'text-amber-500',
       bgColor: 'bg-amber-500/10',
@@ -53,7 +77,7 @@ export const BatchOverviewSection = ({ batch, rollsData, totalCutPieces, totalCo
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {stats.map((stat, index) => {
           const Icon = stat.icon;
           return (
@@ -79,16 +103,14 @@ export const BatchOverviewSection = ({ batch, rollsData, totalCutPieces, totalCo
       <Card>
         <CardContent className="p-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium">Overall Progress</span>
-            <span className="text-sm font-bold text-primary">{batch.overall_progress || 0}%</span>
+            <span className="text-sm font-medium">Production Progress</span>
+            <span className="text-sm font-bold text-primary">{currentProgress}%</span>
           </div>
-          <Progress value={batch.overall_progress || 0} className="h-2" />
+          <Progress value={currentProgress} className="h-2" />
           <div className="flex justify-between text-xs text-muted-foreground mt-2">
-            <span>Cutting</span>
-            <span>Stitching</span>
-            <span>Checking</span>
-            <span>Packing</span>
-            <span>Done</span>
+            <span>Cut: {totalCutPieces} pcs</span>
+            <span>Produced: {totalProductionPieces} pcs</span>
+            <span>Remaining: {Math.max(0, totalCutPieces - totalProductionPieces)} pcs</span>
           </div>
         </CardContent>
       </Card>
