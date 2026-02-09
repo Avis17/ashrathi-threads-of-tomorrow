@@ -35,6 +35,7 @@ type FormData = {
   date_joined: string;
   salary_type?: string;
   salary_amount?: string;
+  notes?: string;
 };
 
 const EmployeeForm = ({ employee, onClose }: EmployeeFormProps) => {
@@ -59,6 +60,7 @@ const EmployeeForm = ({ employee, onClose }: EmployeeFormProps) => {
       date_joined: employee?.date_joined || new Date().toISOString().split('T')[0],
       salary_type: (employee as any)?.salary_type || '',
       salary_amount: (employee as any)?.salary_amount?.toString() || '',
+      notes: (employee as any)?.notes || '',
     },
   });
 
@@ -78,6 +80,7 @@ const EmployeeForm = ({ employee, onClose }: EmployeeFormProps) => {
       contractor_id: employeeType === 'contract' ? data.contractor_id : null,
       salary_type: data.salary_type || null,
       salary_amount: data.salary_amount ? parseFloat(data.salary_amount) : null,
+      notes: data.notes || null,
     };
 
     if (employee) {
@@ -259,6 +262,20 @@ const EmployeeForm = ({ employee, onClose }: EmployeeFormProps) => {
           {selectedDepartments.length === 0 && (
             <p className="text-sm text-destructive">⚠️ Please select at least one department</p>
           )}
+        </div>
+
+        {/* Notes Section */}
+        <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
+          <h3 className="font-semibold text-foreground">Notes</h3>
+          <div className="space-y-2">
+            <Label htmlFor="notes">Additional Notes</Label>
+            <Textarea 
+              id="notes" 
+              {...register('notes')} 
+              rows={3} 
+              placeholder="Any additional information about the employee (skills, preferences, etc.)"
+            />
+          </div>
         </div>
 
         {/* Actions */}

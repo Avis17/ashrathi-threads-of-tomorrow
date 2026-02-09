@@ -2487,6 +2487,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           name: string
+          notes: string | null
           phone: string | null
           rate_type: string | null
           salary_amount: number | null
@@ -2505,6 +2506,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           name: string
+          notes?: string | null
           phone?: string | null
           rate_type?: string | null
           salary_amount?: number | null
@@ -2523,6 +2525,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           name?: string
+          notes?: string | null
           phone?: string | null
           rate_type?: string | null
           salary_amount?: number | null
