@@ -2476,6 +2476,47 @@ export type Database = {
         }
         Relationships: []
       }
+      job_employee_reviews: {
+        Row: {
+          created_at: string
+          employee_id: string
+          id: string
+          notes: string | null
+          rating: number
+          review_month: number
+          review_year: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          employee_id: string
+          id?: string
+          notes?: string | null
+          rating: number
+          review_month: number
+          review_year: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          employee_id?: string
+          id?: string
+          notes?: string | null
+          rating?: number
+          review_month?: number
+          review_year?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_employee_reviews_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "job_employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       job_employees: {
         Row: {
           address: string | null
