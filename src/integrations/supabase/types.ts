@@ -199,6 +199,53 @@ export type Database = {
           },
         ]
       }
+      batch_cutting_wastage: {
+        Row: {
+          actual_weight_kg: number | null
+          batch_id: string
+          color: string
+          created_at: string
+          id: string
+          log_date: string
+          notes: string | null
+          type_index: number
+          updated_at: string
+          wastage_pieces: number
+        }
+        Insert: {
+          actual_weight_kg?: number | null
+          batch_id: string
+          color: string
+          created_at?: string
+          id?: string
+          log_date?: string
+          notes?: string | null
+          type_index: number
+          updated_at?: string
+          wastage_pieces?: number
+        }
+        Update: {
+          actual_weight_kg?: number | null
+          batch_id?: string
+          color?: string
+          created_at?: string
+          id?: string
+          log_date?: string
+          notes?: string | null
+          type_index?: number
+          updated_at?: string
+          wastage_pieces?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "batch_cutting_wastage_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "job_batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       batch_materials: {
         Row: {
           batch_id: string
