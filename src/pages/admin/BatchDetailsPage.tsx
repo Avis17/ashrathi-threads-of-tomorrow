@@ -1,10 +1,18 @@
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Package, Scissors, FileText, DollarSign, Users, Settings } from 'lucide-react';
+import { ArrowLeft, Package, Scissors, FileText, DollarSign, Users, Settings, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useJobBatch } from '@/hooks/useJobBatches';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useJobBatch, useUpdateJobBatch } from '@/hooks/useJobBatches';
 import { useJobProductionEntries } from '@/hooks/useJobProduction';
 import { useJobBatchExpenses } from '@/hooks/useJobExpenses';
 import { useBatchCuttingLogs } from '@/hooks/useBatchCuttingLogs';
@@ -14,6 +22,15 @@ import { BatchOverviewSection } from '@/components/admin/jobmanagement/batch-det
 import { BatchTypesTable } from '@/components/admin/jobmanagement/batch-details/BatchTypesTable';
 import { BatchProductionSection } from '@/components/admin/jobmanagement/batch-details/BatchProductionSection';
 import { BatchExpensesSection } from '@/components/admin/jobmanagement/batch-details/BatchExpensesSection';
+import EditBatchDialog from '@/components/admin/jobmanagement/EditBatchDialog';
+
+const BATCH_STATUSES = [
+  { value: 'created', label: 'Created', color: 'bg-blue-500' },
+  { value: 'draft', label: 'Draft', color: 'bg-gray-500' },
+  { value: 'in_progress', label: 'In Progress', color: 'bg-yellow-500' },
+  { value: 'completed', label: 'Completed', color: 'bg-green-500' },
+  { value: 'payment_pending', label: 'Payment Pending', color: 'bg-orange-500' },
+];
 
 const BatchDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -22,6 +39,8 @@ const BatchDetailsPage = () => {
   const { data: productionEntries } = useJobProductionEntries(id || '');
   const { data: expenses } = useJobBatchExpenses(id || '');
   const { data: cuttingLogs } = useBatchCuttingLogs(id || '');
+  const updateBatchMutation = useUpdateJobBatch();
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -63,15 +82,13 @@ const BatchDetailsPage = () => {
   const totalProductionPieces = productionEntries?.reduce((sum, e) => sum + e.quantity_completed, 0) || 0;
 
   const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      'created': 'bg-blue-500',
-      'cutting': 'bg-yellow-500',
-      'stitching': 'bg-orange-500',
-      'checking': 'bg-purple-500',
-      'packing': 'bg-pink-500',
-      'done': 'bg-green-500',
-    };
-    return colors[status] || 'bg-gray-500';
+    const found = BATCH_STATUSES.find(s => s.value === status);
+    return found?.color || 'bg-gray-500';
+  };
+
+  const handleStatusChange = async (newStatus: string) => {
+    if (!id) return;
+    await updateBatchMutation.mutateAsync({ id, data: { status: newStatus } });
   };
 
   // Calculate overall progress based on cutting and production
@@ -103,12 +120,33 @@ const BatchDetailsPage = () => {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <Badge className={`${getStatusColor(batch.status)} text-white px-3 py-1 text-sm`}>
-            {batch.status.toUpperCase()}
-          </Badge>
+          <Select value={batch.status || 'created'} onValueChange={handleStatusChange}>
+            <SelectTrigger className="w-[180px]">
+              <div className="flex items-center gap-2">
+                <span className={`h-2.5 w-2.5 rounded-full ${getStatusColor(batch.status || 'created')}`} />
+                <span className="text-sm font-medium">
+                  {BATCH_STATUSES.find(s => s.value === batch.status)?.label || batch.status?.toUpperCase()}
+                </span>
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              {BATCH_STATUSES.map(s => (
+                <SelectItem key={s.value} value={s.value}>
+                  <div className="flex items-center gap-2">
+                    <span className={`h-2 w-2 rounded-full ${s.color}`} />
+                    {s.label}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Badge variant="outline" className="px-3 py-1">
             Cut: {totalCutPieces} | Prod: {totalProductionPieces} | {currentProgress}%
           </Badge>
+          <Button variant="outline" size="sm" onClick={() => setEditDialogOpen(true)}>
+            <Edit className="h-4 w-4 mr-1" />
+            Edit
+          </Button>
         </div>
       </div>
 
@@ -204,6 +242,13 @@ const BatchDetailsPage = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Edit Batch Dialog */}
+      <EditBatchDialog 
+        open={editDialogOpen} 
+        onOpenChange={setEditDialogOpen} 
+        batch={batch} 
+      />
     </div>
   );
 };

@@ -49,6 +49,11 @@ const BatchesManager = () => {
   const getStatusColor = (status: string) => {
     const colors: any = {
       'created': 'bg-blue-500',
+      'draft': 'bg-gray-500',
+      'in_progress': 'bg-yellow-500',
+      'completed': 'bg-green-500',
+      'payment_pending': 'bg-orange-500',
+      // Legacy statuses
       'cutting': 'bg-yellow-500',
       'stitching': 'bg-orange-500',
       'checking': 'bg-purple-500',
@@ -96,11 +101,10 @@ const BatchesManager = () => {
             <SelectContent>
               <SelectItem value="all">All Status</SelectItem>
               <SelectItem value="created">Created</SelectItem>
-              <SelectItem value="cutting">Cutting</SelectItem>
-              <SelectItem value="stitching">Stitching</SelectItem>
-              <SelectItem value="checking">Checking</SelectItem>
-              <SelectItem value="packing">Packing</SelectItem>
-              <SelectItem value="done">Done</SelectItem>
+              <SelectItem value="draft">Draft</SelectItem>
+              <SelectItem value="in_progress">In Progress</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="payment_pending">Payment Pending</SelectItem>
             </SelectContent>
           </Select>
         </div>
