@@ -12,10 +12,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useJobStyles } from '@/hooks/useJobStyles';
 import { useCreateJobBatch } from '@/hooks/useJobBatches';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { JOB_DEPARTMENTS } from '@/lib/jobDepartments';
 
 interface BatchFormProps {
   onClose: () => void;
@@ -28,6 +30,15 @@ interface VariationData {
   number_of_rolls: number;
 }
 
+const BATCH_OPERATIONS = [
+  "Cutting",
+  "Stitching(Singer)",
+  "Stitching(Powertable)",
+  "Checking",
+  "Ironing",
+  "Packing",
+] as const;
+
 interface TypeData {
   style_id: string;
   fabric_type: string;
@@ -35,6 +46,7 @@ interface TypeData {
   planned_start_date: string;
   estimated_delivery_date: string;
   notes: string;
+  operations: string[];
   variations: VariationData[];
 }
 
@@ -61,6 +73,7 @@ const BatchForm = ({ onClose }: BatchFormProps) => {
         planned_start_date: '',
         estimated_delivery_date: '',
         notes: '',
+        operations: ['Cutting', 'Stitching(Singer)', 'Checking', 'Ironing', 'Packing'],
         variations: [{ color: '', fabric_width: '', weight: 0, number_of_rolls: 1 }]
       }],
       supplier_name: '',
@@ -128,6 +141,7 @@ const BatchForm = ({ onClose }: BatchFormProps) => {
         planned_start_date: type.planned_start_date,
         estimated_delivery_date: type.estimated_delivery_date,
         notes: type.notes,
+        operations: type.operations,
         color: variation.color,
         fabric_width: variation.fabric_width,
         weight: variation.weight,
@@ -328,6 +342,31 @@ const BatchForm = ({ onClose }: BatchFormProps) => {
                     </div>
                   </div>
 
+                  {/* Operations */}
+                  <div className="space-y-2 pb-3 border-b">
+                    <Label className="text-sm font-medium">Applicable Operations</Label>
+                    <div className="flex flex-wrap gap-3">
+                      {BATCH_OPERATIONS.map((op) => {
+                        const isChecked = types[typeIndex]?.operations?.includes(op) || false;
+                        return (
+                          <label key={op} className="flex items-center gap-2 cursor-pointer">
+                            <Checkbox
+                              checked={isChecked}
+                              onCheckedChange={(checked) => {
+                                const currentOps = types[typeIndex]?.operations || [];
+                                const newOps = checked
+                                  ? [...currentOps, op]
+                                  : currentOps.filter(o => o !== op);
+                                setValue(`types.${typeIndex}.operations`, newOps);
+                              }}
+                            />
+                            <span className="text-sm">{op}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+
                   {/* Variations */}
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
@@ -445,6 +484,7 @@ const BatchForm = ({ onClose }: BatchFormProps) => {
               planned_start_date: '',
               estimated_delivery_date: '',
               notes: '',
+              operations: ['Cutting', 'Stitching(Singer)', 'Checking', 'Ironing', 'Packing'],
               variations: [{ color: '', fabric_width: '', weight: 0, number_of_rolls: 1 }]
             });
           }}
