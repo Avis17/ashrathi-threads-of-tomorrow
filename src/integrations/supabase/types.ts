@@ -302,6 +302,7 @@ export type Database = {
           id: string
           notes: string | null
           operation: string
+          type_index: number
           updated_at: string
         }
         Insert: {
@@ -311,6 +312,7 @@ export type Database = {
           id?: string
           notes?: string | null
           operation: string
+          type_index?: number
           updated_at?: string
         }
         Update: {
@@ -320,6 +322,7 @@ export type Database = {
           id?: string
           notes?: string | null
           operation?: string
+          type_index?: number
           updated_at?: string
         }
         Relationships: [
