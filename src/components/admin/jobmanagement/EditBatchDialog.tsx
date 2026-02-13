@@ -4,8 +4,18 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useUpdateJobBatch } from '@/hooks/useJobBatches';
+
+const BATCH_OPERATIONS = [
+  "Cutting",
+  "Stitching(Singer)",
+  "Stitching(Powertable)",
+  "Checking",
+  "Ironing",
+  "Packing",
+] as const;
 
 interface EditBatchDialogProps {
   open: boolean;
@@ -23,8 +33,8 @@ interface EditFormData {
 
 const EditBatchDialog = ({ open, onOpenChange, batch }: EditBatchDialogProps) => {
   const updateMutation = useUpdateJobBatch();
-  
   const { register, handleSubmit, reset } = useForm<EditFormData>();
+  const [selectedOperations, setSelectedOperations] = useState<string[]>([]);
 
   useEffect(() => {
     if (batch && open) {
@@ -35,10 +45,29 @@ const EditBatchDialog = ({ open, onOpenChange, batch }: EditBatchDialogProps) =>
         remarks: batch.remarks || '',
         expected_pieces: batch.expected_pieces || 0,
       });
+      // Extract operations from rolls_data
+      const rollsData = (batch.rolls_data || []) as any[];
+      const ops = rollsData.length > 0 && rollsData[0]?.operations
+        ? (rollsData[0].operations as string[])
+        : [];
+      setSelectedOperations(ops);
     }
   }, [batch, open, reset]);
 
+  const toggleOperation = (op: string) => {
+    setSelectedOperations(prev =>
+      prev.includes(op) ? prev.filter(o => o !== op) : [...prev, op]
+    );
+  };
+
   const onSubmit = async (data: EditFormData) => {
+    // Update operations in all rolls_data entries
+    const rollsData = (batch.rolls_data || []) as any[];
+    const updatedRollsData = rollsData.map((roll: any) => ({
+      ...roll,
+      operations: selectedOperations,
+    }));
+
     await updateMutation.mutateAsync({
       id: batch.id,
       data: {
@@ -47,6 +76,7 @@ const EditBatchDialog = ({ open, onOpenChange, batch }: EditBatchDialogProps) =>
         lot_number: data.lot_number || null,
         remarks: data.remarks || null,
         expected_pieces: data.expected_pieces,
+        rolls_data: updatedRollsData,
       },
     });
     onOpenChange(false);
@@ -75,6 +105,23 @@ const EditBatchDialog = ({ open, onOpenChange, batch }: EditBatchDialogProps) =>
             <Label htmlFor="lot_number">Lot Number</Label>
             <Input id="lot_number" {...register('lot_number')} />
           </div>
+
+          {/* Operations */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Applicable Operations</Label>
+            <div className="flex flex-wrap gap-3 p-3 bg-muted/30 rounded-lg">
+              {BATCH_OPERATIONS.map((op) => (
+                <label key={op} className="flex items-center gap-2 cursor-pointer">
+                  <Checkbox
+                    checked={selectedOperations.includes(op)}
+                    onCheckedChange={() => toggleOperation(op)}
+                  />
+                  <span className="text-sm">{op}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="remarks">Remarks</Label>
             <Textarea id="remarks" {...register('remarks')} className="min-h-[80px]" />

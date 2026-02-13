@@ -67,6 +67,12 @@ const BatchDetailsPage = () => {
   }
 
   const rollsData = (batch.rolls_data || []) as any[];
+  
+  // Extract operations from rolls_data
+  const batchOperations: string[] = rollsData.length > 0 && rollsData[0]?.operations
+    ? (rollsData[0].operations as string[])
+    : [];
+  
   const totalLabourCost = productionEntries?.reduce((sum, entry) => sum + entry.total_amount, 0) || 0;
   const totalExpenses = expenses?.reduce((sum, exp) => sum + exp.amount, 0) || 0;
   const totalCost = totalLabourCost + totalExpenses;
@@ -201,7 +207,7 @@ const BatchDetailsPage = () => {
         </TabsContent>
 
         <TabsContent value="production" className="mt-6">
-          <BatchProductionSection batchId={id || ''} />
+          <BatchProductionSection batchId={id || ''} operations={batchOperations} />
         </TabsContent>
 
         <TabsContent value="expenses" className="mt-6">

@@ -294,6 +294,44 @@ export type Database = {
           },
         ]
       }
+      batch_operation_progress: {
+        Row: {
+          batch_id: string
+          completed_pieces: number
+          created_at: string
+          id: string
+          notes: string | null
+          operation: string
+          updated_at: string
+        }
+        Insert: {
+          batch_id: string
+          completed_pieces?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          operation: string
+          updated_at?: string
+        }
+        Update: {
+          batch_id?: string
+          completed_pieces?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          operation?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "batch_operation_progress_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "job_batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       batch_sales: {
         Row: {
           batch_id: string
