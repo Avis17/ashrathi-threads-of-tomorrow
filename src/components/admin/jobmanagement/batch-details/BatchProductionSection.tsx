@@ -3,9 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Settings, CheckCircle, AlertCircle, ChevronDown, ChevronRight } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { CheckCircle, AlertCircle, ChevronDown, ChevronRight } from 'lucide-react';
 import { useBatchOperationProgress, useUpsertOperationProgress } from '@/hooks/useBatchOperationProgress';
-import { useBatchCuttingLogs } from '@/hooks/useBatchCuttingLogs';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 interface BatchProductionSectionProps {
@@ -20,6 +21,7 @@ export const BatchProductionSection = ({ batchId, operations = [], rollsData = [
   const upsertMutation = useUpsertOperationProgress();
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
+  const [allExpanded, setAllExpanded] = useState(true);
   const [openTypes, setOpenTypes] = useState<Record<number, boolean>>({});
 
   // Build progress map: key = `${typeIndex}-${operation}`
@@ -28,6 +30,13 @@ export const BatchProductionSection = ({ batchId, operations = [], rollsData = [
     progressMap[`${p.type_index}-${p.operation}`] = p.completed_pieces;
   });
 
+  // Get operations for a specific type (falls back to global operations)
+  const getTypeOperations = (typeIndex: number): string[] => {
+    const typeOps = rollsData[typeIndex]?.operations;
+    if (Array.isArray(typeOps) && typeOps.length > 0) return typeOps;
+    return operations;
+  };
+
   const getOpProgress = (typeIndex: number, op: string, typeCutPieces: number) => {
     const completed = progressMap[`${typeIndex}-${op}`] || 0;
     if (typeCutPieces === 0) return 0;
@@ -35,11 +44,11 @@ export const BatchProductionSection = ({ batchId, operations = [], rollsData = [
   };
 
   const getTypeOverallProgress = (typeIndex: number, typeCutPieces: number) => {
-    if (operations.length === 0 || typeCutPieces === 0) return 0;
-    return Math.round(operations.reduce((sum, op) => sum + getOpProgress(typeIndex, op, typeCutPieces), 0) / operations.length);
+    const typeOps = getTypeOperations(typeIndex);
+    if (typeOps.length === 0 || typeCutPieces === 0) return 0;
+    return Math.round(typeOps.reduce((sum, op) => sum + getOpProgress(typeIndex, op, typeCutPieces), 0) / typeOps.length);
   };
 
-  // Overall batch progress = average of all type progresses
   const totalCutPieces = Object.values(cuttingSummary).reduce((sum, val) => sum + val, 0);
   const overallProgress = rollsData.length > 0
     ? Math.round(rollsData.reduce((sum, _, idx) => {
@@ -51,12 +60,7 @@ export const BatchProductionSection = ({ batchId, operations = [], rollsData = [
   const handleSave = async (typeIndex: number, operation: string, maxPieces: number) => {
     const value = parseInt(editValue) || 0;
     if (value > maxPieces) return;
-    await upsertMutation.mutateAsync({
-      batchId,
-      operation,
-      completedPieces: value,
-      typeIndex,
-    });
+    await upsertMutation.mutateAsync({ batchId, operation, completedPieces: value, typeIndex });
     setEditingKey(null);
     setEditValue('');
   };
@@ -73,8 +77,20 @@ export const BatchProductionSection = ({ batchId, operations = [], rollsData = [
     return 'bg-primary';
   };
 
+  const isTypeOpen = (idx: number) => {
+    if (openTypes[idx] !== undefined) return openTypes[idx];
+    return allExpanded;
+  };
+
   const toggleType = (idx: number) => {
-    setOpenTypes(prev => ({ ...prev, [idx]: !prev[idx] }));
+    setOpenTypes(prev => ({ ...prev, [idx]: !isTypeOpen(idx) }));
+  };
+
+  const handleExpandCollapseAll = (expanded: boolean) => {
+    setAllExpanded(expanded);
+    const newState: Record<number, boolean> = {};
+    rollsData.forEach((_, idx) => { newState[idx] = expanded; });
+    setOpenTypes(newState);
   };
 
   if (operations.length === 0) {
@@ -83,9 +99,7 @@ export const BatchProductionSection = ({ batchId, operations = [], rollsData = [
         <CardContent className="py-12 text-center">
           <AlertCircle className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
           <p className="text-muted-foreground">No operations configured for this batch.</p>
-          <p className="text-sm text-muted-foreground mt-1">
-            Edit batch details to add operations like Cutting, Stitching, Checking, etc.
-          </p>
+          <p className="text-sm text-muted-foreground mt-1">Edit batch details to add operations.</p>
         </CardContent>
       </Card>
     );
@@ -137,18 +151,32 @@ export const BatchProductionSection = ({ batchId, operations = [], rollsData = [
         </Card>
       </div>
 
-      {/* Overall Progress Bar */}
+      {/* Overall Progress Bar + Expand/Collapse Toggle */}
       <Card>
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium">Overall Batch Progress</span>
-            <span className={`text-sm font-bold ${getStatusColor(overallProgress)}`}>{overallProgress}%</span>
+        <CardContent className="p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium">Overall Batch Progress</span>
+                <span className={`text-sm font-bold ${getStatusColor(overallProgress)}`}>{overallProgress}%</span>
+              </div>
+              <div className="relative h-4 w-full overflow-hidden rounded-full bg-secondary">
+                <div
+                  className={`h-full transition-all duration-500 rounded-full ${getProgressColor(overallProgress)}`}
+                  style={{ width: `${overallProgress}%` }}
+                />
+              </div>
+            </div>
           </div>
-          <div className="relative h-4 w-full overflow-hidden rounded-full bg-secondary">
-            <div
-              className={`h-full transition-all duration-500 rounded-full ${getProgressColor(overallProgress)}`}
-              style={{ width: `${overallProgress}%` }}
+          <div className="flex items-center gap-2 pt-1 border-t">
+            <Switch
+              id="expand-all"
+              checked={allExpanded}
+              onCheckedChange={handleExpandCollapseAll}
             />
+            <Label htmlFor="expand-all" className="text-sm text-muted-foreground cursor-pointer">
+              {allExpanded ? 'Collapse All Types' : 'Expand All Types'}
+            </Label>
           </div>
         </CardContent>
       </Card>
@@ -156,8 +184,9 @@ export const BatchProductionSection = ({ batchId, operations = [], rollsData = [
       {/* Type-wise Progress */}
       {rollsData.map((type, typeIndex) => {
         const typeCutPieces = cuttingSummary[typeIndex] || 0;
+        const typeOps = getTypeOperations(typeIndex);
         const typeProgress = getTypeOverallProgress(typeIndex, typeCutPieces);
-        const isOpen = openTypes[typeIndex] !== false; // default open
+        const isOpen = isTypeOpen(typeIndex);
         const typeLabel = `Type ${typeIndex + 1}: ${type.color || 'N/A'} - ${type.fabric_type || type.fabricType || 'Fabric'}`;
 
         return (
@@ -185,7 +214,7 @@ export const BatchProductionSection = ({ batchId, operations = [], rollsData = [
                   {typeCutPieces === 0 ? (
                     <p className="text-sm text-muted-foreground py-4 text-center">No pieces cut yet for this type. Add cutting entries first.</p>
                   ) : (
-                    operations.map((op) => {
+                    typeOps.map((op) => {
                       const key = `${typeIndex}-${op}`;
                       const completed = progressMap[key] || 0;
                       const percent = getOpProgress(typeIndex, op, typeCutPieces);

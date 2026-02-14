@@ -68,10 +68,10 @@ const BatchDetailsPage = () => {
 
   const rollsData = (batch.rolls_data || []) as any[];
   
-  // Extract operations from rolls_data
-  const batchOperations: string[] = rollsData.length > 0 && rollsData[0]?.operations
-    ? (rollsData[0].operations as string[])
-    : [];
+  // Extract unique operations across all types
+  const batchOperations: string[] = Array.from(
+    new Set(rollsData.flatMap((type: any) => type.operations || []))
+  );
   
   const totalLabourCost = productionEntries?.reduce((sum, entry) => sum + entry.total_amount, 0) || 0;
   const totalExpenses = expenses?.reduce((sum, exp) => sum + exp.amount, 0) || 0;
