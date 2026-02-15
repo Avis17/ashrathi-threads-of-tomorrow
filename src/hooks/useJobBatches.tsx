@@ -9,12 +9,28 @@ export const useJobBatches = () => {
   return useQuery({
     queryKey: ['job-batches'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('job_batches')
-        .select('*, job_styles(style_name, style_code)')
-        .order('date_created', { ascending: false });
+      const [{ data: batches, error }, { data: cuttingTotals, error: cutError }] = await Promise.all([
+        supabase
+          .from('job_batches')
+          .select('*, job_styles(style_name, style_code)')
+          .order('date_created', { ascending: false }),
+        supabase
+          .from('batch_cutting_logs')
+          .select('batch_id, pieces_cut'),
+      ]);
       if (error) throw error;
-      return data;
+      if (cutError) throw cutError;
+
+      // Aggregate cutting totals per batch
+      const cutMap: Record<string, number> = {};
+      cuttingTotals?.forEach((log: any) => {
+        cutMap[log.batch_id] = (cutMap[log.batch_id] || 0) + log.pieces_cut;
+      });
+
+      return (batches || []).map((b: any) => ({
+        ...b,
+        total_cut_pieces: cutMap[b.id] || 0,
+      }));
     },
   });
 };

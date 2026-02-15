@@ -192,15 +192,7 @@ const BatchesManager = () => {
                     </td>
                     <td className="px-4 py-3">
                       <div className="text-sm">
-                        <div className="font-semibold">
-                          {(() => {
-                            const rollsData = (batch.rolls_data || []) as any[];
-                            const totalExpected = rollsData.reduce((sum: number, type: any) => 
-                              sum + (type.variations || []).reduce((vSum: number, v: any) => vSum + (Number(v.expectedPieces) || 0), 0), 0
-                            );
-                            return totalExpected > 0 ? `${totalExpected} pcs` : `${batch.final_quantity || batch.expected_pieces || 0} pcs`;
-                          })()}
-                        </div>
+                        <div className="font-semibold">{batch.total_cut_pieces || 0} pcs</div>
                         <div className="text-xs text-muted-foreground">Expected: {batch.expected_pieces || 0}</div>
                       </div>
                     </td>
