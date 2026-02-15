@@ -8,6 +8,7 @@ import { useState } from 'react';
 interface CostBreakdown {
   salaryTotal: number;
   expenseTotal: number;
+  jobWorkTotal?: number;
 }
 
 interface BatchOverviewSectionProps {
@@ -130,6 +131,12 @@ export const BatchOverviewSection = ({
                       <span className="text-muted-foreground">Expenses</span>
                       <span className="font-medium">₹{costBreakdown.expenseTotal.toFixed(2)}</span>
                     </div>
+                    {(costBreakdown.jobWorkTotal ?? 0) > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Job Work</span>
+                        <span className="font-medium">₹{costBreakdown.jobWorkTotal!.toFixed(2)}</span>
+                      </div>
+                    )}
                   </div>
                 )}
               </CollapsibleContent>
