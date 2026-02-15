@@ -63,6 +63,29 @@ export const useAddCuttingLog = () => {
   });
 };
 
+export const useUpdateCuttingLog = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, batchId, pieces_cut }: { id: string; batchId: string; pieces_cut: number }) => {
+      const { error } = await supabase
+        .from('batch_cutting_logs')
+        .update({ pieces_cut })
+        .eq('id', id);
+      if (error) throw error;
+      return batchId;
+    },
+    onSuccess: (batchId) => {
+      queryClient.invalidateQueries({ queryKey: ['batch-cutting-logs', batchId] });
+      queryClient.invalidateQueries({ queryKey: ['job-batch', batchId] });
+      queryClient.invalidateQueries({ queryKey: ['job-batches'] });
+      toast.success('Cutting log updated');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to update cutting log');
+    },
+  });
+};
+
 export const useDeleteCuttingLog = () => {
   const queryClient = useQueryClient();
   return useMutation({

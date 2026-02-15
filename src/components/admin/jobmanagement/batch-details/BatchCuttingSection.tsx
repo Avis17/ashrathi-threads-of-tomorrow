@@ -7,8 +7,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Scissors, Plus, Trash2, Calendar, CheckCircle, AlertTriangle, Scale } from 'lucide-react';
-import { useAddCuttingLog, useDeleteCuttingLog, CuttingLog } from '@/hooks/useBatchCuttingLogs';
+import { Scissors, Plus, Trash2, Calendar, CheckCircle, AlertTriangle, Scale, Pencil, Check, X } from 'lucide-react';
+import { useAddCuttingLog, useDeleteCuttingLog, useUpdateCuttingLog, CuttingLog } from '@/hooks/useBatchCuttingLogs';
 import { useBatchCuttingWastage } from '@/hooks/useBatchCuttingWastage';
 import { format } from 'date-fns';
 import {
@@ -34,9 +34,12 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
   const [piecesCut, setPiecesCut] = useState('');
   const [notes, setNotes] = useState('');
   const [deleteLogId, setDeleteLogId] = useState<string | null>(null);
+  const [editingLogId, setEditingLogId] = useState<string | null>(null);
+  const [editPiecesCut, setEditPiecesCut] = useState('');
 
   const addLogMutation = useAddCuttingLog();
   const deleteLogMutation = useDeleteCuttingLog();
+  const updateLogMutation = useUpdateCuttingLog();
   const { data: wastageEntries } = useBatchCuttingWastage(batch.id);
 
   const handleAddLog = async () => {
@@ -299,12 +302,56 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
                           <TableRow key={log.id}>
                             <TableCell><Badge variant="outline">{log.type_index + 1}</Badge></TableCell>
                             <TableCell className="font-medium">{log.color}</TableCell>
-                            <TableCell><Badge>{log.pieces_cut} pcs</Badge></TableCell>
+                            <TableCell>
+                              {editingLogId === log.id ? (
+                                <div className="flex items-center gap-1">
+                                  <Input
+                                    type="number"
+                                    value={editPiecesCut}
+                                    onChange={(e) => setEditPiecesCut(e.target.value)}
+                                    className="h-8 w-20"
+                                    autoFocus
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') {
+                                        const val = parseInt(editPiecesCut);
+                                        if (!isNaN(val) && val > 0) {
+                                          updateLogMutation.mutate({ id: log.id, batchId: batch.id, pieces_cut: val });
+                                          setEditingLogId(null);
+                                        }
+                                      } else if (e.key === 'Escape') {
+                                        setEditingLogId(null);
+                                      }
+                                    }}
+                                  />
+                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-green-600" onClick={() => {
+                                    const val = parseInt(editPiecesCut);
+                                    if (!isNaN(val) && val > 0) {
+                                      updateLogMutation.mutate({ id: log.id, batchId: batch.id, pieces_cut: val });
+                                      setEditingLogId(null);
+                                    }
+                                  }}>
+                                    <Check className="h-3.5 w-3.5" />
+                                  </Button>
+                                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditingLogId(null)}>
+                                    <X className="h-3.5 w-3.5" />
+                                  </Button>
+                                </div>
+                              ) : (
+                                <Badge className="cursor-pointer" onClick={() => { setEditingLogId(log.id); setEditPiecesCut(log.pieces_cut.toString()); }}>
+                                  {log.pieces_cut} pcs
+                                </Badge>
+                              )}
+                            </TableCell>
                             <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">{log.notes || '-'}</TableCell>
                             <TableCell>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteLogId(log.id)}>
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+                              <div className="flex items-center gap-1">
+                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingLogId(log.id); setEditPiecesCut(log.pieces_cut.toString()); }}>
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteLogId(log.id)}>
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
                             </TableCell>
                           </TableRow>
                         ))}
