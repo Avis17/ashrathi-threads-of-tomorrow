@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -26,6 +27,7 @@ const PAYMENT_COLORS: Record<string, string> = {
 };
 
 export const BatchJobWorkSection = ({ batchId, rollsData, cuttingSummary }: Props) => {
+  const navigate = useNavigate();
   const [showForm, setShowForm] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -95,6 +97,7 @@ export const BatchJobWorkSection = ({ batchId, rollsData, cuttingSummary }: Prop
                   isExpanded={expandedId === jw.id}
                   onToggle={() => setExpandedId(expandedId === jw.id ? null : jw.id)}
                   onDelete={() => setDeleteId(jw.id)}
+                  onView={() => navigate(`/admin/job-management/batch/${batchId}/job-work/${jw.id}`)}
                 />
               ))}
             </div>
@@ -141,11 +144,13 @@ const JobWorkRow = ({
   isExpanded,
   onToggle,
   onDelete,
+  onView,
 }: {
   jobWork: any;
   isExpanded: boolean;
   onToggle: () => void;
   onDelete: () => void;
+  onView: () => void;
 }) => {
   const { data: operations = [] } = useJobWorkOperations(isExpanded ? jobWork.id : undefined);
 
@@ -173,6 +178,9 @@ const JobWorkRow = ({
                   Paid: ₹{jobWork.paid_amount.toFixed(2)}
                 </p>
               </div>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); onView(); }}>
+                <Eye className="h-4 w-4" />
+              </Button>
               <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={(e) => { e.stopPropagation(); onDelete(); }}>
                 <Trash2 className="h-4 w-4" />
               </Button>
