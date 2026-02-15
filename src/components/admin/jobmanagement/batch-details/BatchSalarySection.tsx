@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { IndianRupee, Save, Loader2, Trash2, ChevronDown, ChevronRight, ExternalLink, Plus } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useBatchSalaryEntries, useUpsertBatchSalary, useDeleteBatchSalary, BatchSalaryEntry } from '@/hooks/useBatchSalary';
+import { useBatchJobWorks } from '@/hooks/useJobWorks';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -59,6 +60,7 @@ interface Props {
 }
 
 export const BatchSalarySection = ({ batchId, rollsData, cuttingSummary, totalCutPieces = 0 }: Props) => {
+  const { data: jobWorks = [] } = useBatchJobWorks(batchId);
   const styleGroups = useMemo(() => {
     const groups: Record<string, { styleId: string; typeIndices: number[]; colors: string[] }> = {};
     rollsData.forEach((type, idx) => {
@@ -154,6 +156,18 @@ export const BatchSalarySection = ({ batchId, rollsData, cuttingSummary, totalCu
           group.typeIndices.flatMap(idx => rollsData[idx]?.operations || [])
         ));
 
+        // Calculate job work pieces per operation for this style's type indices
+        const jobWorkPiecesPerOp: Record<string, number> = {};
+        jobWorks.forEach(jw => {
+          const variations = (jw.variations || []) as Array<{ type_index: number; style_id: string; pieces: number }>;
+          const relevantVariations = variations.filter(v => group.typeIndices.includes(v.type_index));
+          if (relevantVariations.length === 0) return;
+          const jwPieces = relevantVariations.reduce((sum, v) => sum + (v.pieces || 0), 0);
+          // Get operations from job work operations (query separately) - use the job work's operations from batch_job_work_operations
+          // Since we don't have individual operations here, we check the operations table via the hook
+          // For now, we'll pass the full job work data and let StyleSalaryCard handle it
+        });
+
         return (
           <StyleSalaryCard
             key={group.styleId}
@@ -166,6 +180,8 @@ export const BatchSalarySection = ({ batchId, rollsData, cuttingSummary, totalCu
             operations={operations}
             existingEntries={(existingEntries || []).filter(e => e.style_id === group.styleId)}
             colors={group.colors}
+            typeIndices={group.typeIndices}
+            jobWorks={jobWorks}
           />
         );
       })}
@@ -179,20 +195,23 @@ function buildDefaultEntries(
   cmtOps: CMTOperation[],
   cmtApproved: CMTApprovedRates | null,
   totalPieces: number,
+  jobWorkPiecesPerOp: Record<string, number> = {},
 ): LocalEntry[] {
   const entries: LocalEntry[] = [];
 
   operations.forEach(operation => {
     const rates = getApprovedRatesForOp(operation, cmtOps, cmtApproved);
+    const jwPieces = jobWorkPiecesPerOp[operation] || 0;
+    const effectivePieces = Math.max(0, totalPieces - jwPieces);
     rates.forEach(r => {
       entries.push({
         operation,
         description: r.description,
         rate_per_piece: r.rate,
-        quantity: totalPieces,
+        quantity: effectivePieces,
         payment_status: 'pending',
         paid_amount: 0,
-        notes: '',
+        notes: jwPieces > 0 ? `${jwPieces} pcs in Job Work` : '',
       });
     });
   });
@@ -282,7 +301,7 @@ function mergeEntries(
 }
 
 const StyleSalaryCard = ({
-  batchId, styleId, style, cmt, cmtId, totalPieces, operations, existingEntries, colors,
+  batchId, styleId, style, cmt, cmtId, totalPieces, operations, existingEntries, colors, typeIndices, jobWorks,
 }: {
   batchId: string;
   styleId: string;
@@ -293,6 +312,8 @@ const StyleSalaryCard = ({
   operations: string[];
   existingEntries: BatchSalaryEntry[];
   colors: string[];
+  typeIndices?: number[];
+  jobWorks?: import('@/hooks/useJobWorks').BatchJobWork[];
 }) => {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(true);
@@ -304,11 +325,45 @@ const StyleSalaryCard = ({
   const cmtApproved = cmt?.approved_rates as CMTApprovedRates | null;
   const cmtOps = (cmt?.operations || []) as CMTOperation[];
 
+  // Calculate job work pieces per operation for relevant type indices
+  const { data: allJwOps = [] } = useQuery({
+    queryKey: ['jw-ops-for-salary', typeIndices, jobWorks?.map(jw => jw.id)],
+    queryFn: async () => {
+      if (!jobWorks || jobWorks.length === 0 || !typeIndices) return [];
+      // Filter job works that include our type indices
+      const relevantJwIds: string[] = [];
+      const jwPiecesMap: Record<string, number> = {}; // jwId -> pieces for our types
+      jobWorks.forEach(jw => {
+        const variations = (jw.variations || []) as Array<{ type_index: number; pieces: number }>;
+        const relevant = variations.filter(v => typeIndices.includes(v.type_index));
+        if (relevant.length > 0) {
+          relevantJwIds.push(jw.id);
+          jwPiecesMap[jw.id] = relevant.reduce((s, v) => s + (v.pieces || 0), 0);
+        }
+      });
+      if (relevantJwIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from('batch_job_work_operations')
+        .select('job_work_id, operation, quantity')
+        .in('job_work_id', relevantJwIds);
+      if (error) throw error;
+      return (data || []).map(op => ({ ...op, relevantPieces: jwPiecesMap[op.job_work_id] || 0 }));
+    },
+    enabled: !!jobWorks && jobWorks.length > 0 && !!typeIndices,
+  });
+
+  // Build map: operation -> total pieces sent to job work
+  const jobWorkPiecesPerOp: Record<string, number> = {};
+  allJwOps.forEach(op => {
+    const opName = op.operation;
+    jobWorkPiecesPerOp[opName] = (jobWorkPiecesPerOp[opName] || 0) + (op.relevantPieces || 0);
+  });
+
   useEffect(() => {
-    const defaults = buildDefaultEntries(operations, cmtOps, cmtApproved, totalPieces);
+    const defaults = buildDefaultEntries(operations, cmtOps, cmtApproved, totalPieces, jobWorkPiecesPerOp);
     const merged = mergeEntries(existingEntries, defaults);
     setLocalEntries(merged);
-  }, [existingEntries, operations.length, cmtOps.length, totalPieces]);
+  }, [existingEntries, operations.length, cmtOps.length, totalPieces, JSON.stringify(jobWorkPiecesPerOp)]);
 
   const updateEntry = (idx: number, field: keyof LocalEntry, value: any) => {
     setLocalEntries(prev => prev.map((e, i) => i === idx ? { ...e, [field]: value } : e));

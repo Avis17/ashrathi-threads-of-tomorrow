@@ -3725,6 +3725,47 @@ export type Database = {
           },
         ]
       }
+      job_work_payments: {
+        Row: {
+          adjustment: number
+          calculated_amount: number
+          created_at: string
+          id: string
+          job_work_id: string
+          notes: string | null
+          payment_amount: number
+          payment_date: string
+        }
+        Insert: {
+          adjustment?: number
+          calculated_amount?: number
+          created_at?: string
+          id?: string
+          job_work_id: string
+          notes?: string | null
+          payment_amount?: number
+          payment_date?: string
+        }
+        Update: {
+          adjustment?: number
+          calculated_amount?: number
+          created_at?: string
+          id?: string
+          job_work_id?: string
+          notes?: string | null
+          payment_amount?: number
+          payment_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_work_payments_job_work_id_fkey"
+            columns: ["job_work_id"]
+            isOneToOne: false
+            referencedRelation: "batch_job_works"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       job_workers: {
         Row: {
           address: string | null
