@@ -16,6 +16,7 @@ import { useJobBatch, useUpdateJobBatch } from '@/hooks/useJobBatches';
 import { useJobProductionEntries } from '@/hooks/useJobProduction';
 import { useJobBatchExpenses } from '@/hooks/useJobExpenses';
 import { useBatchCuttingLogs } from '@/hooks/useBatchCuttingLogs';
+import { useBatchSalaryEntries } from '@/hooks/useBatchSalary';
 import { format } from 'date-fns';
 import { BatchCuttingSection } from '@/components/admin/jobmanagement/batch-details/BatchCuttingSection';
 import { BatchOverviewSection } from '@/components/admin/jobmanagement/batch-details/BatchOverviewSection';
@@ -40,6 +41,7 @@ const BatchDetailsPage = () => {
   const { data: productionEntries } = useJobProductionEntries(id || '');
   const { data: expenses } = useJobBatchExpenses(id || '');
   const { data: cuttingLogs } = useBatchCuttingLogs(id || '');
+  const { data: salaryEntries } = useBatchSalaryEntries(id || '');
   const updateBatchMutation = useUpdateJobBatch();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
 
@@ -76,7 +78,8 @@ const BatchDetailsPage = () => {
   
   const totalLabourCost = productionEntries?.reduce((sum, entry) => sum + entry.total_amount, 0) || 0;
   const totalExpenses = expenses?.reduce((sum, exp) => sum + exp.amount, 0) || 0;
-  const totalCost = totalLabourCost + totalExpenses;
+  const totalSalary = salaryEntries?.reduce((sum, e) => sum + (e.rate_per_piece * e.quantity), 0) || 0;
+  const totalCost = totalSalary + totalExpenses;
 
   // Calculate cutting summary per type
   const cuttingSummary: Record<number, number> = {};
@@ -164,6 +167,7 @@ const BatchDetailsPage = () => {
         totalCutPieces={totalCutPieces}
         totalCost={totalCost}
         totalProductionPieces={totalProductionPieces}
+        costBreakdown={{ salaryTotal: totalSalary, expenseTotal: totalExpenses }}
       />
 
       {/* Main Tabs */}
