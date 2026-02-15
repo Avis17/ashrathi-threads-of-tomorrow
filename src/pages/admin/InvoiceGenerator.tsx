@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -46,6 +47,8 @@ interface InvoiceItem {
 export default function InvoiceGenerator() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const location = useLocation();
+  const prefillState = location.state as { prefillItems?: any[]; prefillGst?: { taxType: 'intra' | 'inter'; cgstRate: string; sgstRate: string }; prefillSource?: string } | null;
   const [invoiceDate, setInvoiceDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [invoiceType, setInvoiceType] = useState('Feather Fashions');
   const [customerId, setCustomerId] = useState('');
@@ -81,6 +84,22 @@ export default function InvoiceGenerator() {
   const calculatedRate = calcTotalAmount && calcQuantity && Number(calcQuantity) > 0 
     ? (Number(calcTotalAmount) / Number(calcQuantity)).toFixed(2) 
     : '0.00';
+
+  // Handle prefill from batch invoice dialog
+  useEffect(() => {
+    if (prefillState?.prefillItems) {
+      setItems(prefillState.prefillItems);
+    }
+    if (prefillState?.prefillGst) {
+      setTaxType(prefillState.prefillGst.taxType);
+      setCgstRate(prefillState.prefillGst.cgstRate);
+      setSgstRate(prefillState.prefillGst.sgstRate);
+    }
+    // Clear the state so it doesn't re-apply on re-render
+    if (prefillState) {
+      window.history.replaceState({}, document.title);
+    }
+  }, []);
 
   const { data: customers } = useQuery({
     queryKey: ['customers'],
