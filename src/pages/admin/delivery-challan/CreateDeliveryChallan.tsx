@@ -253,11 +253,24 @@ export default function CreateDeliveryChallan() {
             remarks: item.remarks || '',
           })));
         }
+
+        // Auto-select worker by GSTIN match
+        if (prefill.job_worker_gstin) {
+          const matched = jobWorkers.find(w => w.gstin && w.gstin === prefill.job_worker_gstin);
+          if (matched) {
+            setSelectedWorkerId(matched.id);
+          }
+        } else if (prefill.job_worker_name) {
+          const matched = jobWorkers.find(w => w.name === prefill.job_worker_name);
+          if (matched) {
+            setSelectedWorkerId(matched.id);
+          }
+        }
       } catch (e) {
         // Invalid JSON, ignore
       }
     }
-  }, [searchParams, isEditMode, fromJob]);
+  }, [searchParams, isEditMode, fromJob, jobWorkers]);
 
   const handleWorkerSelect = (workerId: string) => {
     setSelectedWorkerId(workerId);
