@@ -335,6 +335,69 @@ export type Database = {
           },
         ]
       }
+      batch_salary_entries: {
+        Row: {
+          batch_id: string
+          created_at: string
+          description: string | null
+          id: string
+          notes: string | null
+          operation: string
+          paid_amount: number
+          payment_status: string
+          quantity: number
+          rate_per_piece: number
+          style_id: string
+          total_amount: number | null
+          updated_at: string
+        }
+        Insert: {
+          batch_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          notes?: string | null
+          operation: string
+          paid_amount?: number
+          payment_status?: string
+          quantity?: number
+          rate_per_piece?: number
+          style_id: string
+          total_amount?: number | null
+          updated_at?: string
+        }
+        Update: {
+          batch_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          notes?: string | null
+          operation?: string
+          paid_amount?: number
+          payment_status?: string
+          quantity?: number
+          rate_per_piece?: number
+          style_id?: string
+          total_amount?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "batch_salary_entries_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "job_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "batch_salary_entries_style_id_fkey"
+            columns: ["style_id"]
+            isOneToOne: false
+            referencedRelation: "job_styles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       batch_sales: {
         Row: {
           batch_id: string
