@@ -191,19 +191,27 @@ const BatchesManager = () => {
                       {format(new Date(batch.date_created), 'MMM dd, yyyy')}
                     </td>
                     <td className="px-4 py-3">
-                      <Badge className={`${getPaymentStatusColor(batch.payment_status || 'unpaid')} text-white`}>
-                        {getPaymentStatusLabel(batch.payment_status || 'unpaid')}
-                      </Badge>
-                    </td>
-                    <td className="px-4 py-3">
                       <div className="text-sm">
-                        <div className="font-semibold">{batch.final_quantity || batch.expected_pieces} pcs</div>
-                        <div className="text-xs text-muted-foreground">Expected: {batch.expected_pieces}</div>
+                        <div className="font-semibold">
+                          {(() => {
+                            const rollsData = (batch.rolls_data || []) as any[];
+                            const totalExpected = rollsData.reduce((sum: number, type: any) => 
+                              sum + (type.variations || []).reduce((vSum: number, v: any) => vSum + (Number(v.expectedPieces) || 0), 0), 0
+                            );
+                            return totalExpected > 0 ? `${totalExpected} pcs` : `${batch.final_quantity || batch.expected_pieces || 0} pcs`;
+                          })()}
+                        </div>
+                        <div className="text-xs text-muted-foreground">Expected: {batch.expected_pieces || 0}</div>
                       </div>
                     </td>
                     <td className="px-4 py-3">
                       <Badge className={`${getStatusColor(batch.status)} text-white`}>
                         {batch.status}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge className={`${getPaymentStatusColor(batch.payment_status || 'unpaid')} text-white`}>
+                        {getPaymentStatusLabel(batch.payment_status || 'unpaid')}
                       </Badge>
                     </td>
                     <td className="px-4 py-3">
