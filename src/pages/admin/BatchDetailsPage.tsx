@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Package, Scissors, FileText, DollarSign, Users, Settings, Edit, IndianRupee, Briefcase, BarChart3 } from 'lucide-react';
+import { ArrowLeft, Package, Scissors, FileText, DollarSign, Users, Settings, Edit, IndianRupee, Briefcase, BarChart3, Receipt } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -27,6 +27,7 @@ import { BatchExpensesSection } from '@/components/admin/jobmanagement/batch-det
 import { BatchSalarySection } from '@/components/admin/jobmanagement/batch-details/BatchSalarySection';
 import { BatchJobWorkSection } from '@/components/admin/jobmanagement/batch-details/BatchJobWorkSection';
 import EditBatchDialog from '@/components/admin/jobmanagement/EditBatchDialog';
+import { GenerateInvoiceDialog } from '@/components/admin/jobmanagement/batch-details/GenerateInvoiceDialog';
 
 const BATCH_STATUSES = [
   { value: 'created', label: 'Created', color: 'bg-blue-500' },
@@ -47,6 +48,7 @@ const BatchDetailsPage = () => {
   const { data: jobWorks } = useBatchJobWorks(id || '');
   const updateBatchMutation = useUpdateJobBatch();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [invoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -160,6 +162,10 @@ const BatchDetailsPage = () => {
           <Button variant="default" size="sm" onClick={() => navigate(`/admin/job-management/batch/${id}/dashboard`)}>
             <BarChart3 className="h-4 w-4 mr-1" />
             Dashboard
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setInvoiceDialogOpen(true)}>
+            <Receipt className="h-4 w-4 mr-1" />
+            Invoice
           </Button>
           <Button variant="outline" size="sm" onClick={() => setEditDialogOpen(true)}>
             <Edit className="h-4 w-4 mr-1" />
@@ -283,6 +289,16 @@ const BatchDetailsPage = () => {
         open={editDialogOpen} 
         onOpenChange={setEditDialogOpen} 
         batch={batch} 
+      />
+
+      {/* Generate Invoice Dialog */}
+      <GenerateInvoiceDialog
+        open={invoiceDialogOpen}
+        onOpenChange={setInvoiceDialogOpen}
+        batchId={id || ''}
+        batchNumber={batch.batch_number}
+        rollsData={rollsData}
+        cuttingSummary={cuttingSummary}
       />
     </div>
   );
