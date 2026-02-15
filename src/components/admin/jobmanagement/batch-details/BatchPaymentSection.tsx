@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Plus, Trash2, CreditCard, Banknote } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,6 +30,8 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useBatchPayments, useCreateBatchPayment, useDeleteBatchPayment } from '@/hooks/useBatchPayments';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 
 interface BatchPaymentSectionProps {
@@ -51,13 +53,28 @@ export const BatchPaymentSection = ({ batchId, rollsData }: BatchPaymentSectionP
   const [formOpen, setFormOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  // Extract unique styles from rollsData
-  const styles = rollsData.reduce((acc: any[], type: any) => {
-    if (type.style_id && type.style_name && !acc.find(s => s.id === type.style_id)) {
-      acc.push({ id: type.style_id, name: type.style_name, code: type.style_code });
-    }
-    return acc;
-  }, []);
+  // Extract unique style IDs from rollsData and fetch their details
+  const styleIds = useMemo(() => {
+    const ids = new Set<string>();
+    rollsData.forEach((type: any) => {
+      if (type.style_id) ids.add(type.style_id);
+    });
+    return Array.from(ids);
+  }, [rollsData]);
+
+  const { data: styles } = useQuery({
+    queryKey: ['batch-payment-styles', styleIds],
+    queryFn: async () => {
+      if (styleIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from('job_styles')
+        .select('id, style_name, style_code')
+        .in('id', styleIds);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: styleIds.length > 0,
+  });
 
   const [formData, setFormData] = useState({
     payment_date: new Date().toISOString().split('T')[0],
@@ -216,8 +233,8 @@ export const BatchPaymentSection = ({ batchId, rollsData }: BatchPaymentSectionP
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">All / General</SelectItem>
-                  {styles.map((s: any) => (
-                    <SelectItem key={s.id} value={s.id}>{s.name} ({s.code})</SelectItem>
+                  {(styles || []).map((s: any) => (
+                    <SelectItem key={s.id} value={s.id}>{s.style_name} ({s.style_code})</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
