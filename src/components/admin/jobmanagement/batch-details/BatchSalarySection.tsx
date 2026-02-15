@@ -7,13 +7,15 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { IndianRupee, Save, Loader2, Trash2, ChevronDown, ChevronRight, ExternalLink, Plus } from 'lucide-react';
+import { IndianRupee, Save, Loader2, Trash2, ChevronDown, ChevronRight, ExternalLink, Plus, Banknote } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useBatchSalaryEntries, useUpsertBatchSalary, useDeleteBatchSalary, BatchSalaryEntry } from '@/hooks/useBatchSalary';
 import { useBatchJobWorks } from '@/hooks/useJobWorks';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
+import { useBatchSalaryAdvances } from '@/hooks/useBatchSalaryAdvances';
+import { RecordAdvanceDialog } from './RecordAdvanceDialog';
 
 interface StyleInfo {
   id: string;
@@ -60,6 +62,7 @@ interface Props {
 }
 
 export const BatchSalarySection = ({ batchId, rollsData, cuttingSummary, totalCutPieces = 0 }: Props) => {
+  const navigate = useNavigate();
   const { data: jobWorks = [] } = useBatchJobWorks(batchId);
   const styleGroups = useMemo(() => {
     const groups: Record<string, { styleId: string; typeIndices: number[]; colors: string[] }> = {};
@@ -146,6 +149,14 @@ export const BatchSalarySection = ({ batchId, rollsData, cuttingSummary, totalCu
           <IndianRupee className="h-5 w-5 text-primary" />
           Salary Management
         </h3>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate(`/admin/job-management/batch/${batchId}/advances`)}
+        >
+          <Banknote className="h-4 w-4 mr-1" />
+          Advances
+        </Button>
       </div>
 
       {styleGroups.map(group => {
@@ -319,8 +330,10 @@ const StyleSalaryCard = ({
   const [isOpen, setIsOpen] = useState(true);
   const [localEntries, setLocalEntries] = useState<LocalEntry[]>([]);
   const [savingIdx, setSavingIdx] = useState<number | null>(null);
+  const [advanceDialog, setAdvanceDialog] = useState<{ open: boolean; idx: number } | null>(null);
   const upsertMutation = useUpsertBatchSalary();
   const deleteMutation = useDeleteBatchSalary();
+  const { data: allAdvances = [] } = useBatchSalaryAdvances(batchId);
 
   const cmtApproved = cmt?.approved_rates as CMTApprovedRates | null;
   const cmtOps = (cmt?.operations || []) as CMTOperation[];
@@ -417,9 +430,16 @@ const StyleSalaryCard = ({
     }]);
   };
 
+  // Helper: get advance total for an entry
+  const getAdvanceTotal = (entry: LocalEntry) => {
+    return allAdvances
+      .filter(a => a.style_id === styleId && a.operation === entry.operation && a.description === (entry.description || ''))
+      .reduce((sum, a) => sum + Number(a.amount), 0);
+  };
+
   const totalAmount = localEntries.reduce((sum, e) => sum + (e.rate_per_piece * e.quantity), 0);
-  const totalPaid = localEntries.reduce((sum, e) => sum + e.paid_amount, 0);
-  const totalBalance = totalAmount - totalPaid;
+  const totalAdvanceGiven = localEntries.reduce((sum, e) => sum + getAdvanceTotal(e), 0);
+  const totalBalance = totalAmount - totalAdvanceGiven;
 
   return (
     <Card>
@@ -461,7 +481,7 @@ const StyleSalaryCard = ({
                 <div className="text-right">
                   <p className="font-semibold">₹{totalAmount.toFixed(2)}</p>
                   <p className="text-xs text-muted-foreground">
-                    Paid: ₹{totalPaid.toFixed(2)} | Bal: ₹{totalBalance.toFixed(2)}
+                    Adv: ₹{totalAdvanceGiven.toFixed(2)} | Bal: ₹{totalBalance.toFixed(2)}
                   </p>
                 </div>
               </div>
@@ -480,18 +500,18 @@ const StyleSalaryCard = ({
                     <TableHead className="w-[100px] text-right">Rate/Pc (₹)</TableHead>
                     <TableHead className="w-[100px] text-right">Quantity</TableHead>
                     <TableHead className="w-[110px] text-right">Amount (₹)</TableHead>
-                    <TableHead className="w-[110px]">Status</TableHead>
-                    <TableHead className="w-[100px] text-right">Paid (₹)</TableHead>
+                    <TableHead className="w-[100px] text-right">Advance (₹)</TableHead>
                     <TableHead className="w-[90px] text-right">Balance (₹)</TableHead>
                     <TableHead className="w-[180px]">Notes</TableHead>
                     <TableHead className="w-[130px]">Last Saved</TableHead>
-                    <TableHead className="w-[80px]">Actions</TableHead>
+                    <TableHead className="w-[110px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {localEntries.map((entry, idx) => {
                     const amount = entry.rate_per_piece * entry.quantity;
-                    const balance = amount - entry.paid_amount;
+                    const advanceGiven = getAdvanceTotal(entry);
+                    const balance = amount - advanceGiven;
                     return (
                       <TableRow key={`${entry.operation}-${entry.description}-${idx}`}>
                         <TableCell className="font-medium text-sm">
@@ -541,31 +561,13 @@ const StyleSalaryCard = ({
                           />
                         </TableCell>
                         <TableCell className="text-right font-medium text-sm">₹{amount.toFixed(2)}</TableCell>
-                        <TableCell>
-                          <Select
-                            value={entry.payment_status}
-                            onValueChange={v => updateEntry(idx, 'payment_status', v)}
-                          >
-                            <SelectTrigger className="h-8 w-[100px] text-xs">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="pending">Pending</SelectItem>
-                              <SelectItem value="partial">Partial</SelectItem>
-                              <SelectItem value="paid">Paid</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            value={entry.paid_amount}
-                            onChange={e => updateEntry(idx, 'paid_amount', parseFloat(e.target.value) || 0)}
-                            className="h-8 w-20 text-right text-sm"
-                          />
+                        <TableCell className="text-right text-sm">
+                          <span className={advanceGiven > 0 ? 'text-primary font-medium' : 'text-muted-foreground'}>
+                            ₹{advanceGiven.toFixed(2)}
+                          </span>
                         </TableCell>
                         <TableCell className="text-right text-sm">
-                          <span className={balance > 0 ? 'text-destructive' : 'text-primary'}>
+                          <span className={balance > 0 ? 'text-destructive font-medium' : 'text-primary'}>
                             ₹{balance.toFixed(2)}
                           </span>
                         </TableCell>
@@ -585,6 +587,15 @@ const StyleSalaryCard = ({
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-1">
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-7 w-7 text-primary"
+                              title="Record Advance"
+                              onClick={() => setAdvanceDialog({ open: true, idx })}
+                            >
+                              <Banknote className="h-3.5 w-3.5" />
+                            </Button>
                             <Button
                               size="icon"
                               variant="ghost"
@@ -622,13 +633,29 @@ const StyleSalaryCard = ({
               </Button>
               <div className="flex gap-6 text-sm">
                 <div>Total: <span className="font-bold">₹{totalAmount.toFixed(2)}</span></div>
-                <div>Paid: <span className="font-bold text-primary">₹{totalPaid.toFixed(2)}</span></div>
+                <div>Advanced: <span className="font-bold text-primary">₹{totalAdvanceGiven.toFixed(2)}</span></div>
                 <div>Balance: <span className="font-bold text-destructive">₹{totalBalance.toFixed(2)}</span></div>
               </div>
             </div>
           </CardContent>
         </CollapsibleContent>
       </Collapsible>
+
+      {/* Advance Dialog */}
+      {advanceDialog && (
+        <RecordAdvanceDialog
+          open={advanceDialog.open}
+          onOpenChange={(open) => !open && setAdvanceDialog(null)}
+          batchId={batchId}
+          styleId={styleId}
+          operation={localEntries[advanceDialog.idx]?.operation || ''}
+          description={localEntries[advanceDialog.idx]?.description || ''}
+          maxAmount={
+            (localEntries[advanceDialog.idx]?.rate_per_piece || 0) *
+            (localEntries[advanceDialog.idx]?.quantity || 0)
+          }
+        />
+      )}
     </Card>
   );
 };

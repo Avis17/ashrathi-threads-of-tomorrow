@@ -461,6 +461,45 @@ export type Database = {
           },
         ]
       }
+      batch_salary_advances: {
+        Row: {
+          advance_date: string
+          amount: number
+          batch_id: string
+          created_at: string
+          description: string
+          id: string
+          notes: string | null
+          operation: string
+          style_id: string
+          updated_at: string
+        }
+        Insert: {
+          advance_date?: string
+          amount: number
+          batch_id: string
+          created_at?: string
+          description?: string
+          id?: string
+          notes?: string | null
+          operation: string
+          style_id: string
+          updated_at?: string
+        }
+        Update: {
+          advance_date?: string
+          amount?: number
+          batch_id?: string
+          created_at?: string
+          description?: string
+          id?: string
+          notes?: string | null
+          operation?: string
+          style_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       batch_salary_entries: {
         Row: {
           batch_id: string
