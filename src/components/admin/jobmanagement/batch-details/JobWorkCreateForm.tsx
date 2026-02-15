@@ -10,12 +10,29 @@ import { useCreateJobWork } from '@/hooks/useJobWorks';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 
+const JOB_WORK_OPERATIONS = [
+  'Cutting',
+  'Stitching(Singer)',
+  'Stitching(Powertable)',
+  'Checking',
+  'Ironing',
+  'Packing',
+] as const;
+
 interface Props {
   batchId: string;
   rollsData: any[];
   cuttingSummary: Record<number, number>;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+}
+
+interface SelectedVariation {
+  index: number;
+  styleId: string;
+  color: string;
+  pieces: number;
+  label: string;
 }
 
 interface OperationRow {
@@ -26,20 +43,21 @@ interface OperationRow {
 }
 
 export const JobWorkCreateForm = ({ batchId, rollsData, cuttingSummary, open, onOpenChange }: Props) => {
-  const [selectedTypeIndex, setSelectedTypeIndex] = useState<string>('');
+  const [selectedVariations, setSelectedVariations] = useState<SelectedVariation[]>([]);
   const [companyId, setCompanyId] = useState<string>('');
   const [newCompanyName, setNewCompanyName] = useState('');
   const [isNewCompany, setIsNewCompany] = useState(false);
   const [notes, setNotes] = useState('');
   const [paidAmount, setPaidAmount] = useState('0');
+  const [companyProfit, setCompanyProfit] = useState('0');
   const [operations, setOperations] = useState<OperationRow[]>([
     { operation: '', rate_per_piece: 0, quantity: 0, notes: '' },
   ]);
 
   const createMutation = useCreateJobWork();
 
-  // Fetch companies
-  const { data: companies = [] } = useQuery({
+  // Fetch external_job_companies
+  const { data: externalCompanies = [] } = useQuery({
     queryKey: ['external-job-companies'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -51,6 +69,32 @@ export const JobWorkCreateForm = ({ batchId, rollsData, cuttingSummary, open, on
       return data;
     },
   });
+
+  // Fetch unique job worker names from delivery_challans
+  const { data: jobWorkerNames = [] } = useQuery({
+    queryKey: ['job-worker-companies'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('delivery_challans')
+        .select('job_worker_name')
+        .order('job_worker_name');
+      if (error) throw error;
+      const unique = [...new Set(data.map(d => d.job_worker_name).filter(Boolean))];
+      return unique;
+    },
+  });
+
+  // Merge companies: external + job workers (deduplicated)
+  const allCompanies = useMemo((): Array<{ id: string; name: string; source: string }> => {
+    const externalNames = new Set(externalCompanies.map(c => c.company_name.toLowerCase()));
+    const merged: Array<{ id: string; name: string; source: string }> = externalCompanies.map(c => ({ id: c.id, name: c.company_name, source: 'external' }));
+    jobWorkerNames.forEach(name => {
+      if (!externalNames.has(name.toLowerCase())) {
+        merged.push({ id: `jw_${name}`, name, source: 'job_worker' });
+      }
+    });
+    return merged.sort((a, b) => a.name.localeCompare(b.name));
+  }, [externalCompanies, jobWorkerNames]);
 
   // Fetch styles for the batch
   const styleIds = useMemo(() => {
@@ -86,23 +130,49 @@ export const JobWorkCreateForm = ({ batchId, rollsData, cuttingSummary, open, on
     });
   }, [rollsData, styles, cuttingSummary]);
 
-  const selectedType = typeOptions.find(t => t.index.toString() === selectedTypeIndex);
+  // Available options (exclude already selected)
+  const availableOptions = useMemo(() => {
+    const selectedIndices = new Set(selectedVariations.map(v => v.index));
+    return typeOptions.filter(opt => !selectedIndices.has(opt.index));
+  }, [typeOptions, selectedVariations]);
 
-  // Auto-fill quantity when type changes
+  // Total pieces from all selected variations
+  const totalPieces = useMemo(() => {
+    return selectedVariations.reduce((sum, v) => sum + v.pieces, 0);
+  }, [selectedVariations]);
+
+  // Auto-update operation quantities when total pieces changes
   useEffect(() => {
-    if (selectedType) {
+    if (totalPieces > 0) {
       setOperations(prev => prev.map(op => ({
         ...op,
-        quantity: op.quantity === 0 ? selectedType.pieces : op.quantity,
+        quantity: totalPieces,
       })));
     }
-  }, [selectedTypeIndex]);
+  }, [totalPieces]);
+
+  const addVariation = (indexStr: string) => {
+    const opt = typeOptions.find(t => t.index.toString() === indexStr);
+    if (opt) {
+      setSelectedVariations(prev => [...prev, {
+        index: opt.index,
+        styleId: opt.styleId,
+        color: opt.color,
+        pieces: opt.pieces,
+        label: opt.label,
+      }]);
+    }
+  };
+
+  const removeVariation = (index: number) => {
+    setSelectedVariations(prev => prev.filter(v => v.index !== index));
+  };
 
   const addOperation = () => {
     setOperations(prev => [...prev, {
       operation: '',
       rate_per_piece: 0,
-      quantity: selectedType?.pieces || 0,
+      quantity: totalPieces,
       notes: '',
     }]);
   };
@@ -116,16 +186,16 @@ export const JobWorkCreateForm = ({ batchId, rollsData, cuttingSummary, open, on
   };
 
   const totalAmount = operations.reduce((sum, op) => sum + (op.rate_per_piece * op.quantity), 0);
+  const profitAmount = (parseFloat(companyProfit) || 0) * totalPieces;
 
   const handleSubmit = async () => {
-    if (!selectedType || (!companyId && !newCompanyName)) return;
+    if (selectedVariations.length === 0 || (!companyId && !newCompanyName)) return;
     if (operations.some(op => !op.operation)) return;
 
-    let finalCompanyId: string | null = companyId || null;
+    let finalCompanyId: string | null = null;
     let finalCompanyName = '';
 
     if (isNewCompany && newCompanyName) {
-      // Create new company
       const { data: newComp, error } = await supabase
         .from('external_job_companies')
         .insert([{
@@ -136,28 +206,36 @@ export const JobWorkCreateForm = ({ batchId, rollsData, cuttingSummary, open, on
         }])
         .select()
         .single();
-      if (error) {
-        return;
-      }
+      if (error) return;
       finalCompanyId = newComp.id;
       finalCompanyName = newCompanyName;
     } else {
-      const comp = companies.find(c => c.id === companyId);
-      finalCompanyName = comp?.company_name || '';
+      const comp = allCompanies.find(c => c.id === companyId);
+      finalCompanyName = comp?.name || '';
+      finalCompanyId = comp?.source === 'external' ? comp.id : null;
     }
+
+    const firstVariation = selectedVariations[0];
 
     await createMutation.mutateAsync({
       jobWork: {
         batch_id: batchId,
-        style_id: selectedType.styleId,
-        type_index: selectedType.index,
-        color: selectedType.color,
-        pieces: selectedType.pieces,
+        style_id: firstVariation.styleId,
+        type_index: firstVariation.index,
+        color: firstVariation.color,
+        pieces: totalPieces,
         company_id: finalCompanyId,
         company_name: finalCompanyName,
         notes: notes || null,
         paid_amount: parseFloat(paidAmount) || 0,
         payment_status: 'pending',
+        company_profit: parseFloat(companyProfit) || 0,
+        variations: selectedVariations.map(v => ({
+          type_index: v.index,
+          style_id: v.styleId,
+          color: v.color,
+          pieces: v.pieces,
+        })),
       },
       operations: operations.map(op => ({
         operation: op.operation,
@@ -172,12 +250,13 @@ export const JobWorkCreateForm = ({ batchId, rollsData, cuttingSummary, open, on
   };
 
   const resetForm = () => {
-    setSelectedTypeIndex('');
+    setSelectedVariations([]);
     setCompanyId('');
     setNewCompanyName('');
     setIsNewCompany(false);
     setNotes('');
     setPaidAmount('0');
+    setCompanyProfit('0');
     setOperations([{ operation: '', rate_per_piece: 0, quantity: 0, notes: '' }]);
   };
 
@@ -189,23 +268,35 @@ export const JobWorkCreateForm = ({ batchId, rollsData, cuttingSummary, open, on
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          {/* Style & Color Selection */}
+          {/* Style & Color/Variation Selection - Multiple */}
           <div>
-            <Label>Style & Color/Variation *</Label>
-            <Select value={selectedTypeIndex} onValueChange={setSelectedTypeIndex}>
-              <SelectTrigger><SelectValue placeholder="Select style & color" /></SelectTrigger>
-              <SelectContent>
-                {typeOptions.map(opt => (
-                  <SelectItem key={opt.index} value={opt.index.toString()}>
-                    {opt.label}
-                  </SelectItem>
+            <Label className="text-base font-semibold">Style & Color/Variation *</Label>
+            {selectedVariations.length > 0 && (
+              <div className="space-y-2 mt-2 mb-2">
+                {selectedVariations.map(v => (
+                  <div key={v.index} className="flex items-center justify-between border rounded-md px-3 py-2 bg-muted/30">
+                    <span className="text-sm">{v.label}</span>
+                    <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeVariation(v.index)}>
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
                 ))}
-              </SelectContent>
-            </Select>
-            {selectedType && (
-              <p className="text-sm text-muted-foreground mt-1">
-                Auto-fetched: {selectedType.pieces} pieces cut
-              </p>
+                <p className="text-sm font-medium text-primary">
+                  Total Pieces: {totalPieces}
+                </p>
+              </div>
+            )}
+            {availableOptions.length > 0 && (
+              <Select value="" onValueChange={addVariation}>
+                <SelectTrigger><SelectValue placeholder="+ Add style & color variation" /></SelectTrigger>
+                <SelectContent>
+                  {availableOptions.map(opt => (
+                    <SelectItem key={opt.index} value={opt.index.toString()}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             )}
           </div>
 
@@ -233,8 +324,8 @@ export const JobWorkCreateForm = ({ batchId, rollsData, cuttingSummary, open, on
               <Select value={companyId} onValueChange={setCompanyId}>
                 <SelectTrigger><SelectValue placeholder="Select company" /></SelectTrigger>
                 <SelectContent>
-                  {companies.map(c => (
-                    <SelectItem key={c.id} value={c.id}>{c.company_name}</SelectItem>
+                  {allCompanies.map(c => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -256,11 +347,14 @@ export const JobWorkCreateForm = ({ batchId, rollsData, cuttingSummary, open, on
                   <div className="grid grid-cols-4 gap-3">
                     <div className="col-span-2">
                       <Label className="text-xs">Operation *</Label>
-                      <Input
-                        placeholder="e.g., Stitching, Embroidery"
-                        value={op.operation}
-                        onChange={e => updateOperation(idx, 'operation', e.target.value)}
-                      />
+                      <Select value={op.operation} onValueChange={v => updateOperation(idx, 'operation', v)}>
+                        <SelectTrigger><SelectValue placeholder="Select operation" /></SelectTrigger>
+                        <SelectContent>
+                          {JOB_WORK_OPERATIONS.map(o => (
+                            <SelectItem key={o} value={o}>{o}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div>
                       <Label className="text-xs">Rate/Pc (₹)</Label>
@@ -303,10 +397,39 @@ export const JobWorkCreateForm = ({ batchId, rollsData, cuttingSummary, open, on
             </div>
           </div>
 
+          {/* Company Profit */}
+          <div>
+            <Label>Company Profit (₹ per piece)</Label>
+            <div className="flex items-center gap-3">
+              <Input
+                type="number"
+                step="0.5"
+                className="max-w-[200px]"
+                value={companyProfit}
+                onChange={e => setCompanyProfit(e.target.value)}
+              />
+              {totalPieces > 0 && (
+                <span className="text-sm text-muted-foreground">
+                  Total Profit: ₹{profitAmount.toFixed(2)}
+                </span>
+              )}
+            </div>
+          </div>
+
           {/* Total */}
-          <div className="bg-muted/50 rounded-lg p-3 flex justify-between items-center">
-            <span className="font-medium">Total Amount</span>
-            <span className="text-lg font-bold">₹{totalAmount.toFixed(2)}</span>
+          <div className="bg-muted/50 rounded-lg p-3 space-y-1">
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">Operations Total</span>
+              <span className="font-semibold">₹{totalAmount.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">Company Profit</span>
+              <span className="font-semibold">₹{profitAmount.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between items-center border-t pt-1">
+              <span className="font-medium">Grand Total</span>
+              <span className="text-lg font-bold">₹{(totalAmount + profitAmount).toFixed(2)}</span>
+            </div>
           </div>
 
           {/* Notes */}
@@ -320,7 +443,7 @@ export const JobWorkCreateForm = ({ batchId, rollsData, cuttingSummary, open, on
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button
             onClick={handleSubmit}
-            disabled={!selectedType || (!companyId && !newCompanyName) || operations.some(op => !op.operation) || createMutation.isPending}
+            disabled={selectedVariations.length === 0 || (!companyId && !newCompanyName) || operations.some(op => !op.operation) || createMutation.isPending}
           >
             {createMutation.isPending ? 'Creating...' : 'Create Job Work'}
           </Button>
