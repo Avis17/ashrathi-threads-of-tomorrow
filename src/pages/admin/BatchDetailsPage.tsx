@@ -18,6 +18,7 @@ import { useJobBatchExpenses } from '@/hooks/useJobExpenses';
 import { useBatchCuttingLogs } from '@/hooks/useBatchCuttingLogs';
 import { useBatchSalaryEntries } from '@/hooks/useBatchSalary';
 import { useBatchJobWorks } from '@/hooks/useJobWorks';
+import { useBatchOperationProgress } from '@/hooks/useBatchOperationProgress';
 import { format } from 'date-fns';
 import { BatchCuttingSection } from '@/components/admin/jobmanagement/batch-details/BatchCuttingSection';
 import { BatchOverviewSection } from '@/components/admin/jobmanagement/batch-details/BatchOverviewSection';
@@ -54,6 +55,7 @@ const BatchDetailsPage = () => {
   const { data: cuttingLogs } = useBatchCuttingLogs(id || '');
   const { data: salaryEntries } = useBatchSalaryEntries(id || '');
   const { data: jobWorks } = useBatchJobWorks(id || '');
+  const { data: operationProgress } = useBatchOperationProgress(id || '');
   const updateBatchMutation = useUpdateJobBatch();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [invoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
@@ -102,8 +104,21 @@ const BatchDetailsPage = () => {
   });
   const totalCutPieces = Object.values(cuttingSummary).reduce((sum, val) => sum + val, 0);
 
-  // Calculate production progress
-  const totalProductionPieces = productionEntries?.reduce((sum, e) => sum + e.quantity_completed, 0) || 0;
+  // Calculate production progress from batch_operation_progress (non-cutting operations)
+  const totalProductionPieces = (() => {
+    if (!operationProgress || operationProgress.length === 0) return 0;
+    // Get unique type indices
+    const typeIndices = new Set(operationProgress.map(p => p.type_index));
+    let total = 0;
+    typeIndices.forEach(ti => {
+      const nonCuttingOps = operationProgress.filter(p => p.type_index === ti && p.operation !== 'Cutting');
+      if (nonCuttingOps.length > 0) {
+        // Use minimum across non-cutting ops (bottleneck) for this type
+        total += Math.min(...nonCuttingOps.map(o => o.completed_pieces));
+      }
+    });
+    return total;
+  })();
 
   const getStatusColor = (status: string) => {
     const found = BATCH_STATUSES.find(s => s.value === status);
