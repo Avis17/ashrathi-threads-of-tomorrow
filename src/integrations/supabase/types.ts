@@ -246,6 +246,123 @@ export type Database = {
           },
         ]
       }
+      batch_job_work_operations: {
+        Row: {
+          amount: number | null
+          created_at: string
+          id: string
+          job_work_id: string
+          notes: string | null
+          operation: string
+          quantity: number
+          rate_per_piece: number
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          id?: string
+          job_work_id: string
+          notes?: string | null
+          operation: string
+          quantity?: number
+          rate_per_piece?: number
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          id?: string
+          job_work_id?: string
+          notes?: string | null
+          operation?: string
+          quantity?: number
+          rate_per_piece?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "batch_job_work_operations_job_work_id_fkey"
+            columns: ["job_work_id"]
+            isOneToOne: false
+            referencedRelation: "batch_job_works"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      batch_job_works: {
+        Row: {
+          balance_amount: number
+          batch_id: string
+          color: string
+          company_id: string | null
+          company_name: string
+          created_at: string
+          id: string
+          notes: string | null
+          paid_amount: number
+          payment_status: string
+          pieces: number
+          style_id: string
+          total_amount: number
+          type_index: number
+          updated_at: string
+        }
+        Insert: {
+          balance_amount?: number
+          batch_id: string
+          color: string
+          company_id?: string | null
+          company_name: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          paid_amount?: number
+          payment_status?: string
+          pieces?: number
+          style_id: string
+          total_amount?: number
+          type_index?: number
+          updated_at?: string
+        }
+        Update: {
+          balance_amount?: number
+          batch_id?: string
+          color?: string
+          company_id?: string | null
+          company_name?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          paid_amount?: number
+          payment_status?: string
+          pieces?: number
+          style_id?: string
+          total_amount?: number
+          type_index?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "batch_job_works_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "job_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "batch_job_works_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "external_job_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "batch_job_works_style_id_fkey"
+            columns: ["style_id"]
+            isOneToOne: false
+            referencedRelation: "job_styles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       batch_materials: {
         Row: {
           batch_id: string

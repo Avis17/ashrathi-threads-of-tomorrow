@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Package, Scissors, FileText, DollarSign, Users, Settings, Edit, IndianRupee } from 'lucide-react';
+import { ArrowLeft, Package, Scissors, FileText, DollarSign, Users, Settings, Edit, IndianRupee, Briefcase } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -24,6 +24,7 @@ import { BatchTypesTable } from '@/components/admin/jobmanagement/batch-details/
 import { BatchProductionSection } from '@/components/admin/jobmanagement/batch-details/BatchProductionSection';
 import { BatchExpensesSection } from '@/components/admin/jobmanagement/batch-details/BatchExpensesSection';
 import { BatchSalarySection } from '@/components/admin/jobmanagement/batch-details/BatchSalarySection';
+import { BatchJobWorkSection } from '@/components/admin/jobmanagement/batch-details/BatchJobWorkSection';
 import EditBatchDialog from '@/components/admin/jobmanagement/EditBatchDialog';
 
 const BATCH_STATUSES = [
@@ -172,7 +173,7 @@ const BatchDetailsPage = () => {
 
       {/* Main Tabs */}
       <Tabs defaultValue="cutting" className="w-full">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="cutting" className="flex items-center gap-2">
             <Scissors className="h-4 w-4" />
             Cutting
@@ -192,6 +193,10 @@ const BatchDetailsPage = () => {
           <TabsTrigger value="expenses" className="flex items-center gap-2">
             <DollarSign className="h-4 w-4" />
             Expenses
+          </TabsTrigger>
+          <TabsTrigger value="jobwork" className="flex items-center gap-2">
+            <Briefcase className="h-4 w-4" />
+            Job Work
           </TabsTrigger>
           <TabsTrigger value="info" className="flex items-center gap-2">
             <Settings className="h-4 w-4" />
@@ -225,6 +230,10 @@ const BatchDetailsPage = () => {
 
         <TabsContent value="expenses" className="mt-6">
           <BatchExpensesSection batchId={id || ''} totalCutPieces={totalCutPieces} />
+        </TabsContent>
+
+        <TabsContent value="jobwork" className="mt-6">
+          <BatchJobWorkSection batchId={id || ''} rollsData={rollsData} cuttingSummary={cuttingSummary} />
         </TabsContent>
 
         <TabsContent value="info" className="mt-6">

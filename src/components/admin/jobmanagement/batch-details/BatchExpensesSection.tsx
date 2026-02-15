@@ -3,19 +3,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { DollarSign, Plus, Trash2 } from 'lucide-react';
-import { useJobBatchExpenses, useDeleteJobBatchExpense } from '@/hooks/useJobExpenses';
+import { DollarSign, Plus, Trash2, Pencil } from 'lucide-react';
+import { useJobBatchExpenses, useDeleteJobBatchExpense, JobBatchExpense } from '@/hooks/useJobExpenses';
 import { BatchExpenseForm } from './BatchExpenseForm';
 import { format } from 'date-fns';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
 interface BatchExpensesSectionProps {
@@ -25,6 +19,7 @@ interface BatchExpensesSectionProps {
 
 export const BatchExpensesSection = ({ batchId, totalCutPieces = 0 }: BatchExpensesSectionProps) => {
   const [showForm, setShowForm] = useState(false);
+  const [editingExpense, setEditingExpense] = useState<JobBatchExpense | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const { data: expenses = [] } = useJobBatchExpenses(batchId);
@@ -37,7 +32,16 @@ export const BatchExpensesSection = ({ batchId, totalCutPieces = 0 }: BatchExpen
     }
   };
 
-  // Group by expense type
+  const handleEdit = (expense: JobBatchExpense) => {
+    setEditingExpense(expense);
+    setShowForm(true);
+  };
+
+  const handleFormClose = (open: boolean) => {
+    setShowForm(open);
+    if (!open) setEditingExpense(null);
+  };
+
   const typeTotals: Record<string, number> = {};
   expenses.forEach(exp => {
     typeTotals[exp.expense_type] = (typeTotals[exp.expense_type] || 0) + exp.amount;
@@ -91,9 +95,7 @@ export const BatchExpensesSection = ({ batchId, totalCutPieces = 0 }: BatchExpen
       {/* Type-wise Summary */}
       {Object.keys(typeTotals).length > 0 && (
         <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Expenses by Type</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle className="text-lg">Expenses by Type</CardTitle></CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
               {Object.entries(typeTotals).map(([type, amount]) => (
@@ -114,7 +116,7 @@ export const BatchExpensesSection = ({ batchId, totalCutPieces = 0 }: BatchExpen
             <DollarSign className="h-5 w-5 text-green-500" />
             Expense Entries
           </CardTitle>
-          <Button onClick={() => setShowForm(true)} size="sm">
+          <Button onClick={() => { setEditingExpense(null); setShowForm(true); }} size="sm">
             <Plus className="h-4 w-4 mr-2" />
             Add Expense
           </Button>
@@ -131,7 +133,7 @@ export const BatchExpensesSection = ({ batchId, totalCutPieces = 0 }: BatchExpen
                   <TableHead>Supplier</TableHead>
                   <TableHead className="text-right">Amount</TableHead>
                   <TableHead>Notes</TableHead>
-                  <TableHead className="w-16">Actions</TableHead>
+                  <TableHead className="w-20">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -140,34 +142,27 @@ export const BatchExpensesSection = ({ batchId, totalCutPieces = 0 }: BatchExpen
                     <TableCell className="whitespace-nowrap">
                       {format(new Date(expense.date), 'dd MMM')}
                     </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{expense.expense_type}</Badge>
-                    </TableCell>
+                    <TableCell><Badge variant="outline">{expense.expense_type}</Badge></TableCell>
                     <TableCell className="font-medium">{expense.item_name}</TableCell>
                     <TableCell>
-                      {expense.quantity && expense.unit 
-                        ? `${expense.quantity} ${expense.unit}`
-                        : '-'
-                      }
+                      {expense.quantity && expense.unit ? `${expense.quantity} ${expense.unit}` : '-'}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {expense.supplier_name || '-'}
                     </TableCell>
-                    <TableCell className="text-right font-semibold">
-                      ₹{expense.amount.toFixed(2)}
-                    </TableCell>
+                    <TableCell className="text-right font-semibold">₹{expense.amount.toFixed(2)}</TableCell>
                     <TableCell className="text-sm text-muted-foreground max-w-[150px] truncate">
                       {expense.note || '-'}
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-destructive hover:text-destructive"
-                        onClick={() => setDeleteId(expense.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(expense)}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteId(expense.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -185,7 +180,8 @@ export const BatchExpensesSection = ({ batchId, totalCutPieces = 0 }: BatchExpen
       <BatchExpenseForm
         batchId={batchId}
         open={showForm}
-        onOpenChange={setShowForm}
+        onOpenChange={handleFormClose}
+        editingExpense={editingExpense}
       />
 
       {/* Delete Confirmation */}
@@ -199,10 +195,7 @@ export const BatchExpensesSection = ({ batchId, totalCutPieces = 0 }: BatchExpen
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
