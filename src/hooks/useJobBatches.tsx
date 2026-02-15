@@ -9,28 +9,96 @@ export const useJobBatches = () => {
   return useQuery({
     queryKey: ['job-batches'],
     queryFn: async () => {
-      const [{ data: batches, error }, { data: cuttingTotals, error: cutError }] = await Promise.all([
-        supabase
-          .from('job_batches')
-          .select('*, job_styles(style_name, style_code)')
-          .order('date_created', { ascending: false }),
-        supabase
-          .from('batch_cutting_logs')
-          .select('batch_id, pieces_cut'),
+      const [
+        { data: batches, error },
+        { data: cuttingTotals, error: cutError },
+        { data: cuttingByStyle, error: cutStyleError },
+        { data: payments, error: payError },
+        { data: salaryEntries, error: salError },
+        { data: advances, error: advError },
+        { data: expenses, error: expError },
+        { data: jobWorks, error: jwError },
+        { data: allStyles, error: styError },
+      ] = await Promise.all([
+        supabase.from('job_batches').select('*, job_styles(style_name, style_code)').order('date_created', { ascending: false }),
+        supabase.from('batch_cutting_logs').select('batch_id, pieces_cut'),
+        supabase.from('batch_cutting_logs').select('batch_id, style_id, pieces_cut'),
+        supabase.from('batch_payments').select('batch_id, amount'),
+        supabase.from('batch_salary_entries').select('batch_id, rate_per_piece, quantity'),
+        supabase.from('batch_salary_advances').select('batch_id, amount'),
+        supabase.from('job_batch_expenses').select('batch_id, amount'),
+        supabase.from('batch_job_works').select('batch_id, total_amount, paid_amount'),
+        supabase.from('job_styles').select('id, style_name, style_code'),
       ]);
       if (error) throw error;
-      if (cutError) throw cutError;
+
+      // Build style lookup
+      const styleLookup: Record<string, { style_name: string; style_code: string }> = {};
+      allStyles?.forEach((s: any) => { styleLookup[s.id] = { style_name: s.style_name, style_code: s.style_code }; });
 
       // Aggregate cutting totals per batch
       const cutMap: Record<string, number> = {};
-      cuttingTotals?.forEach((log: any) => {
-        cutMap[log.batch_id] = (cutMap[log.batch_id] || 0) + log.pieces_cut;
+      cuttingTotals?.forEach((l: any) => { cutMap[l.batch_id] = (cutMap[l.batch_id] || 0) + l.pieces_cut; });
+
+      // Aggregate cutting by style per batch
+      const cutByStyleMap: Record<string, Record<string, number>> = {};
+      cuttingByStyle?.forEach((l: any) => {
+        if (!cutByStyleMap[l.batch_id]) cutByStyleMap[l.batch_id] = {};
+        if (l.style_id) {
+          cutByStyleMap[l.batch_id][l.style_id] = (cutByStyleMap[l.batch_id][l.style_id] || 0) + l.pieces_cut;
+        }
       });
 
-      return (batches || []).map((b: any) => ({
-        ...b,
-        total_cut_pieces: cutMap[b.id] || 0,
-      }));
+      // Aggregate payments per batch
+      const payMap: Record<string, number> = {};
+      payments?.forEach((p: any) => { payMap[p.batch_id] = (payMap[p.batch_id] || 0) + Number(p.amount); });
+
+      // Aggregate salary per batch
+      const salMap: Record<string, number> = {};
+      salaryEntries?.forEach((s: any) => { salMap[s.batch_id] = (salMap[s.batch_id] || 0) + (s.rate_per_piece * s.quantity); });
+
+      // Aggregate advances per batch
+      const advMap: Record<string, number> = {};
+      advances?.forEach((a: any) => { advMap[a.batch_id] = (advMap[a.batch_id] || 0) + Number(a.amount); });
+
+      // Aggregate expenses per batch
+      const expMap: Record<string, number> = {};
+      expenses?.forEach((e: any) => { expMap[e.batch_id] = (expMap[e.batch_id] || 0) + Number(e.amount); });
+
+      // Aggregate job works per batch
+      const jwMap: Record<string, { total: number; paid: number }> = {};
+      jobWorks?.forEach((jw: any) => {
+        if (!jwMap[jw.batch_id]) jwMap[jw.batch_id] = { total: 0, paid: 0 };
+        jwMap[jw.batch_id].total += Number(jw.total_amount);
+        jwMap[jw.batch_id].paid += Number(jw.paid_amount);
+      });
+
+      return (batches || []).map((b: any) => {
+        // Extract unique styles from rolls_data
+        const rollsData = (b.rolls_data || []) as any[];
+        const styleIds = [...new Set(rollsData.map((r: any) => r.style_id).filter(Boolean))] as string[];
+        const batchStyles = styleIds.map(id => styleLookup[id]).filter(Boolean);
+
+        // Style-wise cutting breakdown
+        const styleCutBreakdown = cutByStyleMap[b.id] || {};
+        const styleQuantities = styleIds.map(id => ({
+          ...styleLookup[id],
+          pieces: styleCutBreakdown[id] || 0,
+        })).filter(s => s.style_name);
+
+        return {
+          ...b,
+          total_cut_pieces: cutMap[b.id] || 0,
+          batch_styles: batchStyles,
+          style_quantities: styleQuantities,
+          total_payments: payMap[b.id] || 0,
+          total_salary: salMap[b.id] || 0,
+          total_advances: advMap[b.id] || 0,
+          total_expenses: expMap[b.id] || 0,
+          total_job_work: jwMap[b.id]?.total || 0,
+          total_job_work_paid: jwMap[b.id]?.paid || 0,
+        };
+      });
     },
   });
 };
