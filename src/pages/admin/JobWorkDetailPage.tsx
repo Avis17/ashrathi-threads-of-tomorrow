@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Briefcase, Truck, Plus, Trash2, Save, CreditCard } from 'lucide-react';
+import { ArrowLeft, Briefcase, Truck, Plus, Trash2, Save, CreditCard, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -476,9 +476,32 @@ const PaymentSection = ({ jobWork, jwId, queryClient }: { jobWork: BatchJobWork;
   const [adjustment, setAdjustment] = useState(0);
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
+  const [editingPayment, setEditingPayment] = useState<any | null>(null);
+  const [editAmount, setEditAmount] = useState(0);
+  const [editNotes, setEditNotes] = useState('');
+
+  const { data: payments = [], refetch: refetchPayments } = useQuery({
+    queryKey: ['job-work-payments', jwId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('job_work_payments')
+        .select('*')
+        .eq('job_work_id', jwId)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!jwId,
+  });
 
   const calculatedAmount = jobWork.balance_amount;
   const finalAmount = calculatedAmount + adjustment;
+
+  const invalidateAll = () => {
+    refetchPayments();
+    queryClient.invalidateQueries({ queryKey: ['job-work-detail', jwId] });
+    queryClient.invalidateQueries({ queryKey: ['batch-job-works'] });
+  };
 
   const handleRecordPayment = async () => {
     if (finalAmount <= 0) {
@@ -487,17 +510,15 @@ const PaymentSection = ({ jobWork, jwId, queryClient }: { jobWork: BatchJobWork;
     }
     setSaving(true);
     try {
-      const newPaidAmount = jobWork.paid_amount + finalAmount;
-      const { error } = await supabase
-        .from('batch_job_works')
-        .update({
-          paid_amount: newPaidAmount,
-          payment_status: newPaidAmount >= jobWork.total_amount ? 'paid' : 'partial',
-        })
-        .eq('id', jwId);
+      const { error } = await supabase.from('job_work_payments').insert({
+        job_work_id: jwId,
+        calculated_amount: calculatedAmount,
+        adjustment,
+        payment_amount: finalAmount,
+        notes: notes || null,
+      });
       if (error) throw error;
-      queryClient.invalidateQueries({ queryKey: ['job-work-detail', jwId] });
-      queryClient.invalidateQueries({ queryKey: ['batch-job-works'] });
+      invalidateAll();
       toast.success(`Payment of ₹${finalAmount.toFixed(2)} recorded`);
       setShowForm(false);
       setAdjustment(0);
@@ -509,18 +530,56 @@ const PaymentSection = ({ jobWork, jwId, queryClient }: { jobWork: BatchJobWork;
     }
   };
 
+  const handleDeletePayment = async (paymentId: string) => {
+    try {
+      const { error } = await supabase.from('job_work_payments').delete().eq('id', paymentId);
+      if (error) throw error;
+      invalidateAll();
+      toast.success('Payment deleted');
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to delete payment');
+    }
+  };
+
+  const startEditPayment = (payment: any) => {
+    setEditingPayment(payment);
+    setEditAmount(payment.payment_amount);
+    setEditNotes(payment.notes || '');
+  };
+
+  const handleUpdatePayment = async () => {
+    if (!editingPayment || editAmount <= 0) return;
+    setSaving(true);
+    try {
+      const newAdjustment = editAmount - editingPayment.calculated_amount;
+      const { error } = await supabase.from('job_work_payments').update({
+        payment_amount: editAmount,
+        adjustment: newAdjustment,
+        notes: editNotes || null,
+      }).eq('id', editingPayment.id);
+      if (error) throw error;
+      invalidateAll();
+      toast.success('Payment updated');
+      setEditingPayment(null);
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to update payment');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-base">Payment</CardTitle>
+        <CardTitle className="text-base">Payments</CardTitle>
         {!showForm && (
           <Button size="sm" onClick={() => setShowForm(true)} disabled={jobWork.balance_amount <= 0}>
             <CreditCard className="h-4 w-4 mr-1" /> Record Payment
           </Button>
         )}
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-3 gap-4 mb-4">
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-3 gap-4">
           <div className="p-3 rounded-lg bg-muted/50">
             <p className="text-xs text-muted-foreground">Total Amount</p>
             <p className="text-lg font-bold">₹{jobWork.total_amount.toFixed(2)}</p>
@@ -569,6 +628,85 @@ const PaymentSection = ({ jobWork, jwId, queryClient }: { jobWork: BatchJobWork;
                 {saving ? 'Recording...' : `Record ₹${finalAmount.toFixed(2)}`}
               </Button>
             </div>
+          </div>
+        )}
+
+        {/* Payment History */}
+        {payments.length > 0 && (
+          <div>
+            <h4 className="text-sm font-medium mb-2">Payment History</h4>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead className="text-right">Calculated</TableHead>
+                  <TableHead className="text-right">Adjustment</TableHead>
+                  <TableHead className="text-right">Amount Paid</TableHead>
+                  <TableHead>Notes</TableHead>
+                  <TableHead className="w-[80px]">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {payments.map(p => (
+                  <TableRow key={p.id}>
+                    {editingPayment?.id === p.id ? (
+                      <>
+                        <TableCell>{format(new Date(p.created_at), 'dd MMM yyyy')}</TableCell>
+                        <TableCell className="text-right">₹{p.calculated_amount.toFixed(2)}</TableCell>
+                        <TableCell className="text-right text-muted-foreground">—</TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={editAmount}
+                            onChange={e => setEditAmount(parseFloat(e.target.value) || 0)}
+                            className="h-8 w-24 text-right text-sm"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            value={editNotes}
+                            onChange={e => setEditNotes(e.target.value)}
+                            className="h-8 text-sm"
+                            placeholder="Notes"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={handleUpdatePayment} disabled={saving}>
+                              <Save className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditingPayment(null)}>
+                              <ArrowLeft className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </>
+                    ) : (
+                      <>
+                        <TableCell className="text-sm">{format(new Date(p.created_at), 'dd MMM yyyy')}</TableCell>
+                        <TableCell className="text-right text-sm">₹{p.calculated_amount.toFixed(2)}</TableCell>
+                        <TableCell className="text-right text-sm text-muted-foreground">
+                          {p.adjustment !== 0 ? `${p.adjustment > 0 ? '+' : ''}₹${p.adjustment.toFixed(2)}` : '—'}
+                        </TableCell>
+                        <TableCell className="text-right text-sm font-semibold">₹{p.payment_amount.toFixed(2)}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{p.notes || '—'}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => startEditPayment(p)}>
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => handleDeletePayment(p.id)}>
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </>
+                    )}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
         )}
       </CardContent>
