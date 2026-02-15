@@ -64,6 +64,7 @@ import CMTQuotation from './admin/CMTQuotation';
 import CMTQuotationView from './admin/CMTQuotationView';
 import StyleDetailsPage from './admin/StyleDetailsPage';
 import BatchDetailsPage from './admin/BatchDetailsPage';
+import JobWorkDetailPage from './admin/JobWorkDetailPage';
 const CompanyProfile = lazy(() => import('./admin/CompanyProfile'));
 
 const Admin = () => {
@@ -105,6 +106,7 @@ const Admin = () => {
               <Route path="/job-management" element={<JobManagement />} />
               <Route path="/job-management/style/:id" element={<StyleDetailsPage />} />
               <Route path="/job-management/batch/:id" element={<BatchDetailsPage />} />
+              <Route path="/job-management/batch/:id/job-work/:jwId" element={<JobWorkDetailPage />} />
               <Route path="/job-management/employee/:id" element={<EmployeeDetailsPage />} />
               <Route path="/branches" element={<BranchesManager />} />
               <Route path="/expenses" element={<ExpensesManager />} />

@@ -220,6 +220,45 @@ export default function CreateDeliveryChallan() {
     }
   }, [fromJob, jobOrderData, isEditMode, isPrefilledFromJob]);
 
+  // Auto-populate from prefill query param (e.g., from Job Work page)
+  useEffect(() => {
+    const prefillStr = searchParams.get('prefill');
+    if (prefillStr && !isEditMode && !fromJob) {
+      try {
+        const prefill = JSON.parse(prefillStr);
+        setFormData(prev => ({
+          ...prev,
+          dc_type: prefill.dc_type || prev.dc_type,
+          job_worker_name: prefill.job_worker_name || prev.job_worker_name,
+          job_worker_address: prefill.job_worker_address || prev.job_worker_address,
+          job_worker_gstin: prefill.job_worker_gstin || prev.job_worker_gstin,
+        }));
+        if (prefill.job_work_direction) {
+          setJobWorkDirection(prefill.job_work_direction);
+        }
+        if (prefill.purposes?.length > 0) {
+          setSelectedPurposes(prefill.purposes);
+        } else if (prefill.purpose) {
+          setSelectedPurposes([prefill.purpose]);
+        }
+        if (prefill.items?.length > 0) {
+          setItems(prefill.items.map((item: any) => ({
+            id: crypto.randomUUID(),
+            product_name: item.product_name || '',
+            sku: item.sku || '',
+            size: item.size || '',
+            color: item.color || '',
+            quantity: item.quantity || 0,
+            uom: (item.uom as 'pcs' | 'kg') || 'pcs',
+            remarks: item.remarks || '',
+          })));
+        }
+      } catch (e) {
+        // Invalid JSON, ignore
+      }
+    }
+  }, [searchParams, isEditMode, fromJob]);
+
   const handleWorkerSelect = (workerId: string) => {
     setSelectedWorkerId(workerId);
     const worker = jobWorkers.find(w => w.id === workerId);
