@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Package, Eye, Trash2 } from 'lucide-react';
+import { Plus, Search, Package, Eye, Trash2, Scissors, IndianRupee, CreditCard, Briefcase, Receipt } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
 import { useJobBatches, useDeleteJobBatch } from '@/hooks/useJobBatches';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import {
@@ -37,72 +38,111 @@ const BatchesManager = () => {
   const [deleteBatchId, setDeleteBatchId] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
+  // Compute overall stats
+  const stats = useMemo(() => {
+    if (!batches) return null;
+    return {
+      totalBatches: batches.length,
+      totalPieces: batches.reduce((s: number, b: any) => s + (b.total_cut_pieces || 0), 0),
+      totalPayments: batches.reduce((s: number, b: any) => s + (b.total_payments || 0), 0),
+      totalSalary: batches.reduce((s: number, b: any) => s + (b.total_salary || 0), 0),
+      totalAdvances: batches.reduce((s: number, b: any) => s + (b.total_advances || 0), 0),
+      totalExpenses: batches.reduce((s: number, b: any) => s + (b.total_expenses || 0), 0),
+      totalJobWork: batches.reduce((s: number, b: any) => s + (b.total_job_work || 0), 0),
+    };
+  }, [batches]);
+
   const filteredBatches = batches?.filter((batch: any) => {
-    const matchesSearch = 
+    const styleNames = (batch.batch_styles || []).map((s: any) => s.style_name?.toLowerCase() || '').join(' ');
+    const matchesSearch =
       batch.batch_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      batch.job_styles?.style_name.toLowerCase().includes(searchTerm.toLowerCase());
-    
+      styleNames.includes(searchTerm.toLowerCase());
+
     const matchesStatus = statusFilter === 'all' || batch.status === statusFilter;
     const matchesPaymentStatus = paymentStatusFilter === 'all' || batch.payment_status === paymentStatusFilter;
-    
+
     return matchesSearch && matchesStatus && matchesPaymentStatus;
   });
 
   const getStatusColor = (status: string) => {
     const colors: any = {
-      'created': 'bg-blue-500',
-      'draft': 'bg-gray-500',
-      'in_progress': 'bg-yellow-500',
-      'completed': 'bg-green-500',
-      'payment_pending': 'bg-orange-500',
-      'cutting': 'bg-yellow-500',
-      'stitching': 'bg-orange-500',
-      'checking': 'bg-purple-500',
-      'packing': 'bg-pink-500',
-      'done': 'bg-green-500',
+      'created': 'bg-blue-500', 'draft': 'bg-gray-500', 'in_progress': 'bg-yellow-500',
+      'completed': 'bg-green-500', 'payment_pending': 'bg-orange-500', 'done': 'bg-green-500',
     };
     return colors[status] || 'bg-gray-500';
   };
 
   const getPaymentStatusColor = (status: string) => {
-    const colors: any = {
-      'unpaid': 'bg-red-500',
-      'partial': 'bg-orange-500',
-      'paid': 'bg-green-500',
-      'on_hold': 'bg-gray-500',
-    };
+    const colors: any = { 'unpaid': 'bg-red-500', 'partial': 'bg-orange-500', 'paid': 'bg-green-500', 'on_hold': 'bg-gray-500' };
     return colors[status] || 'bg-gray-500';
   };
 
   const getPaymentStatusLabel = (status: string) => {
-    const labels: any = {
-      'unpaid': 'Unpaid',
-      'partial': 'Partial',
-      'paid': 'Paid',
-      'on_hold': 'On Hold',
-    };
+    const labels: any = { 'unpaid': 'Unpaid', 'partial': 'Partial', 'paid': 'Paid', 'on_hold': 'On Hold' };
     return labels[status] || status;
   };
 
-  const handleViewDetails = (batch: any) => {
-    navigate(`/admin/job-management/batch/${batch.id}`);
-  };
-
-  const handleDeleteClick = (batchId: string) => {
-    setDeleteBatchId(batchId);
-    setDeleteDialogOpen(true);
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (deleteBatchId) {
-      await deleteBatchMutation.mutateAsync(deleteBatchId);
-      setDeleteDialogOpen(false);
-      setDeleteBatchId(null);
-    }
-  };
+  const fmt = (n: number) => n.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
   return (
     <div className="space-y-6">
+      {/* Stats Cards */}
+      {stats && !isLoading && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
+          <Card className="p-3 space-y-1">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Package className="h-3.5 w-3.5" />
+              Batches
+            </div>
+            <div className="text-xl font-bold">{stats.totalBatches}</div>
+          </Card>
+          <Card className="p-3 space-y-1">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Scissors className="h-3.5 w-3.5" />
+              Total Pieces
+            </div>
+            <div className="text-xl font-bold">{fmt(stats.totalPieces)}</div>
+          </Card>
+          <Card className="p-3 space-y-1">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <CreditCard className="h-3.5 w-3.5" />
+              Collected
+            </div>
+            <div className="text-xl font-bold text-emerald-600">₹{fmt(stats.totalPayments)}</div>
+          </Card>
+          <Card className="p-3 space-y-1">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <IndianRupee className="h-3.5 w-3.5" />
+              Salary
+            </div>
+            <div className="text-xl font-bold">₹{fmt(stats.totalSalary)}</div>
+            <div className="text-[10px] text-muted-foreground">Adv: ₹{fmt(stats.totalAdvances)}</div>
+          </Card>
+          <Card className="p-3 space-y-1">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Receipt className="h-3.5 w-3.5" />
+              Expenses
+            </div>
+            <div className="text-xl font-bold">₹{fmt(stats.totalExpenses)}</div>
+          </Card>
+          <Card className="p-3 space-y-1">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Briefcase className="h-3.5 w-3.5" />
+              Job Work
+            </div>
+            <div className="text-xl font-bold">₹{fmt(stats.totalJobWork)}</div>
+          </Card>
+          <Card className="p-3 space-y-1">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              Total Cost
+            </div>
+            <div className="text-xl font-bold text-destructive">
+              ₹{fmt(stats.totalSalary + stats.totalExpenses + stats.totalJobWork)}
+            </div>
+          </Card>
+        </div>
+      )}
+
       {/* Header Actions */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div className="flex gap-4 flex-1 w-full">
@@ -141,7 +181,7 @@ const BatchesManager = () => {
             </SelectContent>
           </Select>
         </div>
-        <Button 
+        <Button
           onClick={() => setIsFormOpen(true)}
           className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity"
         >
@@ -164,7 +204,7 @@ const BatchesManager = () => {
               <thead className="bg-muted/50 border-b">
                 <tr>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Batch Number</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Style</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Styles</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Date</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Quantity</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Status</th>
@@ -182,9 +222,20 @@ const BatchesManager = () => {
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <div>
-                        <div className="font-medium text-sm">{batch.job_styles?.style_name}</div>
-                        <div className="text-xs text-muted-foreground">{batch.job_styles?.style_code}</div>
+                      <div className="space-y-0.5">
+                        {(batch.batch_styles || []).length > 0 ? (
+                          (batch.batch_styles as any[]).map((s: any, i: number) => (
+                            <div key={i} className="text-sm">
+                              <span className="font-medium">{s.style_name}</span>
+                              <span className="text-xs text-muted-foreground ml-1">({s.style_code})</span>
+                            </div>
+                          ))
+                        ) : (
+                          <div>
+                            <div className="font-medium text-sm">{batch.job_styles?.style_name || '—'}</div>
+                            <div className="text-xs text-muted-foreground">{batch.job_styles?.style_code}</div>
+                          </div>
+                        )}
                       </div>
                     </td>
                     <td className="px-4 py-3 text-sm text-muted-foreground">
@@ -193,7 +244,15 @@ const BatchesManager = () => {
                     <td className="px-4 py-3">
                       <div className="text-sm">
                         <div className="font-semibold">{batch.total_cut_pieces || 0} pcs</div>
-                        <div className="text-xs text-muted-foreground">Expected: {batch.expected_pieces || 0}</div>
+                        {(batch.style_quantities || []).length > 1 && (
+                          <div className="mt-0.5 space-y-0.5">
+                            {(batch.style_quantities as any[]).map((sq: any, i: number) => (
+                              <div key={i} className="text-[11px] text-muted-foreground">
+                                {sq.style_code}: {sq.pieces} pcs
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </td>
                     <td className="px-4 py-3">
@@ -208,19 +267,11 @@ const BatchesManager = () => {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex gap-2">
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => handleViewDetails(batch)}
-                        >
+                        <Button size="sm" variant="outline" onClick={() => navigate(`/admin/job-management/batch/${batch.id}`)}>
                           <Eye className="h-4 w-4 mr-1" />
                           View
                         </Button>
-                        <Button 
-                          size="sm" 
-                          variant="destructive"
-                          onClick={() => handleDeleteClick(batch.id)}
-                        >
+                        <Button size="sm" variant="destructive" onClick={() => { setDeleteBatchId(batch.id); setDeleteDialogOpen(true); }}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -253,20 +304,14 @@ const BatchesManager = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Batch?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete batch <span className="font-semibold">{batches?.find(b => b.id === deleteBatchId)?.batch_number}</span> and all associated records including:
-              <ul className="list-disc list-inside mt-2 space-y-1">
-                <li>Production entries</li>
-                <li>Batch expenses</li>
-                <li>Weekly settlements</li>
-                <li>Part payments</li>
-              </ul>
+              This will permanently delete batch <span className="font-semibold">{batches?.find((b: any) => b.id === deleteBatchId)?.batch_number}</span> and all associated records.
               <p className="mt-2 font-semibold text-destructive">This action cannot be undone.</p>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleDeleteConfirm}
+              onClick={async () => { if (deleteBatchId) { await deleteBatchMutation.mutateAsync(deleteBatchId); setDeleteDialogOpen(false); setDeleteBatchId(null); } }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Delete
