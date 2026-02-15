@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Package, Scissors, FileText, DollarSign, Users, Settings, Edit, IndianRupee, Briefcase } from 'lucide-react';
+import { ArrowLeft, Package, Scissors, FileText, DollarSign, Users, Settings, Edit, IndianRupee, Briefcase, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -157,6 +157,10 @@ const BatchDetailsPage = () => {
           <Badge variant="outline" className="px-3 py-1">
             Cut: {totalCutPieces} | Prod: {totalProductionPieces} | {currentProgress}%
           </Badge>
+          <Button variant="default" size="sm" onClick={() => navigate(`/admin/job-management/batch/${id}/dashboard`)}>
+            <BarChart3 className="h-4 w-4 mr-1" />
+            Dashboard
+          </Button>
           <Button variant="outline" size="sm" onClick={() => setEditDialogOpen(true)}>
             <Edit className="h-4 w-4 mr-1" />
             Edit
