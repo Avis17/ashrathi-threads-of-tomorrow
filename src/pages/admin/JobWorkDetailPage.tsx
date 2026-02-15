@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Briefcase, Truck, Plus, Trash2, Save } from 'lucide-react';
+import { ArrowLeft, Briefcase, Truck, Plus, Trash2, Save, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -452,6 +452,9 @@ const JobWorkDetailPage = () => {
         </CardContent>
       </Card>
 
+      {/* Record Payment */}
+      <PaymentSection jobWork={jobWork} jwId={jwId!} queryClient={queryClient} />
+
       {/* Notes */}
       {jobWork.notes && (
         <Card>
@@ -464,6 +467,112 @@ const JobWorkDetailPage = () => {
         </Card>
       )}
     </div>
+  );
+};
+
+// Payment Section Component
+const PaymentSection = ({ jobWork, jwId, queryClient }: { jobWork: BatchJobWork; jwId: string; queryClient: any }) => {
+  const [showForm, setShowForm] = useState(false);
+  const [adjustment, setAdjustment] = useState(0);
+  const [notes, setNotes] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const calculatedAmount = jobWork.balance_amount;
+  const finalAmount = calculatedAmount + adjustment;
+
+  const handleRecordPayment = async () => {
+    if (finalAmount <= 0) {
+      toast.error('Payment amount must be greater than 0');
+      return;
+    }
+    setSaving(true);
+    try {
+      const newPaidAmount = jobWork.paid_amount + finalAmount;
+      const { error } = await supabase
+        .from('batch_job_works')
+        .update({
+          paid_amount: newPaidAmount,
+          payment_status: newPaidAmount >= jobWork.total_amount ? 'paid' : 'partial',
+        })
+        .eq('id', jwId);
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ['job-work-detail', jwId] });
+      queryClient.invalidateQueries({ queryKey: ['batch-job-works'] });
+      toast.success(`Payment of ₹${finalAmount.toFixed(2)} recorded`);
+      setShowForm(false);
+      setAdjustment(0);
+      setNotes('');
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to record payment');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle className="text-base">Payment</CardTitle>
+        {!showForm && (
+          <Button size="sm" onClick={() => setShowForm(true)} disabled={jobWork.balance_amount <= 0}>
+            <CreditCard className="h-4 w-4 mr-1" /> Record Payment
+          </Button>
+        )}
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-3 gap-4 mb-4">
+          <div className="p-3 rounded-lg bg-muted/50">
+            <p className="text-xs text-muted-foreground">Total Amount</p>
+            <p className="text-lg font-bold">₹{jobWork.total_amount.toFixed(2)}</p>
+          </div>
+          <div className="p-3 rounded-lg bg-green-500/10">
+            <p className="text-xs text-muted-foreground">Paid</p>
+            <p className="text-lg font-bold text-green-600">₹{jobWork.paid_amount.toFixed(2)}</p>
+          </div>
+          <div className="p-3 rounded-lg bg-orange-500/10">
+            <p className="text-xs text-muted-foreground">Balance</p>
+            <p className="text-lg font-bold text-orange-600">₹{jobWork.balance_amount.toFixed(2)}</p>
+          </div>
+        </div>
+
+        {showForm && (
+          <div className="border rounded-lg p-4 space-y-4">
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <Label className="text-xs text-muted-foreground">Calculated Amount</Label>
+                <div className="text-xl font-bold mt-1">₹{calculatedAmount.toFixed(2)}</div>
+              </div>
+              <div>
+                <Label className="text-xs">Adjustment (+/-)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={adjustment}
+                  onChange={e => setAdjustment(parseFloat(e.target.value) || 0)}
+                  placeholder="0.00"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Final Payment</Label>
+                <div className={`text-xl font-bold mt-1 ${finalAmount > 0 ? 'text-green-600' : 'text-destructive'}`}>
+                  ₹{finalAmount.toFixed(2)}
+                </div>
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs">Notes (optional)</Label>
+              <Input value={notes} onChange={e => setNotes(e.target.value)} placeholder="Payment notes..." />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" size="sm" onClick={() => { setShowForm(false); setAdjustment(0); }}>Cancel</Button>
+              <Button size="sm" onClick={handleRecordPayment} disabled={saving || finalAmount <= 0}>
+                {saving ? 'Recording...' : `Record ₹${finalAmount.toFixed(2)}`}
+              </Button>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 
