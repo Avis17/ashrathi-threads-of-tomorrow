@@ -461,6 +461,57 @@ export type Database = {
           },
         ]
       }
+      batch_payments: {
+        Row: {
+          amount: number
+          batch_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          payment_date: string
+          payment_mode: string
+          style_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          batch_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_date?: string
+          payment_mode?: string
+          style_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          batch_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_date?: string
+          payment_mode?: string
+          style_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "batch_payments_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "job_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "batch_payments_style_id_fkey"
+            columns: ["style_id"]
+            isOneToOne: false
+            referencedRelation: "job_styles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       batch_salary_advances: {
         Row: {
           advance_date: string
@@ -2992,6 +3043,7 @@ export type Database = {
           number_of_rolls: number | null
           overall_progress: number | null
           packed_quantity: number | null
+          payment_status: string
           remarks: string | null
           rolls_data: Json | null
           status: string | null
@@ -3025,6 +3077,7 @@ export type Database = {
           number_of_rolls?: number | null
           overall_progress?: number | null
           packed_quantity?: number | null
+          payment_status?: string
           remarks?: string | null
           rolls_data?: Json | null
           status?: string | null
@@ -3058,6 +3111,7 @@ export type Database = {
           number_of_rolls?: number | null
           overall_progress?: number | null
           packed_quantity?: number | null
+          payment_status?: string
           remarks?: string | null
           rolls_data?: Json | null
           status?: string | null
