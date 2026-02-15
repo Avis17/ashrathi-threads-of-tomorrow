@@ -1,6 +1,14 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Package, Scissors, DollarSign, Scale, Users } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ChevronDown } from 'lucide-react';
+import { useState } from 'react';
+
+interface CostBreakdown {
+  salaryTotal: number;
+  expenseTotal: number;
+}
 
 interface BatchOverviewSectionProps {
   batch: any;
@@ -8,6 +16,7 @@ interface BatchOverviewSectionProps {
   totalCutPieces: number;
   totalCost: number;
   totalProductionPieces?: number;
+  costBreakdown?: CostBreakdown;
 }
 
 export const BatchOverviewSection = ({ 
@@ -15,15 +24,14 @@ export const BatchOverviewSection = ({
   rollsData, 
   totalCutPieces, 
   totalCost,
-  totalProductionPieces = 0 
+  totalProductionPieces = 0,
+  costBreakdown,
 }: BatchOverviewSectionProps) => {
+  const [costOpen, setCostOpen] = useState(false);
   const totalFabric = batch.total_fabric_received_kg || 0;
   const numberOfTypes = rollsData.length;
-  
-  // Get unique styles
   const uniqueStyles = new Set(rollsData.map(r => r.style_id)).size;
 
-  // Calculate progress based on cutting and production
   const calculateProgress = () => {
     if (totalCutPieces === 0) return 0;
     const progress = Math.min((totalProductionPieces / totalCutPieces) * 100, 100);
@@ -65,14 +73,6 @@ export const BatchOverviewSection = ({
       color: 'text-orange-500',
       bgColor: 'bg-orange-500/10',
     },
-    {
-      title: 'Total Cost',
-      value: `₹${totalCost.toFixed(2)}`,
-      subtitle: totalProductionPieces > 0 ? `₹${(totalCost / totalProductionPieces).toFixed(2)}/pc` : 'Per piece: TBD',
-      icon: DollarSign,
-      color: 'text-amber-500',
-      bgColor: 'bg-amber-500/10',
-    },
   ];
 
   return (
@@ -97,6 +97,45 @@ export const BatchOverviewSection = ({
             </Card>
           );
         })}
+
+        {/* Total Cost Card with breakdown */}
+        <Card>
+          <CardContent className="p-4">
+            <Collapsible open={costOpen} onOpenChange={setCostOpen}>
+              <CollapsibleTrigger className="w-full">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-amber-500/10">
+                    <DollarSign className="h-5 w-5 text-amber-500" />
+                  </div>
+                  <div className="text-left flex-1">
+                    <p className="text-sm text-muted-foreground flex items-center gap-1">
+                      Total Cost
+                      <ChevronDown className={`h-3 w-3 transition-transform ${costOpen ? 'rotate-180' : ''}`} />
+                    </p>
+                    <p className="text-xl font-bold">₹{totalCost.toFixed(2)}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {totalProductionPieces > 0 ? `₹${(totalCost / totalProductionPieces).toFixed(2)}/pc` : 'Per piece: TBD'}
+                    </p>
+                  </div>
+                </div>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                {costBreakdown && (
+                  <div className="mt-3 pt-3 border-t space-y-1.5 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Salary</span>
+                      <span className="font-medium">₹{costBreakdown.salaryTotal.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Expenses</span>
+                      <span className="font-medium">₹{costBreakdown.expenseTotal.toFixed(2)}</span>
+                    </div>
+                  </div>
+                )}
+              </CollapsibleContent>
+            </Collapsible>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Progress Bar */}

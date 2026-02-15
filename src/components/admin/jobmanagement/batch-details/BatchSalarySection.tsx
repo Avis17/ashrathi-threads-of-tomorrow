@@ -1,16 +1,18 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { IndianRupee, Save, Loader2, Trash2, ChevronDown, ChevronRight, ExternalLink } from 'lucide-react';
+import { IndianRupee, Save, Loader2, Trash2, ChevronDown, ChevronRight, ExternalLink, Plus } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useBatchSalaryEntries, useUpsertBatchSalary, useDeleteBatchSalary, BatchSalaryEntry } from '@/hooks/useBatchSalary';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
+import { format } from 'date-fns';
 
 interface StyleInfo {
   id: string;
@@ -45,6 +47,8 @@ interface LocalEntry {
   payment_status: string;
   paid_amount: number;
   notes: string;
+  updated_at?: string;
+  is_custom?: boolean;
 }
 
 interface Props {
@@ -190,42 +194,35 @@ function getApprovedRatesForOp(
 
   const machine = machineMap[operation] || null;
 
-  // Filter CMT operations by category + machine
   const matchingCmtOps = cmtOps.filter(op => {
     if (op.category !== category) return false;
     if (machine && op.machineType !== machine) return false;
-    // For non-machine operations (Cutting, Checking, etc.), match all in that category
     if (!machine && (operation === 'Stitching(Singer)' || operation === 'Stitching(Powertable)')) return false;
     return true;
   });
 
   if (matchingCmtOps.length === 0) {
-    // Fallback: try approved_rates array
     const approvedMatch = cmtApproved.operations.find(op => op.category === category);
     return [{ rate: approvedMatch?.rate || 0, description: '' }];
   }
 
-  // Now find corresponding approved rates by position
-  // Build a positional index: for each CMT operation in the full list, track its position within its category
   const allCategoryOps = cmtOps.filter(op => op.category === category);
   
   return matchingCmtOps.map(match => {
     const posInCategory = allCategoryOps.indexOf(match);
-    // The approved_rates.operations array has one entry per CMT operation, in order
     const approvedCategoryOps = cmtApproved.operations.filter(op => op.category === category);
     const rate = approvedCategoryOps[posInCategory]?.rate ?? match.ratePerPiece;
     return { rate, description: match.description || '' };
   });
 }
 
-/** Merge existing DB entries with expected operations (keep saved, add missing) */
+/** Merge existing DB entries with expected operations */
 function mergeEntries(
   existingEntries: BatchSalaryEntry[],
   defaultEntries: LocalEntry[],
 ): LocalEntry[] {
   const result: LocalEntry[] = [];
 
-  // First, add all existing entries
   existingEntries.forEach(e => {
     result.push({
       id: e.id,
@@ -236,10 +233,10 @@ function mergeEntries(
       payment_status: e.payment_status,
       paid_amount: e.paid_amount,
       notes: e.notes || '',
+      updated_at: e.updated_at,
     });
   });
 
-  // Then add any default entries that don't exist yet
   defaultEntries.forEach(def => {
     const exists = existingEntries.some(
       e => e.operation === def.operation && e.description === def.description
@@ -269,19 +266,16 @@ const StyleSalaryCard = ({
   const [isOpen, setIsOpen] = useState(true);
   const [localEntries, setLocalEntries] = useState<LocalEntry[]>([]);
   const [savingIdx, setSavingIdx] = useState<number | null>(null);
-  const [initialized, setInitialized] = useState(false);
   const upsertMutation = useUpsertBatchSalary();
   const deleteMutation = useDeleteBatchSalary();
 
   const cmtApproved = cmt?.approved_rates as CMTApprovedRates | null;
   const cmtOps = (cmt?.operations || []) as CMTOperation[];
 
-  // Build defaults and merge with existing — always show all operation rows
   useEffect(() => {
     const defaults = buildDefaultEntries(operations, cmtOps, cmtApproved, totalPieces);
     const merged = mergeEntries(existingEntries, defaults);
     setLocalEntries(merged);
-    setInitialized(true);
   }, [existingEntries, operations.length, cmtOps.length, totalPieces]);
 
   const updateEntry = (idx: number, field: keyof LocalEntry, value: any) => {
@@ -317,6 +311,19 @@ const StyleSalaryCard = ({
     setLocalEntries(prev => prev.filter((_, i) => i !== idx));
   };
 
+  const handleAddCustomEntry = () => {
+    setLocalEntries(prev => [...prev, {
+      operation: 'Custom',
+      description: '',
+      rate_per_piece: 0,
+      quantity: totalPieces,
+      payment_status: 'pending',
+      paid_amount: 0,
+      notes: '',
+      is_custom: true,
+    }]);
+  };
+
   const totalAmount = localEntries.reduce((sum, e) => sum + (e.rate_per_piece * e.quantity), 0);
   const totalPaid = localEntries.reduce((sum, e) => sum + e.paid_amount, 0);
   const totalBalance = totalAmount - totalPaid;
@@ -339,7 +346,7 @@ const StyleSalaryCard = ({
                         className="h-6 px-2 text-xs text-primary"
                         onClick={(e) => {
                           e.stopPropagation();
-                          navigate(`/admin/cmt-quotation/${cmtId}`);
+                          navigate(`/admin/cmt-quotation/view/${cmtId}`);
                         }}
                       >
                         <ExternalLink className="h-3 w-3 mr-1" />
@@ -383,7 +390,8 @@ const StyleSalaryCard = ({
                     <TableHead className="w-[110px]">Status</TableHead>
                     <TableHead className="w-[100px] text-right">Paid (₹)</TableHead>
                     <TableHead className="w-[90px] text-right">Balance (₹)</TableHead>
-                    <TableHead className="w-[140px]">Notes</TableHead>
+                    <TableHead className="w-[180px]">Notes</TableHead>
+                    <TableHead className="w-[130px]">Last Saved</TableHead>
                     <TableHead className="w-[80px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -394,12 +402,34 @@ const StyleSalaryCard = ({
                     return (
                       <TableRow key={`${entry.operation}-${entry.description}-${idx}`}>
                         <TableCell className="font-medium text-sm">
-                          {entry.operation}
-                          {!entry.id && (
-                            <Badge variant="outline" className="ml-2 text-[10px] px-1 py-0">New</Badge>
+                          {entry.is_custom ? (
+                            <Input
+                              value={entry.operation}
+                              onChange={e => updateEntry(idx, 'operation', e.target.value)}
+                              className="h-8 text-sm"
+                              placeholder="Operation name"
+                            />
+                          ) : (
+                            <>
+                              {entry.operation}
+                              {!entry.id && (
+                                <Badge variant="outline" className="ml-2 text-[10px] px-1 py-0">New</Badge>
+                              )}
+                            </>
                           )}
                         </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">{entry.description || '—'}</TableCell>
+                        <TableCell>
+                          {entry.is_custom ? (
+                            <Input
+                              value={entry.description}
+                              onChange={e => updateEntry(idx, 'description', e.target.value)}
+                              className="h-8 text-sm"
+                              placeholder="Description"
+                            />
+                          ) : (
+                            <span className="text-sm text-muted-foreground">{entry.description || '—'}</span>
+                          )}
+                        </TableCell>
                         <TableCell>
                           <Input
                             type="number"
@@ -447,12 +477,18 @@ const StyleSalaryCard = ({
                           </span>
                         </TableCell>
                         <TableCell>
-                          <Input
+                          <Textarea
                             value={entry.notes}
                             onChange={e => updateEntry(idx, 'notes', e.target.value)}
-                            className="h-8 text-xs"
+                            className="min-h-[32px] text-xs resize-y"
                             placeholder="Notes..."
+                            rows={1}
                           />
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          {entry.updated_at
+                            ? format(new Date(entry.updated_at), 'dd/MM/yy HH:mm')
+                            : '—'}
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-1">
@@ -486,10 +522,16 @@ const StyleSalaryCard = ({
               </Table>
             </div>
 
-            <div className="mt-4 flex justify-end gap-6 text-sm border-t pt-3">
-              <div>Total: <span className="font-bold">₹{totalAmount.toFixed(2)}</span></div>
-              <div>Paid: <span className="font-bold text-primary">₹{totalPaid.toFixed(2)}</span></div>
-              <div>Balance: <span className="font-bold text-destructive">₹{totalBalance.toFixed(2)}</span></div>
+            <div className="mt-4 flex items-center justify-between border-t pt-3">
+              <Button variant="outline" size="sm" onClick={handleAddCustomEntry}>
+                <Plus className="h-4 w-4 mr-1" />
+                Add Custom Entry
+              </Button>
+              <div className="flex gap-6 text-sm">
+                <div>Total: <span className="font-bold">₹{totalAmount.toFixed(2)}</span></div>
+                <div>Paid: <span className="font-bold text-primary">₹{totalPaid.toFixed(2)}</span></div>
+                <div>Balance: <span className="font-bold text-destructive">₹{totalBalance.toFixed(2)}</span></div>
+              </div>
             </div>
           </CardContent>
         </CollapsibleContent>
