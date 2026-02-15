@@ -353,8 +353,14 @@ const StyleSalaryCard = ({
   });
 
   // Build map: operation -> total pieces sent to job work
+  // Deduplicate by (job_work_id, operation) to avoid double-counting when
+  // multiple operation rows exist for the same operation name within one job work
   const jobWorkPiecesPerOp: Record<string, number> = {};
+  const seenJwOps = new Set<string>();
   allJwOps.forEach(op => {
+    const key = `${op.job_work_id}::${op.operation}`;
+    if (seenJwOps.has(key)) return;
+    seenJwOps.add(key);
     const opName = op.operation;
     jobWorkPiecesPerOp[opName] = (jobWorkPiecesPerOp[opName] || 0) + (op.relevantPieces || 0);
   });
