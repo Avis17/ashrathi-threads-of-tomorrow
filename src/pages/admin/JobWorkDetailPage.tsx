@@ -78,6 +78,21 @@ const JobWorkDetailPage = () => {
     enabled: !!jobWork,
   });
 
+  const { data: matchedWorker } = useQuery({
+    queryKey: ['jw-worker-match', jobWork?.company_name],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('job_workers')
+        .select('id, name, address, gstin')
+        .eq('name', jobWork!.company_name)
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!jobWork?.company_name,
+  });
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -137,6 +152,8 @@ const JobWorkDetailPage = () => {
     const params = new URLSearchParams({
       prefill: JSON.stringify({
         job_worker_name: jobWork.company_name,
+        job_worker_gstin: matchedWorker?.gstin || '',
+        job_worker_address: matchedWorker?.address || '',
         dc_type: 'job_work',
         job_work_direction: 'given',
         purpose: purposes[0] || 'stitching',
