@@ -20,9 +20,10 @@ import {
 
 interface BatchExpensesSectionProps {
   batchId: string;
+  totalCutPieces?: number;
 }
 
-export const BatchExpensesSection = ({ batchId }: BatchExpensesSectionProps) => {
+export const BatchExpensesSection = ({ batchId, totalCutPieces = 0 }: BatchExpensesSectionProps) => {
   const [showForm, setShowForm] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
@@ -47,11 +48,22 @@ export const BatchExpensesSection = ({ batchId }: BatchExpensesSectionProps) => 
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card className="bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-200">
           <CardContent className="p-4">
             <div className="text-sm text-muted-foreground">Total Expenses</div>
             <div className="text-2xl font-bold text-green-600">₹{totalAmount.toFixed(2)}</div>
+          </CardContent>
+        </Card>
+        <Card className="bg-gradient-to-br from-amber-500/10 to-amber-600/5 border-amber-200">
+          <CardContent className="p-4">
+            <div className="text-sm text-muted-foreground">Per Piece Cost</div>
+            <div className="text-2xl font-bold text-amber-600">
+              ₹{totalCutPieces > 0 ? (totalAmount / totalCutPieces).toFixed(2) : '0.00'}
+            </div>
+            <div className="text-xs text-muted-foreground mt-0.5">
+              {totalCutPieces > 0 ? `${totalCutPieces} pcs` : 'No cut pieces'}
+            </div>
           </CardContent>
         </Card>
         <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-200">

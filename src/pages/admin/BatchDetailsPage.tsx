@@ -220,11 +220,11 @@ const BatchDetailsPage = () => {
         </TabsContent>
 
         <TabsContent value="salary" className="mt-6">
-          <BatchSalarySection batchId={id || ''} rollsData={rollsData} cuttingSummary={cuttingSummary} />
+          <BatchSalarySection batchId={id || ''} rollsData={rollsData} cuttingSummary={cuttingSummary} totalCutPieces={totalCutPieces} />
         </TabsContent>
 
         <TabsContent value="expenses" className="mt-6">
-          <BatchExpensesSection batchId={id || ''} />
+          <BatchExpensesSection batchId={id || ''} totalCutPieces={totalCutPieces} />
         </TabsContent>
 
         <TabsContent value="info" className="mt-6">
