@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Scissors, Plus, Trash2, Calendar, CheckCircle, AlertTriangle, Scale, Pencil, Check, X } from 'lucide-react';
 import { useAddCuttingLog, useDeleteCuttingLog, useUpdateCuttingLog, CuttingLog } from '@/hooks/useBatchCuttingLogs';
 import { useBatchCuttingWastage } from '@/hooks/useBatchCuttingWastage';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -101,6 +103,34 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
     logsByDate[log.log_date].push(log);
   });
 
+  // Style-wise piece counts
+  const styleIds = useMemo(() => [...new Set(rollsData.map(r => r.style_id).filter(Boolean))], [rollsData]);
+  const { data: styles = [] } = useQuery({
+    queryKey: ['job-styles-cutting', styleIds],
+    queryFn: async () => {
+      if (styleIds.length === 0) return [];
+      const { data, error } = await supabase.from('job_styles').select('id, style_code, style_name').in('id', styleIds);
+      if (error) throw error;
+      return data;
+    },
+    enabled: styleIds.length > 0,
+  });
+
+  const piecesByStyle = useMemo(() => {
+    const map: Record<string, { styleName: string; styleCode: string; pieces: number; colors: string[] }> = {};
+    rollsData.forEach((type, index) => {
+      const sid = type.style_id;
+      if (!sid) return;
+      const style = styles.find(s => s.id === sid);
+      if (!map[sid]) {
+        map[sid] = { styleName: style?.style_name || 'Unknown', styleCode: style?.style_code || '', pieces: 0, colors: [] };
+      }
+      map[sid].pieces += cuttingSummary[index] || 0;
+      if (!map[sid].colors.includes(type.color)) map[sid].colors.push(type.color);
+    });
+    return Object.values(map);
+  }, [rollsData, styles, cuttingSummary]);
+
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
@@ -112,6 +142,40 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
         colorsWithActualWeight={colorsWithActualWeight}
         totalColors={rollsData.length}
       />
+
+      {/* Pieces by Style */}
+      {piecesByStyle.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Scissors className="h-5 w-5 text-primary" />
+              Total Pieces by Style
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {piecesByStyle.map((s, i) => (
+                <div key={i} className="p-4 rounded-lg border bg-muted/30 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-semibold truncate">{s.styleName}</h4>
+                    <Badge className="text-lg px-3 py-1 bg-primary">{s.pieces}</Badge>
+                  </div>
+                  {s.styleCode && <p className="text-xs text-muted-foreground">Code: {s.styleCode}</p>}
+                  <div className="flex flex-wrap gap-1">
+                    {s.colors.map(c => (
+                      <Badge key={c} variant="outline" className="text-xs">{c}</Badge>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 p-3 bg-primary/10 rounded-lg flex items-center justify-between">
+              <span className="font-semibold">Grand Total</span>
+              <Badge className="text-lg px-4 py-1.5 bg-primary">{totalCutPieces}</Badge>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Color Cards with Weight Info */}
       <Card>
