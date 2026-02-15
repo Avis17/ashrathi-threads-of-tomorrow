@@ -5,8 +5,9 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { CheckCircle, AlertCircle, ChevronDown, ChevronRight } from 'lucide-react';
+import { CheckCircle, AlertCircle, ChevronDown, ChevronRight, Briefcase } from 'lucide-react';
 import { useBatchOperationProgress, useUpsertOperationProgress } from '@/hooks/useBatchOperationProgress';
+import { useBatchJobWorks } from '@/hooks/useJobWorks';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 interface BatchProductionSectionProps {
@@ -18,11 +19,27 @@ interface BatchProductionSectionProps {
 
 export const BatchProductionSection = ({ batchId, operations = [], rollsData = [], cuttingSummary = {} }: BatchProductionSectionProps) => {
   const { data: progressData = [] } = useBatchOperationProgress(batchId);
+  const { data: jobWorks = [] } = useBatchJobWorks(batchId);
   const upsertMutation = useUpsertOperationProgress();
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
   const [allExpanded, setAllExpanded] = useState(true);
   const [openTypes, setOpenTypes] = useState<Record<number, boolean>>({});
+
+  // Build a map of type_index -> company names from job works
+  const jobWorkByType: Record<number, string[]> = {};
+  jobWorks.forEach(jw => {
+    const variations = (jw.variations || []) as Array<{ type_index: number }>;
+    const indices = variations.length > 0
+      ? variations.map(v => v.type_index)
+      : [jw.type_index];
+    indices.forEach(idx => {
+      if (!jobWorkByType[idx]) jobWorkByType[idx] = [];
+      if (!jobWorkByType[idx].includes(jw.company_name)) {
+        jobWorkByType[idx].push(jw.company_name);
+      }
+    });
+  });
 
   // Build progress map: key = `${typeIndex}-${operation}`
   const progressMap: Record<string, number> = {};
@@ -188,9 +205,11 @@ export const BatchProductionSection = ({ batchId, operations = [], rollsData = [
         const typeProgress = getTypeOverallProgress(typeIndex, typeCutPieces);
         const isOpen = isTypeOpen(typeIndex);
         const typeLabel = `Type ${typeIndex + 1}: ${type.color || 'N/A'} - ${type.fabric_type || type.fabricType || 'Fabric'}`;
+        const assignedCompanies = jobWorkByType[typeIndex];
+        const isJobWorkAssigned = assignedCompanies && assignedCompanies.length > 0;
 
         return (
-          <Card key={typeIndex}>
+          <Card key={typeIndex} className={isJobWorkAssigned ? 'border-primary/40 bg-primary/5' : ''}>
             <Collapsible open={isOpen} onOpenChange={() => toggleType(typeIndex)}>
               <CollapsibleTrigger className="w-full">
                 <CardHeader className="cursor-pointer hover:bg-muted/30 transition-colors">
@@ -198,6 +217,12 @@ export const BatchProductionSection = ({ batchId, operations = [], rollsData = [
                     <div className="flex items-center gap-3">
                       {isOpen ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
                       <CardTitle className="text-base">{typeLabel}</CardTitle>
+                      {isJobWorkAssigned && (
+                        <Badge variant="secondary" className="gap-1 bg-primary/10 text-primary border-primary/30">
+                          <Briefcase className="h-3 w-3" />
+                          {assignedCompanies.join(', ')}
+                        </Badge>
+                      )}
                     </div>
                     <div className="flex items-center gap-3">
                       <Badge variant="outline">{typeCutPieces} pcs</Badge>
