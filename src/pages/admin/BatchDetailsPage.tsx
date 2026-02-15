@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Package, Scissors, FileText, DollarSign, Users, Settings, Edit, IndianRupee, Briefcase, BarChart3, Receipt } from 'lucide-react';
+import { ArrowLeft, Package, Scissors, FileText, DollarSign, Users, Settings, Edit, IndianRupee, Briefcase, BarChart3, Receipt, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -28,6 +28,7 @@ import { BatchSalarySection } from '@/components/admin/jobmanagement/batch-detai
 import { BatchJobWorkSection } from '@/components/admin/jobmanagement/batch-details/BatchJobWorkSection';
 import EditBatchDialog from '@/components/admin/jobmanagement/EditBatchDialog';
 import { GenerateInvoiceDialog } from '@/components/admin/jobmanagement/batch-details/GenerateInvoiceDialog';
+import { BatchPaymentSection } from '@/components/admin/jobmanagement/batch-details/BatchPaymentSection';
 
 const BATCH_STATUSES = [
   { value: 'created', label: 'Created', color: 'bg-blue-500' },
@@ -35,6 +36,13 @@ const BATCH_STATUSES = [
   { value: 'in_progress', label: 'In Progress', color: 'bg-yellow-500' },
   { value: 'completed', label: 'Completed', color: 'bg-green-500' },
   { value: 'payment_pending', label: 'Payment Pending', color: 'bg-orange-500' },
+];
+
+const PAYMENT_STATUSES = [
+  { value: 'unpaid', label: 'Unpaid', color: 'bg-red-500' },
+  { value: 'partial', label: 'Partial', color: 'bg-orange-500' },
+  { value: 'paid', label: 'Paid', color: 'bg-green-500' },
+  { value: 'on_hold', label: 'On Hold', color: 'bg-gray-500' },
 ];
 
 const BatchDetailsPage = () => {
@@ -107,10 +115,14 @@ const BatchDetailsPage = () => {
     await updateBatchMutation.mutateAsync({ id, data: { status: newStatus } });
   };
 
+  const handlePaymentStatusChange = async (newStatus: string) => {
+    if (!id) return;
+    await updateBatchMutation.mutateAsync({ id, data: { payment_status: newStatus } });
+  };
+
   // Calculate overall progress based on cutting and production
   const calculateProgress = () => {
     if (totalCutPieces === 0) return 0;
-    // Progress is the ratio of production pieces to cut pieces (capped at 100%)
     const progress = Math.min((totalProductionPieces / totalCutPieces) * 100, 100);
     return Math.round(progress);
   };
@@ -156,6 +168,26 @@ const BatchDetailsPage = () => {
               ))}
             </SelectContent>
           </Select>
+          <Select value={(batch as any).payment_status || 'unpaid'} onValueChange={handlePaymentStatusChange}>
+            <SelectTrigger className="w-[160px]">
+              <div className="flex items-center gap-2">
+                <span className={`h-2.5 w-2.5 rounded-full ${PAYMENT_STATUSES.find(s => s.value === ((batch as any).payment_status || 'unpaid'))?.color || 'bg-gray-500'}`} />
+                <span className="text-sm font-medium">
+                  {PAYMENT_STATUSES.find(s => s.value === ((batch as any).payment_status || 'unpaid'))?.label || 'Unpaid'}
+                </span>
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              {PAYMENT_STATUSES.map(s => (
+                <SelectItem key={s.value} value={s.value}>
+                  <div className="flex items-center gap-2">
+                    <span className={`h-2 w-2 rounded-full ${s.color}`} />
+                    {s.label}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Badge variant="outline" className="px-3 py-1">
             Cut: {totalCutPieces} | Prod: {totalProductionPieces} | {currentProgress}%
           </Badge>
@@ -186,7 +218,7 @@ const BatchDetailsPage = () => {
 
       {/* Main Tabs */}
       <Tabs defaultValue="cutting" className="w-full">
-        <TabsList className="grid w-full grid-cols-7">
+        <TabsList className="grid w-full grid-cols-8">
           <TabsTrigger value="cutting" className="flex items-center gap-2">
             <Scissors className="h-4 w-4" />
             Cutting
@@ -210,6 +242,10 @@ const BatchDetailsPage = () => {
           <TabsTrigger value="jobwork" className="flex items-center gap-2">
             <Briefcase className="h-4 w-4" />
             Job Work
+          </TabsTrigger>
+          <TabsTrigger value="payments" className="flex items-center gap-2">
+            <CreditCard className="h-4 w-4" />
+            Payments
           </TabsTrigger>
           <TabsTrigger value="info" className="flex items-center gap-2">
             <Settings className="h-4 w-4" />
@@ -247,6 +283,10 @@ const BatchDetailsPage = () => {
 
         <TabsContent value="jobwork" className="mt-6">
           <BatchJobWorkSection batchId={id || ''} rollsData={rollsData} cuttingSummary={cuttingSummary} />
+        </TabsContent>
+
+        <TabsContent value="payments" className="mt-6">
+          <BatchPaymentSection batchId={id || ''} rollsData={rollsData} />
         </TabsContent>
 
         <TabsContent value="info" className="mt-6">

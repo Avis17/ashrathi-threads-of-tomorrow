@@ -32,6 +32,7 @@ const BatchesManager = () => {
   const deleteBatchMutation = useDeleteJobBatch();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState('all');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [deleteBatchId, setDeleteBatchId] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -42,8 +43,9 @@ const BatchesManager = () => {
       batch.job_styles?.style_name.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === 'all' || batch.status === statusFilter;
+    const matchesPaymentStatus = paymentStatusFilter === 'all' || batch.payment_status === paymentStatusFilter;
     
-    return matchesSearch && matchesStatus;
+    return matchesSearch && matchesStatus && matchesPaymentStatus;
   });
 
   const getStatusColor = (status: string) => {
@@ -53,7 +55,6 @@ const BatchesManager = () => {
       'in_progress': 'bg-yellow-500',
       'completed': 'bg-green-500',
       'payment_pending': 'bg-orange-500',
-      // Legacy statuses
       'cutting': 'bg-yellow-500',
       'stitching': 'bg-orange-500',
       'checking': 'bg-purple-500',
@@ -61,6 +62,26 @@ const BatchesManager = () => {
       'done': 'bg-green-500',
     };
     return colors[status] || 'bg-gray-500';
+  };
+
+  const getPaymentStatusColor = (status: string) => {
+    const colors: any = {
+      'unpaid': 'bg-red-500',
+      'partial': 'bg-orange-500',
+      'paid': 'bg-green-500',
+      'on_hold': 'bg-gray-500',
+    };
+    return colors[status] || 'bg-gray-500';
+  };
+
+  const getPaymentStatusLabel = (status: string) => {
+    const labels: any = {
+      'unpaid': 'Unpaid',
+      'partial': 'Partial',
+      'paid': 'Paid',
+      'on_hold': 'On Hold',
+    };
+    return labels[status] || status;
   };
 
   const handleViewDetails = (batch: any) => {
@@ -107,6 +128,18 @@ const BatchesManager = () => {
               <SelectItem value="payment_pending">Payment Pending</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={paymentStatusFilter} onValueChange={setPaymentStatusFilter}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Payment status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Payments</SelectItem>
+              <SelectItem value="unpaid">Unpaid</SelectItem>
+              <SelectItem value="partial">Partial</SelectItem>
+              <SelectItem value="paid">Paid</SelectItem>
+              <SelectItem value="on_hold">On Hold</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         <Button 
           onClick={() => setIsFormOpen(true)}
@@ -135,6 +168,7 @@ const BatchesManager = () => {
                   <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Date</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Quantity</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Status</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Payment</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Actions</th>
                 </tr>
               </thead>
@@ -155,6 +189,11 @@ const BatchesManager = () => {
                     </td>
                     <td className="px-4 py-3 text-sm text-muted-foreground">
                       {format(new Date(batch.date_created), 'MMM dd, yyyy')}
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge className={`${getPaymentStatusColor(batch.payment_status || 'unpaid')} text-white`}>
+                        {getPaymentStatusLabel(batch.payment_status || 'unpaid')}
+                      </Badge>
                     </td>
                     <td className="px-4 py-3">
                       <div className="text-sm">
