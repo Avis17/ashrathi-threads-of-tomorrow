@@ -306,6 +306,7 @@ export type Database = {
           type_index: number
           updated_at: string
           variations: Json | null
+          work_status: string
         }
         Insert: {
           balance_amount?: number
@@ -325,6 +326,7 @@ export type Database = {
           type_index?: number
           updated_at?: string
           variations?: Json | null
+          work_status?: string
         }
         Update: {
           balance_amount?: number
@@ -344,6 +346,7 @@ export type Database = {
           type_index?: number
           updated_at?: string
           variations?: Json | null
+          work_status?: string
         }
         Relationships: [
           {

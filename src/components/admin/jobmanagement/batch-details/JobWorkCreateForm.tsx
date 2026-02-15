@@ -9,6 +9,7 @@ import { Plus, Trash2 } from 'lucide-react';
 import { useCreateJobWork } from '@/hooks/useJobWorks';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
+import { AddWorkerDialog } from './AddWorkerDialog';
 
 const JOB_WORK_OPERATIONS = [
   'Cutting',
@@ -33,6 +34,7 @@ interface SelectedVariation {
   color: string;
   pieces: number;
   label: string;
+  sizes: string;
 }
 
 interface OperationRow {
@@ -45,11 +47,10 @@ interface OperationRow {
 export const JobWorkCreateForm = ({ batchId, rollsData, cuttingSummary, open, onOpenChange }: Props) => {
   const [selectedVariations, setSelectedVariations] = useState<SelectedVariation[]>([]);
   const [companyId, setCompanyId] = useState<string>('');
-  const [newCompanyName, setNewCompanyName] = useState('');
-  const [isNewCompany, setIsNewCompany] = useState(false);
+  const [showAddWorker, setShowAddWorker] = useState(false);
   const [notes, setNotes] = useState('');
   const [paidAmount, setPaidAmount] = useState('0');
-  const [companyProfit, setCompanyProfit] = useState('0');
+  const [companyProfitPercent, setCompanyProfitPercent] = useState('0');
   const [operations, setOperations] = useState<OperationRow[]>([
     { operation: '', rate_per_piece: 0, quantity: 0, notes: '' },
   ]);
@@ -160,12 +161,17 @@ export const JobWorkCreateForm = ({ batchId, rollsData, cuttingSummary, open, on
         color: opt.color,
         pieces: opt.pieces,
         label: opt.label,
+        sizes: '',
       }]);
     }
   };
 
   const removeVariation = (index: number) => {
     setSelectedVariations(prev => prev.filter(v => v.index !== index));
+  };
+
+  const updateVariationSizes = (index: number, sizes: string) => {
+    setSelectedVariations(prev => prev.map(v => v.index === index ? { ...v, sizes } : v));
   };
 
   const addOperation = () => {
@@ -186,34 +192,17 @@ export const JobWorkCreateForm = ({ batchId, rollsData, cuttingSummary, open, on
   };
 
   const totalAmount = operations.reduce((sum, op) => sum + (op.rate_per_piece * op.quantity), 0);
-  const profitAmount = (parseFloat(companyProfit) || 0) * totalPieces;
+  const profitPercent = parseFloat(companyProfitPercent) || 0;
+  const profitPerPiece = totalPieces > 0 ? (totalAmount / totalPieces) * (profitPercent / 100) : 0;
+  const profitAmount = profitPerPiece * totalPieces;
 
   const handleSubmit = async () => {
-    if (selectedVariations.length === 0 || (!companyId && !newCompanyName)) return;
+    if (selectedVariations.length === 0 || !companyId) return;
     if (operations.some(op => !op.operation)) return;
 
-    let finalCompanyId: string | null = null;
-    let finalCompanyName = '';
-
-    if (isNewCompany && newCompanyName) {
-      const { data: newComp, error } = await supabase
-        .from('external_job_companies')
-        .insert([{
-          company_name: newCompanyName,
-          address: '',
-          contact_number: '',
-          contact_person: '',
-        }])
-        .select()
-        .single();
-      if (error) return;
-      finalCompanyId = newComp.id;
-      finalCompanyName = newCompanyName;
-    } else {
-      const comp = allCompanies.find(c => c.id === companyId);
-      finalCompanyName = comp?.name || '';
-      finalCompanyId = comp?.source === 'external' ? comp.id : null;
-    }
+    const comp = allCompanies.find(c => c.id === companyId);
+    const finalCompanyName = comp?.name || '';
+    const finalCompanyId = comp?.source === 'external' ? comp.id : null;
 
     const firstVariation = selectedVariations[0];
 
@@ -229,12 +218,14 @@ export const JobWorkCreateForm = ({ batchId, rollsData, cuttingSummary, open, on
         notes: notes || null,
         paid_amount: parseFloat(paidAmount) || 0,
         payment_status: 'pending',
-        company_profit: parseFloat(companyProfit) || 0,
+        work_status: 'pending',
+        company_profit: profitPerPiece,
         variations: selectedVariations.map(v => ({
           type_index: v.index,
           style_id: v.styleId,
           color: v.color,
           pieces: v.pieces,
+          sizes: v.sizes,
         })),
       },
       operations: operations.map(op => ({
@@ -252,75 +243,75 @@ export const JobWorkCreateForm = ({ batchId, rollsData, cuttingSummary, open, on
   const resetForm = () => {
     setSelectedVariations([]);
     setCompanyId('');
-    setNewCompanyName('');
-    setIsNewCompany(false);
     setNotes('');
     setPaidAmount('0');
-    setCompanyProfit('0');
+    setCompanyProfitPercent('0');
     setOperations([{ operation: '', rate_per_piece: 0, quantity: 0, notes: '' }]);
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Create Job Work</DialogTitle>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Create Job Work</DialogTitle>
+          </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          {/* Style & Color/Variation Selection - Multiple */}
-          <div>
-            <Label className="text-base font-semibold">Style & Color/Variation *</Label>
-            {selectedVariations.length > 0 && (
-              <div className="space-y-2 mt-2 mb-2">
-                {selectedVariations.map(v => (
-                  <div key={v.index} className="flex items-center justify-between border rounded-md px-3 py-2 bg-muted/30">
-                    <span className="text-sm">{v.label}</span>
-                    <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeVariation(v.index)}>
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </div>
-                ))}
-                <p className="text-sm font-medium text-primary">
-                  Total Pieces: {totalPieces}
-                </p>
-              </div>
-            )}
-            {availableOptions.length > 0 && (
-              <Select value="" onValueChange={addVariation}>
-                <SelectTrigger><SelectValue placeholder="+ Add style & color variation" /></SelectTrigger>
-                <SelectContent>
-                  {availableOptions.map(opt => (
-                    <SelectItem key={opt.index} value={opt.index.toString()}>
-                      {opt.label}
-                    </SelectItem>
+          <div className="space-y-4 py-4">
+            {/* Style & Color/Variation Selection - Multiple */}
+            <div>
+              <Label className="text-base font-semibold">Style & Color/Variation *</Label>
+              {selectedVariations.length > 0 && (
+                <div className="space-y-2 mt-2 mb-2">
+                  {selectedVariations.map(v => (
+                    <div key={v.index} className="border rounded-md px-3 py-2 bg-muted/30 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">{v.label}</span>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeVariation(v.index)}>
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                      <Input
+                        placeholder="Enter sizes (e.g., S, M, L, XL)"
+                        value={v.sizes}
+                        onChange={e => updateVariationSizes(v.index, e.target.value)}
+                        className="h-8 text-sm"
+                      />
+                    </div>
                   ))}
-                </SelectContent>
-              </Select>
-            )}
-          </div>
-
-          {/* Company Selection */}
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <Label>Company *</Label>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-6 text-xs"
-                onClick={() => setIsNewCompany(!isNewCompany)}
-              >
-                {isNewCompany ? 'Select Existing' : '+ New Company'}
-              </Button>
+                  <p className="text-sm font-medium text-primary">
+                    Total Pieces: {totalPieces}
+                  </p>
+                </div>
+              )}
+              {availableOptions.length > 0 && (
+                <Select value="" onValueChange={addVariation}>
+                  <SelectTrigger><SelectValue placeholder="+ Add style & color variation" /></SelectTrigger>
+                  <SelectContent>
+                    {availableOptions.map(opt => (
+                      <SelectItem key={opt.index} value={opt.index.toString()}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
-            {isNewCompany ? (
-              <Input
-                placeholder="Enter new company name"
-                value={newCompanyName}
-                onChange={e => setNewCompanyName(e.target.value)}
-              />
-            ) : (
+
+            {/* Company Selection */}
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <Label>Company *</Label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 text-xs"
+                  onClick={() => setShowAddWorker(true)}
+                >
+                  + New Company
+                </Button>
+              </div>
               <Select value={companyId} onValueChange={setCompanyId}>
                 <SelectTrigger><SelectValue placeholder="Select company" /></SelectTrigger>
                 <SelectContent>
@@ -329,126 +320,128 @@ export const JobWorkCreateForm = ({ batchId, rollsData, cuttingSummary, open, on
                   ))}
                 </SelectContent>
               </Select>
-            )}
-          </div>
-
-          {/* Operations */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <Label className="text-base font-semibold">Operations</Label>
-              <Button type="button" variant="outline" size="sm" onClick={addOperation}>
-                <Plus className="h-4 w-4 mr-1" />
-                Add Operation
-              </Button>
             </div>
-            <div className="space-y-3">
-              {operations.map((op, idx) => (
-                <div key={idx} className="border rounded-lg p-3 space-y-2">
-                  <div className="grid grid-cols-4 gap-3">
-                    <div className="col-span-2">
-                      <Label className="text-xs">Operation *</Label>
-                      <Select value={op.operation} onValueChange={v => updateOperation(idx, 'operation', v)}>
-                        <SelectTrigger><SelectValue placeholder="Select operation" /></SelectTrigger>
-                        <SelectContent>
-                          {JOB_WORK_OPERATIONS.map(o => (
-                            <SelectItem key={o} value={o}>{o}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+
+            {/* Operations */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <Label className="text-base font-semibold">Operations</Label>
+                <Button type="button" variant="outline" size="sm" onClick={addOperation}>
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add Operation
+                </Button>
+              </div>
+              <div className="space-y-3">
+                {operations.map((op, idx) => (
+                  <div key={idx} className="border rounded-lg p-3 space-y-2">
+                    <div className="grid grid-cols-4 gap-3">
+                      <div className="col-span-2">
+                        <Label className="text-xs">Operation *</Label>
+                        <Select value={op.operation} onValueChange={v => updateOperation(idx, 'operation', v)}>
+                          <SelectTrigger><SelectValue placeholder="Select operation" /></SelectTrigger>
+                          <SelectContent>
+                            {JOB_WORK_OPERATIONS.map(o => (
+                              <SelectItem key={o} value={o}>{o}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label className="text-xs">Rate/Pc (₹)</Label>
+                        <Input
+                          type="number"
+                          step="0.5"
+                          value={op.rate_per_piece}
+                          onChange={e => updateOperation(idx, 'rate_per_piece', parseFloat(e.target.value) || 0)}
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Quantity</Label>
+                        <Input
+                          type="number"
+                          value={op.quantity}
+                          onChange={e => updateOperation(idx, 'quantity', parseInt(e.target.value) || 0)}
+                        />
+                      </div>
                     </div>
-                    <div>
-                      <Label className="text-xs">Rate/Pc (₹)</Label>
-                      <Input
-                        type="number"
-                        step="0.5"
-                        value={op.rate_per_piece}
-                        onChange={e => updateOperation(idx, 'rate_per_piece', parseFloat(e.target.value) || 0)}
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Quantity</Label>
-                      <Input
-                        type="number"
-                        value={op.quantity}
-                        onChange={e => updateOperation(idx, 'quantity', parseInt(e.target.value) || 0)}
-                      />
+                    <div className="flex items-end gap-2">
+                      <div className="flex-1">
+                        <Label className="text-xs">Notes</Label>
+                        <Input
+                          placeholder="Optional notes"
+                          value={op.notes}
+                          onChange={e => updateOperation(idx, 'notes', e.target.value)}
+                        />
+                      </div>
+                      <div className="text-sm font-semibold whitespace-nowrap pr-2">
+                        = ₹{(op.rate_per_piece * op.quantity).toFixed(2)}
+                      </div>
+                      {operations.length > 1 && (
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeOperation(idx)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </div>
-                  <div className="flex items-end gap-2">
-                    <div className="flex-1">
-                      <Label className="text-xs">Notes</Label>
-                      <Input
-                        placeholder="Optional notes"
-                        value={op.notes}
-                        onChange={e => updateOperation(idx, 'notes', e.target.value)}
-                      />
-                    </div>
-                    <div className="text-sm font-semibold whitespace-nowrap pr-2">
-                      = ₹{(op.rate_per_piece * op.quantity).toFixed(2)}
-                    </div>
-                    {operations.length > 1 && (
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeOperation(idx)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
+            </div>
+
+            {/* Company Profit as Percentage */}
+            <div>
+              <Label>Company Profit (%)</Label>
+              <div className="flex items-center gap-3">
+                <Input
+                  type="number"
+                  step="0.5"
+                  className="max-w-[200px]"
+                  value={companyProfitPercent}
+                  onChange={e => setCompanyProfitPercent(e.target.value)}
+                />
+                {totalPieces > 0 && totalAmount > 0 && (
+                  <span className="text-sm text-muted-foreground">
+                    ₹{profitPerPiece.toFixed(2)}/pc · Total: ₹{profitAmount.toFixed(2)}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Total */}
+            <div className="bg-muted/50 rounded-lg p-3 space-y-1">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Operations Total</span>
+                <span className="font-semibold">₹{totalAmount.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Company Profit ({profitPercent}%)</span>
+                <span className="font-semibold">₹{profitAmount.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between items-center border-t pt-1">
+                <span className="font-medium">Grand Total</span>
+                <span className="text-lg font-bold">₹{(totalAmount + profitAmount).toFixed(2)}</span>
+              </div>
+            </div>
+
+            {/* Notes */}
+            <div>
+              <Label>Notes</Label>
+              <Textarea placeholder="Any remarks about this job work..." value={notes} onChange={e => setNotes(e.target.value)} />
             </div>
           </div>
 
-          {/* Company Profit */}
-          <div>
-            <Label>Company Profit (₹ per piece)</Label>
-            <div className="flex items-center gap-3">
-              <Input
-                type="number"
-                step="0.5"
-                className="max-w-[200px]"
-                value={companyProfit}
-                onChange={e => setCompanyProfit(e.target.value)}
-              />
-              {totalPieces > 0 && (
-                <span className="text-sm text-muted-foreground">
-                  Total Profit: ₹{profitAmount.toFixed(2)}
-                </span>
-              )}
-            </div>
-          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+            <Button
+              onClick={handleSubmit}
+              disabled={selectedVariations.length === 0 || !companyId || operations.some(op => !op.operation) || createMutation.isPending}
+            >
+              {createMutation.isPending ? 'Creating...' : 'Create Job Work'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-          {/* Total */}
-          <div className="bg-muted/50 rounded-lg p-3 space-y-1">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Operations Total</span>
-              <span className="font-semibold">₹{totalAmount.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Company Profit</span>
-              <span className="font-semibold">₹{profitAmount.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between items-center border-t pt-1">
-              <span className="font-medium">Grand Total</span>
-              <span className="text-lg font-bold">₹{(totalAmount + profitAmount).toFixed(2)}</span>
-            </div>
-          </div>
-
-          {/* Notes */}
-          <div>
-            <Label>Notes</Label>
-            <Textarea placeholder="Any remarks about this job work..." value={notes} onChange={e => setNotes(e.target.value)} />
-          </div>
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={selectedVariations.length === 0 || (!companyId && !newCompanyName) || operations.some(op => !op.operation) || createMutation.isPending}
-          >
-            {createMutation.isPending ? 'Creating...' : 'Create Job Work'}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      <AddWorkerDialog open={showAddWorker} onOpenChange={setShowAddWorker} />
+    </>
   );
 };
