@@ -294,6 +294,7 @@ export type Database = {
           color: string
           company_id: string | null
           company_name: string
+          company_profit: number | null
           created_at: string
           id: string
           notes: string | null
@@ -304,6 +305,7 @@ export type Database = {
           total_amount: number
           type_index: number
           updated_at: string
+          variations: Json | null
         }
         Insert: {
           balance_amount?: number
@@ -311,6 +313,7 @@ export type Database = {
           color: string
           company_id?: string | null
           company_name: string
+          company_profit?: number | null
           created_at?: string
           id?: string
           notes?: string | null
@@ -321,6 +324,7 @@ export type Database = {
           total_amount?: number
           type_index?: number
           updated_at?: string
+          variations?: Json | null
         }
         Update: {
           balance_amount?: number
@@ -328,6 +332,7 @@ export type Database = {
           color?: string
           company_id?: string | null
           company_name?: string
+          company_profit?: number | null
           created_at?: string
           id?: string
           notes?: string | null
@@ -338,6 +343,7 @@ export type Database = {
           total_amount?: number
           type_index?: number
           updated_at?: string
+          variations?: Json | null
         }
         Relationships: [
           {
