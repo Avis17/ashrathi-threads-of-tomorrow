@@ -1,12 +1,12 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Textarea } from '@/components/ui/textarea';
-import { IndianRupee, Save, Loader2, Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
+import { IndianRupee, Save, Loader2, Trash2, ChevronDown, ChevronRight, ExternalLink } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useBatchSalaryEntries, useUpsertBatchSalary, useDeleteBatchSalary, BatchSalaryEntry } from '@/hooks/useBatchSalary';
 import { supabase } from '@/integrations/supabase/client';
@@ -45,7 +45,6 @@ interface LocalEntry {
   payment_status: string;
   paid_amount: number;
   notes: string;
-  isNew?: boolean;
 }
 
 interface Props {
@@ -55,7 +54,6 @@ interface Props {
 }
 
 export const BatchSalarySection = ({ batchId, rollsData, cuttingSummary }: Props) => {
-  // Group rolls by style_id
   const styleGroups = useMemo(() => {
     const groups: Record<string, { styleId: string; typeIndices: number[]; colors: string[] }> = {};
     rollsData.forEach((type, idx) => {
@@ -72,7 +70,6 @@ export const BatchSalarySection = ({ batchId, rollsData, cuttingSummary }: Props
 
   const styleIds = styleGroups.map(g => g.styleId);
 
-  // Fetch style info
   const { data: styles } = useQuery({
     queryKey: ['styles-for-salary', styleIds],
     queryFn: async () => {
@@ -87,7 +84,6 @@ export const BatchSalarySection = ({ batchId, rollsData, cuttingSummary }: Props
     enabled: styleIds.length > 0,
   });
 
-  // Fetch CMT quotations for styles
   const cmtIds = (styles || []).map(s => s.linked_cmt_quotation_id).filter(Boolean) as string[];
   const { data: cmtQuotations } = useQuery({
     queryKey: ['cmt-for-salary', cmtIds],
@@ -129,6 +125,7 @@ export const BatchSalarySection = ({ batchId, rollsData, cuttingSummary }: Props
             styleId={group.styleId}
             style={style}
             cmt={cmt}
+            cmtId={style?.linked_cmt_quotation_id || null}
             totalPieces={totalPieces}
             operations={operations}
             existingEntries={(existingEntries || []).filter(e => e.style_id === group.styleId)}
@@ -140,137 +137,152 @@ export const BatchSalarySection = ({ batchId, rollsData, cuttingSummary }: Props
   );
 };
 
+/** Build the default rows from batch operations + CMT approved rates */
+function buildDefaultEntries(
+  operations: string[],
+  cmtOps: CMTOperation[],
+  cmtApproved: CMTApprovedRates | null,
+  totalPieces: number,
+): LocalEntry[] {
+  const entries: LocalEntry[] = [];
+
+  operations.forEach(operation => {
+    const rates = getApprovedRatesForOp(operation, cmtOps, cmtApproved);
+    rates.forEach(r => {
+      entries.push({
+        operation,
+        description: r.description,
+        rate_per_piece: r.rate,
+        quantity: totalPieces,
+        payment_status: 'pending',
+        paid_amount: 0,
+        notes: '',
+      });
+    });
+  });
+
+  return entries;
+}
+
+function getApprovedRatesForOp(
+  operation: string,
+  cmtOps: CMTOperation[],
+  cmtApproved: CMTApprovedRates | null,
+): { rate: number; description: string }[] {
+  if (!cmtApproved || !cmtOps.length) return [{ rate: 0, description: '' }];
+
+  const machineMap: Record<string, string> = {
+    'Stitching(Singer)': 'Singer',
+    'Stitching(Powertable)': 'Power Table',
+  };
+  const categoryMap: Record<string, string> = {
+    'Cutting': 'Cutting',
+    'Stitching(Singer)': 'Stitching',
+    'Stitching(Powertable)': 'Stitching',
+    'Checking': 'Checking',
+    'Ironing': 'Finishing',
+    'Packing': 'Packing',
+    'Maintenance': 'Special',
+  };
+
+  const category = categoryMap[operation];
+  if (!category) return [{ rate: 0, description: '' }];
+
+  const machine = machineMap[operation] || null;
+
+  // Filter CMT operations by category + machine
+  const matchingCmtOps = cmtOps.filter(op => {
+    if (op.category !== category) return false;
+    if (machine && op.machineType !== machine) return false;
+    // For non-machine operations (Cutting, Checking, etc.), match all in that category
+    if (!machine && (operation === 'Stitching(Singer)' || operation === 'Stitching(Powertable)')) return false;
+    return true;
+  });
+
+  if (matchingCmtOps.length === 0) {
+    // Fallback: try approved_rates array
+    const approvedMatch = cmtApproved.operations.find(op => op.category === category);
+    return [{ rate: approvedMatch?.rate || 0, description: '' }];
+  }
+
+  // Now find corresponding approved rates by position
+  // Build a positional index: for each CMT operation in the full list, track its position within its category
+  const allCategoryOps = cmtOps.filter(op => op.category === category);
+  
+  return matchingCmtOps.map(match => {
+    const posInCategory = allCategoryOps.indexOf(match);
+    // The approved_rates.operations array has one entry per CMT operation, in order
+    const approvedCategoryOps = cmtApproved.operations.filter(op => op.category === category);
+    const rate = approvedCategoryOps[posInCategory]?.rate ?? match.ratePerPiece;
+    return { rate, description: match.description || '' };
+  });
+}
+
+/** Merge existing DB entries with expected operations (keep saved, add missing) */
+function mergeEntries(
+  existingEntries: BatchSalaryEntry[],
+  defaultEntries: LocalEntry[],
+): LocalEntry[] {
+  const result: LocalEntry[] = [];
+
+  // First, add all existing entries
+  existingEntries.forEach(e => {
+    result.push({
+      id: e.id,
+      operation: e.operation,
+      description: e.description,
+      rate_per_piece: e.rate_per_piece,
+      quantity: e.quantity,
+      payment_status: e.payment_status,
+      paid_amount: e.paid_amount,
+      notes: e.notes || '',
+    });
+  });
+
+  // Then add any default entries that don't exist yet
+  defaultEntries.forEach(def => {
+    const exists = existingEntries.some(
+      e => e.operation === def.operation && e.description === def.description
+    );
+    if (!exists) {
+      result.push(def);
+    }
+  });
+
+  return result;
+}
+
 const StyleSalaryCard = ({
-  batchId, styleId, style, cmt, totalPieces, operations, existingEntries, colors,
+  batchId, styleId, style, cmt, cmtId, totalPieces, operations, existingEntries, colors,
 }: {
   batchId: string;
   styleId: string;
   style?: StyleInfo;
   cmt?: any;
+  cmtId: string | null;
   totalPieces: number;
   operations: string[];
   existingEntries: BatchSalaryEntry[];
   colors: string[];
 }) => {
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(true);
   const [localEntries, setLocalEntries] = useState<LocalEntry[]>([]);
   const [savingIdx, setSavingIdx] = useState<number | null>(null);
+  const [initialized, setInitialized] = useState(false);
   const upsertMutation = useUpsertBatchSalary();
   const deleteMutation = useDeleteBatchSalary();
 
-  // Get approved CMT operations
   const cmtApproved = cmt?.approved_rates as CMTApprovedRates | null;
   const cmtOps = (cmt?.operations || []) as CMTOperation[];
 
-  // Map batch operations to CMT rates
-  const getApprovedRate = (operation: string): { rate: number; description: string }[] => {
-    if (!cmtApproved || !cmtOps.length) return [{ rate: 0, description: '' }];
-
-    // Map batch operation names to CMT categories
-    const categoryMap: Record<string, string[]> = {
-      'Cutting': ['Cutting'],
-      'Stitching(Singer)': ['Stitching'],
-      'Stitching(Powertable)': ['Stitching'],
-      'Checking': ['Checking'],
-      'Ironing': ['Finishing'],
-      'Packing': ['Packing'],
-      'Maintenance': ['Special'],
-    };
-
-    const machineFilter: Record<string, string | null> = {
-      'Stitching(Singer)': 'Singer',
-      'Stitching(Powertable)': 'Power Table',
-    };
-
-    const cats = categoryMap[operation] || [];
-    const machineReq = machineFilter[operation] || null;
-
-    // Find matching CMT operations
-    const matches = cmtOps.filter(op => {
-      if (!cats.includes(op.category)) return false;
-      if (machineReq && op.machineType !== machineReq) return false;
-      if (!machineReq && operation !== 'Cutting' && operation !== 'Checking') return false;
-      return true;
-    });
-
-    if (matches.length === 0) {
-      // Try from approved_rates
-      const approvedIdx = cmtApproved.operations.findIndex(
-        op => cats.includes(op.category)
-      );
-      if (approvedIdx >= 0) {
-        return [{ rate: cmtApproved.operations[approvedIdx].rate, description: '' }];
-      }
-      return [{ rate: 0, description: '' }];
-    }
-
-    // Use approved rates (which override the original CMT operation amounts)
-    // Map each CMT operation to its approved rate
-    return matches.map((match, i) => {
-      // Find corresponding approved rate by matching position
-      const approvedOps = cmtApproved.operations.filter(
-        op => cats.includes(op.category)
-      );
-      // For stitching with machine filter, narrow down
-      let rate = match.ratePerPiece;
-      if (machineReq === 'Singer') {
-        const singerOps = cmtOps.filter(o => cats.includes(o.category) && o.machineType === 'Singer');
-        const singerIdx = singerOps.indexOf(match);
-        const approvedSinger = approvedOps.filter((_, ai) => {
-          const origOp = cmtOps.filter(o => cats.includes(o.category));
-          return origOp[ai]?.machineType === 'Singer';
-        });
-        if (approvedSinger[singerIdx]) rate = approvedSinger[singerIdx].rate;
-      } else if (machineReq === 'Power Table') {
-        const ptOps = cmtOps.filter(o => cats.includes(o.category) && o.machineType === 'Power Table');
-        const ptIdx = ptOps.indexOf(match);
-        const approvedPT = approvedOps.filter((_, ai) => {
-          const origOp = cmtOps.filter(o => cats.includes(o.category));
-          return origOp[ai]?.machineType === 'Power Table';
-        });
-        if (approvedPT[ptIdx]) rate = approvedPT[ptIdx].rate;
-      } else {
-        if (approvedOps[i]) rate = approvedOps[i].rate;
-      }
-
-      return { rate, description: match.description || '' };
-    });
-  };
-
-  // Initialize local entries from existing or generate from operations
+  // Build defaults and merge with existing — always show all operation rows
   useEffect(() => {
-    if (existingEntries.length > 0) {
-      setLocalEntries(existingEntries.map(e => ({
-        id: e.id,
-        operation: e.operation,
-        description: e.description,
-        rate_per_piece: e.rate_per_piece,
-        quantity: e.quantity,
-        payment_status: e.payment_status,
-        paid_amount: e.paid_amount,
-        notes: e.notes || '',
-      })));
-    } else {
-      // Auto-generate from operations with CMT rates
-      const entries: LocalEntry[] = [];
-      operations.forEach(op => {
-        const rates = getApprovedRate(op);
-        rates.forEach(r => {
-          entries.push({
-            operation: op,
-            description: r.description,
-            rate_per_piece: r.rate,
-            quantity: totalPieces,
-            payment_status: 'pending',
-            paid_amount: 0,
-            notes: '',
-            isNew: true,
-          });
-        });
-      });
-      setLocalEntries(entries);
-    }
-  }, [existingEntries.length, operations.length]);
+    const defaults = buildDefaultEntries(operations, cmtOps, cmtApproved, totalPieces);
+    const merged = mergeEntries(existingEntries, defaults);
+    setLocalEntries(merged);
+    setInitialized(true);
+  }, [existingEntries, operations.length, cmtOps.length, totalPieces]);
 
   const updateEntry = (idx: number, field: keyof LocalEntry, value: any) => {
     setLocalEntries(prev => prev.map((e, i) => i === idx ? { ...e, [field]: value } : e));
@@ -309,14 +321,6 @@ const StyleSalaryCard = ({
   const totalPaid = localEntries.reduce((sum, e) => sum + e.paid_amount, 0);
   const totalBalance = totalAmount - totalPaid;
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'paid': return <Badge className="bg-green-500/10 text-green-600 border-green-200">Paid</Badge>;
-      case 'partial': return <Badge className="bg-yellow-500/10 text-yellow-600 border-yellow-200">Partial</Badge>;
-      default: return <Badge className="bg-red-500/10 text-red-600 border-red-200">Pending</Badge>;
-    }
-  };
-
   return (
     <Card>
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -326,14 +330,28 @@ const StyleSalaryCard = ({
               <div className="flex items-center gap-3">
                 {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                 <div>
-                  <CardTitle className="text-base">
+                  <CardTitle className="text-base flex items-center gap-2">
                     {style?.style_code || 'Unknown'} — {style?.style_name || 'Loading...'}
+                    {cmtId && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-2 text-xs text-primary"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/admin/cmt-quotation/${cmtId}`);
+                        }}
+                      >
+                        <ExternalLink className="h-3 w-3 mr-1" />
+                        View CMT
+                      </Button>
+                    )}
                   </CardTitle>
                   <p className="text-xs text-muted-foreground mt-1">
                     Colors: {colors.join(', ')} | Total Cut Pieces: {totalPieces}
                     {cmtApproved && (
-                      <span className="text-green-600 ml-2">
-                        | CMT Rate: ₹{cmtApproved.finalCMTPerPiece}
+                      <span className="text-primary ml-2 font-medium">
+                        | Approved CMT: ₹{cmtApproved.finalCMTPerPiece}
                       </span>
                     )}
                   </p>
@@ -374,8 +392,13 @@ const StyleSalaryCard = ({
                     const amount = entry.rate_per_piece * entry.quantity;
                     const balance = amount - entry.paid_amount;
                     return (
-                      <TableRow key={idx}>
-                        <TableCell className="font-medium text-sm">{entry.operation}</TableCell>
+                      <TableRow key={`${entry.operation}-${entry.description}-${idx}`}>
+                        <TableCell className="font-medium text-sm">
+                          {entry.operation}
+                          {!entry.id && (
+                            <Badge variant="outline" className="ml-2 text-[10px] px-1 py-0">New</Badge>
+                          )}
+                        </TableCell>
                         <TableCell className="text-sm text-muted-foreground">{entry.description || '—'}</TableCell>
                         <TableCell>
                           <Input
@@ -419,7 +442,7 @@ const StyleSalaryCard = ({
                           />
                         </TableCell>
                         <TableCell className="text-right text-sm">
-                          <span className={balance > 0 ? 'text-red-600' : 'text-green-600'}>
+                          <span className={balance > 0 ? 'text-destructive' : 'text-primary'}>
                             ₹{balance.toFixed(2)}
                           </span>
                         </TableCell>
@@ -463,11 +486,10 @@ const StyleSalaryCard = ({
               </Table>
             </div>
 
-            {/* Summary row */}
             <div className="mt-4 flex justify-end gap-6 text-sm border-t pt-3">
               <div>Total: <span className="font-bold">₹{totalAmount.toFixed(2)}</span></div>
-              <div>Paid: <span className="font-bold text-green-600">₹{totalPaid.toFixed(2)}</span></div>
-              <div>Balance: <span className="font-bold text-red-600">₹{totalBalance.toFixed(2)}</span></div>
+              <div>Paid: <span className="font-bold text-primary">₹{totalPaid.toFixed(2)}</span></div>
+              <div>Balance: <span className="font-bold text-destructive">₹{totalBalance.toFixed(2)}</span></div>
             </div>
           </CardContent>
         </CollapsibleContent>
