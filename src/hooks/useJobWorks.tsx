@@ -17,7 +17,8 @@ export interface BatchJobWork {
   balance_amount: number;
   payment_status: string;
   company_profit: number;
-  variations: Array<{ type_index: number; style_id: string; color: string; pieces: number }>;
+  work_status: string;
+  variations: any;
   created_at: string;
   updated_at: string;
 }
