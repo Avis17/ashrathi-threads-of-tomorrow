@@ -55,9 +55,10 @@ interface Props {
   batchId: string;
   rollsData: any[];
   cuttingSummary: Record<number, number>;
+  totalCutPieces?: number;
 }
 
-export const BatchSalarySection = ({ batchId, rollsData, cuttingSummary }: Props) => {
+export const BatchSalarySection = ({ batchId, rollsData, cuttingSummary, totalCutPieces = 0 }: Props) => {
   const styleGroups = useMemo(() => {
     const groups: Record<string, { styleId: string; typeIndices: number[]; colors: string[] }> = {};
     rollsData.forEach((type, idx) => {
@@ -105,8 +106,39 @@ export const BatchSalarySection = ({ batchId, rollsData, cuttingSummary }: Props
 
   const { data: existingEntries } = useBatchSalaryEntries(batchId);
 
+  const grandTotalSalary = (existingEntries || []).reduce((sum, e) => sum + (e.rate_per_piece * e.quantity), 0);
+
   return (
     <div className="space-y-6">
+      {/* Summary Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <Card className="bg-gradient-to-br from-indigo-500/10 to-indigo-600/5 border-indigo-200">
+          <CardContent className="p-4">
+            <div className="text-sm text-muted-foreground">Total Salary</div>
+            <div className="text-2xl font-bold text-indigo-600">₹{grandTotalSalary.toFixed(2)}</div>
+          </CardContent>
+        </Card>
+        <Card className="bg-gradient-to-br from-amber-500/10 to-amber-600/5 border-amber-200">
+          <CardContent className="p-4">
+            <div className="text-sm text-muted-foreground">Per Piece Cost</div>
+            <div className="text-2xl font-bold text-amber-600">
+              ₹{totalCutPieces > 0 ? (grandTotalSalary / totalCutPieces).toFixed(2) : '0.00'}
+            </div>
+            <div className="text-xs text-muted-foreground mt-0.5">
+              {totalCutPieces > 0 ? `${totalCutPieces} pcs` : 'No cut pieces'}
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border-emerald-200">
+          <CardContent className="p-4">
+            <div className="text-sm text-muted-foreground">Paid Amount</div>
+            <div className="text-2xl font-bold text-emerald-600">
+              ₹{(existingEntries || []).reduce((sum, e) => sum + e.paid_amount, 0).toFixed(2)}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold flex items-center gap-2">
           <IndianRupee className="h-5 w-5 text-primary" />
