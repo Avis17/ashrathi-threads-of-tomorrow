@@ -111,12 +111,16 @@ export const BatchSalarySection = ({ batchId, rollsData, cuttingSummary, totalCu
 
   const { data: existingEntries } = useBatchSalaryEntries(batchId);
 
+  const { data: allBatchAdvances = [] } = useBatchSalaryAdvances(batchId);
   const grandTotalSalary = (existingEntries || []).reduce((sum, e) => sum + (e.rate_per_piece * e.quantity), 0);
+  const grandTotalAdvances = allBatchAdvances.reduce((sum, a) => sum + Number(a.amount), 0);
+  const grandTotalPaid = (existingEntries || []).reduce((sum, e) => sum + e.paid_amount, 0) + grandTotalAdvances;
+  const grandTotalBalance = grandTotalSalary - grandTotalAdvances;
 
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="bg-gradient-to-br from-indigo-500/10 to-indigo-600/5 border-indigo-200">
           <CardContent className="p-4">
             <div className="text-sm text-muted-foreground">Total Salary</div>
@@ -136,9 +140,19 @@ export const BatchSalarySection = ({ batchId, rollsData, cuttingSummary, totalCu
         </Card>
         <Card className="bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border-emerald-200">
           <CardContent className="p-4">
-            <div className="text-sm text-muted-foreground">Paid Amount</div>
-            <div className="text-2xl font-bold text-emerald-600">
-              ₹{(existingEntries || []).reduce((sum, e) => sum + e.paid_amount, 0).toFixed(2)}
+            <div className="text-sm text-muted-foreground">Total Paid (incl. Advances)</div>
+            <div className="text-2xl font-bold text-emerald-600">₹{grandTotalPaid.toFixed(2)}</div>
+            <div className="text-xs text-muted-foreground mt-0.5">
+              Balance: ₹{grandTotalBalance.toFixed(2)}
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="bg-gradient-to-br from-violet-500/10 to-violet-600/5 border-violet-200">
+          <CardContent className="p-4">
+            <div className="text-sm text-muted-foreground">Total Advances</div>
+            <div className="text-2xl font-bold text-violet-600">₹{grandTotalAdvances.toFixed(2)}</div>
+            <div className="text-xs text-muted-foreground mt-0.5">
+              {allBatchAdvances.length} transaction{allBatchAdvances.length !== 1 ? 's' : ''}
             </div>
           </CardContent>
         </Card>
