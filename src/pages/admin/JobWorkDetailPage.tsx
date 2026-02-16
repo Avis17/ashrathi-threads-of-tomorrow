@@ -29,7 +29,7 @@ const WORK_STATUSES = [
 ];
 
 const JOB_WORK_OPERATIONS = [
-  'Cutting', 'Stitching(Singer)', 'Stitching(Powertable)', 'Checking', 'Ironing', 'Packing',
+  'Cutting', 'Stitching(Singer)', 'Stitching(Powertable)', 'Checking', 'Ironing', 'Packing', 'Accessories',
 ] as const;
 
 interface EditableOp {

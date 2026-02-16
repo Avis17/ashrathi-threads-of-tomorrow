@@ -17,6 +17,7 @@ const JOB_WORK_OPERATIONS = [
   'Stitching(Powertable)',
   'Checking',
   'Ironing',
+  'Accessories',
   'Packing',
 ] as const;
 
