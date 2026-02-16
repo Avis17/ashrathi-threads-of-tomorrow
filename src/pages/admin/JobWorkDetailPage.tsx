@@ -47,6 +47,7 @@ const JobWorkDetailPage = () => {
   const queryClient = useQueryClient();
   const updateMutation = useUpdateJobWork();
   const [editingOps, setEditingOps] = useState<EditableOp[] | null>(null);
+  const [editProfitPercent, setEditProfitPercent] = useState(0);
   const [savingOps, setSavingOps] = useState(false);
 
   const { data: jobWork, isLoading } = useQuery({
@@ -174,6 +175,7 @@ const JobWorkDetailPage = () => {
       quantity: op.quantity,
       notes: op.notes || '',
     })));
+    setEditProfitPercent(profitPercent);
   };
 
   const addNewOp = () => {
@@ -194,6 +196,11 @@ const JobWorkDetailPage = () => {
     setEditingOps(prev => prev?.map((op, i) => i === idx ? { ...op, [field]: value } : op) || null);
   };
 
+  const editOpsTotal = editingOps?.reduce((s, op) => s + (op.rate_per_piece * op.quantity), 0) || 0;
+  const editProfitAmount = editOpsTotal * (editProfitPercent / 100);
+  const editGrandTotal = editOpsTotal + editProfitAmount;
+  const editProfitPerPiece = jobWork.pieces > 0 ? editProfitAmount / jobWork.pieces : 0;
+
   const saveOps = async () => {
     if (!editingOps || !jwId) return;
     setSavingOps(true);
@@ -212,6 +219,14 @@ const JobWorkDetailPage = () => {
         const { error } = await supabase.from('batch_job_work_operations').insert(opsData);
         if (error) throw error;
       }
+      // Update company_profit and total_amount on the job work record
+      const { error: updateError } = await supabase.from('batch_job_works').update({
+        company_profit: editProfitPerPiece,
+        total_amount: editGrandTotal,
+        balance_amount: editGrandTotal - jobWork.paid_amount,
+      }).eq('id', jwId);
+      if (updateError) throw updateError;
+
       queryClient.invalidateQueries({ queryKey: ['job-work-operations', jwId] });
       queryClient.invalidateQueries({ queryKey: ['job-work-detail', jwId] });
       queryClient.invalidateQueries({ queryKey: ['batch-job-works'] });
@@ -414,6 +429,29 @@ const JobWorkDetailPage = () => {
                   </div>
                 </div>
               ))}
+              {/* Totals & Profit */}
+              <div className="border-t pt-3 space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-medium">Operations Total</span>
+                  <span className="font-bold">₹{editOpsTotal.toFixed(2)}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Label className="text-sm font-medium whitespace-nowrap">Company Profit %</Label>
+                  <Input
+                    type="number"
+                    step="0.5"
+                    min="0"
+                    value={editProfitPercent}
+                    onChange={e => setEditProfitPercent(parseFloat(e.target.value) || 0)}
+                    className="w-24 h-8"
+                  />
+                  <span className="text-sm font-semibold whitespace-nowrap">= ₹{editProfitAmount.toFixed(2)}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm border-t pt-2">
+                  <span className="font-bold">Grand Total</span>
+                  <span className="font-bold text-base">₹{editGrandTotal.toFixed(2)}</span>
+                </div>
+              </div>
             </div>
           ) : (
             <Table>
