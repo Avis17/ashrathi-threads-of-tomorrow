@@ -71,17 +71,20 @@ export const JobWorkCreateForm = ({ batchId, rollsData, cuttingSummary, open, on
     },
   });
 
-  // Fetch unique job worker names from delivery_challans
+  // Fetch unique job worker names from delivery_challans + job_workers
   const { data: jobWorkerNames = [] } = useQuery({
     queryKey: ['job-worker-companies'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('delivery_challans')
-        .select('job_worker_name')
-        .order('job_worker_name');
-      if (error) throw error;
-      const unique = [...new Set(data.map(d => d.job_worker_name).filter(Boolean))];
-      return unique;
+      const [dcRes, jwRes] = await Promise.all([
+        supabase.from('delivery_challans').select('job_worker_name').order('job_worker_name'),
+        supabase.from('job_workers').select('name').eq('is_active', true).order('name'),
+      ]);
+      if (dcRes.error) throw dcRes.error;
+      if (jwRes.error) throw jwRes.error;
+      const names = new Set<string>();
+      dcRes.data.forEach(d => { if (d.job_worker_name) names.add(d.job_worker_name); });
+      jwRes.data.forEach(w => { if (w.name) names.add(w.name); });
+      return [...names].sort();
     },
   });
 

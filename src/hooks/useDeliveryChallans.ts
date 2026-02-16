@@ -217,6 +217,8 @@ export const useCreateJobWorker = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['job-workers'] });
+      queryClient.invalidateQueries({ queryKey: ['external-job-companies'] });
+      queryClient.invalidateQueries({ queryKey: ['job-worker-companies'] });
       toast.success('Job Worker added successfully');
     },
     onError: (error: Error) => {
