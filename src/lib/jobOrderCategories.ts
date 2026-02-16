@@ -125,4 +125,5 @@ export const OPERATIONS = [
   "Checking",
   "Ironing",
   "Packing",
+  "Accessories",
 ];
