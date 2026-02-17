@@ -51,7 +51,7 @@ const CompaniesList = () => {
     (company) =>
       company.company_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       company.contact_person.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      company.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (company.address || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
       company.contact_number.includes(searchQuery) ||
       (company.alternate_number && company.alternate_number.includes(searchQuery))
   );
@@ -136,7 +136,7 @@ const CompaniesList = () => {
                         <p className="font-semibold">{company.company_name}</p>
                         <p className="text-xs text-muted-foreground flex items-center gap-1">
                           <MapPin className="h-3 w-3" />
-                          {company.address.slice(0, 40)}{company.address.length > 40 ? "..." : ""}
+                          {(company.address || "").slice(0, 40)}{(company.address || "").length > 40 ? "..." : ""}
                         </p>
                       </div>
                     </div>
