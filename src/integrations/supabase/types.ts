@@ -4597,6 +4597,386 @@ export type Database = {
         }
         Relationships: []
       }
+      pp_approvals: {
+        Row: {
+          approval_type: string
+          approved_at: string | null
+          approver: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          status: string
+          style_id: string
+        }
+        Insert: {
+          approval_type: string
+          approved_at?: string | null
+          approver?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          status?: string
+          style_id: string
+        }
+        Update: {
+          approval_type?: string
+          approved_at?: string | null
+          approver?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          status?: string
+          style_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pp_approvals_style_id_fkey"
+            columns: ["style_id"]
+            isOneToOne: false
+            referencedRelation: "pp_styles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pp_diagrams: {
+        Row: {
+          ai_generated: boolean | null
+          ai_prompt: string | null
+          created_at: string
+          diagram_type: string
+          file_url: string | null
+          id: string
+          notes: string | null
+          style_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          ai_generated?: boolean | null
+          ai_prompt?: string | null
+          created_at?: string
+          diagram_type?: string
+          file_url?: string | null
+          id?: string
+          notes?: string | null
+          style_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          ai_generated?: boolean | null
+          ai_prompt?: string | null
+          created_at?: string
+          diagram_type?: string
+          file_url?: string | null
+          id?: string
+          notes?: string | null
+          style_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pp_diagrams_style_id_fkey"
+            columns: ["style_id"]
+            isOneToOne: false
+            referencedRelation: "pp_styles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pp_measurements: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          rows: Json
+          size_set: string[]
+          style_id: string
+          template_name: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          rows?: Json
+          size_set?: string[]
+          style_id: string
+          template_name?: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          rows?: Json
+          size_set?: string[]
+          style_id?: string
+          template_name?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pp_measurements_style_id_fkey"
+            columns: ["style_id"]
+            isOneToOne: false
+            referencedRelation: "pp_styles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pp_patterns: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          file_type: string | null
+          file_url: string | null
+          id: string
+          is_approved: boolean | null
+          notes: string | null
+          pattern_version: string
+          size_set: string | null
+          style_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          is_approved?: boolean | null
+          notes?: string | null
+          pattern_version?: string
+          size_set?: string | null
+          style_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          is_approved?: boolean | null
+          notes?: string | null
+          pattern_version?: string
+          size_set?: string | null
+          style_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pp_patterns_style_id_fkey"
+            columns: ["style_id"]
+            isOneToOne: false
+            referencedRelation: "pp_styles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pp_samples: {
+        Row: {
+          approval_status: string | null
+          comments: string | null
+          created_at: string
+          factory: string | null
+          id: string
+          received_date: string | null
+          sample_number: string | null
+          sample_type: string
+          sent_date: string | null
+          status: string
+          style_id: string
+          updated_at: string
+        }
+        Insert: {
+          approval_status?: string | null
+          comments?: string | null
+          created_at?: string
+          factory?: string | null
+          id?: string
+          received_date?: string | null
+          sample_number?: string | null
+          sample_type?: string
+          sent_date?: string | null
+          status?: string
+          style_id: string
+          updated_at?: string
+        }
+        Update: {
+          approval_status?: string | null
+          comments?: string | null
+          created_at?: string
+          factory?: string | null
+          id?: string
+          received_date?: string | null
+          sample_number?: string | null
+          sample_type?: string
+          sent_date?: string | null
+          status?: string
+          style_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pp_samples_style_id_fkey"
+            columns: ["style_id"]
+            isOneToOne: false
+            referencedRelation: "pp_styles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pp_style_versions: {
+        Row: {
+          ai_diff: string | null
+          change_summary: string | null
+          changed_by: string | null
+          created_at: string
+          id: string
+          snapshot: Json
+          style_id: string
+          version: number
+        }
+        Insert: {
+          ai_diff?: string | null
+          change_summary?: string | null
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          snapshot: Json
+          style_id: string
+          version: number
+        }
+        Update: {
+          ai_diff?: string | null
+          change_summary?: string | null
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          snapshot?: Json
+          style_id?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pp_style_versions_style_id_fkey"
+            columns: ["style_id"]
+            isOneToOne: false
+            referencedRelation: "pp_styles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pp_styles: {
+        Row: {
+          buyer: string | null
+          category: string
+          color_palette: string[] | null
+          construction_type: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          fabric_type: string | null
+          gsm: string | null
+          id: string
+          season: string | null
+          status: string
+          stitch_type: string | null
+          style_code: string
+          style_name: string
+          target_market: string | null
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          buyer?: string | null
+          category?: string
+          color_palette?: string[] | null
+          construction_type?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          fabric_type?: string | null
+          gsm?: string | null
+          id?: string
+          season?: string | null
+          status?: string
+          stitch_type?: string | null
+          style_code: string
+          style_name: string
+          target_market?: string | null
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          buyer?: string | null
+          category?: string
+          color_palette?: string[] | null
+          construction_type?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          fabric_type?: string | null
+          gsm?: string | null
+          id?: string
+          season?: string | null
+          status?: string
+          stitch_type?: string | null
+          style_code?: string
+          style_name?: string
+          target_market?: string | null
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
+      }
+      pp_tech_packs: {
+        Row: {
+          created_at: string
+          generated_at: string
+          id: string
+          includes: Json | null
+          pdf_url: string | null
+          status: string
+          style_id: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          generated_at?: string
+          id?: string
+          includes?: Json | null
+          pdf_url?: string | null
+          status?: string
+          style_id: string
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          generated_at?: string
+          id?: string
+          includes?: Json | null
+          pdf_url?: string | null
+          status?: string
+          style_id?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pp_tech_packs_style_id_fkey"
+            columns: ["style_id"]
+            isOneToOne: false
+            referencedRelation: "pp_styles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_inventory: {
         Row: {
           available_quantity: number
