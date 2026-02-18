@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Plus, Pencil, Trash2, Search } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, ExternalLink } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -13,6 +14,7 @@ import { format } from 'date-fns';
 import ExpenseForm from './ExpenseForm';
 
 const ExpensesManager = () => {
+  const navigate = useNavigate();
   const [selectedBatch, setSelectedBatch] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -123,7 +125,21 @@ const ExpensesManager = () => {
               {filteredExpenses.map((expense) => (
                 <div key={expense.id} className="flex items-center justify-between p-4 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors">
                   <div className="flex-1 space-y-1">
-                    <div className="font-medium">{expense.item_name}</div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium">{expense.item_name}</span>
+                      {expense.batch_id && (() => {
+                        const batch = batches?.find(b => b.id === expense.batch_id);
+                        return batch ? (
+                          <button
+                            onClick={() => navigate(`/admin/job-management/batch/${expense.batch_id}`)}
+                            className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                          >
+                            {batch.batch_number}
+                            <ExternalLink className="h-3 w-3" />
+                          </button>
+                        ) : null;
+                      })()}
+                    </div>
                     <div className="text-sm text-muted-foreground">
                       {expense.expense_type} • {format(new Date(expense.date), 'MMM dd, yyyy')}
                       {expense.supplier_name && ` • ${expense.supplier_name}`}
