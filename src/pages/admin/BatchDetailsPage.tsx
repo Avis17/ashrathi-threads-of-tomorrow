@@ -32,6 +32,7 @@ import { BatchJobWorkSection } from '@/components/admin/jobmanagement/batch-deta
 import EditBatchDialog from '@/components/admin/jobmanagement/EditBatchDialog';
 import { GenerateInvoiceDialog } from '@/components/admin/jobmanagement/batch-details/GenerateInvoiceDialog';
 import { BatchPaymentSection } from '@/components/admin/jobmanagement/batch-details/BatchPaymentSection';
+import { BatchWeightAnalysisCard } from '@/components/admin/jobmanagement/batch-details/BatchWeightAnalysisCard';
 
 const BATCH_STATUSES = [
   { value: 'created', label: 'Created', color: 'bg-blue-500' },
@@ -245,6 +246,26 @@ const BatchDetailsPage = () => {
         cuttingSummary={cuttingSummary}
         operationProgress={operationProgress || []}
       />
+
+      {/* Weight Analysis Card */}
+      {(() => {
+        // Build style-wise fabric info
+        const styleMap: Record<string, { styleName: string; totalWeightKg: number; totalCutPieces: number }> = {};
+        rollsData.forEach((r: any, idx: number) => {
+          const key = r.style_id || 'unknown';
+          const name = styleLookup[key] || r.style_name || `Style ${key.slice(0, 6)}`;
+          if (!styleMap[key]) styleMap[key] = { styleName: name, totalWeightKg: 0, totalCutPieces: 0 };
+          styleMap[key].totalWeightKg += (Number(r.number_of_rolls) || 0) * (Number(r.weight) || 0);
+          styleMap[key].totalCutPieces += cuttingSummary[idx] || 0;
+        });
+        const styleList = Object.entries(styleMap).map(([styleId, info]) => ({ styleId, ...info }));
+        return (
+          <BatchWeightAnalysisCard
+            batchId={id || ''}
+            styles={styleList}
+          />
+        );
+      })()}
 
       {/* Main Tabs */}
       <Tabs defaultValue="cutting" className="w-full">

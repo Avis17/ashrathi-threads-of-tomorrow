@@ -661,6 +661,54 @@ export type Database = {
           },
         ]
       }
+      batch_weight_analysis: {
+        Row: {
+          actual_weight_grams: number | null
+          batch_id: string
+          bottom_wastage_percent: number | null
+          bottom_weight_grams: number | null
+          created_at: string
+          id: string
+          is_set_item: boolean
+          notes: string | null
+          style_id: string
+          top_wastage_percent: number | null
+          top_weight_grams: number | null
+          updated_at: string
+          wastage_percent: number | null
+        }
+        Insert: {
+          actual_weight_grams?: number | null
+          batch_id: string
+          bottom_wastage_percent?: number | null
+          bottom_weight_grams?: number | null
+          created_at?: string
+          id?: string
+          is_set_item?: boolean
+          notes?: string | null
+          style_id: string
+          top_wastage_percent?: number | null
+          top_weight_grams?: number | null
+          updated_at?: string
+          wastage_percent?: number | null
+        }
+        Update: {
+          actual_weight_grams?: number | null
+          batch_id?: string
+          bottom_wastage_percent?: number | null
+          bottom_weight_grams?: number | null
+          created_at?: string
+          id?: string
+          is_set_item?: boolean
+          notes?: string | null
+          style_id?: string
+          top_wastage_percent?: number | null
+          top_weight_grams?: number | null
+          updated_at?: string
+          wastage_percent?: number | null
+        }
+        Relationships: []
+      }
       branches: {
         Row: {
           address: string
