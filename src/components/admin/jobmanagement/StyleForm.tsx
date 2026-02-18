@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/select';
 import { useCreateJobStyle, useUpdateJobStyle, type JobStyle } from '@/hooks/useJobStyles';
 import { supabase } from '@/integrations/supabase/client';
-import { Upload, Link as LinkIcon, X, Plus, Trash2 } from 'lucide-react';
+import { Upload, Link as LinkIcon, X, Plus, Trash2, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { Switch } from '@/components/ui/switch';
 
@@ -126,6 +126,8 @@ const StyleForm = ({ style, onClose }: StyleFormProps) => {
   const [showCustomStyleName, setShowCustomStyleName] = useState(
     style?.style_name && !STYLE_NAMES.includes(style.style_name)
   );
+  const [measurementFile, setMeasurementFile] = useState<File | null>(null);
+  const [measurementPreview, setMeasurementPreview] = useState<string>((style as any)?.measurement_sheet_url || '');
 
   const additionalCosts = parseAdditionalCosts(style);
 
@@ -244,14 +246,55 @@ const StyleForm = ({ style, onClose }: StyleFormProps) => {
     return data.publicUrl;
   };
 
+  const uploadMeasurementSheet = async (): Promise<string | null> => {
+    if (!measurementFile) return null;
+
+    const fileExt = measurementFile.name.split('.').pop();
+    const fileName = `measurement-${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('style-images')
+      .upload(fileName, measurementFile);
+
+    if (uploadError) {
+      toast.error('Failed to upload measurement sheet');
+      return null;
+    }
+
+    const { data } = supabase.storage
+      .from('style-images')
+      .getPublicUrl(fileName);
+
+    return data.publicUrl;
+  };
+
+  const handleMeasurementFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setMeasurementFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setMeasurementPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const onSubmit = async (data: FormData) => {
     let imageUrl = data.style_image_url;
+    let measurementSheetUrl = (style as any)?.measurement_sheet_url || null;
 
-    // Upload file if selected
+    // Upload files if selected
     if (imageFile) {
       const uploadedUrl = await uploadImage();
       if (uploadedUrl) {
         imageUrl = uploadedUrl;
+      }
+    }
+    if (measurementFile) {
+      const uploadedUrl = await uploadMeasurementSheet();
+      if (uploadedUrl) {
+        measurementSheetUrl = uploadedUrl;
       }
     }
 
@@ -293,6 +336,7 @@ const StyleForm = ({ style, onClose }: StyleFormProps) => {
       min_order_qty: data.min_order_qty,
       remarks: data.remarks,
       style_image_url: imageUrl || null,
+      measurement_sheet_url: measurementSheetUrl,
       rate_cutting: getOperationRate('Cutting'),
       rate_stitching_singer: getOperationRate('Stitching (Singer)'),
       rate_stitching_power_table: getOperationRate('Stitching (Power Table)'),
@@ -303,9 +347,9 @@ const StyleForm = ({ style, onClose }: StyleFormProps) => {
     };
 
     if (style) {
-      await updateMutation.mutateAsync({ id: style.id, data: submitData });
+      await updateMutation.mutateAsync({ id: style.id, data: submitData as any });
     } else {
-      await createMutation.mutateAsync(submitData);
+      await createMutation.mutateAsync(submitData as any);
     }
     onClose();
   };
@@ -489,7 +533,54 @@ const StyleForm = ({ style, onClose }: StyleFormProps) => {
         </div>
       </div>
 
+      {/* Measurement Sheet */}
+      <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
+        <h3 className="font-semibold flex items-center gap-2">
+          <FileText className="h-4 w-4" />
+          Measurement Sheet
+        </h3>
+        <div className="space-y-3">
+          <div>
+            <Input
+              type="file"
+              accept="image/*,.pdf"
+              onChange={handleMeasurementFileChange}
+            />
+            <p className="text-xs text-muted-foreground mt-1">Upload measurement chart image (JPG, PNG, PDF)</p>
+          </div>
+
+          {measurementPreview && (
+            <div className="relative w-full rounded-lg overflow-hidden border">
+              <img
+                src={measurementPreview}
+                alt="Measurement Sheet"
+                className="w-full object-contain max-h-48"
+                onError={(e) => {
+                  // Hide if it's a PDF (can't preview)
+                  (e.currentTarget as HTMLImageElement).style.display = 'none';
+                }}
+              />
+              <div className="flex items-center justify-between p-2 bg-muted/50">
+                <span className="text-xs text-muted-foreground">Measurement sheet uploaded</span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setMeasurementPreview('');
+                    setMeasurementFile(null);
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Process Rates - Simplified */}
+
       <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
         <h3 className="font-semibold">Process Rates (₹ per piece)</h3>
         
