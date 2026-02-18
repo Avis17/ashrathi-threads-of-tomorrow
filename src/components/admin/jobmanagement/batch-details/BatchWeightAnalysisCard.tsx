@@ -6,14 +6,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Scale, Edit, TrendingDown, TrendingUp, Minus } from 'lucide-react';
+import { Scale, Edit, TrendingDown, TrendingUp, Minus, Plus, X } from 'lucide-react';
 import { useBatchWeightAnalysis, useUpsertWeightAnalysis } from '@/hooks/useBatchWeightAnalysis';
 
 interface StyleFabricInfo {
   styleId: string;
   styleName: string;
-  totalWeightKg: number;   // total fabric weight for this style
-  totalCutPieces: number;  // total cut pieces for this style
+  totalWeightKg: number;
+  totalCutPieces: number;
 }
 
 interface BatchWeightAnalysisCardProps {
@@ -21,27 +21,124 @@ interface BatchWeightAnalysisCardProps {
   styles: StyleFabricInfo[];
 }
 
+// One row in the size-weights table
+interface SizeWeightEntry {
+  size: string;
+  weight: string; // grams
+}
+
 interface StyleForm {
   isSetItem: boolean;
-  actualWeightGrams: string;
+  // For non-set: list of size → weight rows; we average for final value
+  sizeWeights: SizeWeightEntry[];
   wastagePercent: string;
-  topWeightGrams: string;
-  bottomWeightGrams: string;
+  // For set: top rows + bottom rows
+  topSizeWeights: SizeWeightEntry[];
+  bottomSizeWeights: SizeWeightEntry[];
   topWastagePercent: string;
   bottomWastagePercent: string;
   notes: string;
 }
 
+const newSizeRow = (): SizeWeightEntry => ({ size: '', weight: '' });
+
 const emptyForm = (): StyleForm => ({
   isSetItem: false,
-  actualWeightGrams: '',
+  sizeWeights: [newSizeRow()],
   wastagePercent: '',
-  topWeightGrams: '',
-  bottomWeightGrams: '',
+  topSizeWeights: [newSizeRow()],
+  bottomSizeWeights: [newSizeRow()],
   topWastagePercent: '',
   bottomWastagePercent: '',
   notes: '',
 });
+
+// Average of non-empty, valid weight rows
+const avgOf = (rows: SizeWeightEntry[]): number | null => {
+  const vals = rows.map(r => parseFloat(r.weight)).filter(v => !isNaN(v) && v > 0);
+  if (vals.length === 0) return null;
+  return vals.reduce((a, b) => a + b, 0) / vals.length;
+};
+
+// SizeWeightsTable sub-component
+const SizeWeightsTable = ({
+  rows,
+  onChange,
+  label,
+}: {
+  rows: SizeWeightEntry[];
+  onChange: (rows: SizeWeightEntry[]) => void;
+  label: string;
+}) => {
+  const avg = avgOf(rows);
+
+  const update = (idx: number, field: keyof SizeWeightEntry, val: string) => {
+    const next = rows.map((r, i) => (i === idx ? { ...r, [field]: val } : r));
+    onChange(next);
+  };
+
+  const addRow = () => onChange([...rows, newSizeRow()]);
+
+  const removeRow = (idx: number) => {
+    if (rows.length === 1) return;
+    onChange(rows.filter((_, i) => i !== idx));
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
+        {avg !== null && (
+          <span className="text-xs font-medium text-primary">Avg: {avg.toFixed(1)} g</span>
+        )}
+      </div>
+      <div className="space-y-1.5">
+        <div className="grid grid-cols-[1fr_1fr_auto] gap-1.5 text-xs text-muted-foreground px-0.5 mb-0.5">
+          <span>Size / Label</span>
+          <span>Weight (g)</span>
+          <span />
+        </div>
+        {rows.map((row, idx) => (
+          <div key={idx} className="grid grid-cols-[1fr_1fr_auto] gap-1.5 items-center">
+            <Input
+              className="h-8 text-sm"
+              placeholder="e.g. L"
+              value={row.size}
+              onChange={e => update(idx, 'size', e.target.value)}
+            />
+            <Input
+              className="h-8 text-sm"
+              type="number"
+              placeholder="e.g. 450"
+              value={row.weight}
+              onChange={e => update(idx, 'weight', e.target.value)}
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+              onClick={() => removeRow(idx)}
+              disabled={rows.length === 1}
+            >
+              <X className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        ))}
+      </div>
+      <Button type="button" variant="outline" size="sm" className="h-7 text-xs w-full" onClick={addRow}>
+        <Plus className="h-3 w-3 mr-1" />
+        Add Size
+      </Button>
+      {avg !== null && (
+        <div className="text-xs p-2 bg-muted/50 rounded flex justify-between">
+          <span className="text-muted-foreground">Average across {rows.filter(r => parseFloat(r.weight) > 0).length} size(s)</span>
+          <span className="font-semibold">{avg.toFixed(2)} g</span>
+        </div>
+      )}
+    </div>
+  );
+};
 
 export const BatchWeightAnalysisCard = ({ batchId, styles }: BatchWeightAnalysisCardProps) => {
   const { data: analyses = [] } = useBatchWeightAnalysis(batchId);
@@ -54,15 +151,32 @@ export const BatchWeightAnalysisCard = ({ batchId, styles }: BatchWeightAnalysis
   const openDialog = (style: StyleFabricInfo) => {
     const existing = getAnalysis(style.styleId);
     if (existing) {
+      // Restore saved size-weight rows from notes JSON if present, else reconstruct from avg
+      let sizeWeights: SizeWeightEntry[] = [newSizeRow()];
+      let topSizeWeights: SizeWeightEntry[] = [newSizeRow()];
+      let bottomSizeWeights: SizeWeightEntry[] = [newSizeRow()];
+
+      try {
+        const parsed = existing.notes ? JSON.parse(existing.notes) : null;
+        if (parsed?._sizeWeights) sizeWeights = parsed._sizeWeights;
+        if (parsed?._topSizeWeights) topSizeWeights = parsed._topSizeWeights;
+        if (parsed?._bottomSizeWeights) bottomSizeWeights = parsed._bottomSizeWeights;
+      } catch {
+        // Fall back: show a single row with the saved average
+        if (existing.actual_weight_grams) sizeWeights = [{ size: '', weight: existing.actual_weight_grams.toString() }];
+        if (existing.top_weight_grams) topSizeWeights = [{ size: '', weight: existing.top_weight_grams.toString() }];
+        if (existing.bottom_weight_grams) bottomSizeWeights = [{ size: '', weight: existing.bottom_weight_grams.toString() }];
+      }
+
       setForm({
         isSetItem: existing.is_set_item,
-        actualWeightGrams: existing.actual_weight_grams?.toString() || '',
+        sizeWeights,
         wastagePercent: existing.wastage_percent?.toString() || '',
-        topWeightGrams: existing.top_weight_grams?.toString() || '',
-        bottomWeightGrams: existing.bottom_weight_grams?.toString() || '',
+        topSizeWeights,
+        bottomSizeWeights,
         topWastagePercent: existing.top_wastage_percent?.toString() || '',
         bottomWastagePercent: existing.bottom_wastage_percent?.toString() || '',
-        notes: existing.notes || '',
+        notes: '',
       });
     } else {
       setForm(emptyForm());
@@ -72,17 +186,29 @@ export const BatchWeightAnalysisCard = ({ batchId, styles }: BatchWeightAnalysis
 
   const handleSave = async () => {
     if (!openStyleId) return;
+
+    const avgWeight = avgOf(form.sizeWeights);
+    const avgTop = avgOf(form.topSizeWeights);
+    const avgBottom = avgOf(form.bottomSizeWeights);
+
+    // Store size rows inside notes as JSON for restoring later
+    const notesPayload = JSON.stringify({
+      _sizeWeights: form.sizeWeights,
+      _topSizeWeights: form.topSizeWeights,
+      _bottomSizeWeights: form.bottomSizeWeights,
+    });
+
     await upsert.mutateAsync({
       batch_id: batchId,
       style_id: openStyleId,
       is_set_item: form.isSetItem,
-      actual_weight_grams: form.actualWeightGrams ? parseFloat(form.actualWeightGrams) : null,
+      actual_weight_grams: avgWeight,
       wastage_percent: form.wastagePercent ? parseFloat(form.wastagePercent) : null,
-      top_weight_grams: form.topWeightGrams ? parseFloat(form.topWeightGrams) : null,
-      bottom_weight_grams: form.bottomWeightGrams ? parseFloat(form.bottomWeightGrams) : null,
+      top_weight_grams: avgTop,
+      bottom_weight_grams: avgBottom,
       top_wastage_percent: form.topWastagePercent ? parseFloat(form.topWastagePercent) : null,
       bottom_wastage_percent: form.bottomWastagePercent ? parseFloat(form.bottomWastagePercent) : null,
-      notes: form.notes || null,
+      notes: notesPayload,
     });
     setOpenStyleId(null);
   };
@@ -91,53 +217,33 @@ export const BatchWeightAnalysisCard = ({ batchId, styles }: BatchWeightAnalysis
   const calcPrediction = (style: StyleFabricInfo) => {
     const a = getAnalysis(style.styleId);
     if (!a) return null;
-
     const totalGrams = style.totalWeightKg * 1000;
 
     if (a.is_set_item) {
-      // Set item: top + bottom weights with their wastages
       const tw = a.top_weight_grams;
       const bw = a.bottom_weight_grams;
       const twp = a.top_wastage_percent ?? 0;
       const bwp = a.bottom_wastage_percent ?? 0;
       if (!tw || !bw) return null;
-
-      // Effective weight per piece (top + bottom) including wastage
-      const effectiveTopPerPiece = tw * (1 + twp / 100);
-      const effectiveBotPerPiece = bw * (1 + bwp / 100);
-      // For a set, total fabric used per set = top fabric used + bottom fabric used
-      // We assume fabric is split 50/50 unless we know better — but we can't know,
-      // so we compute: total weight / (effectiveTop + effectiveBot) = predicted sets
-      const effectivePerSet = effectiveTopPerPiece + effectiveBotPerPiece;
+      const effectivePerSet = tw * (1 + twp / 100) + bw * (1 + bwp / 100);
       const predictedSets = effectivePerSet > 0 ? Math.floor(totalGrams / effectivePerSet) : 0;
-
-      // Actual cut sets = style.totalCutPieces (each set counts as 1)
       const actualCut = style.totalCutPieces;
       const diff = actualCut - predictedSets;
-
-      // Actual wastage: fabric consumed by cut pieces / total fabric
-      const fabricConsumedByActual = actualCut * (tw + bw); // ideal usage without wastage
+      const fabricConsumedByActual = actualCut * (tw + bw);
       const actualWastageGrams = totalGrams - fabricConsumedByActual;
       const actualWastagePct = totalGrams > 0 ? (actualWastageGrams / totalGrams) * 100 : 0;
-
       return { predictedSets, actualCut, diff, actualWastagePct, isSet: true, effectivePerSet };
     } else {
       const aw = a.actual_weight_grams;
       const wp = a.wastage_percent ?? 0;
       if (!aw) return null;
-
-      // Effective weight per piece including wastage
       const effectivePerPiece = aw * (1 + wp / 100);
       const predictedPieces = effectivePerPiece > 0 ? Math.floor(totalGrams / effectivePerPiece) : 0;
-
       const actualCut = style.totalCutPieces;
       const diff = actualCut - predictedPieces;
-
-      // Actual wastage from cut data
       const fabricConsumedByActual = actualCut * aw;
       const actualWastageGrams = totalGrams - fabricConsumedByActual;
       const actualWastagePct = totalGrams > 0 ? (actualWastageGrams / totalGrams) * 100 : 0;
-
       return { predictedPieces, actualCut, diff, actualWastagePct, isSet: false, effectivePerPiece };
     }
   };
@@ -145,6 +251,26 @@ export const BatchWeightAnalysisCard = ({ batchId, styles }: BatchWeightAnalysis
   if (styles.length === 0) return null;
 
   const currentStyle = styles.find(s => s.styleId === openStyleId);
+
+  // Live preview values inside dialog
+  const liveAvgWeight = avgOf(form.sizeWeights);
+  const liveAvgTop = avgOf(form.topSizeWeights);
+  const liveAvgBottom = avgOf(form.bottomSizeWeights);
+
+  const livePreviewPieces = (() => {
+    if (!currentStyle) return null;
+    const totalG = currentStyle.totalWeightKg * 1000;
+    if (form.isSetItem) {
+      if (!liveAvgTop || !liveAvgBottom) return null;
+      const eff = liveAvgTop * (1 + parseFloat(form.topWastagePercent || '0') / 100) +
+                  liveAvgBottom * (1 + parseFloat(form.bottomWastagePercent || '0') / 100);
+      return { pieces: Math.floor(totalG / eff), effPer: eff, unit: 'set' };
+    } else {
+      if (!liveAvgWeight) return null;
+      const eff = liveAvgWeight * (1 + parseFloat(form.wastagePercent || '0') / 100);
+      return { pieces: Math.floor(totalG / eff), effPer: eff, unit: 'pc' };
+    }
+  })();
 
   return (
     <>
@@ -161,12 +287,18 @@ export const BatchWeightAnalysisCard = ({ batchId, styles }: BatchWeightAnalysis
             const analysis = getAnalysis(style.styleId);
             return (
               <div key={style.styleId} className="border rounded-lg p-3 space-y-3">
-                {/* Style header */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-sm">{style.styleName}</span>
                     {analysis?.is_set_item && (
                       <Badge variant="secondary" className="text-xs">Set Item</Badge>
+                    )}
+                    {analysis && (
+                      <Badge variant="outline" className="text-xs">
+                        Avg: {analysis.is_set_item
+                          ? `${analysis.top_weight_grams?.toFixed(1)}g + ${analysis.bottom_weight_grams?.toFixed(1)}g`
+                          : `${analysis.actual_weight_grams?.toFixed(1)}g`}
+                      </Badge>
                     )}
                   </div>
                   <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => openDialog(style)}>
@@ -175,59 +307,42 @@ export const BatchWeightAnalysisCard = ({ batchId, styles }: BatchWeightAnalysis
                   </Button>
                 </div>
 
-                {/* Fabric info */}
                 <div className="flex gap-4 text-xs text-muted-foreground">
                   <span>Total Fabric: <span className="font-medium text-foreground">{style.totalWeightKg.toFixed(2)} kg ({(style.totalWeightKg * 1000).toFixed(0)} g)</span></span>
                   <span>Cut Pieces: <span className="font-medium text-foreground">{style.totalCutPieces}</span></span>
                 </div>
 
-                {/* Analysis results */}
-                {analysis && !pred && (
-                  <p className="text-xs text-muted-foreground italic">Enter weight to see predictions</p>
-                )}
-
                 {pred && (
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                    {/* Weight entered */}
                     <div className="bg-muted/40 rounded p-2 text-xs">
-                      <div className="text-muted-foreground mb-0.5">
-                        {pred.isSet ? 'Top + Bottom' : 'Product Weight'}
-                      </div>
+                      <div className="text-muted-foreground mb-0.5">{pred.isSet ? 'Avg Top + Bottom' : 'Avg Weight'}</div>
                       {pred.isSet ? (
-                        <div className="font-semibold">
-                          {analysis!.top_weight_grams}g + {analysis!.bottom_weight_grams}g
-                        </div>
+                        <div className="font-semibold">{analysis!.top_weight_grams?.toFixed(1)}g + {analysis!.bottom_weight_grams?.toFixed(1)}g</div>
                       ) : (
-                        <div className="font-semibold">{analysis!.actual_weight_grams}g</div>
+                        <div className="font-semibold">{analysis!.actual_weight_grams?.toFixed(1)}g</div>
                       )}
                       <div className="text-muted-foreground mt-0.5">
                         {pred.isSet
-                          ? `+${analysis!.top_wastage_percent ?? 0}% / +${analysis!.bottom_wastage_percent ?? 0}% wastage`
+                          ? `+${analysis!.top_wastage_percent ?? 0}% / +${analysis!.bottom_wastage_percent ?? 0}%`
                           : `+${analysis!.wastage_percent ?? 0}% wastage`}
                       </div>
                     </div>
 
-                    {/* Predicted pieces */}
-                    <div className="bg-blue-500/10 rounded p-2 text-xs">
+                    <div className="bg-primary/10 rounded p-2 text-xs">
                       <div className="text-muted-foreground mb-0.5">Predicted Pieces</div>
-                      <div className="font-bold text-blue-600 dark:text-blue-400 text-base">
+                      <div className="font-bold text-primary text-base">
                         {pred.isSet ? pred.predictedSets : pred.predictedPieces}
                       </div>
                       <div className="text-muted-foreground mt-0.5">
-                        ~{pred.isSet
-                          ? pred.effectivePerSet.toFixed(1)
-                          : pred.effectivePerPiece.toFixed(1)}g / {pred.isSet ? 'set' : 'pc'}
+                        ~{pred.isSet ? pred.effectivePerSet.toFixed(1) : pred.effectivePerPiece.toFixed(1)}g / {pred.isSet ? 'set' : 'pc'}
                       </div>
                     </div>
 
-                    {/* Actual vs prediction diff */}
-                    <div className={`rounded p-2 text-xs ${
-                      pred.diff > 0 ? 'bg-green-500/10' : pred.diff < 0 ? 'bg-red-500/10' : 'bg-muted/40'
-                    }`}>
+                    <div className={`rounded p-2 text-xs ${pred.diff > 0 ? 'bg-green-500/10' : pred.diff < 0 ? 'bg-destructive/10' : 'bg-muted/40'}`}>
                       <div className="text-muted-foreground mb-0.5">Actual vs Predicted</div>
                       <div className={`font-bold text-base flex items-center gap-1 ${
                         pred.diff > 0 ? 'text-green-600 dark:text-green-400' :
-                        pred.diff < 0 ? 'text-red-600 dark:text-red-400' : 'text-foreground'
+                        pred.diff < 0 ? 'text-destructive' : 'text-foreground'
                       }`}>
                         {pred.diff > 0 ? <TrendingUp className="h-3 w-3" /> :
                          pred.diff < 0 ? <TrendingDown className="h-3 w-3" /> :
@@ -239,7 +354,6 @@ export const BatchWeightAnalysisCard = ({ batchId, styles }: BatchWeightAnalysis
                       </div>
                     </div>
 
-                    {/* Actual wastage */}
                     <div className="bg-amber-500/10 rounded p-2 text-xs">
                       <div className="text-muted-foreground mb-0.5">Actual Wastage</div>
                       <div className="font-bold text-amber-600 dark:text-amber-400 text-base">
@@ -256,8 +370,12 @@ export const BatchWeightAnalysisCard = ({ batchId, styles }: BatchWeightAnalysis
 
                 {!analysis && (
                   <p className="text-xs text-muted-foreground italic">
-                    No weight data entered yet. Click "Enter Weight" to add analysis.
+                    No weight data yet. Click "Enter Weight" to begin analysis.
                   </p>
+                )}
+
+                {analysis && !pred && (
+                  <p className="text-xs text-muted-foreground italic">Complete weight entry to see predictions.</p>
                 )}
               </div>
             );
@@ -267,7 +385,7 @@ export const BatchWeightAnalysisCard = ({ batchId, styles }: BatchWeightAnalysis
 
       {/* Dialog */}
       <Dialog open={!!openStyleId} onOpenChange={open => !open && setOpenStyleId(null)}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Scale className="h-4 w-4" />
@@ -275,8 +393,8 @@ export const BatchWeightAnalysisCard = ({ batchId, styles }: BatchWeightAnalysis
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4 py-2">
-            {/* Fabric info */}
+          <div className="space-y-5 py-1">
+            {/* Fabric summary */}
             {currentStyle && (
               <div className="p-3 bg-muted/40 rounded text-sm flex justify-between">
                 <span className="text-muted-foreground">Total Fabric</span>
@@ -287,125 +405,92 @@ export const BatchWeightAnalysisCard = ({ batchId, styles }: BatchWeightAnalysis
             )}
 
             {/* Set item toggle */}
-            <div className="flex items-center justify-between">
-              <Label htmlFor="is-set" className="font-medium">Set Item (Top + Bottom)</Label>
+            <div className="flex items-center justify-between border rounded-lg p-3">
+              <div>
+                <p className="font-medium text-sm">Set Item</p>
+                <p className="text-xs text-muted-foreground">Enter top & bottom weights separately</p>
+              </div>
               <Switch
-                id="is-set"
                 checked={form.isSetItem}
                 onCheckedChange={val => setForm(f => ({ ...f, isSetItem: val }))}
               />
             </div>
 
             {!form.isSetItem ? (
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Actual Product Weight (grams)</Label>
-                    <Input
-                      type="number"
-                      placeholder="e.g. 450"
-                      value={form.actualWeightGrams}
-                      onChange={e => setForm(f => ({ ...f, actualWeightGrams: e.target.value }))}
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Wastage % (cutting loss)</Label>
-                    <Input
-                      type="number"
-                      placeholder="e.g. 20"
-                      value={form.wastagePercent}
-                      onChange={e => setForm(f => ({ ...f, wastagePercent: e.target.value }))}
-                    />
-                  </div>
+              <>
+                <SizeWeightsTable
+                  label="Product Weights by Size"
+                  rows={form.sizeWeights}
+                  onChange={rows => setForm(f => ({ ...f, sizeWeights: rows }))}
+                />
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Wastage % (cutting loss)</Label>
+                  <Input
+                    type="number"
+                    placeholder="e.g. 20"
+                    value={form.wastagePercent}
+                    onChange={e => setForm(f => ({ ...f, wastagePercent: e.target.value }))}
+                  />
                 </div>
-                {/* Preview */}
-                {form.actualWeightGrams && form.wastagePercent && (
-                  <div className="text-xs p-2 bg-blue-500/10 rounded text-blue-700 dark:text-blue-300">
-                    Effective per piece: {(parseFloat(form.actualWeightGrams) * (1 + parseFloat(form.wastagePercent) / 100)).toFixed(1)}g
-                    {currentStyle && ` → ~${Math.floor((currentStyle.totalWeightKg * 1000) / (parseFloat(form.actualWeightGrams) * (1 + parseFloat(form.wastagePercent) / 100)))} predicted pieces`}
-                  </div>
-                )}
-              </div>
+              </>
             ) : (
-              <div className="space-y-3">
-                <div className="text-xs text-muted-foreground">
-                  For set items, enter the weight for the top garment and bottom garment separately. 
-                  Each set counts as 1 unit.
+              <>
+                <SizeWeightsTable
+                  label="Top Weights by Size"
+                  rows={form.topSizeWeights}
+                  onChange={rows => setForm(f => ({ ...f, topSizeWeights: rows }))}
+                />
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Top Wastage %</Label>
+                  <Input
+                    type="number"
+                    placeholder="e.g. 15"
+                    value={form.topWastagePercent}
+                    onChange={e => setForm(f => ({ ...f, topWastagePercent: e.target.value }))}
+                  />
                 </div>
-                <div className="space-y-2">
-                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Top</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">Top Weight (grams)</Label>
-                      <Input
-                        type="number"
-                        placeholder="e.g. 250"
-                        value={form.topWeightGrams}
-                        onChange={e => setForm(f => ({ ...f, topWeightGrams: e.target.value }))}
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">Top Wastage %</Label>
-                      <Input
-                        type="number"
-                        placeholder="e.g. 15"
-                        value={form.topWastagePercent}
-                        onChange={e => setForm(f => ({ ...f, topWastagePercent: e.target.value }))}
-                      />
-                    </div>
+                <div className="border-t pt-4">
+                  <SizeWeightsTable
+                    label="Bottom Weights by Size"
+                    rows={form.bottomSizeWeights}
+                    onChange={rows => setForm(f => ({ ...f, bottomSizeWeights: rows }))}
+                  />
+                  <div className="space-y-1.5 mt-3">
+                    <Label className="text-xs">Bottom Wastage %</Label>
+                    <Input
+                      type="number"
+                      placeholder="e.g. 10"
+                      value={form.bottomWastagePercent}
+                      onChange={e => setForm(f => ({ ...f, bottomWastagePercent: e.target.value }))}
+                    />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Bottom</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">Bottom Weight (grams)</Label>
-                      <Input
-                        type="number"
-                        placeholder="e.g. 200"
-                        value={form.bottomWeightGrams}
-                        onChange={e => setForm(f => ({ ...f, bottomWeightGrams: e.target.value }))}
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">Bottom Wastage %</Label>
-                      <Input
-                        type="number"
-                        placeholder="e.g. 10"
-                        value={form.bottomWastagePercent}
-                        onChange={e => setForm(f => ({ ...f, bottomWastagePercent: e.target.value }))}
-                      />
-                    </div>
-                  </div>
+              </>
+            )}
+
+            {/* Live preview */}
+            {livePreviewPieces && (
+              <div className="p-3 bg-primary/10 rounded text-sm space-y-1">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Avg weight used</span>
+                  <span className="font-medium">
+                    {form.isSetItem
+                      ? `${liveAvgTop?.toFixed(1)}g + ${liveAvgBottom?.toFixed(1)}g`
+                      : `${liveAvgWeight?.toFixed(1)}g`}
+                  </span>
                 </div>
-                {/* Set preview */}
-                {form.topWeightGrams && form.bottomWeightGrams && (
-                  <div className="text-xs p-2 bg-blue-500/10 rounded text-blue-700 dark:text-blue-300">
-                    {(() => {
-                      const tw = parseFloat(form.topWeightGrams);
-                      const bw = parseFloat(form.bottomWeightGrams);
-                      const twp = parseFloat(form.topWastagePercent || '0');
-                      const bwp = parseFloat(form.bottomWastagePercent || '0');
-                      const effPerSet = tw * (1 + twp / 100) + bw * (1 + bwp / 100);
-                      const totalG = (currentStyle?.totalWeightKg || 0) * 1000;
-                      const predicted = Math.floor(totalG / effPerSet);
-                      return `Effective per set: ${effPerSet.toFixed(1)}g → ~${predicted} predicted sets`;
-                    })()}
-                  </div>
-                )}
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Effective per {livePreviewPieces.unit}</span>
+                  <span className="font-medium">{livePreviewPieces.effPer.toFixed(1)}g</span>
+                </div>
+                <div className="flex justify-between font-semibold text-primary">
+                  <span>Predicted {livePreviewPieces.unit === 'set' ? 'sets' : 'pieces'}</span>
+                  <span>~{livePreviewPieces.pieces}</span>
+                </div>
               </div>
             )}
 
-            <div className="space-y-1.5">
-              <Label className="text-xs">Notes (optional)</Label>
-              <Input
-                placeholder="Any remarks..."
-                value={form.notes}
-                onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
-              />
-            </div>
-
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex justify-end gap-2 pt-1">
               <Button variant="outline" onClick={() => setOpenStyleId(null)}>Cancel</Button>
               <Button onClick={handleSave} disabled={upsert.isPending}>
                 {upsert.isPending ? 'Saving...' : 'Save'}
