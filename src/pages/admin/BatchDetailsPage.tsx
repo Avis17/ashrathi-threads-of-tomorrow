@@ -242,6 +242,8 @@ const BatchDetailsPage = () => {
         totalProductionPieces={totalProductionPieces}
         costBreakdown={{ salaryTotal: totalSalary, expenseTotal: totalExpenses, jobWorkTotal: totalJobWorkPaid }}
         styleLookup={styleLookup}
+        cuttingSummary={cuttingSummary}
+        operationProgress={operationProgress || []}
       />
 
       {/* Main Tabs */}

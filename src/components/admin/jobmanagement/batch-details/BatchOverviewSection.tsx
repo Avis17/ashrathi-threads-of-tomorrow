@@ -19,6 +19,8 @@ interface BatchOverviewSectionProps {
   totalProductionPieces?: number;
   costBreakdown?: CostBreakdown;
   styleLookup?: Record<string, string>;
+  cuttingSummary?: Record<number, number>;
+  operationProgress?: any[];
 }
 
 export const BatchOverviewSection = ({ 
@@ -29,68 +31,70 @@ export const BatchOverviewSection = ({
   totalProductionPieces = 0,
   costBreakdown,
   styleLookup = {},
+  cuttingSummary = {},
+  operationProgress = [],
 }: BatchOverviewSectionProps) => {
   const [costOpen, setCostOpen] = useState(false);
   const [fabricOpen, setFabricOpen] = useState(false);
+  const [typesOpen, setTypesOpen] = useState(false);
+  const [cutOpen, setCutOpen] = useState(false);
+  const [prodOpen, setProdOpen] = useState(false);
+
   const totalFabric = batch.total_fabric_received_kg || 0;
   const numberOfTypes = rollsData.length;
-  const uniqueStyles = new Set(rollsData.map(r => r.style_id)).size;
 
-  // Group rollsData by style_id for style-wise fabric breakdown
-  const styleWiseFabric = (() => {
-    const groups: Record<string, { styleName: string; rolls: number; weight: number }> = {};
-    rollsData.forEach((r: any) => {
-      const key = r.style_id || 'unknown';
-      const styleName = styleLookup[key] || r.style_name || `Style ${key.slice(0, 6)}`;
-      if (!groups[key]) groups[key] = { styleName, rolls: 0, weight: 0 };
-      const rolls = Number(r.number_of_rolls) || 0;
-      const weight = Number(r.weight) || 0;
-      groups[key].rolls += rolls;
-      groups[key].weight += rolls * weight;
+  // Helper: get style name for a style_id
+  const getStyleName = (styleId: string) => styleLookup[styleId] || `Style ${styleId?.slice(0, 6) || 'N/A'}`;
+
+  // Build style-wise data: group type indices by style_id
+  const styleGroups: Record<string, { styleName: string; typeIndices: number[] }> = {};
+  rollsData.forEach((r: any, idx: number) => {
+    const key = r.style_id || 'unknown';
+    if (!styleGroups[key]) styleGroups[key] = { styleName: getStyleName(key), typeIndices: [] };
+    styleGroups[key].typeIndices.push(idx);
+  });
+  const styleEntries = Object.entries(styleGroups);
+
+  // Style-wise fabric
+  const styleWiseFabric = styleEntries.map(([, sg]) => ({
+    styleName: sg.styleName,
+    rolls: sg.typeIndices.reduce((s, i) => s + (Number(rollsData[i]?.number_of_rolls) || 0), 0),
+    weight: sg.typeIndices.reduce((s, i) => {
+      const r = rollsData[i];
+      return s + (Number(r?.number_of_rolls) || 0) * (Number(r?.weight) || 0);
+    }, 0),
+    colors: sg.typeIndices.map(i => rollsData[i]?.color).filter(Boolean),
+  }));
+
+  // Style-wise cut pieces
+  const styleWiseCut = styleEntries.map(([, sg]) => ({
+    styleName: sg.styleName,
+    pieces: sg.typeIndices.reduce((s, i) => s + (cuttingSummary[i] || 0), 0),
+  }));
+
+  // Style-wise production done (bottleneck per type, summed per style)
+  const styleWiseProd = styleEntries.map(([, sg]) => {
+    let pieces = 0;
+    sg.typeIndices.forEach(ti => {
+      const nonCutOps = operationProgress.filter(p => p.type_index === ti && p.operation !== 'Cutting');
+      if (nonCutOps.length > 0) {
+        pieces += Math.min(...nonCutOps.map((o: any) => o.completed_pieces));
+      }
     });
-    return Object.values(groups);
-  })();
+    const cutForStyle = sg.typeIndices.reduce((s, i) => s + (cuttingSummary[i] || 0), 0);
+    const pct = cutForStyle > 0 ? Math.round(Math.min((pieces / cutForStyle) * 100, 100)) : 0;
+    return { styleName: sg.styleName, pieces, cutForStyle, pct };
+  });
 
-  const calculateProgress = () => {
-    if (totalCutPieces === 0) return 0;
-    const progress = Math.min((totalProductionPieces / totalCutPieces) * 100, 100);
-    return Math.round(progress);
-  };
-
-  const currentProgress = calculateProgress();
-
-  const stats = [
-    {
-      title: 'Types/Colors',
-      value: numberOfTypes,
-      subtitle: `${uniqueStyles} style(s)`,
-      icon: Package,
-      color: 'text-purple-500',
-      bgColor: 'bg-purple-500/10',
-    },
-    {
-      title: 'Total Cut Pieces',
-      value: totalCutPieces,
-      subtitle: `Expected: ${batch.expected_pieces || 'TBD'}`,
-      icon: Scissors,
-      color: 'text-green-500',
-      bgColor: 'bg-green-500/10',
-    },
-    {
-      title: 'Production Done',
-      value: totalProductionPieces,
-      subtitle: totalCutPieces > 0 ? `${currentProgress}% of cut` : 'No cut pieces yet',
-      icon: Users,
-      color: 'text-orange-500',
-      bgColor: 'bg-orange-500/10',
-    },
-  ];
+  const currentProgress = totalCutPieces > 0
+    ? Math.round(Math.min((totalProductionPieces / totalCutPieces) * 100, 100))
+    : 0;
 
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
 
-        {/* Total Fabric Card with style-wise breakdown */}
+        {/* 1. Total Fabric */}
         <Card>
           <CardContent className="p-4">
             <Collapsible open={fabricOpen} onOpenChange={setFabricOpen}>
@@ -110,13 +114,16 @@ export const BatchOverviewSection = ({
                 </div>
               </CollapsibleTrigger>
               <CollapsibleContent>
-                <div className="mt-3 pt-3 border-t space-y-1.5 text-xs">
+                <div className="mt-3 pt-3 border-t space-y-2 text-xs">
                   {styleWiseFabric.map((s, i) => (
-                    <div key={i} className="flex justify-between items-start gap-2">
-                      <span className="text-muted-foreground truncate">{s.styleName}</span>
-                      <div className="text-right shrink-0">
-                        <span className="font-medium">{s.weight.toFixed(2)} kg</span>
-                        <span className="text-muted-foreground ml-1">({s.rolls} rolls)</span>
+                    <div key={i}>
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium text-foreground">{s.styleName}</span>
+                        <span className="font-semibold">{s.weight.toFixed(2)} kg</span>
+                      </div>
+                      <div className="flex justify-between text-muted-foreground mt-0.5">
+                        <span>{s.colors.join(', ')}</span>
+                        <span>{s.rolls} rolls</span>
                       </div>
                     </div>
                   ))}
@@ -126,27 +133,117 @@ export const BatchOverviewSection = ({
           </CardContent>
         </Card>
 
-        {stats.map((stat, index) => {
-          const Icon = stat.icon;
-          return (
-            <Card key={index}>
-              <CardContent className="p-4">
+        {/* 2. Types/Colors */}
+        <Card>
+          <CardContent className="p-4">
+            <Collapsible open={typesOpen} onOpenChange={setTypesOpen}>
+              <CollapsibleTrigger className="w-full">
                 <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${stat.bgColor}`}>
-                    <Icon className={`h-5 w-5 ${stat.color}`} />
+                  <div className="p-2 rounded-lg bg-purple-500/10">
+                    <Package className="h-5 w-5 text-purple-500" />
                   </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">{stat.title}</p>
-                    <p className="text-xl font-bold">{stat.value}</p>
-                    <p className="text-xs text-muted-foreground">{stat.subtitle}</p>
+                  <div className="text-left flex-1">
+                    <p className="text-sm text-muted-foreground flex items-center gap-1">
+                      Types/Colors
+                      <ChevronDown className={`h-3 w-3 transition-transform ${typesOpen ? 'rotate-180' : ''}`} />
+                    </p>
+                    <p className="text-xl font-bold">{numberOfTypes}</p>
+                    <p className="text-xs text-muted-foreground">{styleEntries.length} style(s)</p>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="mt-3 pt-3 border-t space-y-2 text-xs">
+                  {styleEntries.map(([, sg], i) => (
+                    <div key={i}>
+                      <span className="font-medium text-foreground">{sg.styleName}</span>
+                      <div className="text-muted-foreground mt-0.5 space-y-0.5">
+                        {sg.typeIndices.map(ti => (
+                          <div key={ti} className="flex justify-between">
+                            <span>{rollsData[ti]?.color || `Type ${ti + 1}`}</span>
+                            <span>{rollsData[ti]?.fabric_type} {rollsData[ti]?.gsm ? `/ ${rollsData[ti].gsm} GSM` : ''}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          </CardContent>
+        </Card>
 
-        {/* Total Cost Card with breakdown */}
+        {/* 3. Total Cut Pieces */}
+        <Card>
+          <CardContent className="p-4">
+            <Collapsible open={cutOpen} onOpenChange={setCutOpen}>
+              <CollapsibleTrigger className="w-full">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-green-500/10">
+                    <Scissors className="h-5 w-5 text-green-500" />
+                  </div>
+                  <div className="text-left flex-1">
+                    <p className="text-sm text-muted-foreground flex items-center gap-1">
+                      Total Cut Pieces
+                      <ChevronDown className={`h-3 w-3 transition-transform ${cutOpen ? 'rotate-180' : ''}`} />
+                    </p>
+                    <p className="text-xl font-bold">{totalCutPieces}</p>
+                    <p className="text-xs text-muted-foreground">Expected: {batch.expected_pieces || 'TBD'}</p>
+                  </div>
+                </div>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="mt-3 pt-3 border-t space-y-2 text-xs">
+                  {styleWiseCut.map((s, i) => (
+                    <div key={i} className="flex justify-between items-center">
+                      <span className="text-muted-foreground truncate">{s.styleName}</span>
+                      <span className="font-semibold shrink-0">{s.pieces} pcs</span>
+                    </div>
+                  ))}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          </CardContent>
+        </Card>
+
+        {/* 4. Production Done */}
+        <Card>
+          <CardContent className="p-4">
+            <Collapsible open={prodOpen} onOpenChange={setProdOpen}>
+              <CollapsibleTrigger className="w-full">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-orange-500/10">
+                    <Users className="h-5 w-5 text-orange-500" />
+                  </div>
+                  <div className="text-left flex-1">
+                    <p className="text-sm text-muted-foreground flex items-center gap-1">
+                      Production Done
+                      <ChevronDown className={`h-3 w-3 transition-transform ${prodOpen ? 'rotate-180' : ''}`} />
+                    </p>
+                    <p className="text-xl font-bold">{totalProductionPieces}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {totalCutPieces > 0 ? `${currentProgress}% of cut` : 'No cut pieces yet'}
+                    </p>
+                  </div>
+                </div>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="mt-3 pt-3 border-t space-y-2 text-xs">
+                  {styleWiseProd.map((s, i) => (
+                    <div key={i}>
+                      <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground truncate">{s.styleName}</span>
+                        <span className="font-semibold shrink-0">{s.pieces} pcs ({s.pct}%)</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          </CardContent>
+        </Card>
+
+        {/* 5. Total Cost */}
         <Card>
           <CardContent className="p-4">
             <Collapsible open={costOpen} onOpenChange={setCostOpen}>
@@ -192,19 +289,35 @@ export const BatchOverviewSection = ({
         </Card>
       </div>
 
-      {/* Progress Bar */}
+      {/* Production Progress - style-wise bars */}
       <Card>
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium">Production Progress</span>
-            <span className="text-sm font-bold text-primary">{currentProgress}%</span>
+        <CardContent className="p-4 space-y-4">
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium">Production Progress (Overall)</span>
+              <span className="text-sm font-bold text-primary">{currentProgress}%</span>
+            </div>
+            <Progress value={currentProgress} className="h-2" />
+            <div className="flex justify-between text-xs text-muted-foreground mt-1">
+              <span>Cut: {totalCutPieces} pcs</span>
+              <span>Produced: {totalProductionPieces} pcs</span>
+              <span>Remaining: {Math.max(0, totalCutPieces - totalProductionPieces)} pcs</span>
+            </div>
           </div>
-          <Progress value={currentProgress} className="h-2" />
-          <div className="flex justify-between text-xs text-muted-foreground mt-2">
-            <span>Cut: {totalCutPieces} pcs</span>
-            <span>Produced: {totalProductionPieces} pcs</span>
-            <span>Remaining: {Math.max(0, totalCutPieces - totalProductionPieces)} pcs</span>
-          </div>
+
+          {styleWiseProd.length > 1 && (
+            <div className="pt-2 border-t space-y-3">
+              {styleWiseProd.map((s, i) => (
+                <div key={i}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-medium">{s.styleName}</span>
+                    <span className="text-xs text-muted-foreground">{s.pieces}/{s.cutForStyle} pcs · {s.pct}%</span>
+                  </div>
+                  <Progress value={s.pct} className="h-1.5" />
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
