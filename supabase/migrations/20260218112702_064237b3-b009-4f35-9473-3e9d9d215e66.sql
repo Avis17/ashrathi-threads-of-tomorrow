@@ -1,0 +1,1 @@
+ALTER TABLE public.job_styles ADD COLUMN IF NOT EXISTS measurement_sheet_url TEXT;

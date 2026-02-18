@@ -3712,6 +3712,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           linked_cmt_quotation_id: string | null
+          measurement_sheet_url: string | null
           min_order_qty: number | null
           pattern_number: string
           process_rate_details: Json | null
@@ -3740,6 +3741,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           linked_cmt_quotation_id?: string | null
+          measurement_sheet_url?: string | null
           min_order_qty?: number | null
           pattern_number: string
           process_rate_details?: Json | null
@@ -3768,6 +3770,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           linked_cmt_quotation_id?: string | null
+          measurement_sheet_url?: string | null
           min_order_qty?: number | null
           pattern_number?: string
           process_rate_details?: Json | null
