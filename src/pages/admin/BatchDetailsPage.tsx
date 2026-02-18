@@ -19,6 +19,8 @@ import { useBatchCuttingLogs } from '@/hooks/useBatchCuttingLogs';
 import { useBatchSalaryEntries } from '@/hooks/useBatchSalary';
 import { useBatchJobWorks } from '@/hooks/useJobWorks';
 import { useBatchOperationProgress } from '@/hooks/useBatchOperationProgress';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { BatchCuttingSection } from '@/components/admin/jobmanagement/batch-details/BatchCuttingSection';
 import { BatchOverviewSection } from '@/components/admin/jobmanagement/batch-details/BatchOverviewSection';
@@ -56,6 +58,16 @@ const BatchDetailsPage = () => {
   const { data: salaryEntries } = useBatchSalaryEntries(id || '');
   const { data: jobWorks } = useBatchJobWorks(id || '');
   const { data: operationProgress } = useBatchOperationProgress(id || '');
+  const { data: allStyles = [] } = useQuery({
+    queryKey: ['job-styles-all'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('job_styles').select('id, style_name, style_code');
+      if (error) throw error;
+      return data || [];
+    },
+  });
+  const styleLookup: Record<string, string> = {};
+  allStyles.forEach((s: any) => { styleLookup[s.id] = s.style_name; });
   const updateBatchMutation = useUpdateJobBatch();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [invoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
@@ -229,6 +241,7 @@ const BatchDetailsPage = () => {
         totalCost={totalCost}
         totalProductionPieces={totalProductionPieces}
         costBreakdown={{ salaryTotal: totalSalary, expenseTotal: totalExpenses, jobWorkTotal: totalJobWorkPaid }}
+        styleLookup={styleLookup}
       />
 
       {/* Main Tabs */}

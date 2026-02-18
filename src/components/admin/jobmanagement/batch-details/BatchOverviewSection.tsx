@@ -18,6 +18,7 @@ interface BatchOverviewSectionProps {
   totalCost: number;
   totalProductionPieces?: number;
   costBreakdown?: CostBreakdown;
+  styleLookup?: Record<string, string>;
 }
 
 export const BatchOverviewSection = ({ 
@@ -27,11 +28,28 @@ export const BatchOverviewSection = ({
   totalCost,
   totalProductionPieces = 0,
   costBreakdown,
+  styleLookup = {},
 }: BatchOverviewSectionProps) => {
   const [costOpen, setCostOpen] = useState(false);
+  const [fabricOpen, setFabricOpen] = useState(false);
   const totalFabric = batch.total_fabric_received_kg || 0;
   const numberOfTypes = rollsData.length;
   const uniqueStyles = new Set(rollsData.map(r => r.style_id)).size;
+
+  // Group rollsData by style_id for style-wise fabric breakdown
+  const styleWiseFabric = (() => {
+    const groups: Record<string, { styleName: string; rolls: number; weight: number }> = {};
+    rollsData.forEach((r: any) => {
+      const key = r.style_id || 'unknown';
+      const styleName = styleLookup[key] || r.style_name || `Style ${key.slice(0, 6)}`;
+      if (!groups[key]) groups[key] = { styleName, rolls: 0, weight: 0 };
+      const rolls = Number(r.number_of_rolls) || 0;
+      const weight = Number(r.weight) || 0;
+      groups[key].rolls += rolls;
+      groups[key].weight += rolls * weight;
+    });
+    return Object.values(groups);
+  })();
 
   const calculateProgress = () => {
     if (totalCutPieces === 0) return 0;
@@ -42,14 +60,6 @@ export const BatchOverviewSection = ({
   const currentProgress = calculateProgress();
 
   const stats = [
-    {
-      title: 'Total Fabric',
-      value: `${totalFabric.toFixed(2)} kg`,
-      subtitle: `${batch.number_of_rolls} rolls`,
-      icon: Scale,
-      color: 'text-blue-500',
-      bgColor: 'bg-blue-500/10',
-    },
     {
       title: 'Types/Colors',
       value: numberOfTypes,
@@ -79,6 +89,43 @@ export const BatchOverviewSection = ({
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+
+        {/* Total Fabric Card with style-wise breakdown */}
+        <Card>
+          <CardContent className="p-4">
+            <Collapsible open={fabricOpen} onOpenChange={setFabricOpen}>
+              <CollapsibleTrigger className="w-full">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-blue-500/10">
+                    <Scale className="h-5 w-5 text-blue-500" />
+                  </div>
+                  <div className="text-left flex-1">
+                    <p className="text-sm text-muted-foreground flex items-center gap-1">
+                      Total Fabric
+                      <ChevronDown className={`h-3 w-3 transition-transform ${fabricOpen ? 'rotate-180' : ''}`} />
+                    </p>
+                    <p className="text-xl font-bold">{totalFabric.toFixed(2)} kg</p>
+                    <p className="text-xs text-muted-foreground">{batch.number_of_rolls} rolls</p>
+                  </div>
+                </div>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="mt-3 pt-3 border-t space-y-1.5 text-xs">
+                  {styleWiseFabric.map((s, i) => (
+                    <div key={i} className="flex justify-between items-start gap-2">
+                      <span className="text-muted-foreground truncate">{s.styleName}</span>
+                      <div className="text-right shrink-0">
+                        <span className="font-medium">{s.weight.toFixed(2)} kg</span>
+                        <span className="text-muted-foreground ml-1">({s.rolls} rolls)</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          </CardContent>
+        </Card>
+
         {stats.map((stat, index) => {
           const Icon = stat.icon;
           return (
