@@ -672,6 +672,7 @@ export type Database = {
           batch_id: string
           confirmed_pieces: number
           created_at: string
+          delivery_status: string
           id: string
           type_index: number
           updated_at: string
@@ -680,6 +681,7 @@ export type Database = {
           batch_id: string
           confirmed_pieces?: number
           created_at?: string
+          delivery_status?: string
           id?: string
           type_index?: number
           updated_at?: string
@@ -688,6 +690,7 @@ export type Database = {
           batch_id?: string
           confirmed_pieces?: number
           created_at?: string
+          delivery_status?: string
           id?: string
           type_index?: number
           updated_at?: string

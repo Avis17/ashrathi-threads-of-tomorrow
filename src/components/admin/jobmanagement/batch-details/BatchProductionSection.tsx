@@ -5,10 +5,12 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { CheckCircle, AlertCircle, ChevronDown, ChevronRight, Briefcase, AlertTriangle } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { CheckCircle, AlertCircle, ChevronDown, ChevronRight, Briefcase, AlertTriangle, Truck } from 'lucide-react';
 import { useBatchOperationProgress, useUpsertOperationProgress } from '@/hooks/useBatchOperationProgress';
 import { useBatchJobWorks } from '@/hooks/useJobWorks';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { useBatchTypeConfirmed, useUpsertDeliveryStatus, DELIVERY_STATUSES, DeliveryStatus } from '@/hooks/useBatchTypeConfirmed';
 
 interface BatchProductionSectionProps {
   batchId: string;
@@ -20,7 +22,10 @@ interface BatchProductionSectionProps {
 export const BatchProductionSection = ({ batchId, operations = [], rollsData = [], cuttingSummary = {} }: BatchProductionSectionProps) => {
   const { data: progressData = [] } = useBatchOperationProgress(batchId);
   const { data: jobWorks = [] } = useBatchJobWorks(batchId);
+  const { data: typeData } = useBatchTypeConfirmed(batchId);
+  const statusMap = typeData?.statusMap ?? {};
   const upsertMutation = useUpsertOperationProgress();
+  const upsertStatusMutation = useUpsertDeliveryStatus();
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [editCompleted, setEditCompleted] = useState('');
   const [editMistakes, setEditMistakes] = useState('');
@@ -231,6 +236,19 @@ export const BatchProductionSection = ({ batchId, operations = [], rollsData = [
                     </div>
                     <div className="flex items-center gap-3">
                       <Badge variant="outline">{typeCutPieces} pcs</Badge>
+                      {(() => {
+                        const ds = statusMap[typeIndex] || 'in_progress';
+                        const statusDef = DELIVERY_STATUSES.find(s => s.value === ds);
+                        return (
+                          <Badge
+                            variant={ds === 'delivered' ? 'default' : ds === 'completed' ? 'secondary' : 'outline'}
+                            className={`text-xs gap-1 ${ds === 'delivered' ? 'bg-primary' : ds === 'completed' ? 'bg-green-100 text-green-700 border-green-300' : ''}`}
+                          >
+                            {ds === 'delivered' && <Truck className="h-3 w-3" />}
+                            {statusDef?.label}
+                          </Badge>
+                        );
+                      })()}
                       <span className={`text-sm font-bold ${getStatusColor(typeProgress)}`}>{typeProgress}%</span>
                       <div className="w-24 h-2 rounded-full bg-secondary overflow-hidden">
                         <div className={`h-full rounded-full ${getProgressColor(typeProgress)}`} style={{ width: `${typeProgress}%` }} />
@@ -383,6 +401,38 @@ export const BatchProductionSection = ({ batchId, operations = [], rollsData = [
                         </div>
                       );
                     })
+                  )}
+
+                  {/* Delivery Status Dropdown — shown after all operations */}
+                  {typeCutPieces > 0 && (
+                    <div className="pt-3 mt-1 border-t flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <Truck className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm font-medium">Delivery Status</span>
+                      </div>
+                      <Select
+                        value={statusMap[typeIndex] || 'in_progress'}
+                        onValueChange={(val) =>
+                          upsertStatusMutation.mutate({ batchId, typeIndex, deliveryStatus: val as DeliveryStatus })
+                        }
+                      >
+                        <SelectTrigger className="w-44 h-8 text-sm bg-background">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="z-50 bg-background border shadow-lg">
+                          {DELIVERY_STATUSES.map(s => (
+                            <SelectItem key={s.value} value={s.value}>
+                              <span className="flex items-center gap-2">
+                                {s.value === 'delivered' && <CheckCircle className="h-3.5 w-3.5 text-primary" />}
+                                {s.value === 'completed' && <CheckCircle className="h-3.5 w-3.5 text-green-600" />}
+                                {s.value === 'in_progress' && <div className="h-3.5 w-3.5 rounded-full border-2 border-yellow-500" />}
+                                {s.label}
+                              </span>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   )}
                 </CardContent>
               </CollapsibleContent>
