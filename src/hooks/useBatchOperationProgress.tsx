@@ -7,6 +7,7 @@ export interface OperationProgress {
   batch_id: string;
   operation: string;
   completed_pieces: number;
+  mistake_pieces: number;
   type_index: number;
   notes: string | null;
   updated_at: string;
@@ -32,11 +33,11 @@ export const useBatchOperationProgress = (batchId: string) => {
 export const useUpsertOperationProgress = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ batchId, operation, completedPieces, typeIndex }: { batchId: string; operation: string; completedPieces: number; typeIndex: number }) => {
+    mutationFn: async ({ batchId, operation, completedPieces, mistakePieces, typeIndex }: { batchId: string; operation: string; completedPieces: number; mistakePieces: number; typeIndex: number }) => {
       const { data, error } = await supabase
         .from('batch_operation_progress' as any)
         .upsert(
-          { batch_id: batchId, operation, completed_pieces: completedPieces, type_index: typeIndex },
+          { batch_id: batchId, operation, completed_pieces: completedPieces, mistake_pieces: mistakePieces, type_index: typeIndex },
           { onConflict: 'batch_id,operation,type_index' }
         )
         .select()

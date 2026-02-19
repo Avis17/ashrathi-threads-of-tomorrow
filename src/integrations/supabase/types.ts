@@ -426,6 +426,7 @@ export type Database = {
           completed_pieces: number
           created_at: string
           id: string
+          mistake_pieces: number
           notes: string | null
           operation: string
           type_index: number
@@ -436,6 +437,7 @@ export type Database = {
           completed_pieces?: number
           created_at?: string
           id?: string
+          mistake_pieces?: number
           notes?: string | null
           operation: string
           type_index?: number
@@ -446,6 +448,7 @@ export type Database = {
           completed_pieces?: number
           created_at?: string
           id?: string
+          mistake_pieces?: number
           notes?: string | null
           operation?: string
           type_index?: number
