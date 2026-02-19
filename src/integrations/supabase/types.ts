@@ -149,6 +149,7 @@ export type Database = {
         Row: {
           batch_id: string
           color: string
+          confirmed_pieces: number
           created_at: string
           id: string
           log_date: string
@@ -161,6 +162,7 @@ export type Database = {
         Insert: {
           batch_id: string
           color: string
+          confirmed_pieces?: number
           created_at?: string
           id?: string
           log_date?: string
@@ -173,6 +175,7 @@ export type Database = {
         Update: {
           batch_id?: string
           color?: string
+          confirmed_pieces?: number
           created_at?: string
           id?: string
           log_date?: string
@@ -660,6 +663,41 @@ export type Database = {
             columns: ["batch_id"]
             isOneToOne: false
             referencedRelation: "production_batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      batch_type_confirmed: {
+        Row: {
+          batch_id: string
+          confirmed_pieces: number
+          created_at: string
+          id: string
+          type_index: number
+          updated_at: string
+        }
+        Insert: {
+          batch_id: string
+          confirmed_pieces?: number
+          created_at?: string
+          id?: string
+          type_index?: number
+          updated_at?: string
+        }
+        Update: {
+          batch_id?: string
+          confirmed_pieces?: number
+          created_at?: string
+          id?: string
+          type_index?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "batch_type_confirmed_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "job_batches"
             referencedColumns: ["id"]
           },
         ]
