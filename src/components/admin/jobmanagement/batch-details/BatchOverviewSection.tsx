@@ -290,36 +290,47 @@ export const BatchOverviewSection = ({
       </div>
 
       {/* Production Progress - style-wise bars */}
-      <Card>
-        <CardContent className="p-4 space-y-4">
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium">Production Progress (Overall)</span>
-              <span className="text-sm font-bold text-primary">{currentProgress}%</span>
-            </div>
-            <Progress value={currentProgress} className="h-2" />
-            <div className="flex justify-between text-xs text-muted-foreground mt-1">
-              <span>Cut: {totalCutPieces} pcs</span>
-              <span>Produced: {totalProductionPieces} pcs</span>
-              <span>Remaining: {Math.max(0, totalCutPieces - totalProductionPieces)} pcs</span>
-            </div>
-          </div>
-
-          {styleWiseProd.length > 1 && (
-            <div className="pt-2 border-t space-y-3">
-              {styleWiseProd.map((s, i) => (
-                <div key={i}>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-medium">{s.styleName}</span>
-                    <span className="text-xs text-muted-foreground">{s.pieces}/{s.cutForStyle} pcs · {s.pct}%</span>
-                  </div>
-                  <Progress value={s.pct} className="h-1.5" />
+      <Collapsible defaultOpen={false}>
+        <Card>
+          <CardContent className="p-4">
+            <CollapsibleTrigger className="w-full">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Production Progress (Overall)</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold text-primary">{currentProgress}%</span>
+                  <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 [[data-state=open]_&]:rotate-180" />
                 </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+              </div>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div className="mt-3 space-y-4">
+                <div>
+                  <Progress value={currentProgress} className="h-2" />
+                  <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                    <span>Cut: {totalCutPieces} pcs</span>
+                    <span>Produced: {totalProductionPieces} pcs</span>
+                    <span>Remaining: {Math.max(0, totalCutPieces - totalProductionPieces)} pcs</span>
+                  </div>
+                </div>
+
+                {styleWiseProd.length > 1 && (
+                  <div className="pt-2 border-t space-y-3">
+                    {styleWiseProd.map((s, i) => (
+                      <div key={i}>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs font-medium">{s.styleName}</span>
+                          <span className="text-xs text-muted-foreground">{s.pieces}/{s.cutForStyle} pcs · {s.pct}%</span>
+                        </div>
+                        <Progress value={s.pct} className="h-1.5" />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </CollapsibleContent>
+          </CardContent>
+        </Card>
+      </Collapsible>
     </div>
   );
 };
