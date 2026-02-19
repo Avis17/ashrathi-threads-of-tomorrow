@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { CheckCircle, AlertCircle, ChevronDown, ChevronRight, Briefcase } from 'lucide-react';
+import { CheckCircle, AlertCircle, ChevronDown, ChevronRight, Briefcase, AlertTriangle } from 'lucide-react';
 import { useBatchOperationProgress, useUpsertOperationProgress } from '@/hooks/useBatchOperationProgress';
 import { useBatchJobWorks } from '@/hooks/useJobWorks';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -22,7 +22,8 @@ export const BatchProductionSection = ({ batchId, operations = [], rollsData = [
   const { data: jobWorks = [] } = useBatchJobWorks(batchId);
   const upsertMutation = useUpsertOperationProgress();
   const [editingKey, setEditingKey] = useState<string | null>(null);
-  const [editValue, setEditValue] = useState('');
+  const [editCompleted, setEditCompleted] = useState('');
+  const [editMistakes, setEditMistakes] = useState('');
   const [allExpanded, setAllExpanded] = useState(true);
   const [openTypes, setOpenTypes] = useState<Record<number, boolean>>({});
 
@@ -41,10 +42,12 @@ export const BatchProductionSection = ({ batchId, operations = [], rollsData = [
     });
   });
 
-  // Build progress map: key = `${typeIndex}-${operation}`
-  const progressMap: Record<string, number> = {};
+  // Build progress maps: key = `${typeIndex}-${operation}`
+  const completedMap: Record<string, number> = {};
+  const mistakeMap: Record<string, number> = {};
   progressData.forEach(p => {
-    progressMap[`${p.type_index}-${p.operation}`] = p.completed_pieces;
+    completedMap[`${p.type_index}-${p.operation}`] = p.completed_pieces;
+    mistakeMap[`${p.type_index}-${p.operation}`] = p.mistake_pieces || 0;
   });
 
   // Get operations for a specific type (falls back to global operations)
@@ -55,7 +58,7 @@ export const BatchProductionSection = ({ batchId, operations = [], rollsData = [
   };
 
   const getOpProgress = (typeIndex: number, op: string, typeCutPieces: number) => {
-    const completed = progressMap[`${typeIndex}-${op}`] || 0;
+    const completed = completedMap[`${typeIndex}-${op}`] || 0;
     if (typeCutPieces === 0) return 0;
     return Math.min(Math.round((completed / typeCutPieces) * 100), 100);
   };
@@ -75,11 +78,13 @@ export const BatchProductionSection = ({ batchId, operations = [], rollsData = [
     : 0;
 
   const handleSave = async (typeIndex: number, operation: string, maxPieces: number) => {
-    const value = parseInt(editValue) || 0;
-    if (value > maxPieces) return;
-    await upsertMutation.mutateAsync({ batchId, operation, completedPieces: value, typeIndex });
+    const completed = parseInt(editCompleted) || 0;
+    const mistakes = parseInt(editMistakes) || 0;
+    if (completed > maxPieces) return;
+    await upsertMutation.mutateAsync({ batchId, operation, completedPieces: completed, mistakePieces: mistakes, typeIndex });
     setEditingKey(null);
-    setEditValue('');
+    setEditCompleted('');
+    setEditMistakes('');
   };
 
   const getStatusColor = (percent: number) => {
@@ -241,7 +246,10 @@ export const BatchProductionSection = ({ batchId, operations = [], rollsData = [
                   ) : (
                     typeOps.map((op) => {
                       const key = `${typeIndex}-${op}`;
-                      const completed = progressMap[key] || 0;
+                      const completed = completedMap[key] || 0;
+                      const mistakes = mistakeMap[key] || 0;
+                      const accounted = completed + mistakes;
+                      const missing = Math.max(0, typeCutPieces - accounted);
                       const percent = getOpProgress(typeIndex, op, typeCutPieces);
                       const isEditing = editingKey === key;
 
@@ -271,31 +279,92 @@ export const BatchProductionSection = ({ batchId, operations = [], rollsData = [
                             />
                           </div>
 
-                          {isEditing ? (
-                            <div className="flex items-center gap-2">
-                              <Input
-                                type="number"
-                                min={0}
-                                max={typeCutPieces}
-                                value={editValue}
-                                onChange={(e) => setEditValue(e.target.value)}
-                                placeholder={`Max: ${typeCutPieces}`}
-                                className="w-32 h-7 text-sm"
-                                autoFocus
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') handleSave(typeIndex, op, typeCutPieces);
-                                  if (e.key === 'Escape') setEditingKey(null);
-                                }}
-                              />
-                              <Button size="sm" variant="default" className="h-7 text-xs" onClick={() => handleSave(typeIndex, op, typeCutPieces)} disabled={upsertMutation.isPending}>
-                                Save
-                              </Button>
-                              <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setEditingKey(null)}>
-                                Cancel
-                              </Button>
-                              {parseInt(editValue) > typeCutPieces && (
-                                <span className="text-xs text-destructive">Max {typeCutPieces}</span>
+                          {/* Piece breakdown: Completed | Mistakes | Missing */}
+                          {(completed > 0 || mistakes > 0) && (
+                            <div className="flex items-center gap-3 text-xs pt-1">
+                              <span className="text-green-600 font-medium">✓ {completed} done</span>
+                              {mistakes > 0 && (
+                                <span className="text-orange-500 font-medium flex items-center gap-1">
+                                  <AlertTriangle className="h-3 w-3" />
+                                  {mistakes} mistake{mistakes !== 1 ? 's' : ''}
+                                </span>
                               )}
+                              {missing > 0 && (
+                                <span className="text-destructive font-medium">
+                                  {missing} missing
+                                </span>
+                              )}
+                              {missing === 0 && accounted >= typeCutPieces && (
+                                <span className="text-muted-foreground">All {typeCutPieces} accounted</span>
+                              )}
+                            </div>
+                          )}
+
+                          {isEditing ? (
+                            <div className="space-y-2 pt-1">
+                              <div className="flex items-center gap-2">
+                                <div className="flex-1">
+                                  <Label className="text-xs text-muted-foreground mb-1 block">Completed Pieces</Label>
+                                  <Input
+                                    type="number"
+                                    min={0}
+                                    max={typeCutPieces}
+                                    value={editCompleted}
+                                    onChange={(e) => setEditCompleted(e.target.value)}
+                                    placeholder={`Max: ${typeCutPieces}`}
+                                    className="h-7 text-sm"
+                                    autoFocus
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') handleSave(typeIndex, op, typeCutPieces);
+                                      if (e.key === 'Escape') setEditingKey(null);
+                                    }}
+                                  />
+                                </div>
+                                <div className="flex-1">
+                                  <Label className="text-xs text-muted-foreground mb-1 block">Mistake Pieces</Label>
+                                  <Input
+                                    type="number"
+                                    min={0}
+                                    value={editMistakes}
+                                    onChange={(e) => setEditMistakes(e.target.value)}
+                                    placeholder="0"
+                                    className="h-7 text-sm"
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') handleSave(typeIndex, op, typeCutPieces);
+                                      if (e.key === 'Escape') setEditingKey(null);
+                                    }}
+                                  />
+                                </div>
+                              </div>
+                              {/* Live preview of missing calculation */}
+                              {(() => {
+                                const c = parseInt(editCompleted) || 0;
+                                const m = parseInt(editMistakes) || 0;
+                                const acc = c + m;
+                                const miss = Math.max(0, typeCutPieces - acc);
+                                return (
+                                  <div className="text-xs flex gap-3 px-1">
+                                    <span className="text-green-600">✓ {c} done</span>
+                                    {m > 0 && <span className="text-orange-500">⚠ {m} mistakes</span>}
+                                    {miss > 0 ? (
+                                      <span className="text-destructive font-semibold">{miss} missing</span>
+                                    ) : acc > 0 ? (
+                                      <span className="text-muted-foreground">All accounted</span>
+                                    ) : null}
+                                  </div>
+                                );
+                              })()}
+                              <div className="flex items-center gap-2">
+                                <Button size="sm" variant="default" className="h-7 text-xs" onClick={() => handleSave(typeIndex, op, typeCutPieces)} disabled={upsertMutation.isPending}>
+                                  Save
+                                </Button>
+                                <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setEditingKey(null)}>
+                                  Cancel
+                                </Button>
+                                {parseInt(editCompleted) > typeCutPieces && (
+                                  <span className="text-xs text-destructive">Max {typeCutPieces}</span>
+                                )}
+                              </div>
                             </div>
                           ) : (
                             <Button
@@ -304,7 +373,8 @@ export const BatchProductionSection = ({ batchId, operations = [], rollsData = [
                               className="h-6 text-xs"
                               onClick={() => {
                                 setEditingKey(key);
-                                setEditValue(completed.toString());
+                                setEditCompleted(completed.toString());
+                                setEditMistakes(mistakes.toString());
                               }}
                             >
                               Update
