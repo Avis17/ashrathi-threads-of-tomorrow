@@ -7,9 +7,18 @@ export interface BatchTypeConfirmed {
   batch_id: string;
   type_index: number;
   confirmed_pieces: number;
+  delivery_status: string;
   updated_at: string;
   created_at: string;
 }
+
+export const DELIVERY_STATUSES = [
+  { value: 'in_progress', label: 'In Progress' },
+  { value: 'completed', label: 'Completed' },
+  { value: 'delivered', label: 'Delivered' },
+] as const;
+
+export type DeliveryStatus = 'in_progress' | 'completed' | 'delivered';
 
 export const useBatchTypeConfirmed = (batchId: string) => {
   return useQuery({
@@ -21,10 +30,13 @@ export const useBatchTypeConfirmed = (batchId: string) => {
         .eq('batch_id', batchId);
       if (error) throw error;
       const rows = (data || []) as unknown as BatchTypeConfirmed[];
-      // Return as a map: type_index -> confirmed_pieces
-      const map: Record<number, number> = {};
-      rows.forEach(r => { map[r.type_index] = r.confirmed_pieces; });
-      return map;
+      const confirmedMap: Record<number, number> = {};
+      const statusMap: Record<number, DeliveryStatus> = {};
+      rows.forEach(r => {
+        confirmedMap[r.type_index] = r.confirmed_pieces;
+        statusMap[r.type_index] = (r.delivery_status || 'in_progress') as DeliveryStatus;
+      });
+      return { confirmedMap, statusMap };
     },
     enabled: !!batchId,
   });
@@ -48,6 +60,27 @@ export const useUpsertBatchTypeConfirmed = () => {
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to update confirmed pieces');
+    },
+  });
+};
+
+export const useUpsertDeliveryStatus = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ batchId, typeIndex, deliveryStatus }: { batchId: string; typeIndex: number; deliveryStatus: DeliveryStatus }) => {
+      const { error } = await supabase
+        .from('batch_type_confirmed' as any)
+        .upsert(
+          { batch_id: batchId, type_index: typeIndex, delivery_status: deliveryStatus, updated_at: new Date().toISOString() },
+          { onConflict: 'batch_id,type_index' }
+        );
+      if (error) throw error;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['batch-type-confirmed', variables.batchId] });
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to update status');
     },
   });
 };

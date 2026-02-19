@@ -16,7 +16,8 @@ interface BatchTypesTableProps {
 }
 
 export const BatchTypesTable = ({ rollsData, cuttingSummary, batchId }: BatchTypesTableProps) => {
-  const { data: confirmedMap = {} } = useBatchTypeConfirmed(batchId);
+  const { data: typeData } = useBatchTypeConfirmed(batchId);
+  const confirmedMap = typeData?.confirmedMap ?? {};
   const upsert = useUpsertBatchTypeConfirmed();
 
   // Fetch all style names
