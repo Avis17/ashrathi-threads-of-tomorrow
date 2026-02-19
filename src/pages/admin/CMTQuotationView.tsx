@@ -671,7 +671,15 @@ const CMTQuotationView = () => {
                       </div>
                       <div className="flex justify-between">
                         <span>Profit %</span>
-                        <span className="font-medium">{(quotation.approved_rates as ApprovedRates).companyProfitPercent}%</span>
+                        <span className="font-medium">
+                          {(() => {
+                            const ar = quotation.approved_rates as ApprovedRates;
+                            const opsTotal = ar.operations.reduce((sum, op) => sum + op.rate, 0);
+                            const base = opsTotal + ar.finishingPackingCost + ar.overheadsCost;
+                            const profitAmt = base * (ar.companyProfitPercent / 100);
+                            return `${ar.companyProfitPercent.toFixed(2)}% (₹${profitAmt.toFixed(2)})`;
+                          })()}
+                        </span>
                       </div>
                       <Separator />
                       <div className="flex justify-between text-lg font-bold">
