@@ -1,14 +1,37 @@
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { FileText } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { FileText, Check, Pencil } from 'lucide-react';
+import { useBatchTypeConfirmed, useUpsertBatchTypeConfirmed } from '@/hooks/useBatchTypeConfirmed';
 
 interface BatchTypesTableProps {
   rollsData: any[];
   cuttingSummary: Record<number, number>;
+  batchId: string;
 }
 
-export const BatchTypesTable = ({ rollsData, cuttingSummary }: BatchTypesTableProps) => {
+export const BatchTypesTable = ({ rollsData, cuttingSummary, batchId }: BatchTypesTableProps) => {
+  const { data: confirmedMap = {} } = useBatchTypeConfirmed(batchId);
+  const upsert = useUpsertBatchTypeConfirmed();
+
+  // editing state: typeIndex -> local value
+  const [editing, setEditing] = useState<Record<number, string>>({});
+  const [activeEdit, setActiveEdit] = useState<number | null>(null);
+
+  const handleEdit = (index: number) => {
+    setActiveEdit(index);
+    setEditing(prev => ({ ...prev, [index]: String(confirmedMap[index] ?? 0) }));
+  };
+
+  const handleSave = async (index: number) => {
+    const val = parseInt(editing[index] ?? '0', 10);
+    await upsert.mutateAsync({ batchId, typeIndex: index, confirmedPieces: isNaN(val) ? 0 : val });
+    setActiveEdit(null);
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -30,6 +53,7 @@ export const BatchTypesTable = ({ rollsData, cuttingSummary }: BatchTypesTablePr
                 <TableHead>Rolls</TableHead>
                 <TableHead>Weight (kg)</TableHead>
                 <TableHead>Cut Pieces</TableHead>
+                <TableHead>Confirmed</TableHead>
                 <TableHead>Start Date</TableHead>
                 <TableHead>Delivery Date</TableHead>
               </TableRow>
@@ -57,6 +81,44 @@ export const BatchTypesTable = ({ rollsData, cuttingSummary }: BatchTypesTablePr
                     <Badge variant={cuttingSummary[index] > 0 ? 'default' : 'secondary'}>
                       {cuttingSummary[index] || 0} pcs
                     </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {activeEdit === index ? (
+                      <div className="flex items-center gap-1">
+                        <Input
+                          type="number"
+                          min={0}
+                          value={editing[index] ?? '0'}
+                          onChange={e => setEditing(prev => ({ ...prev, [index]: e.target.value }))}
+                          className="h-8 w-24 text-sm"
+                          autoFocus
+                          onKeyDown={e => { if (e.key === 'Enter') handleSave(index); if (e.key === 'Escape') setActiveEdit(null); }}
+                        />
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8 text-primary"
+                          onClick={() => handleSave(index)}
+                          disabled={upsert.isPending}
+                        >
+                          <Check className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <Badge variant={confirmedMap[index] > 0 ? 'default' : 'secondary'} className="cursor-pointer">
+                          {confirmedMap[index] ?? 0} pcs
+                        </Badge>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7 text-muted-foreground hover:text-primary"
+                          onClick={() => handleEdit(index)}
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    )}
                   </TableCell>
                   <TableCell className="text-sm">
                     {type.planned_start_date ? new Date(type.planned_start_date).toLocaleDateString() : '-'}

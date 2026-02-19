@@ -317,6 +317,7 @@ const BatchDetailsPage = () => {
           <BatchTypesTable 
             rollsData={rollsData} 
             cuttingSummary={cuttingSummary}
+            batchId={id || ''}
           />
         </TabsContent>
 
