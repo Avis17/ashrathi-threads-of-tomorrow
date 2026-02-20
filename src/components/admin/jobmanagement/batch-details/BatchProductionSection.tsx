@@ -460,11 +460,18 @@ export const BatchProductionSection = ({
                                 styleStatus === 'delivered' ? 'border-primary text-primary' : 'opacity-0 pointer-events-none'
                               )}
                               title="Set delivery date"
+                              onClick={(e) => e.stopPropagation()}
                             >
                               <CalendarIcon className="h-3.5 w-3.5" />
                             </Button>
                           </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0 z-50" align="end">
+                          <PopoverContent
+                            className="w-auto p-0 z-[200]"
+                            align="end"
+                            onInteractOutside={(e) => e.preventDefault()}
+                            onPointerDownOutside={(e) => e.preventDefault()}
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             <div className="p-3 border-b">
                               <p className="text-sm font-medium">Select Delivery Date</p>
                               <p className="text-xs text-muted-foreground">{sg.styleName}</p>
@@ -479,14 +486,16 @@ export const BatchProductionSection = ({
                                   setDeliveryDatePopovers(prev => ({ ...prev, [sg.styleId]: false }));
                                 }
                               }}
-                              className={cn('p-3 pointer-events-auto')}
+                              initialFocus
+                              className="p-3 pointer-events-auto"
                             />
                             {styleActualDeliveryDate && (
                               <div className="p-2 border-t flex items-center justify-between">
                                 <span className="text-xs text-muted-foreground">
                                   Delivered: {format(parseISO(styleActualDeliveryDate), 'dd MMM yyyy')}
                                 </span>
-                                <Button size="sm" variant="ghost" className="h-6 text-xs" onClick={() => {
+                                <Button size="sm" variant="ghost" className="h-6 text-xs" onClick={(e) => {
+                                  e.stopPropagation();
                                   handleSetStyleStatus(sg, 'delivered', null);
                                   setDeliveryDatePopovers(prev => ({ ...prev, [sg.styleId]: false }));
                                 }}>Clear</Button>
