@@ -1,0 +1,1 @@
+ALTER TABLE public.batch_type_confirmed ADD COLUMN IF NOT EXISTS delivery_notes text;
