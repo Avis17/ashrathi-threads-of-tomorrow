@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
-import { Edit2, Trash2, Plus, FileText, Download, Search, Eye } from 'lucide-react';
+import { Edit2, Trash2, Plus, FileText, Download, Search, Eye, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -30,9 +30,10 @@ import { toast } from 'sonner';
 interface CMTQuotationsListProps {
   onEdit: (record: CMTQuotationRecord) => void;
   onCreateNew: () => void;
+  onClone: (record: CMTQuotationRecord) => void;
 }
 
-export function CMTQuotationsList({ onEdit, onCreateNew }: CMTQuotationsListProps) {
+export function CMTQuotationsList({ onEdit, onCreateNew, onClone }: CMTQuotationsListProps) {
   const navigate = useNavigate();
   const { data: quotations, isLoading } = useCMTQuotations();
   const deleteQuotation = useDeleteCMTQuotation();
@@ -156,6 +157,7 @@ export function CMTQuotationsList({ onEdit, onCreateNew }: CMTQuotationsListProp
                         size="icon"
                         className="h-8 w-8"
                         onClick={() => navigate(`/admin/cmt-quotation/view/${q.id}`)}
+                        title="View"
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
@@ -164,6 +166,7 @@ export function CMTQuotationsList({ onEdit, onCreateNew }: CMTQuotationsListProp
                         size="icon"
                         className="h-8 w-8"
                         onClick={() => onEdit(q)}
+                        title="Edit"
                       >
                         <Edit2 className="h-4 w-4" />
                       </Button>
@@ -171,7 +174,17 @@ export function CMTQuotationsList({ onEdit, onCreateNew }: CMTQuotationsListProp
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8"
+                        onClick={() => onClone(q)}
+                        title="Clone as new"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
                         onClick={() => handleDownloadPdf(q)}
+                        title="Download PDF"
                       >
                         <Download className="h-4 w-4" />
                       </Button>
@@ -180,6 +193,7 @@ export function CMTQuotationsList({ onEdit, onCreateNew }: CMTQuotationsListProp
                         size="icon"
                         className="h-8 w-8 text-destructive hover:text-destructive"
                         onClick={() => setDeleteId(q.id)}
+                        title="Delete"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

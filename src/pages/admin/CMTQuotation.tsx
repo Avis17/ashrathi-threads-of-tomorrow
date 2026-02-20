@@ -126,6 +126,18 @@ export default function CMTQuotation() {
     setViewMode('editor');
   };
 
+  const handleClone = (record: CMTQuotationRecord) => {
+    setEditingId(null);
+    const cloned = recordToQuotationData(record);
+    setData({
+      ...cloned,
+      quotationNo: generateQuotationNo(),
+      date: new Date().toISOString().split('T')[0],
+      validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    });
+    setViewMode('editor');
+  };
+
   const handleBackToList = () => {
     setViewMode('list');
     setEditingId(null);
@@ -134,7 +146,7 @@ export default function CMTQuotation() {
   if (viewMode === 'list') {
     return (
       <div className="min-h-screen bg-background p-6">
-        <CMTQuotationsList onEdit={handleEdit} onCreateNew={handleCreateNew} />
+        <CMTQuotationsList onEdit={handleEdit} onCreateNew={handleCreateNew} onClone={handleClone} />
       </div>
     );
   }
