@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Download, Save, FileText, List, ArrowLeft, DatabaseBackup } from 'lucide-react';
+import { useState } from 'react';
+import { Download, FileText, List, ArrowLeft, DatabaseBackup, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -55,6 +55,7 @@ export default function CMTQuotation() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [data, setData] = useState<CMTQuotationData>(getInitialData());
   const [isGenerating, setIsGenerating] = useState(false);
+  const [showPreview, setShowPreview] = useState(true);
   
   const saveQuotation = useSaveCMTQuotation();
 
@@ -170,6 +171,15 @@ export default function CMTQuotation() {
               <List className="h-4 w-4 mr-2" />
               All Quotations
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowPreview(p => !p)}
+              title={showPreview ? 'Hide Preview' : 'Show Preview'}
+            >
+              {showPreview ? <EyeOff className="h-4 w-4 mr-2" /> : <Eye className="h-4 w-4 mr-2" />}
+              {showPreview ? 'Hide Preview' : 'Show Preview'}
+            </Button>
             <Button 
               variant="outline" 
               size="sm" 
@@ -194,7 +204,7 @@ export default function CMTQuotation() {
       {/* Two-Panel Layout */}
       <div className="flex gap-6 p-6">
         {/* Left Panel - Form */}
-        <div className="flex-1 space-y-6 max-w-2xl">
+        <div className={`flex-1 space-y-6 ${showPreview ? 'max-w-2xl' : 'max-w-4xl'}`}>
           {/* Header Info */}
           <Card>
             <CardHeader>
@@ -406,18 +416,20 @@ export default function CMTQuotation() {
         </div>
 
         {/* Right Panel - Preview */}
-        <div className="sticky top-20 h-fit w-[420px] flex-shrink-0">
-          <div className="flex items-center gap-2 mb-4">
-            <FileText className="h-5 w-5 text-muted-foreground" />
-            <h2 className="font-semibold text-lg">Live Preview</h2>
-            <span className="text-xs text-muted-foreground">(Scaled view)</span>
-          </div>
-          <div className="border rounded-lg overflow-hidden shadow-lg bg-white" style={{ maxHeight: 'calc(100vh - 140px)', overflowY: 'auto' }}>
-            <div className="origin-top-left scale-[0.5]" style={{ width: '794px', marginBottom: '-50%' }}>
-              <CMTQuotationPreview data={data} />
+        {showPreview && (
+          <div className="sticky top-20 h-fit w-[420px] flex-shrink-0">
+            <div className="flex items-center gap-2 mb-4">
+              <FileText className="h-5 w-5 text-muted-foreground" />
+              <h2 className="font-semibold text-lg">Live Preview</h2>
+              <span className="text-xs text-muted-foreground">(Scaled view)</span>
+            </div>
+            <div className="border rounded-lg overflow-hidden shadow-lg bg-white" style={{ maxHeight: 'calc(100vh - 140px)', overflowY: 'auto' }}>
+              <div className="origin-top-left scale-[0.5]" style={{ width: '794px', marginBottom: '-50%' }}>
+                <CMTQuotationPreview data={data} />
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
