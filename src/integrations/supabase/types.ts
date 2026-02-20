@@ -3116,6 +3116,7 @@ export type Database = {
           batch_number: string
           checked_quantity: number | null
           color: string
+          company_name: string | null
           created_at: string | null
           cut_quantity: number | null
           cutting_completed: boolean | null
@@ -3150,6 +3151,7 @@ export type Database = {
           batch_number: string
           checked_quantity?: number | null
           color: string
+          company_name?: string | null
           created_at?: string | null
           cut_quantity?: number | null
           cutting_completed?: boolean | null
@@ -3184,6 +3186,7 @@ export type Database = {
           batch_number?: string
           checked_quantity?: number | null
           color?: string
+          company_name?: string | null
           created_at?: string | null
           cut_quantity?: number | null
           cutting_completed?: boolean | null
