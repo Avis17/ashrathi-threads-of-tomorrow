@@ -90,6 +90,8 @@ const BatchDetailsPage = () => {
     remarks: string;
     company_name: string;
   } | null>(null);
+  // styleDetailsForm: map from style_id -> { fabric_type, gsm, sizes }
+  const [styleDetailsForm, setStyleDetailsForm] = useState<Record<string, { fabric_type: string; gsm: string; sizes: string }> | null>(null);
 
   if (isLoading) {
     return (
@@ -373,18 +375,50 @@ const BatchDetailsPage = () => {
             };
             const setForm = (updates: Partial<typeof form>) =>
               setInfoForm({ ...form, ...updates });
+
+            // Build style-wise defaults from rollsData (first entry per style defines the shared fields)
+            const styleDefaults: Record<string, { fabric_type: string; gsm: string; sizes: string; styleName: string }> = {};
+            rollsData.forEach((r: any) => {
+              const sid = r.style_id || '__unknown__';
+              if (!styleDefaults[sid]) {
+                styleDefaults[sid] = {
+                  fabric_type: r.fabric_type || '',
+                  gsm: r.gsm || '',
+                  sizes: r.sizes || '',
+                  styleName: styleLookup[sid] || 'Unknown Style',
+                };
+              }
+            });
+
+            const styleForm = styleDetailsForm ?? Object.fromEntries(
+              Object.entries(styleDefaults).map(([sid, v]) => [sid, { fabric_type: v.fabric_type, gsm: v.gsm, sizes: v.sizes }])
+            );
+            const setStyleField = (sid: string, field: string, value: string) =>
+              setStyleDetailsForm({ ...styleForm, [sid]: { ...styleForm[sid], [field]: value } });
+
             const handleSave = async () => {
+              // Apply style-wise changes back to all rolls of that style
+              const updatedRollsData = rollsData.map((r: any) => {
+                const sid = r.style_id || '__unknown__';
+                const overrides = styleForm[sid];
+                if (!overrides) return r;
+                return { ...r, fabric_type: overrides.fabric_type, gsm: overrides.gsm, sizes: overrides.sizes };
+              });
+
               await updateBatchMutation.mutateAsync({
                 id: id!,
                 data: {
                   supplier_name: form.supplier_name || null,
                   lot_number: form.lot_number || null,
                   remarks: form.remarks || null,
+                  rolls_data: updatedRollsData,
                   ...(form.company_name !== undefined ? { company_name: form.company_name } : {}),
                 } as any,
               });
               setInfoForm(null);
+              setStyleDetailsForm(null);
             };
+
             return (
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
@@ -411,6 +445,49 @@ const BatchDetailsPage = () => {
                       <span className="font-medium">{batch.number_of_rolls}</span>
                     </div>
                   </div>
+
+                  {/* Style-wise editable details */}
+                  {Object.entries(styleDefaults).length > 0 && (
+                    <div className="space-y-3">
+                      <Label className="text-sm font-semibold">Style Details</Label>
+                      <div className="space-y-3">
+                        {Object.entries(styleDefaults).map(([sid, defaults]) => (
+                          <div key={sid} className="border rounded-lg p-4 space-y-3">
+                            <p className="text-sm font-medium text-foreground">{defaults.styleName}</p>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                              <div className="space-y-1.5">
+                                <Label className="text-xs">Fabric Type</Label>
+                                <Input
+                                  value={styleForm[sid]?.fabric_type ?? defaults.fabric_type}
+                                  onChange={(e) => setStyleField(sid, 'fabric_type', e.target.value)}
+                                  placeholder="e.g., Cotton"
+                                  className="h-9"
+                                />
+                              </div>
+                              <div className="space-y-1.5">
+                                <Label className="text-xs">GSM</Label>
+                                <Input
+                                  value={styleForm[sid]?.gsm ?? defaults.gsm}
+                                  onChange={(e) => setStyleField(sid, 'gsm', e.target.value)}
+                                  placeholder="e.g., 220"
+                                  className="h-9"
+                                />
+                              </div>
+                              <div className="space-y-1.5">
+                                <Label className="text-xs">Sizes</Label>
+                                <Input
+                                  value={styleForm[sid]?.sizes ?? defaults.sizes}
+                                  onChange={(e) => setStyleField(sid, 'sizes', e.target.value)}
+                                  placeholder="e.g., S, M, L, XL"
+                                  className="h-9"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Editable fields */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
