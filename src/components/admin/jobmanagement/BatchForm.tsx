@@ -45,6 +45,7 @@ interface TypeData {
   style_id: string;
   fabric_type: string;
   gsm: string;
+  sizes: string;
   planned_start_date: string;
   estimated_delivery_date: string;
   notes: string;
@@ -75,6 +76,7 @@ const BatchForm = ({ onClose }: BatchFormProps) => {
         style_id: '',
         fabric_type: '',
         gsm: '',
+        sizes: '',
         planned_start_date: '',
         estimated_delivery_date: '',
         notes: '',
@@ -144,6 +146,7 @@ const BatchForm = ({ onClose }: BatchFormProps) => {
         style_id: type.style_id,
         fabric_type: type.fabric_type,
         gsm: type.gsm,
+        sizes: type.sizes,
         planned_start_date: type.planned_start_date,
         estimated_delivery_date: type.estimated_delivery_date,
         notes: type.notes,
@@ -308,7 +311,7 @@ const BatchForm = ({ onClose }: BatchFormProps) => {
                   </div>
 
                   {/* Fabric Details */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pb-3 border-b">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pb-3 border-b">
                     <div className="space-y-2">
                       <Label htmlFor={`types.${typeIndex}.fabric_type`}>Fabric Type *</Label>
                       <Input
@@ -324,6 +327,14 @@ const BatchForm = ({ onClose }: BatchFormProps) => {
                         id={`types.${typeIndex}.gsm`}
                         {...register(`types.${typeIndex}.gsm`)}
                         placeholder="e.g., 220"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor={`types.${typeIndex}.sizes`}>Sizes</Label>
+                      <Input
+                        id={`types.${typeIndex}.sizes`}
+                        {...register(`types.${typeIndex}.sizes`)}
+                        placeholder="e.g., S, M, L, XL, XXL"
                       />
                     </div>
                   </div>
@@ -487,6 +498,7 @@ const BatchForm = ({ onClose }: BatchFormProps) => {
               style_id: '',
               fabric_type: '',
               gsm: '',
+              sizes: '',
               planned_start_date: '',
               estimated_delivery_date: '',
               notes: '',
