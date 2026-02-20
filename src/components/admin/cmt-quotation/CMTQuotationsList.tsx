@@ -127,6 +127,7 @@ export function CMTQuotationsList({ onEdit, onCreateNew, onClone }: CMTQuotation
               <TableHead>Date</TableHead>
               <TableHead>Buyer</TableHead>
               <TableHead>Style</TableHead>
+              <TableHead>Code</TableHead>
               <TableHead className="text-right">Final CMT</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="w-32">Actions</TableHead>
@@ -135,18 +136,19 @@ export function CMTQuotationsList({ onEdit, onCreateNew, onClone }: CMTQuotation
           <TableBody>
             {!filteredQuotations?.length ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                   No quotations found. Create your first quotation!
                 </TableCell>
               </TableRow>
             ) : (
               filteredQuotations.map((q) => (
                 <TableRow key={q.id}>
-                  <TableCell className="font-medium">{q.quotation_no}</TableCell>
-                  <TableCell>{format(new Date(q.date), 'dd MMM yyyy')}</TableCell>
-                  <TableCell>{q.buyer_name}</TableCell>
-                  <TableCell>{q.style_name}</TableCell>
-                  <TableCell className="text-right font-semibold">
+                   <TableCell className="font-medium">{q.quotation_no}</TableCell>
+                   <TableCell>{format(new Date(q.date), 'dd MMM yyyy')}</TableCell>
+                   <TableCell>{q.buyer_name}</TableCell>
+                   <TableCell>{q.style_name}</TableCell>
+                   <TableCell className="text-muted-foreground">{q.style_code || '—'}</TableCell>
+                   <TableCell className="text-right font-semibold">
                     ₹{Number(q.final_cmt_per_piece).toFixed(2)}
                   </TableCell>
                   <TableCell>{getStatusBadge(q.status)}</TableCell>
