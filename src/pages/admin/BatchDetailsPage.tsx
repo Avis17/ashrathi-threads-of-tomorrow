@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Package, Scissors, FileText, DollarSign, Users, Settings, Edit, IndianRupee, Briefcase, BarChart3, Receipt, CreditCard, UserPlus, Save } from 'lucide-react';
+import { ArrowLeft, Package, Scissors, FileText, DollarSign, Users, Settings, Edit, IndianRupee, Briefcase, BarChart3, Receipt, CreditCard, UserPlus, Save, Truck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -38,6 +38,7 @@ import { GenerateInvoiceDialog } from '@/components/admin/jobmanagement/batch-de
 import { BatchPaymentSection } from '@/components/admin/jobmanagement/batch-details/BatchPaymentSection';
 import { BatchWeightAnalysisCard } from '@/components/admin/jobmanagement/batch-details/BatchWeightAnalysisCard';
 import { AddWorkerDialog } from '@/components/admin/jobmanagement/batch-details/AddWorkerDialog';
+import { CreateDCFromBatchDialog } from '@/components/admin/jobmanagement/batch-details/CreateDCFromBatchDialog';
 
 const BATCH_STATUSES = [
   { value: 'created', label: 'Created', color: 'bg-blue-500' },
@@ -79,6 +80,7 @@ const BatchDetailsPage = () => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [invoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
   const [addWorkerOpen, setAddWorkerOpen] = useState(false);
+  const [createDCOpen, setCreateDCOpen] = useState(false);
   const [infoForm, setInfoForm] = useState<{
     supplier_name: string;
     lot_number: string;
@@ -232,6 +234,10 @@ const BatchDetailsPage = () => {
           <Badge variant="outline" className="px-3 py-1">
             Cut: {totalCutPieces} | Prod: {totalProductionPieces} | {currentProgress}%
           </Badge>
+          <Button variant="outline" size="sm" onClick={() => setCreateDCOpen(true)}>
+            <Truck className="h-4 w-4 mr-1" />
+            Create DC
+          </Button>
           <Button variant="default" size="sm" onClick={() => navigate(`/admin/job-management/batch/${id}/dashboard`)}>
             <BarChart3 className="h-4 w-4 mr-1" />
             Dashboard
@@ -516,6 +522,18 @@ const BatchDetailsPage = () => {
             company_name: name,
           });
         }}
+      />
+
+      {/* Create DC from Batch Dialog */}
+      <CreateDCFromBatchDialog
+        open={createDCOpen}
+        onOpenChange={setCreateDCOpen}
+        batchId={id || ''}
+        batchNumber={batch.batch_number}
+        rollsData={rollsData}
+        cuttingSummary={cuttingSummary}
+        styleLookup={styleLookup}
+        companyName={(batch as any).company_name || ''}
       />
     </div>
   );
