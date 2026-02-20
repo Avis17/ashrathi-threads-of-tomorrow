@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Package, Scissors, FileText, DollarSign, Users, Settings, Edit, IndianRupee, Briefcase, BarChart3, Receipt, CreditCard, UserPlus, Save, Truck } from 'lucide-react';
+import { ArrowLeft, Package, Scissors, FileText, DollarSign, Users, Settings, Edit, IndianRupee, Briefcase, BarChart3, Receipt, CreditCard, UserPlus, Save, Truck, CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -8,6 +8,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
 import {
   Select,
   SelectContent,
@@ -26,7 +29,7 @@ import { useBatchOperationProgress } from '@/hooks/useBatchOperationProgress';
 import { useJobWorkers } from '@/hooks/useDeliveryChallans';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { BatchCuttingSection } from '@/components/admin/jobmanagement/batch-details/BatchCuttingSection';
 import { BatchOverviewSection } from '@/components/admin/jobmanagement/batch-details/BatchOverviewSection';
 import { BatchTypesTable } from '@/components/admin/jobmanagement/batch-details/BatchTypesTable';
@@ -90,8 +93,9 @@ const BatchDetailsPage = () => {
     remarks: string;
     company_name: string;
   } | null>(null);
-  // styleDetailsForm: map from style_id -> { fabric_type, gsm, sizes }
-  const [styleDetailsForm, setStyleDetailsForm] = useState<Record<string, { fabric_type: string; gsm: string; sizes: string }> | null>(null);
+  // styleDetailsForm: map from style_id -> { fabric_type, gsm, sizes, planned_start_date, estimated_delivery_date, operations }
+  const [styleDetailsForm, setStyleDetailsForm] = useState<Record<string, { fabric_type: string; gsm: string; sizes: string; planned_start_date: string; estimated_delivery_date: string; operations: string[] }> | null>(null);
+  const [styleDatePopovers, setStyleDatePopovers] = useState<Record<string, { start: boolean; delivery: boolean }>>({});
 
   if (isLoading) {
     return (
@@ -377,7 +381,7 @@ const BatchDetailsPage = () => {
               setInfoForm({ ...form, ...updates });
 
             // Build style-wise defaults from rollsData (first entry per style defines the shared fields)
-            const styleDefaults: Record<string, { fabric_type: string; gsm: string; sizes: string; styleName: string }> = {};
+            const styleDefaults: Record<string, { fabric_type: string; gsm: string; sizes: string; styleName: string; planned_start_date: string; estimated_delivery_date: string; operations: string[] }> = {};
             rollsData.forEach((r: any) => {
               const sid = r.style_id || '__unknown__';
               if (!styleDefaults[sid]) {
@@ -385,16 +389,28 @@ const BatchDetailsPage = () => {
                   fabric_type: r.fabric_type || '',
                   gsm: r.gsm || '',
                   sizes: r.sizes || '',
+                  planned_start_date: r.planned_start_date || '',
+                  estimated_delivery_date: r.estimated_delivery_date || '',
+                  operations: Array.isArray(r.operations) ? r.operations : batchOperations,
                   styleName: styleLookup[sid] || 'Unknown Style',
                 };
               }
             });
 
             const styleForm = styleDetailsForm ?? Object.fromEntries(
-              Object.entries(styleDefaults).map(([sid, v]) => [sid, { fabric_type: v.fabric_type, gsm: v.gsm, sizes: v.sizes }])
+              Object.entries(styleDefaults).map(([sid, v]) => [sid, {
+                fabric_type: v.fabric_type,
+                gsm: v.gsm,
+                sizes: v.sizes,
+                planned_start_date: v.planned_start_date,
+                estimated_delivery_date: v.estimated_delivery_date,
+                operations: v.operations,
+              }])
             );
-            const setStyleField = (sid: string, field: string, value: string) =>
+            const setStyleField = (sid: string, field: string, value: any) =>
               setStyleDetailsForm({ ...styleForm, [sid]: { ...styleForm[sid], [field]: value } });
+
+            const AVAILABLE_OPERATIONS = ['Cutting', 'Stitching (Singer)', 'Stitching (Power Table)', 'Checking', 'Ironing', 'Packing', 'Accessories'];
 
             const handleSave = async () => {
               // Apply style-wise changes back to all rolls of that style
@@ -402,7 +418,15 @@ const BatchDetailsPage = () => {
                 const sid = r.style_id || '__unknown__';
                 const overrides = styleForm[sid];
                 if (!overrides) return r;
-                return { ...r, fabric_type: overrides.fabric_type, gsm: overrides.gsm, sizes: overrides.sizes };
+                return {
+                  ...r,
+                  fabric_type: overrides.fabric_type,
+                  gsm: overrides.gsm,
+                  sizes: overrides.sizes,
+                  planned_start_date: overrides.planned_start_date || null,
+                  estimated_delivery_date: overrides.estimated_delivery_date || null,
+                  operations: overrides.operations,
+                };
               });
 
               await updateBatchMutation.mutateAsync({
@@ -450,41 +474,140 @@ const BatchDetailsPage = () => {
                   {Object.entries(styleDefaults).length > 0 && (
                     <div className="space-y-3">
                       <Label className="text-sm font-semibold">Style Details</Label>
-                      <div className="space-y-3">
-                        {Object.entries(styleDefaults).map(([sid, defaults]) => (
-                          <div key={sid} className="border rounded-lg p-4 space-y-3">
-                            <p className="text-sm font-medium text-foreground">{defaults.styleName}</p>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                              <div className="space-y-1.5">
-                                <Label className="text-xs">Fabric Type</Label>
-                                <Input
-                                  value={styleForm[sid]?.fabric_type ?? defaults.fabric_type}
-                                  onChange={(e) => setStyleField(sid, 'fabric_type', e.target.value)}
-                                  placeholder="e.g., Cotton"
-                                  className="h-9"
-                                />
+                      <div className="space-y-4">
+                        {Object.entries(styleDefaults).map(([sid, defaults]) => {
+                          const startPopper = styleDatePopovers[sid]?.start || false;
+                          const deliveryPopper = styleDatePopovers[sid]?.delivery || false;
+                          const currentOps: string[] = styleForm[sid]?.operations ?? defaults.operations;
+                          return (
+                            <div key={sid} className="border rounded-lg p-4 space-y-4">
+                              <p className="text-sm font-semibold text-foreground">{defaults.styleName}</p>
+
+                              {/* Fabric / GSM / Sizes */}
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <div className="space-y-1.5">
+                                  <Label className="text-xs">Fabric Type</Label>
+                                  <Input
+                                    value={styleForm[sid]?.fabric_type ?? defaults.fabric_type}
+                                    onChange={(e) => setStyleField(sid, 'fabric_type', e.target.value)}
+                                    placeholder="e.g., Cotton"
+                                    className="h-9"
+                                  />
+                                </div>
+                                <div className="space-y-1.5">
+                                  <Label className="text-xs">GSM</Label>
+                                  <Input
+                                    value={styleForm[sid]?.gsm ?? defaults.gsm}
+                                    onChange={(e) => setStyleField(sid, 'gsm', e.target.value)}
+                                    placeholder="e.g., 220"
+                                    className="h-9"
+                                  />
+                                </div>
+                                <div className="space-y-1.5">
+                                  <Label className="text-xs">Sizes</Label>
+                                  <Input
+                                    value={styleForm[sid]?.sizes ?? defaults.sizes}
+                                    onChange={(e) => setStyleField(sid, 'sizes', e.target.value)}
+                                    placeholder="e.g., S, M, L, XL"
+                                    className="h-9"
+                                  />
+                                </div>
                               </div>
-                              <div className="space-y-1.5">
-                                <Label className="text-xs">GSM</Label>
-                                <Input
-                                  value={styleForm[sid]?.gsm ?? defaults.gsm}
-                                  onChange={(e) => setStyleField(sid, 'gsm', e.target.value)}
-                                  placeholder="e.g., 220"
-                                  className="h-9"
-                                />
+
+                              {/* Dates */}
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div className="space-y-1.5">
+                                  <Label className="text-xs">Planned Start Date</Label>
+                                  <Popover open={startPopper} onOpenChange={(o) => setStyleDatePopovers(prev => ({ ...prev, [sid]: { ...prev[sid], start: o } }))}>
+                                    <PopoverTrigger asChild>
+                                      <Button
+                                        variant="outline"
+                                        className={cn('w-full h-9 justify-start text-left font-normal', !(styleForm[sid]?.planned_start_date || defaults.planned_start_date) && 'text-muted-foreground')}
+                                      >
+                                        <CalendarIcon className="mr-2 h-4 w-4" />
+                                        {(styleForm[sid]?.planned_start_date || defaults.planned_start_date)
+                                          ? format(parseISO(styleForm[sid]?.planned_start_date || defaults.planned_start_date), 'dd MMM yyyy')
+                                          : 'Pick date'}
+                                      </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0 z-50" align="start">
+                                      <Calendar
+                                        mode="single"
+                                        selected={(styleForm[sid]?.planned_start_date || defaults.planned_start_date) ? parseISO(styleForm[sid]?.planned_start_date || defaults.planned_start_date) : undefined}
+                                        onSelect={(date) => {
+                                          if (date) {
+                                            setStyleField(sid, 'planned_start_date', format(date, 'yyyy-MM-dd'));
+                                            setStyleDatePopovers(prev => ({ ...prev, [sid]: { ...prev[sid], start: false } }));
+                                          }
+                                        }}
+                                        className={cn('p-3 pointer-events-auto')}
+                                      />
+                                    </PopoverContent>
+                                  </Popover>
+                                </div>
+                                <div className="space-y-1.5">
+                                  <Label className="text-xs">Estimated Delivery Date</Label>
+                                  <Popover open={deliveryPopper} onOpenChange={(o) => setStyleDatePopovers(prev => ({ ...prev, [sid]: { ...prev[sid], delivery: o } }))}>
+                                    <PopoverTrigger asChild>
+                                      <Button
+                                        variant="outline"
+                                        className={cn('w-full h-9 justify-start text-left font-normal', !(styleForm[sid]?.estimated_delivery_date || defaults.estimated_delivery_date) && 'text-muted-foreground')}
+                                      >
+                                        <CalendarIcon className="mr-2 h-4 w-4" />
+                                        {(styleForm[sid]?.estimated_delivery_date || defaults.estimated_delivery_date)
+                                          ? format(parseISO(styleForm[sid]?.estimated_delivery_date || defaults.estimated_delivery_date), 'dd MMM yyyy')
+                                          : 'Pick date'}
+                                      </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0 z-50" align="start">
+                                      <Calendar
+                                        mode="single"
+                                        selected={(styleForm[sid]?.estimated_delivery_date || defaults.estimated_delivery_date) ? parseISO(styleForm[sid]?.estimated_delivery_date || defaults.estimated_delivery_date) : undefined}
+                                        onSelect={(date) => {
+                                          if (date) {
+                                            setStyleField(sid, 'estimated_delivery_date', format(date, 'yyyy-MM-dd'));
+                                            setStyleDatePopovers(prev => ({ ...prev, [sid]: { ...prev[sid], delivery: false } }));
+                                          }
+                                        }}
+                                        className={cn('p-3 pointer-events-auto')}
+                                      />
+                                    </PopoverContent>
+                                  </Popover>
+                                </div>
                               </div>
+
+                              {/* Operations */}
                               <div className="space-y-1.5">
-                                <Label className="text-xs">Sizes</Label>
-                                <Input
-                                  value={styleForm[sid]?.sizes ?? defaults.sizes}
-                                  onChange={(e) => setStyleField(sid, 'sizes', e.target.value)}
-                                  placeholder="e.g., S, M, L, XL"
-                                  className="h-9"
-                                />
+                                <Label className="text-xs">Applicable Operations</Label>
+                                <div className="flex flex-wrap gap-2">
+                                  {AVAILABLE_OPERATIONS.map(op => {
+                                    const isActive = currentOps.includes(op);
+                                    return (
+                                      <button
+                                        key={op}
+                                        type="button"
+                                        onClick={() => {
+                                          const next = isActive
+                                            ? currentOps.filter(o => o !== op)
+                                            : [...currentOps, op];
+                                          setStyleField(sid, 'operations', next);
+                                        }}
+                                        className={cn(
+                                          'px-3 py-1 rounded-full text-xs border transition-colors',
+                                          isActive
+                                            ? 'bg-primary text-primary-foreground border-primary'
+                                            : 'bg-background text-muted-foreground border-border hover:border-primary hover:text-foreground'
+                                        )}
+                                      >
+                                        {op}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   )}
@@ -571,6 +694,7 @@ const BatchDetailsPage = () => {
           })()}
         </TabsContent>
       </Tabs>
+
 
       {/* Edit Batch Dialog */}
       <EditBatchDialog 

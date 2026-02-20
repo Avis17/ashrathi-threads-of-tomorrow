@@ -8,6 +8,7 @@ export interface BatchTypeConfirmed {
   type_index: number;
   confirmed_pieces: number;
   delivery_status: string;
+  actual_delivery_date: string | null;
   updated_at: string;
   created_at: string;
 }
@@ -32,11 +33,13 @@ export const useBatchTypeConfirmed = (batchId: string) => {
       const rows = (data || []) as unknown as BatchTypeConfirmed[];
       const confirmedMap: Record<number, number> = {};
       const statusMap: Record<number, DeliveryStatus> = {};
+      const actualDeliveryDateMap: Record<number, string | null> = {};
       rows.forEach(r => {
         confirmedMap[r.type_index] = r.confirmed_pieces;
         statusMap[r.type_index] = (r.delivery_status || 'in_progress') as DeliveryStatus;
+        actualDeliveryDateMap[r.type_index] = r.actual_delivery_date || null;
       });
-      return { confirmedMap, statusMap };
+      return { confirmedMap, statusMap, actualDeliveryDateMap };
     },
     enabled: !!batchId,
   });
@@ -67,11 +70,11 @@ export const useUpsertBatchTypeConfirmed = () => {
 export const useUpsertDeliveryStatus = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ batchId, typeIndex, deliveryStatus }: { batchId: string; typeIndex: number; deliveryStatus: DeliveryStatus }) => {
+    mutationFn: async ({ batchId, typeIndex, deliveryStatus, actualDeliveryDate }: { batchId: string; typeIndex: number; deliveryStatus: DeliveryStatus; actualDeliveryDate?: string | null }) => {
       const { error } = await supabase
         .from('batch_type_confirmed' as any)
         .upsert(
-          { batch_id: batchId, type_index: typeIndex, delivery_status: deliveryStatus, updated_at: new Date().toISOString() },
+          { batch_id: batchId, type_index: typeIndex, delivery_status: deliveryStatus, actual_delivery_date: actualDeliveryDate ?? null, updated_at: new Date().toISOString() },
           { onConflict: 'batch_id,type_index' }
         );
       if (error) throw error;

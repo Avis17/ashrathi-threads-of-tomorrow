@@ -669,6 +669,7 @@ export type Database = {
       }
       batch_type_confirmed: {
         Row: {
+          actual_delivery_date: string | null
           batch_id: string
           confirmed_pieces: number
           created_at: string
@@ -678,6 +679,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          actual_delivery_date?: string | null
           batch_id: string
           confirmed_pieces?: number
           created_at?: string
@@ -687,6 +689,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          actual_delivery_date?: string | null
           batch_id?: string
           confirmed_pieces?: number
           created_at?: string
