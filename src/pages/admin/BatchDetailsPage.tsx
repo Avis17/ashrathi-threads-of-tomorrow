@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useJobBatch, useUpdateJobBatch } from '@/hooks/useJobBatches';
+import { useBatchTypeConfirmed } from '@/hooks/useBatchTypeConfirmed';
 import { useJobProductionEntries } from '@/hooks/useJobProduction';
 import { useJobBatchExpenses } from '@/hooks/useJobExpenses';
 import { useBatchCuttingLogs } from '@/hooks/useBatchCuttingLogs';
@@ -65,6 +66,8 @@ const BatchDetailsPage = () => {
   const { data: salaryEntries } = useBatchSalaryEntries(id || '');
   const { data: jobWorks } = useBatchJobWorks(id || '');
   const { data: operationProgress } = useBatchOperationProgress(id || '');
+  const { data: typeConfirmedData } = useBatchTypeConfirmed(id || '');
+  const confirmedMap = typeConfirmedData?.confirmedMap ?? {};
   const { data: allStyles = [] } = useQuery({
     queryKey: ['job-styles-all'],
     queryFn: async () => {
@@ -532,6 +535,7 @@ const BatchDetailsPage = () => {
         batchNumber={batch.batch_number}
         rollsData={rollsData}
         cuttingSummary={cuttingSummary}
+        confirmedMap={confirmedMap}
         styleLookup={styleLookup}
         companyName={(batch as any).company_name || ''}
       />
