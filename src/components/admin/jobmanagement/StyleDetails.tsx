@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Edit, IndianRupee, FileText, ZoomIn, ZoomOut, RotateCcw, X, ChevronLeft, ChevronRight, Maximize2, Images } from 'lucide-react';
+import { Edit, IndianRupee, FileText, ZoomIn, ZoomOut, RotateCcw, X, ChevronLeft, ChevronRight, Maximize2, Images, Download } from 'lucide-react';
 import { JobStyle } from '@/hooks/useJobStyles';
 
 interface StyleDetailsProps {
@@ -13,115 +13,46 @@ interface StyleDetailsProps {
   onEdit: () => void;
 }
 
-interface ImageLightboxProps {
-  src: string;
-  alt: string;
-  onClose: () => void;
-}
-
-const ImageLightbox = ({ src, alt, onClose }: ImageLightboxProps) => {
-  const [scale, setScale] = useState(1);
-  const [rotation, setRotation] = useState(0);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
-  const dragStart = useRef<{ x: number; y: number; px: number; py: number } | null>(null);
-
-  const handleZoomIn = () => setScale(s => Math.min(s + 0.25, 5));
-  const handleZoomOut = () => setScale(s => Math.max(s - 0.25, 0.25));
-  const handleReset = () => { setScale(1); setRotation(0); setPosition({ x: 0, y: 0 }); };
-  const handleRotate = () => setRotation(r => (r + 90) % 360);
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (scale === 1) return;
-    setIsDragging(true);
-    dragStart.current = { x: e.clientX, y: e.clientY, px: position.x, py: position.y };
-  };
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging || !dragStart.current) return;
-    setPosition({
-      x: dragStart.current.px + (e.clientX - dragStart.current.x),
-      y: dragStart.current.py + (e.clientY - dragStart.current.y),
-    });
-  };
-  const handleMouseUp = () => { setIsDragging(false); dragStart.current = null; };
-
-  const handleWheel = useCallback((e: React.WheelEvent) => {
-    e.preventDefault();
-    const delta = e.deltaY > 0 ? -0.1 : 0.1;
-    setScale(s => Math.min(Math.max(s + delta, 0.25), 5));
-  }, []);
-
-  return (
-    <div
-      className="fixed inset-0 z-[100] bg-black/95 flex flex-col"
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
-    >
-      {/* Toolbar */}
-      <div className="flex items-center justify-between px-4 py-3 bg-black/60 border-b border-white/10 flex-shrink-0">
-        <span className="text-white text-sm font-medium">{alt}</span>
-        <div className="flex items-center gap-2">
-          <Button size="sm" variant="ghost" className="text-white hover:text-white hover:bg-white/10" onClick={handleZoomOut}>
-            <ZoomOut className="h-4 w-4" />
-          </Button>
-          <span className="text-white text-xs w-12 text-center">{Math.round(scale * 100)}%</span>
-          <Button size="sm" variant="ghost" className="text-white hover:text-white hover:bg-white/10" onClick={handleZoomIn}>
-            <ZoomIn className="h-4 w-4" />
-          </Button>
-          <div className="w-px h-5 bg-white/20 mx-1" />
-          <Button size="sm" variant="ghost" className="text-white hover:text-white hover:bg-white/10" onClick={handleRotate}>
-            <RotateCcw className="h-4 w-4" />
-          </Button>
-          <Button size="sm" variant="ghost" className="text-white hover:text-white hover:bg-white/10" onClick={handleReset}>
-            Reset
-          </Button>
-          <div className="w-px h-5 bg-white/20 mx-1" />
-          <Button size="sm" variant="ghost" className="text-white hover:text-white hover:bg-white/10" onClick={onClose}>
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Image area */}
-      <div
-        className="flex-1 overflow-hidden flex items-center justify-center select-none"
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onWheel={handleWheel}
-        style={{ cursor: isDragging ? 'grabbing' : scale > 1 ? 'grab' : 'default' }}
-      >
-        <img
-          src={src}
-          alt={alt}
-          draggable={false}
-          style={{
-            transform: `translate(${position.x}px, ${position.y}px) scale(${scale}) rotate(${rotation}deg)`,
-            transition: isDragging ? 'none' : 'transform 0.15s ease',
-            maxWidth: '90vw',
-            maxHeight: '80vh',
-            objectFit: 'contain',
-          }}
-        />
-      </div>
-
-      {/* Hint */}
-      <div className="text-center pb-3 text-white/40 text-xs flex-shrink-0">
-        Scroll to zoom • Drag to pan • Use buttons to rotate
-      </div>
-    </div>
-  );
-};
-
 const StyleDetails = ({ style, open, onClose, onEdit }: StyleDetailsProps) => {
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const [lightboxAlt, setLightboxAlt] = useState<string>('');
   const [lightboxImages, setLightboxImages] = useState<string[]>([]);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [downloading, setDownloading] = useState(false);
 
   if (!style) return null;
 
   const measurementSheetUrl = (style as any).measurement_sheet_url as string | null;
   const extraImages: string[] = (style as any).style_images || [];
+
+  const downloadImage = async (url: string, filename: string) => {
+    try {
+      const response = await fetch(url, { mode: 'cors' });
+      const blob = await response.blob();
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(a.href);
+    } catch {
+      window.open(url, '_blank');
+    }
+  };
+
+  const downloadAll = async () => {
+    setDownloading(true);
+    const allImages: { url: string; name: string }[] = [];
+    if (style.style_image_url) allImages.push({ url: style.style_image_url, name: `${style.style_code}-style.jpg` });
+    if (measurementSheetUrl) allImages.push({ url: measurementSheetUrl, name: `${style.style_code}-measurement-sheet.jpg` });
+    extraImages.forEach((url, i) => allImages.push({ url, name: `${style.style_code}-image-${i + 1}.jpg` }));
+    for (const img of allImages) {
+      await downloadImage(img.url, img.name);
+      await new Promise(r => setTimeout(r, 400));
+    }
+    setDownloading(false);
+  };
 
   const hasDetailedRates = style.process_rate_details && Array.isArray(style.process_rate_details) && (style.process_rate_details as any[]).length > 0;
   
@@ -165,15 +96,31 @@ const StyleDetails = ({ style, open, onClose, onEdit }: StyleDetailsProps) => {
     setLightboxSrc(lightboxImages[newIdx]);
   };
 
+  const totalImageCount = (style.style_image_url ? 1 : 0) + (measurementSheetUrl ? 1 : 0) + extraImages.length;
+
   return (
     <>
       {lightboxSrc && (
         <div className="fixed inset-0 z-[100] bg-black/95 flex flex-col" onMouseUp={() => {}}>
           <div className="flex items-center justify-between px-4 py-3 bg-black/60 border-b border-white/10 flex-shrink-0">
-            <span className="text-white text-sm font-medium">{lightboxAlt}{lightboxImages.length > 1 ? ` (${lightboxIndex + 1}/${lightboxImages.length})` : ''}</span>
-            <Button size="sm" variant="ghost" className="text-white hover:text-white hover:bg-white/10" onClick={() => setLightboxSrc(null)}>
-              <X className="h-4 w-4" />
-            </Button>
+            <span className="text-white text-sm font-medium">
+              {lightboxAlt}{lightboxImages.length > 1 ? ` (${lightboxIndex + 1}/${lightboxImages.length})` : ''}
+            </span>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-white hover:text-white hover:bg-white/10 gap-1.5"
+                onClick={() => downloadImage(lightboxSrc, `${style.style_code}-${lightboxIndex + 1}.jpg`)}
+              >
+                <Download className="h-4 w-4" />
+                <span className="text-xs">Download</span>
+              </Button>
+              <div className="w-px h-5 bg-white/20" />
+              <Button size="sm" variant="ghost" className="text-white hover:text-white hover:bg-white/10" onClick={() => setLightboxSrc(null)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
           <div className="flex-1 flex items-center justify-center relative overflow-hidden">
             {lightboxImages.length > 1 && (
@@ -216,10 +163,24 @@ const StyleDetails = ({ style, open, onClose, onEdit }: StyleDetailsProps) => {
                   {style.style_code} • Pattern: {style.pattern_number}
                 </p>
               </div>
-              <Button onClick={onEdit} size="sm" className="gap-2">
-                <Edit className="h-4 w-4" />
-                Edit
-              </Button>
+              <div className="flex items-center gap-2">
+                {totalImageCount > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    onClick={downloadAll}
+                    disabled={downloading}
+                  >
+                    <Download className="h-4 w-4" />
+                    {downloading ? 'Downloading...' : `Download All (${totalImageCount})`}
+                  </Button>
+                )}
+                <Button onClick={onEdit} size="sm" className="gap-2">
+                  <Edit className="h-4 w-4" />
+                  Edit
+                </Button>
+              </div>
             </div>
           </DialogHeader>
 
@@ -229,7 +190,16 @@ const StyleDetails = ({ style, open, onClose, onEdit }: StyleDetailsProps) => {
               {/* Style Image */}
               {style.style_image_url && (
                 <div className="space-y-1">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Style Image</p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Style Image</p>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); downloadImage(style.style_image_url!, `${style.style_code}-style.jpg`); }}
+                      className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded"
+                      title="Download"
+                    >
+                      <Download className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                   <div
                     className="aspect-video w-full rounded-lg overflow-hidden bg-muted cursor-pointer relative group"
                     onClick={() => openLightbox(style.style_image_url!, style.style_name)}
@@ -249,10 +219,19 @@ const StyleDetails = ({ style, open, onClose, onEdit }: StyleDetailsProps) => {
               {/* Measurement Sheet */}
               {measurementSheetUrl && (
                 <div className="space-y-1">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1">
-                    <FileText className="h-3.5 w-3.5" />
-                    Measurement Sheet
-                  </p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+                      <FileText className="h-3.5 w-3.5" />
+                      Measurement Sheet
+                    </p>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); downloadImage(measurementSheetUrl, `${style.style_code}-measurement-sheet.jpg`); }}
+                      className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded"
+                      title="Download"
+                    >
+                      <Download className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                   <div
                     className="aspect-video w-full rounded-lg overflow-hidden bg-muted cursor-pointer relative group border"
                     onClick={() => openLightbox(measurementSheetUrl, 'Measurement Sheet – ' + style.style_name)}
@@ -288,8 +267,17 @@ const StyleDetails = ({ style, open, onClose, onEdit }: StyleDetailsProps) => {
                       onClick={() => openLightbox(src, `${style.style_name} – Image ${idx + 1}`, extraImages)}
                     >
                       <img src={src} alt={`Style image ${idx + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-                        <Maximize2 className="h-5 w-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-end justify-end p-1.5">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); downloadImage(src, `${style.style_code}-image-${idx + 1}.jpg`); }}
+                          className="bg-black/60 text-white rounded p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/80"
+                          title="Download"
+                        >
+                          <Download className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <Maximize2 className="h-5 w-5 text-white opacity-0 group-hover:opacity-60 transition-opacity" />
                       </div>
                     </div>
                   ))}
