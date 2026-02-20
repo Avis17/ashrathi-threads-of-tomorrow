@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Package, Eye, Trash2, Scissors, IndianRupee, CreditCard, Briefcase, Receipt, Truck } from 'lucide-react';
+import { Plus, Search, Package, Eye, Trash2, Scissors, IndianRupee, CreditCard, Briefcase, Receipt, Truck, CheckCircle2, Clock, AlertTriangle, TrendingUp, TrendingDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -144,6 +144,66 @@ const BatchesManager = () => {
     );
   };
 
+  const renderStyleTimingCell = (batch: any) => {
+    const analysis: any[] = batch.style_delivery_analysis || [];
+    if (analysis.length === 0) return <span className="text-xs text-muted-foreground">—</span>;
+
+    return (
+      <div className="space-y-1.5">
+        {analysis.map((s: any, i: number) => {
+          const estimated = s.estimated_delivery;
+          const actual = s.actual_delivery_date;
+          const today = new Date();
+
+          let icon = null;
+          let label = '';
+          let colorClass = 'text-muted-foreground';
+
+          if (actual && estimated) {
+            const diff = differenceInDays(parseISO(actual), parseISO(estimated));
+            if (diff === 0) {
+              icon = <CheckCircle2 className="h-3 w-3 text-emerald-600 shrink-0" />;
+              label = 'On time';
+              colorClass = 'text-emerald-700';
+            } else if (diff > 0) {
+              icon = <TrendingDown className="h-3 w-3 text-red-500 shrink-0" />;
+              label = `${diff}d late`;
+              colorClass = 'text-red-600';
+            } else {
+              icon = <TrendingUp className="h-3 w-3 text-blue-500 shrink-0" />;
+              label = `${Math.abs(diff)}d early`;
+              colorClass = 'text-blue-600';
+            }
+          } else if (!actual && estimated) {
+            const diff = differenceInDays(today, parseISO(estimated));
+            if (diff > 0) {
+              icon = <AlertTriangle className="h-3 w-3 text-orange-500 shrink-0" />;
+              label = `${diff}d overdue`;
+              colorClass = 'text-orange-600';
+            } else {
+              icon = <Clock className="h-3 w-3 text-muted-foreground shrink-0" />;
+              label = `Due in ${Math.abs(diff)}d`;
+              colorClass = 'text-muted-foreground';
+            }
+          } else {
+            icon = <Clock className="h-3 w-3 text-muted-foreground shrink-0" />;
+            label = 'No date set';
+          }
+
+          return (
+            <div key={i} className="flex items-center gap-1.5">
+              {icon}
+              <div className="min-w-0">
+                <span className="text-[10px] font-medium text-foreground">{s.style_code} </span>
+                <span className={`text-[10px] font-semibold ${colorClass}`}>{label}</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
@@ -272,6 +332,9 @@ const BatchesManager = () => {
                   <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">
                     <div className="flex items-center gap-1"><Truck className="h-3.5 w-3.5" />Delivery</div>
                   </th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">
+                    <div className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" />Timing</div>
+                  </th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Actions</th>
                 </tr>
               </thead>
@@ -330,6 +393,9 @@ const BatchesManager = () => {
                     </td>
                     <td className="px-4 py-3">
                       {renderDeliveryCell(batch)}
+                    </td>
+                    <td className="px-4 py-3">
+                      {renderStyleTimingCell(batch)}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex gap-2">

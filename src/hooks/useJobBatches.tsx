@@ -75,10 +75,14 @@ export const useJobBatches = () => {
         jwMap[jw.batch_id].paid += Number(jw.paid_amount);
       });
 
-      // Aggregate delivery status per batch
+      // Aggregate delivery status per batch + per type_index
       const deliveryMap: Record<string, { in_progress: number; completed: number; delivered: number; latest_delivery_date: string | null }> = {};
+      // Map: batch_id → type_index → { status, actual_delivery_date }
+      const deliveryByTypeIndex: Record<string, Record<number, { status: string; actual_delivery_date: string | null }>> = {};
       (typeConfirmed as any[] || []).forEach((tc: any) => {
         if (!deliveryMap[tc.batch_id]) deliveryMap[tc.batch_id] = { in_progress: 0, completed: 0, delivered: 0, latest_delivery_date: null };
+        if (!deliveryByTypeIndex[tc.batch_id]) deliveryByTypeIndex[tc.batch_id] = {};
+        deliveryByTypeIndex[tc.batch_id][tc.type_index] = { status: tc.delivery_status || 'in_progress', actual_delivery_date: tc.actual_delivery_date || null };
         const status = tc.delivery_status || 'in_progress';
         if (status === 'in_progress') deliveryMap[tc.batch_id].in_progress++;
         else if (status === 'completed') deliveryMap[tc.batch_id].completed++;
@@ -109,6 +113,43 @@ export const useJobBatches = () => {
         const estimatedDates = rollsData.map((r: any) => r.estimated_delivery).filter(Boolean);
         const estimatedDelivery = estimatedDates.length > 0 ? estimatedDates[0] : null;
 
+        // Per-style delivery timing: group type_indices by style_id, compute diff per style
+        const batchDeliveryByType = deliveryByTypeIndex[b.id] || {};
+        const styleDeliveryMap: Record<string, { style_name: string; style_code: string; status: string; actual_delivery_date: string | null; estimated_delivery: string | null }[]> = {};
+        rollsData.forEach((r: any, idx: number) => {
+          if (!r.style_id) return;
+          const styleInfo = styleLookup[r.style_id];
+          if (!styleInfo) return;
+          const typeData = batchDeliveryByType[idx] || { status: 'in_progress', actual_delivery_date: null };
+          if (!styleDeliveryMap[r.style_id]) styleDeliveryMap[r.style_id] = [];
+          styleDeliveryMap[r.style_id].push({
+            ...styleInfo,
+            status: typeData.status,
+            actual_delivery_date: typeData.actual_delivery_date,
+            estimated_delivery: r.estimated_delivery || null,
+          });
+        });
+
+        // Aggregate per-style: pick latest actual and earliest estimated
+        const styleDeliveryAnalysis = Object.entries(styleDeliveryMap).map(([styleId, entries]) => {
+          const anyDelivered = entries.some(e => e.status === 'delivered');
+          const latestActual = entries
+            .filter(e => e.actual_delivery_date)
+            .sort((a, b) => (b.actual_delivery_date! > a.actual_delivery_date! ? 1 : -1))[0]?.actual_delivery_date || null;
+          const firstEstimated = entries.find(e => e.estimated_delivery)?.estimated_delivery || null;
+          const overallStatus = anyDelivered ? 'delivered'
+            : entries.some(e => e.status === 'completed') ? 'completed'
+            : 'in_progress';
+          return {
+            style_id: styleId,
+            style_name: entries[0].style_name,
+            style_code: entries[0].style_code,
+            status: overallStatus,
+            actual_delivery_date: latestActual,
+            estimated_delivery: firstEstimated,
+          };
+        });
+
         return {
           ...b,
           total_cut_pieces: cutMap[b.id] || 0,
@@ -122,6 +163,7 @@ export const useJobBatches = () => {
           total_job_work_paid: jwMap[b.id]?.paid || 0,
           delivery_summary: deliveryMap[b.id] || null,
           estimated_delivery: estimatedDelivery,
+          style_delivery_analysis: styleDeliveryAnalysis,
         };
       });
     },
