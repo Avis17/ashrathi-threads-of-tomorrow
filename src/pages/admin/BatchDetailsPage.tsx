@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Package, Scissors, FileText, DollarSign, Users, Settings, Edit, IndianRupee, Briefcase, BarChart3, Receipt, CreditCard } from 'lucide-react';
+import { ArrowLeft, Package, Scissors, FileText, DollarSign, Users, Settings, Edit, IndianRupee, Briefcase, BarChart3, Receipt, CreditCard, UserPlus, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -19,6 +22,7 @@ import { useBatchCuttingLogs } from '@/hooks/useBatchCuttingLogs';
 import { useBatchSalaryEntries } from '@/hooks/useBatchSalary';
 import { useBatchJobWorks } from '@/hooks/useJobWorks';
 import { useBatchOperationProgress } from '@/hooks/useBatchOperationProgress';
+import { useJobWorkers } from '@/hooks/useDeliveryChallans';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
@@ -33,6 +37,7 @@ import EditBatchDialog from '@/components/admin/jobmanagement/EditBatchDialog';
 import { GenerateInvoiceDialog } from '@/components/admin/jobmanagement/batch-details/GenerateInvoiceDialog';
 import { BatchPaymentSection } from '@/components/admin/jobmanagement/batch-details/BatchPaymentSection';
 import { BatchWeightAnalysisCard } from '@/components/admin/jobmanagement/batch-details/BatchWeightAnalysisCard';
+import { AddWorkerDialog } from '@/components/admin/jobmanagement/batch-details/AddWorkerDialog';
 
 const BATCH_STATUSES = [
   { value: 'created', label: 'Created', color: 'bg-blue-500' },
@@ -70,8 +75,16 @@ const BatchDetailsPage = () => {
   const styleLookup: Record<string, string> = {};
   allStyles.forEach((s: any) => { styleLookup[s.id] = s.style_name; });
   const updateBatchMutation = useUpdateJobBatch();
+  const { data: jobWorkers = [], refetch: refetchWorkers } = useJobWorkers(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [invoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
+  const [addWorkerOpen, setAddWorkerOpen] = useState(false);
+  const [infoForm, setInfoForm] = useState<{
+    supplier_name: string;
+    lot_number: string;
+    remarks: string;
+    company_name: string;
+  } | null>(null);
 
   if (isLoading) {
     return (
@@ -342,37 +355,134 @@ const BatchDetailsPage = () => {
         </TabsContent>
 
         <TabsContent value="info" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Batch Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div className="flex justify-between p-3 bg-muted/30 rounded">
-                  <span className="text-muted-foreground">Supplier</span>
-                  <span className="font-medium">{batch.supplier_name || 'N/A'}</span>
-                </div>
-                <div className="flex justify-between p-3 bg-muted/30 rounded">
-                  <span className="text-muted-foreground">Total Fabric</span>
-                  <span className="font-medium">{batch.total_fabric_received_kg?.toFixed(2) || 0} kg</span>
-                </div>
-                <div className="flex justify-between p-3 bg-muted/30 rounded">
-                  <span className="text-muted-foreground">Number of Rolls</span>
-                  <span className="font-medium">{batch.number_of_rolls}</span>
-                </div>
-                <div className="flex justify-between p-3 bg-muted/30 rounded">
-                  <span className="text-muted-foreground">Lot Number</span>
-                  <span className="font-medium">{batch.lot_number || 'N/A'}</span>
-                </div>
-              </div>
-              {batch.remarks && (
-                <div className="p-4 bg-muted/30 rounded-lg">
-                  <div className="text-sm text-muted-foreground mb-1">Remarks</div>
-                  <div className="whitespace-pre-wrap">{batch.remarks}</div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          {(() => {
+            const form = infoForm ?? {
+              supplier_name: batch.supplier_name || '',
+              lot_number: batch.lot_number || '',
+              remarks: batch.remarks || '',
+              company_name: (batch as any).company_name || '',
+            };
+            const setForm = (updates: Partial<typeof form>) =>
+              setInfoForm({ ...form, ...updates });
+            const handleSave = async () => {
+              await updateBatchMutation.mutateAsync({
+                id: id!,
+                data: {
+                  supplier_name: form.supplier_name || null,
+                  lot_number: form.lot_number || null,
+                  remarks: form.remarks || null,
+                  ...(form.company_name !== undefined ? { company_name: form.company_name } : {}),
+                } as any,
+              });
+              setInfoForm(null);
+            };
+            return (
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle>Batch Information</CardTitle>
+                  <Button
+                    size="sm"
+                    onClick={handleSave}
+                    disabled={updateBatchMutation.isPending}
+                    className="gap-2"
+                  >
+                    <Save className="h-4 w-4" />
+                    {updateBatchMutation.isPending ? 'Saving...' : 'Save'}
+                  </Button>
+                </CardHeader>
+                <CardContent className="space-y-5">
+                  {/* Read-only stats */}
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className="flex justify-between p-3 bg-muted/30 rounded">
+                      <span className="text-muted-foreground">Total Fabric</span>
+                      <span className="font-medium">{batch.total_fabric_received_kg?.toFixed(2) || 0} kg</span>
+                    </div>
+                    <div className="flex justify-between p-3 bg-muted/30 rounded">
+                      <span className="text-muted-foreground">Number of Rolls</span>
+                      <span className="font-medium">{batch.number_of_rolls}</span>
+                    </div>
+                  </div>
+
+                  {/* Editable fields */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Supplier Name</Label>
+                      <Input
+                        value={form.supplier_name}
+                        onChange={(e) => setForm({ supplier_name: e.target.value })}
+                        placeholder="ABC Textiles"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Lot Number</Label>
+                      <Input
+                        value={form.lot_number}
+                        onChange={(e) => setForm({ lot_number: e.target.value })}
+                        placeholder="LOT-2024-001"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Company / Job Worker */}
+                  <div className="space-y-2">
+                    <Label>Company / Job Worker</Label>
+                    <div className="flex gap-2">
+                      <Select
+                        value={form.company_name}
+                        onValueChange={(val) => setForm({ company_name: val })}
+                      >
+                        <SelectTrigger className="flex-1">
+                          <SelectValue placeholder="Select company or job worker..." />
+                        </SelectTrigger>
+                        <SelectContent className="z-50">
+                          {form.company_name && !jobWorkers.find(w => w.name === form.company_name) && (
+                            <SelectItem value={form.company_name}>
+                              {form.company_name} (current)
+                            </SelectItem>
+                          )}
+                          {jobWorkers.map((worker) => (
+                            <SelectItem key={worker.id} value={worker.name}>
+                              <div className="flex flex-col">
+                                <span>{worker.name}</span>
+                                {worker.gstin && (
+                                  <span className="text-xs text-muted-foreground">GSTIN: {worker.gstin}</span>
+                                )}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setAddWorkerOpen(true)}
+                        title="Add new job worker / company"
+                      >
+                        <UserPlus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    {form.company_name && (
+                      <p className="text-xs text-muted-foreground">
+                        Selected: <span className="font-medium text-foreground">{form.company_name}</span>
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Remarks */}
+                  <div className="space-y-2">
+                    <Label>Remarks</Label>
+                    <Textarea
+                      value={form.remarks}
+                      onChange={(e) => setForm({ remarks: e.target.value })}
+                      placeholder="Any additional notes..."
+                      className="min-h-[100px]"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })()}
         </TabsContent>
       </Tabs>
 
@@ -391,6 +501,21 @@ const BatchDetailsPage = () => {
         batchNumber={batch.batch_number}
         rollsData={rollsData}
         cuttingSummary={cuttingSummary}
+      />
+
+      {/* Add Worker Dialog */}
+      <AddWorkerDialog
+        open={addWorkerOpen}
+        onOpenChange={setAddWorkerOpen}
+        onWorkerCreated={(name) => {
+          refetchWorkers();
+          setInfoForm(prev => prev ? { ...prev, company_name: name } : {
+            supplier_name: batch.supplier_name || '',
+            lot_number: batch.lot_number || '',
+            remarks: batch.remarks || '',
+            company_name: name,
+          });
+        }}
       />
     </div>
   );
