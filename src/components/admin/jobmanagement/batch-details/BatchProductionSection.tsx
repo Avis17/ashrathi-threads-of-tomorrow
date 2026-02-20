@@ -6,15 +6,18 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import {
   CheckCircle, AlertCircle, ChevronDown, ChevronRight,
-  Briefcase, AlertTriangle, Truck, CalendarClock, CalendarCheck, TrendingDown, TrendingUp,
+  Briefcase, AlertTriangle, Truck, CalendarClock, CalendarCheck, TrendingDown, TrendingUp, CalendarIcon,
 } from 'lucide-react';
 import { useBatchOperationProgress, useUpsertOperationProgress } from '@/hooks/useBatchOperationProgress';
 import { useBatchJobWorks } from '@/hooks/useJobWorks';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useBatchTypeConfirmed, useUpsertDeliveryStatus, DELIVERY_STATUSES, DeliveryStatus } from '@/hooks/useBatchTypeConfirmed';
 import { differenceInDays, format, parseISO } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 interface BatchProductionSectionProps {
   batchId: string;
@@ -44,6 +47,7 @@ export const BatchProductionSection = ({
   const { data: jobWorks = [] } = useBatchJobWorks(batchId);
   const { data: typeData } = useBatchTypeConfirmed(batchId);
   const statusMap = typeData?.statusMap ?? {};
+  const actualDeliveryDateMap = typeData?.actualDeliveryDateMap ?? {};
   const upsertMutation = useUpsertOperationProgress();
   const upsertStatusMutation = useUpsertDeliveryStatus();
 
@@ -53,6 +57,8 @@ export const BatchProductionSection = ({
   const [allExpanded, setAllExpanded] = useState(true);
   const [openStyles, setOpenStyles] = useState<Record<string, boolean>>({});
   const [openColors, setOpenColors] = useState<Record<number, boolean>>({});
+  // Delivery date popover open state per styleId
+  const [deliveryDatePopovers, setDeliveryDatePopovers] = useState<Record<string, boolean>>({});
 
   // --- Build job work lookup ---
   const jobWorkByType: Record<number, string[]> = {};
@@ -124,10 +130,13 @@ export const BatchProductionSection = ({
   const getStyleStatus = (sg: StyleGroup): DeliveryStatus =>
     (statusMap[sg.typeIndices[0]] || 'in_progress') as DeliveryStatus;
 
-  const handleSetStyleStatus = (sg: StyleGroup, status: DeliveryStatus) => {
+  const getStyleActualDeliveryDate = (sg: StyleGroup): string | null =>
+    actualDeliveryDateMap[sg.typeIndices[0]] || null;
+
+  const handleSetStyleStatus = (sg: StyleGroup, status: DeliveryStatus, actualDeliveryDate?: string | null) => {
     // Apply to all type indices of this style
     sg.typeIndices.forEach(idx => {
-      upsertStatusMutation.mutate({ batchId, typeIndex: idx, deliveryStatus: status });
+      upsertStatusMutation.mutate({ batchId, typeIndex: idx, deliveryStatus: status, actualDeliveryDate: actualDeliveryDate });
     });
   };
 
@@ -185,48 +194,54 @@ export const BatchProductionSection = ({
   };
 
   // --- Date diff helper ---
-  const renderDateDiff = (planned: string | undefined, actual: string | undefined) => {
+  const renderDateDiff = (planned: string | undefined, actual: string | null | undefined, isDelivered: boolean) => {
     if (!planned) return null;
-    const today = new Date();
     const plannedDate = parseISO(planned);
-    // If delivered use actual (we don't store actual delivery date, so compare with today)
-    const compareDate = actual ? parseISO(actual) : today;
-    const diff = differenceInDays(compareDate, plannedDate);
 
+    if (isDelivered && actual) {
+      // Show actual vs planned
+      const actualDate = parseISO(actual);
+      const diff = differenceInDays(actualDate, plannedDate);
+      return (
+        <div className="flex items-center gap-2 text-xs flex-wrap">
+          <div className="flex items-center gap-1 text-muted-foreground">
+            <CalendarClock className="h-3.5 w-3.5" />
+            <span>Expected: {format(plannedDate, 'dd MMM yy')}</span>
+          </div>
+          <div className="flex items-center gap-1 text-muted-foreground">
+            <CalendarCheck className="h-3.5 w-3.5" />
+            <span>Delivered: {format(actualDate, 'dd MMM yy')}</span>
+          </div>
+          {diff === 0 ? (
+            <Badge variant="outline" className="text-xs py-0 h-5 text-green-600 border-green-400">On time</Badge>
+          ) : diff > 0 ? (
+            <Badge variant="outline" className="text-xs py-0 h-5 text-red-600 border-red-400 gap-1">
+              <TrendingUp className="h-3 w-3" />{diff}d late
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="text-xs py-0 h-5 text-green-600 border-green-400 gap-1">
+              <TrendingDown className="h-3 w-3" />{Math.abs(diff)}d early
+            </Badge>
+          )}
+        </div>
+      );
+    }
+
+    // Not delivered — compare with today
+    const today = new Date();
+    const diff = differenceInDays(plannedDate, today);
     return (
       <div className="flex items-center gap-2 text-xs">
         <div className="flex items-center gap-1 text-muted-foreground">
           <CalendarClock className="h-3.5 w-3.5" />
           <span>Expected: {format(plannedDate, 'dd MMM yy')}</span>
         </div>
-        {actual ? (
-          <>
-            <div className="flex items-center gap-1 text-muted-foreground">
-              <CalendarCheck className="h-3.5 w-3.5" />
-              <span>{format(parseISO(actual), 'dd MMM yy')}</span>
-            </div>
-            {diff === 0 ? (
-              <Badge variant="outline" className="text-xs py-0 h-5 text-green-600 border-green-400">On time</Badge>
-            ) : diff > 0 ? (
-              <Badge variant="outline" className="text-xs py-0 h-5 text-red-600 border-red-400 gap-1">
-                <TrendingUp className="h-3 w-3" />{diff}d late
-              </Badge>
-            ) : (
-              <Badge variant="outline" className="text-xs py-0 h-5 text-green-600 border-green-400 gap-1">
-                <TrendingDown className="h-3 w-3" />{Math.abs(diff)}d early
-              </Badge>
-            )}
-          </>
+        {diff >= 0 ? (
+          <Badge variant="outline" className="text-xs py-0 h-5 text-muted-foreground">{diff}d remaining</Badge>
         ) : (
-          <>
-            {diff >= 0 ? (
-              <Badge variant="outline" className="text-xs py-0 h-5 text-muted-foreground">{diff}d remaining</Badge>
-            ) : (
-              <Badge variant="outline" className="text-xs py-0 h-5 text-red-600 border-red-400 gap-1">
-                <TrendingUp className="h-3 w-3" />{Math.abs(diff)}d overdue
-              </Badge>
-            )}
-          </>
+          <Badge variant="outline" className="text-xs py-0 h-5 text-red-600 border-red-400 gap-1">
+            <TrendingUp className="h-3 w-3" />{Math.abs(diff)}d overdue
+          </Badge>
         )}
       </div>
     );
@@ -256,6 +271,13 @@ export const BatchProductionSection = ({
   }
 
   const completedTypes = rollsData.filter((_, idx) => getTypeOverallProgress(idx, cuttingSummary[idx] || 0) >= 100).length;
+
+  // Delivery status counts across styles
+  const statusCounts = styleGroups.reduce((acc, sg) => {
+    const s = getStyleStatus(sg);
+    acc[s] = (acc[s] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
 
   return (
     <div className="space-y-6">
@@ -290,6 +312,41 @@ export const BatchProductionSection = ({
         </Card>
       </div>
 
+      {/* Delivery Status Summary Card */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-semibold flex items-center gap-2">
+            <Truck className="h-4 w-4 text-primary" />
+            Delivery Status Summary
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <div className="grid grid-cols-3 gap-3">
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/40 border">
+              <div className="h-3 w-3 rounded-full border-2 border-yellow-500 shrink-0" />
+              <div>
+                <div className="text-xs text-muted-foreground">In Progress</div>
+                <div className="text-xl font-bold">{statusCounts['in_progress'] || 0}</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/40 border">
+              <CheckCircle className="h-4 w-4 text-green-600 shrink-0" />
+              <div>
+                <div className="text-xs text-muted-foreground">Completed</div>
+                <div className="text-xl font-bold text-green-600">{statusCounts['completed'] || 0}</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/40 border">
+              <Truck className="h-4 w-4 text-primary shrink-0" />
+              <div>
+                <div className="text-xs text-muted-foreground">Delivered</div>
+                <div className="text-xl font-bold text-primary">{statusCounts['delivered'] || 0}</div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Overall Progress Bar + Expand/Collapse Toggle */}
       <Card>
         <CardContent className="p-4 space-y-3">
@@ -321,14 +378,14 @@ export const BatchProductionSection = ({
         const styleProgress = getStyleProgress(sg);
         const styleCut = getStyleCutPieces(sg);
         const styleStatus = getStyleStatus(sg);
+        const styleActualDeliveryDate = getStyleActualDeliveryDate(sg);
         const styleStatusDef = DELIVERY_STATUSES.find(s => s.value === styleStatus);
         const isOpen = isStyleOpen(sg.styleId);
-        // Aggregate job work companies across all type indices of this style
+        const datePopoverOpen = deliveryDatePopovers[sg.styleId] || false;
         const allCompanies = Array.from(
           new Set(sg.typeIndices.flatMap(idx => jobWorkByType[idx] || []))
         );
         const isJobWork = allCompanies.length > 0;
-        // Date info from first type
         const firstType = rollsData[sg.typeIndices[0]];
         const plannedStart = firstType?.planned_start_date;
         const estimatedDelivery = firstType?.estimated_delivery_date;
@@ -352,19 +409,24 @@ export const BatchProductionSection = ({
                             </Badge>
                           )}
                         </div>
-                        {/* Date info row */}
                         <div className="mt-1.5">
-                          {renderDateDiff(estimatedDelivery, undefined)}
+                          {renderDateDiff(estimatedDelivery, styleActualDeliveryDate, styleStatus === 'delivered')}
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
                       <Badge variant="outline" className="text-xs">{styleCut} pcs</Badge>
-                      {/* Delivery Status selector at style level */}
-                      <div onClick={e => e.stopPropagation()}>
+                      <div onClick={e => e.stopPropagation()} className="flex items-center gap-1">
                         <Select
                           value={styleStatus}
-                          onValueChange={(val) => handleSetStyleStatus(sg, val as DeliveryStatus)}
+                          onValueChange={(val) => {
+                            const newStatus = val as DeliveryStatus;
+                            if (newStatus === 'delivered') {
+                              setDeliveryDatePopovers(prev => ({ ...prev, [sg.styleId]: true }));
+                            } else {
+                              handleSetStyleStatus(sg, newStatus, null);
+                            }
+                          }}
                         >
                           <SelectTrigger className="w-36 h-7 text-xs bg-background border-border">
                             <div className="flex items-center gap-1.5">
@@ -387,6 +449,51 @@ export const BatchProductionSection = ({
                             ))}
                           </SelectContent>
                         </Select>
+                        {/* Calendar icon to set/change delivery date */}
+                        <Popover open={datePopoverOpen} onOpenChange={(open) => setDeliveryDatePopovers(prev => ({ ...prev, [sg.styleId]: open }))}>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className={cn(
+                                'h-7 w-7 shrink-0 transition-opacity',
+                                styleStatus === 'delivered' ? 'border-primary text-primary' : 'opacity-0 pointer-events-none'
+                              )}
+                              title="Set delivery date"
+                            >
+                              <CalendarIcon className="h-3.5 w-3.5" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0 z-50" align="end">
+                            <div className="p-3 border-b">
+                              <p className="text-sm font-medium">Select Delivery Date</p>
+                              <p className="text-xs text-muted-foreground">{sg.styleName}</p>
+                            </div>
+                            <Calendar
+                              mode="single"
+                              selected={styleActualDeliveryDate ? parseISO(styleActualDeliveryDate) : undefined}
+                              onSelect={(date) => {
+                                if (date) {
+                                  const dateStr = format(date, 'yyyy-MM-dd');
+                                  handleSetStyleStatus(sg, 'delivered', dateStr);
+                                  setDeliveryDatePopovers(prev => ({ ...prev, [sg.styleId]: false }));
+                                }
+                              }}
+                              className={cn('p-3 pointer-events-auto')}
+                            />
+                            {styleActualDeliveryDate && (
+                              <div className="p-2 border-t flex items-center justify-between">
+                                <span className="text-xs text-muted-foreground">
+                                  Delivered: {format(parseISO(styleActualDeliveryDate), 'dd MMM yyyy')}
+                                </span>
+                                <Button size="sm" variant="ghost" className="h-6 text-xs" onClick={() => {
+                                  handleSetStyleStatus(sg, 'delivered', null);
+                                  setDeliveryDatePopovers(prev => ({ ...prev, [sg.styleId]: false }));
+                                }}>Clear</Button>
+                              </div>
+                            )}
+                          </PopoverContent>
+                        </Popover>
                       </div>
                       <span className={`text-sm font-bold ${getStatusColor(styleProgress)}`}>{styleProgress}%</span>
                       <div className="w-24 h-2 rounded-full bg-secondary overflow-hidden">
@@ -399,13 +506,13 @@ export const BatchProductionSection = ({
 
               <CollapsibleContent>
                 <CardContent className="pt-0 pb-4 space-y-3">
-                  {/* Planned start date info */}
                   {plannedStart && (
                     <div className="flex items-center gap-2 text-xs text-muted-foreground px-1 pb-1 border-b">
                       <CalendarClock className="h-3.5 w-3.5" />
                       <span>Planned Start: <span className="font-medium text-foreground">{format(parseISO(plannedStart), 'dd MMM yyyy')}</span></span>
                     </div>
                   )}
+
 
                   {/* Color/Variant sub-items */}
                   {sg.typeIndices.map(typeIndex => {
