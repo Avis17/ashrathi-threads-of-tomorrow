@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Trash2, Copy, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Trash2, Copy, ChevronDown, ChevronUp, UserPlus } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -15,6 +15,8 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useJobStyles } from '@/hooks/useJobStyles';
 import { useCreateJobBatch } from '@/hooks/useJobBatches';
+import { useJobWorkers } from '@/hooks/useDeliveryChallans';
+import { AddWorkerDialog } from './batch-details/AddWorkerDialog';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { JOB_DEPARTMENTS } from '@/lib/jobDepartments';
@@ -54,6 +56,7 @@ interface FormData {
   date_taken: string;
   types: TypeData[];
   supplier_name: string;
+  company_name: string;
   lot_number: string;
   remarks: string;
 }
@@ -61,7 +64,9 @@ interface FormData {
 const BatchForm = ({ onClose }: BatchFormProps) => {
   const { data: styles } = useJobStyles();
   const createMutation = useCreateJobBatch();
+  const { data: jobWorkers = [], refetch: refetchWorkers } = useJobWorkers(false);
   const [collapsedTypes, setCollapsedTypes] = useState<Record<number, boolean>>({});
+  const [addWorkerOpen, setAddWorkerOpen] = useState(false);
   
   const { register, handleSubmit, setValue, watch, control } = useForm<FormData>({
     defaultValues: {
@@ -77,6 +82,7 @@ const BatchForm = ({ onClose }: BatchFormProps) => {
         variations: [{ color: '', fabric_width: '', weight: 0, number_of_rolls: 1 }]
       }],
       supplier_name: '',
+      company_name: '',
       lot_number: '',
       remarks: '',
     },
@@ -508,6 +514,54 @@ const BatchForm = ({ onClose }: BatchFormProps) => {
             <Input id="lot_number" {...register('lot_number')} placeholder="LOT-2024-001" />
           </div>
         </div>
+
+        {/* Company / Job Worker Selection */}
+        <div className="space-y-2">
+          <Label>Company / Job Worker</Label>
+          <div className="flex gap-2">
+            <Controller
+              name="company_name"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  value={field.value}
+                  onValueChange={field.onChange}
+                >
+                  <SelectTrigger className="flex-1 bg-background">
+                    <SelectValue placeholder="Select company or job worker..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover z-50">
+                    {jobWorkers.map((worker) => (
+                      <SelectItem key={worker.id} value={worker.name}>
+                        <div className="flex flex-col">
+                          <span>{worker.name}</span>
+                          {worker.gstin && (
+                            <span className="text-xs text-muted-foreground">GSTIN: {worker.gstin}</span>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={() => setAddWorkerOpen(true)}
+              title="Add new job worker / company"
+            >
+              <UserPlus className="h-4 w-4" />
+            </Button>
+          </div>
+          {watch('company_name') && (
+            <p className="text-xs text-muted-foreground">
+              Selected: <span className="font-medium text-foreground">{watch('company_name')}</span>
+            </p>
+          )}
+        </div>
+
         <div className="space-y-2">
           <Label htmlFor="remarks">Remarks</Label>
           <Textarea 
@@ -518,6 +572,15 @@ const BatchForm = ({ onClose }: BatchFormProps) => {
           />
         </div>
       </div>
+
+      <AddWorkerDialog
+        open={addWorkerOpen}
+        onOpenChange={setAddWorkerOpen}
+        onWorkerCreated={(name) => {
+          refetchWorkers();
+          setValue('company_name', name);
+        }}
+      />
 
       {/* Action Buttons */}
       <div className="flex gap-3 justify-end pt-4 border-t sticky bottom-0 bg-background">
