@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Package, Eye, Trash2, Scissors, IndianRupee, CreditCard, Briefcase, Receipt } from 'lucide-react';
+import { Plus, Search, Package, Eye, Trash2, Scissors, IndianRupee, CreditCard, Briefcase, Receipt, Truck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -25,7 +25,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import BatchForm from './BatchForm';
-import { format } from 'date-fns';
+import { format, differenceInDays, parseISO } from 'date-fns';
 
 const BatchesManager = () => {
   const navigate = useNavigate();
@@ -83,6 +83,66 @@ const BatchesManager = () => {
   };
 
   const fmt = (n: number) => n.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
+  const renderDeliveryCell = (batch: any) => {
+    const ds = batch.delivery_summary;
+    if (!ds) return <span className="text-xs text-muted-foreground">—</span>;
+
+    const total = ds.in_progress + ds.completed + ds.delivered;
+    if (total === 0) return <span className="text-xs text-muted-foreground">—</span>;
+
+    const allDelivered = ds.delivered === total;
+    const hasDelivered = ds.delivered > 0;
+
+    // Time diff badge
+    let diffBadge = null;
+    const estimatedDelivery = batch.estimated_delivery;
+    const latestDelivery = ds.latest_delivery_date;
+    if (latestDelivery && estimatedDelivery) {
+      const diff = differenceInDays(parseISO(latestDelivery), parseISO(estimatedDelivery));
+      if (diff === 0) {
+        diffBadge = <Badge className="text-[10px] px-1.5 py-0 bg-emerald-100 text-emerald-700 border-emerald-300">On time</Badge>;
+      } else if (diff > 0) {
+        diffBadge = <Badge className="text-[10px] px-1.5 py-0 bg-red-100 text-red-700 border-red-300">{diff}d late</Badge>;
+      } else {
+        diffBadge = <Badge className="text-[10px] px-1.5 py-0 bg-blue-100 text-blue-700 border-blue-300">{Math.abs(diff)}d early</Badge>;
+      }
+    } else if (!latestDelivery && estimatedDelivery) {
+      const today = new Date();
+      const estDate = parseISO(estimatedDelivery);
+      const diff = differenceInDays(today, estDate);
+      if (diff > 0 && !allDelivered) {
+        diffBadge = <Badge className="text-[10px] px-1.5 py-0 bg-orange-100 text-orange-700 border-orange-300">{diff}d overdue</Badge>;
+      }
+    }
+
+    return (
+      <div className="space-y-1">
+        <div className="flex items-center gap-1 flex-wrap">
+          {ds.in_progress > 0 && (
+            <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-yellow-700 border-yellow-400">{ds.in_progress} in progress</Badge>
+          )}
+          {ds.completed > 0 && (
+            <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-blue-700 border-blue-400">{ds.completed} completed</Badge>
+          )}
+          {ds.delivered > 0 && (
+            <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-emerald-700 border-emerald-400">{ds.delivered} delivered</Badge>
+          )}
+        </div>
+        {diffBadge && <div>{diffBadge}</div>}
+        {latestDelivery && (
+          <div className="text-[10px] text-muted-foreground">
+            Delivered: {format(parseISO(latestDelivery), 'dd MMM yy')}
+          </div>
+        )}
+        {!latestDelivery && estimatedDelivery && (
+          <div className="text-[10px] text-muted-foreground">
+            Est: {format(parseISO(estimatedDelivery), 'dd MMM yy')}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -209,6 +269,9 @@ const BatchesManager = () => {
                   <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Quantity</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Status</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Payment</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">
+                    <div className="flex items-center gap-1"><Truck className="h-3.5 w-3.5" />Delivery</div>
+                  </th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Actions</th>
                 </tr>
               </thead>
@@ -264,6 +327,9 @@ const BatchesManager = () => {
                       <Badge className={`${getPaymentStatusColor(batch.payment_status || 'unpaid')} text-white`}>
                         {getPaymentStatusLabel(batch.payment_status || 'unpaid')}
                       </Badge>
+                    </td>
+                    <td className="px-4 py-3">
+                      {renderDeliveryCell(batch)}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex gap-2">
