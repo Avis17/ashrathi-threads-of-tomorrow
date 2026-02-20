@@ -38,6 +38,7 @@ interface Props {
   batchNumber: string;
   rollsData: any[];
   cuttingSummary: Record<number, number>;
+  confirmedMap: Record<number, number>;
   styleLookup: Record<string, string>;
   companyName?: string;
 }
@@ -49,6 +50,7 @@ export const CreateDCFromBatchDialog = ({
   batchNumber,
   rollsData,
   cuttingSummary,
+  confirmedMap,
   styleLookup,
   companyName,
 }: Props) => {
@@ -66,7 +68,8 @@ export const CreateDCFromBatchDialog = ({
       if (!groupMap[styleId]) {
         groupMap[styleId] = { styleId, styleName, styleCode, types: [], totalQuantity: 0 };
       }
-      const qty = cuttingSummary[idx] || 0;
+      // Use confirmed pieces; fall back to cut pieces if not yet confirmed
+      const qty = confirmedMap[idx] ?? cuttingSummary[idx] ?? 0;
       groupMap[styleId].types.push({
         typeIndex: idx,
         color: type.color || '',
@@ -77,7 +80,7 @@ export const CreateDCFromBatchDialog = ({
       groupMap[styleId].totalQuantity += qty;
     });
     return Object.values(groupMap);
-  }, [rollsData, cuttingSummary, styleLookup]);
+  }, [rollsData, cuttingSummary, confirmedMap, styleLookup]);
 
   const toggleStyle = (styleId: string) => {
     setSelectedStyleIds(prev => {
