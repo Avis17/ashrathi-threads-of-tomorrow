@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Edit, IndianRupee, FileText, ZoomIn, ZoomOut, RotateCcw, X, ChevronLeft, ChevronRight, Maximize2 } from 'lucide-react';
+import { Edit, IndianRupee, FileText, ZoomIn, ZoomOut, RotateCcw, X, ChevronLeft, ChevronRight, Maximize2, Images } from 'lucide-react';
 import { JobStyle } from '@/hooks/useJobStyles';
 
 interface StyleDetailsProps {
@@ -115,10 +115,13 @@ const ImageLightbox = ({ src, alt, onClose }: ImageLightboxProps) => {
 const StyleDetails = ({ style, open, onClose, onEdit }: StyleDetailsProps) => {
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const [lightboxAlt, setLightboxAlt] = useState<string>('');
+  const [lightboxImages, setLightboxImages] = useState<string[]>([]);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
 
   if (!style) return null;
 
   const measurementSheetUrl = (style as any).measurement_sheet_url as string | null;
+  const extraImages: string[] = (style as any).style_images || [];
 
   const hasDetailedRates = style.process_rate_details && Array.isArray(style.process_rate_details) && (style.process_rate_details as any[]).length > 0;
   
@@ -141,19 +144,66 @@ const StyleDetails = ({ style, open, onClose, onEdit }: StyleDetailsProps) => {
     });
   }
 
-  const openLightbox = (src: string, alt: string) => {
+  const openLightbox = (src: string, alt: string, images?: string[]) => {
+    const imgs = images || [src];
+    const idx = imgs.indexOf(src);
+    setLightboxImages(imgs);
+    setLightboxIndex(idx >= 0 ? idx : 0);
     setLightboxSrc(src);
     setLightboxAlt(alt);
+  };
+
+  const goLightboxPrev = () => {
+    const newIdx = (lightboxIndex - 1 + lightboxImages.length) % lightboxImages.length;
+    setLightboxIndex(newIdx);
+    setLightboxSrc(lightboxImages[newIdx]);
+  };
+
+  const goLightboxNext = () => {
+    const newIdx = (lightboxIndex + 1) % lightboxImages.length;
+    setLightboxIndex(newIdx);
+    setLightboxSrc(lightboxImages[newIdx]);
   };
 
   return (
     <>
       {lightboxSrc && (
-        <ImageLightbox
-          src={lightboxSrc}
-          alt={lightboxAlt}
-          onClose={() => setLightboxSrc(null)}
-        />
+        <div className="fixed inset-0 z-[100] bg-black/95 flex flex-col" onMouseUp={() => {}}>
+          <div className="flex items-center justify-between px-4 py-3 bg-black/60 border-b border-white/10 flex-shrink-0">
+            <span className="text-white text-sm font-medium">{lightboxAlt}{lightboxImages.length > 1 ? ` (${lightboxIndex + 1}/${lightboxImages.length})` : ''}</span>
+            <Button size="sm" variant="ghost" className="text-white hover:text-white hover:bg-white/10" onClick={() => setLightboxSrc(null)}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="flex-1 flex items-center justify-center relative overflow-hidden">
+            {lightboxImages.length > 1 && (
+              <Button size="sm" variant="ghost" className="absolute left-3 z-10 text-white hover:bg-white/20 rounded-full" onClick={goLightboxPrev}>
+                <ChevronLeft className="h-6 w-6" />
+              </Button>
+            )}
+            <img
+              src={lightboxSrc}
+              alt={lightboxAlt}
+              draggable={false}
+              style={{ maxWidth: '90vw', maxHeight: '80vh', objectFit: 'contain' }}
+            />
+            {lightboxImages.length > 1 && (
+              <Button size="sm" variant="ghost" className="absolute right-3 z-10 text-white hover:bg-white/20 rounded-full" onClick={goLightboxNext}>
+                <ChevronRight className="h-6 w-6" />
+              </Button>
+            )}
+          </div>
+          {lightboxImages.length > 1 && (
+            <div className="flex gap-2 justify-center pb-4 flex-shrink-0">
+              {lightboxImages.map((img, i) => (
+                <button key={i} onClick={() => { setLightboxIndex(i); setLightboxSrc(img); }}
+                  className={`w-12 h-12 rounded overflow-hidden border-2 transition-all ${i === lightboxIndex ? 'border-white' : 'border-white/30 opacity-60'}`}>
+                  <img src={img} alt="" className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       )}
 
       <Dialog open={open} onOpenChange={onClose}>
@@ -223,8 +273,29 @@ const StyleDetails = ({ style, open, onClose, onEdit }: StyleDetailsProps) => {
               )}
             </div>
 
-            {/* If only measurement sheet (no style image) show it full width */}
-            {!style.style_image_url && !measurementSheetUrl && null}
+            {/* Extra Images Gallery */}
+            {extraImages.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+                  <Images className="h-3.5 w-3.5" />
+                  Additional Images ({extraImages.length})
+                </p>
+                <div className="grid grid-cols-3 gap-2">
+                  {extraImages.map((src, idx) => (
+                    <div
+                      key={idx}
+                      className="aspect-square rounded-lg overflow-hidden bg-muted cursor-pointer relative group border"
+                      onClick={() => openLightbox(src, `${style.style_name} – Image ${idx + 1}`, extraImages)}
+                    >
+                      <img src={src} alt={`Style image ${idx + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                        <Maximize2 className="h-5 w-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Basic Info */}
             <div className="grid grid-cols-2 gap-4">

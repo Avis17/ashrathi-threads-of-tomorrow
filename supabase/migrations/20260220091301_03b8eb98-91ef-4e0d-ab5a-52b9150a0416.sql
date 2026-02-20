@@ -1,0 +1,1 @@
+ALTER TABLE public.job_styles ADD COLUMN IF NOT EXISTS style_images JSONB DEFAULT '[]'::jsonb;

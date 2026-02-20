@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/select';
 import { useCreateJobStyle, useUpdateJobStyle, type JobStyle } from '@/hooks/useJobStyles';
 import { supabase } from '@/integrations/supabase/client';
-import { Upload, Link as LinkIcon, X, Plus, Trash2, FileText } from 'lucide-react';
+import { Upload, Link as LinkIcon, X, Plus, Trash2, FileText, Images } from 'lucide-react';
 import { toast } from 'sonner';
 import { Switch } from '@/components/ui/switch';
 
@@ -128,6 +128,9 @@ const StyleForm = ({ style, onClose }: StyleFormProps) => {
   );
   const [measurementFile, setMeasurementFile] = useState<File | null>(null);
   const [measurementPreview, setMeasurementPreview] = useState<string>((style as any)?.measurement_sheet_url || '');
+  // Multiple images
+  const [extraImageFiles, setExtraImageFiles] = useState<File[]>([]);
+  const [extraImagePreviews, setExtraImagePreviews] = useState<string[]>((style as any)?.style_images || []);
 
   const additionalCosts = parseAdditionalCosts(style);
 
@@ -280,6 +283,43 @@ const StyleForm = ({ style, onClose }: StyleFormProps) => {
     }
   };
 
+  const handleExtraImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setExtraImagePreviews(prev => [...prev, reader.result as string]);
+      };
+      reader.readAsDataURL(file);
+      setExtraImageFiles(prev => [...prev, file]);
+    });
+    e.target.value = '';
+  };
+
+  const removeExtraImage = (idx: number) => {
+    setExtraImagePreviews(prev => prev.filter((_, i) => i !== idx));
+    setExtraImageFiles(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const uploadExtraImages = async (): Promise<string[]> => {
+    const urls: string[] = [];
+    // Keep existing URLs (those that are already http URLs, not data URLs)
+    const existing = extraImagePreviews.filter(p => p.startsWith('http'));
+    urls.push(...existing);
+    // Upload new files
+    for (const file of extraImageFiles) {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `extra-${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const { error } = await supabase.storage.from('style-images').upload(fileName, file);
+      if (!error) {
+        const { data } = supabase.storage.from('style-images').getPublicUrl(fileName);
+        urls.push(data.publicUrl);
+      }
+    }
+    return urls;
+  };
+
   const onSubmit = async (data: FormData) => {
     let imageUrl = data.style_image_url;
     let measurementSheetUrl = (style as any)?.measurement_sheet_url || null;
@@ -297,6 +337,7 @@ const StyleForm = ({ style, onClose }: StyleFormProps) => {
         measurementSheetUrl = uploadedUrl;
       }
     }
+    const uploadedExtraImages = await uploadExtraImages();
 
     // Build process_rate_details with operations and additional costs
     const processRateDetails = {
@@ -337,6 +378,7 @@ const StyleForm = ({ style, onClose }: StyleFormProps) => {
       remarks: data.remarks,
       style_image_url: imageUrl || null,
       measurement_sheet_url: measurementSheetUrl,
+      style_images: uploadedExtraImages as any,
       rate_cutting: getOperationRate('Cutting'),
       rate_stitching_singer: getOperationRate('Stitching (Singer)'),
       rate_stitching_power_table: getOperationRate('Stitching (Power Table)'),
@@ -574,6 +616,48 @@ const StyleForm = ({ style, onClose }: StyleFormProps) => {
                   <X className="h-4 w-4" />
                 </Button>
               </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Additional Style Images */}
+      <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
+        <h3 className="font-semibold flex items-center gap-2">
+          <Images className="h-4 w-4" />
+          Additional Style Images
+          <span className="text-xs font-normal text-muted-foreground ml-1">({extraImagePreviews.length} added)</span>
+        </h3>
+        <div className="space-y-3">
+          <label className="flex items-center gap-2 cursor-pointer w-fit">
+            <Button type="button" variant="outline" size="sm" className="gap-2 pointer-events-none">
+              <Plus className="h-4 w-4" />
+              Add Images
+            </Button>
+            <Input
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={handleExtraImagesChange}
+            />
+          </label>
+          <p className="text-xs text-muted-foreground">You can select multiple images at once</p>
+
+          {extraImagePreviews.length > 0 && (
+            <div className="grid grid-cols-3 gap-3">
+              {extraImagePreviews.map((src, idx) => (
+                <div key={idx} className="relative group aspect-square rounded-lg overflow-hidden border bg-muted">
+                  <img src={src} alt={`Style image ${idx + 1}`} className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => removeExtraImage(idx)}
+                    className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
             </div>
           )}
         </div>

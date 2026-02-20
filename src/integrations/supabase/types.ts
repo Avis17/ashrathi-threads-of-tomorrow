@@ -3779,6 +3779,7 @@ export type Database = {
           season: string | null
           style_code: string
           style_image_url: string | null
+          style_images: Json | null
           style_name: string
           updated_at: string | null
         }
@@ -3808,6 +3809,7 @@ export type Database = {
           season?: string | null
           style_code: string
           style_image_url?: string | null
+          style_images?: Json | null
           style_name: string
           updated_at?: string | null
         }
@@ -3837,6 +3839,7 @@ export type Database = {
           season?: string | null
           style_code?: string
           style_image_url?: string | null
+          style_images?: Json | null
           style_name?: string
           updated_at?: string | null
         }
