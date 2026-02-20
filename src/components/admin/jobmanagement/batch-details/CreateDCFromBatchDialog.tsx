@@ -1,11 +1,10 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { FileText, Package } from 'lucide-react';
+import { FileText, Package, Palette } from 'lucide-react';
 import { useJobWorkers } from '@/hooks/useDeliveryChallans';
 
 interface ItemRow {
@@ -16,6 +15,20 @@ interface ItemRow {
   quantity: number;
   uom: 'pcs' | 'kg';
   remarks: string;
+}
+
+interface StyleGroup {
+  styleId: string;
+  styleName: string;
+  styleCode: string;
+  types: Array<{
+    typeIndex: number;
+    color: string;
+    fabricType: string;
+    gsm: string;
+    quantity: number;
+  }>;
+  totalQuantity: number;
 }
 
 interface Props {
@@ -41,58 +54,74 @@ export const CreateDCFromBatchDialog = ({
 }: Props) => {
   const navigate = useNavigate();
   const { data: jobWorkers = [] } = useJobWorkers(false);
-  const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set());
+  const [selectedStyleIds, setSelectedStyleIds] = useState<Set<string>>(new Set());
 
-  const toggleType = (idx: number) => {
-    setSelectedIndices(prev => {
+  // Group rollsData by style_id
+  const styleGroups = useMemo<StyleGroup[]>(() => {
+    const groupMap: Record<string, StyleGroup> = {};
+    rollsData.forEach((type, idx) => {
+      const styleId = type.style_id || `__unknown_${idx}`;
+      const styleName = styleLookup[styleId] || type.style_name || `Style ${idx + 1}`;
+      const styleCode = type.style_code || '';
+      if (!groupMap[styleId]) {
+        groupMap[styleId] = { styleId, styleName, styleCode, types: [], totalQuantity: 0 };
+      }
+      const qty = cuttingSummary[idx] || 0;
+      groupMap[styleId].types.push({
+        typeIndex: idx,
+        color: type.color || '',
+        fabricType: type.fabric_type || type.fabricType || '',
+        gsm: type.gsm || '',
+        quantity: qty,
+      });
+      groupMap[styleId].totalQuantity += qty;
+    });
+    return Object.values(groupMap);
+  }, [rollsData, cuttingSummary, styleLookup]);
+
+  const toggleStyle = (styleId: string) => {
+    setSelectedStyleIds(prev => {
       const next = new Set(prev);
-      if (next.has(idx)) next.delete(idx);
-      else next.add(idx);
+      if (next.has(styleId)) next.delete(styleId);
+      else next.add(styleId);
       return next;
     });
   };
 
-  const selectAll = () => setSelectedIndices(new Set(rollsData.map((_, i) => i)));
-  const clearAll = () => setSelectedIndices(new Set());
+  const selectAll = () => setSelectedStyleIds(new Set(styleGroups.map(g => g.styleId)));
+  const clearAll = () => setSelectedStyleIds(new Set());
+
+  // Count total DC line items (colors) that will be created
+  const totalItems = styleGroups
+    .filter(g => selectedStyleIds.has(g.styleId))
+    .reduce((sum, g) => sum + g.types.length, 0);
 
   const handleCreateDC = () => {
-    if (selectedIndices.size === 0) return;
+    if (selectedStyleIds.size === 0) return;
 
-    // Build items from selected types
+    // Build one DC item per color variant of each selected style
     const items: ItemRow[] = [];
-    selectedIndices.forEach(idx => {
-      const type = rollsData[idx];
-      if (!type) return;
-      const styleName = styleLookup[type.style_id] || type.style_name || `Style ${idx + 1}`;
-      const qty = cuttingSummary[idx] || 0;
-      items.push({
-        product_name: styleName,
-        sku: type.style_code || '',
-        size: '',
-        color: type.color || '',
-        quantity: qty,
-        uom: 'pcs',
-        remarks: `Type ${idx + 1} | ${type.fabric_type || ''} ${type.gsm ? `${type.gsm} GSM` : ''}`.trim(),
+    styleGroups
+      .filter(g => selectedStyleIds.has(g.styleId))
+      .forEach(group => {
+        group.types.forEach(t => {
+          items.push({
+            product_name: group.styleName,
+            sku: group.styleCode,
+            size: '',
+            color: t.color,
+            quantity: t.quantity,
+            uom: 'pcs',
+            remarks: [t.fabricType, t.gsm ? `${t.gsm} GSM` : ''].filter(Boolean).join(' · '),
+          });
+        });
       });
-    });
 
-    // Match company by GSTIN first, then name
-    let workerName = companyName || '';
-    let workerAddress = '';
-    let workerGstin = '';
-
-    const matchedWorker =
-      jobWorkers.find(w => w.gstin && companyName && (
-        // Try GSTIN match by looking through all workers for the company name match
-        w.name === companyName
-      )) ||
-      jobWorkers.find(w => w.name === companyName);
-
-    if (matchedWorker) {
-      workerName = matchedWorker.name;
-      workerAddress = matchedWorker.address || '';
-      workerGstin = matchedWorker.gstin || '';
-    }
+    // Match company worker by name (gets GSTIN from job_workers table)
+    const matchedWorker = jobWorkers.find(w => w.name === companyName);
+    const workerName = matchedWorker?.name || companyName || '';
+    const workerAddress = matchedWorker?.address || '';
+    const workerGstin = matchedWorker?.gstin || '';
 
     const prefill = {
       dc_type: 'job_work',
@@ -119,11 +148,11 @@ export const CreateDCFromBatchDialog = ({
             Create Delivery Challan
           </DialogTitle>
           <p className="text-sm text-muted-foreground">
-            Select the types/styles to include in the DC. Company details will be pre-filled from the batch.
+            Select styles to include. All color variants under each style will be added automatically.
           </p>
         </DialogHeader>
 
-        <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+        <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
           {/* Company info preview */}
           {companyName && (
             <div className="p-3 rounded-lg bg-muted/40 text-sm flex items-center gap-2">
@@ -133,7 +162,7 @@ export const CreateDCFromBatchDialog = ({
                 <span className="font-medium">{companyName}</span>
                 {(() => {
                   const w = jobWorkers.find(w => w.name === companyName);
-                  if (w?.gstin) return <span className="text-xs text-muted-foreground ml-2">(GSTIN: {w.gstin})</span>;
+                  if (w?.gstin) return <span className="text-xs text-muted-foreground ml-2">· GSTIN: {w.gstin}</span>;
                   return null;
                 })()}
               </div>
@@ -141,42 +170,63 @@ export const CreateDCFromBatchDialog = ({
           )}
 
           {/* Select all / clear */}
-          <div className="flex items-center gap-3 text-xs">
-            <button onClick={selectAll} className="text-primary underline">Select All</button>
-            <button onClick={clearAll} className="text-muted-foreground underline">Clear</button>
-            <span className="ml-auto text-muted-foreground">{selectedIndices.size} selected</span>
+          <div className="flex items-center gap-3 text-xs border-b pb-2">
+            <button onClick={selectAll} className="text-primary hover:underline font-medium">Select All</button>
+            <button onClick={clearAll} className="text-muted-foreground hover:underline">Clear</button>
+            <span className="ml-auto text-muted-foreground">
+              {selectedStyleIds.size} style{selectedStyleIds.size !== 1 ? 's' : ''} · {totalItems} DC line{totalItems !== 1 ? 's' : ''}
+            </span>
           </div>
 
-          {/* Type rows */}
-          {rollsData.map((type, idx) => {
-            const styleName = styleLookup[type.style_id] || type.style_name || `Style ${idx + 1}`;
-            const qty = cuttingSummary[idx] || 0;
-            const isChecked = selectedIndices.has(idx);
+          {/* Style cards */}
+          {styleGroups.map(group => {
+            const isChecked = selectedStyleIds.has(group.styleId);
             return (
               <div
-                key={idx}
-                onClick={() => toggleType(idx)}
-                className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                  isChecked ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/30'
+                key={group.styleId}
+                onClick={() => toggleStyle(group.styleId)}
+                className={`rounded-lg border cursor-pointer transition-colors ${
+                  isChecked ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/20'
                 }`}
               >
-                <Checkbox
-                  checked={isChecked}
-                  onCheckedChange={() => toggleType(idx)}
-                  onClick={e => e.stopPropagation()}
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium text-sm truncate">{styleName}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {type.color && <span>Color: {type.color} · </span>}
-                    {type.fabric_type && <span>{type.fabric_type} </span>}
-                    {type.gsm && <span>· {type.gsm} GSM</span>}
+                {/* Style header */}
+                <div className="flex items-center gap-3 p-3">
+                  <Checkbox
+                    checked={isChecked}
+                    onCheckedChange={() => toggleStyle(group.styleId)}
+                    onClick={e => e.stopPropagation()}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-sm">{group.styleName}</div>
+                    {group.styleCode && (
+                      <div className="text-xs text-muted-foreground">{group.styleCode}</div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Badge variant="outline" className="text-xs gap-1">
+                      <Palette className="h-3 w-3" />
+                      {group.types.length} color{group.types.length !== 1 ? 's' : ''}
+                    </Badge>
+                    <Badge variant={group.totalQuantity > 0 ? 'default' : 'secondary'} className="text-xs">
+                      {group.totalQuantity} pcs
+                    </Badge>
                   </div>
                 </div>
-                <div className="text-right shrink-0">
-                  <Badge variant={qty > 0 ? 'default' : 'outline'} className="text-xs">
-                    {qty} pcs
-                  </Badge>
+
+                {/* Color breakdown (always visible) */}
+                <div className="px-3 pb-3 space-y-1">
+                  {group.types.map(t => (
+                    <div
+                      key={t.typeIndex}
+                      className="flex items-center gap-2 text-xs pl-7 text-muted-foreground"
+                    >
+                      <span className="w-2 h-2 rounded-full bg-muted-foreground/40 shrink-0" />
+                      <span className="font-medium text-foreground">{t.color || '—'}</span>
+                      {t.fabricType && <span>· {t.fabricType}</span>}
+                      {t.gsm && <span>· {t.gsm} GSM</span>}
+                      <span className="ml-auto font-medium text-foreground">{t.quantity} pcs</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             );
@@ -187,12 +237,10 @@ export const CreateDCFromBatchDialog = ({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button
-            onClick={handleCreateDC}
-            disabled={selectedIndices.size === 0}
-          >
+          <Button onClick={handleCreateDC} disabled={selectedStyleIds.size === 0}>
             <FileText className="h-4 w-4 mr-2" />
-            Create DC ({selectedIndices.size} type{selectedIndices.size !== 1 ? 's' : ''})
+            Create DC
+            {totalItems > 0 && ` (${totalItems} item${totalItems !== 1 ? 's' : ''})`}
           </Button>
         </DialogFooter>
       </DialogContent>
