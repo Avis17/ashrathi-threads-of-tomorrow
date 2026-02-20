@@ -21,6 +21,7 @@ interface StyleGroup {
   styleId: string;
   styleName: string;
   styleCode: string;
+  sizes: string;
   types: Array<{
     typeIndex: number;
     color: string;
@@ -66,7 +67,7 @@ export const CreateDCFromBatchDialog = ({
       const styleName = styleLookup[styleId] || type.style_name || `Style ${idx + 1}`;
       const styleCode = type.style_code || '';
       if (!groupMap[styleId]) {
-        groupMap[styleId] = { styleId, styleName, styleCode, types: [], totalQuantity: 0 };
+        groupMap[styleId] = { styleId, styleName, styleCode, sizes: type.sizes || '', types: [], totalQuantity: 0 };
       }
       // Use confirmed pieces; fall back to cut pieces if not yet confirmed
       const qty = confirmedMap[idx] ?? cuttingSummary[idx] ?? 0;
@@ -111,7 +112,7 @@ export const CreateDCFromBatchDialog = ({
           items.push({
             product_name: group.styleName,
             sku: group.styleCode,
-            size: '',
+            size: group.sizes,
             color: t.color,
             quantity: t.quantity,
             uom: 'pcs',
@@ -203,6 +204,9 @@ export const CreateDCFromBatchDialog = ({
                     <div className="font-semibold text-sm">{group.styleName}</div>
                     {group.styleCode && (
                       <div className="text-xs text-muted-foreground">{group.styleCode}</div>
+                    )}
+                    {group.sizes && (
+                      <div className="text-xs text-muted-foreground mt-0.5">Sizes: {group.sizes}</div>
                     )}
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
