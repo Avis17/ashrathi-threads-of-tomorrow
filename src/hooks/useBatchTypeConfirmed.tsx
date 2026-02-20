@@ -9,6 +9,7 @@ export interface BatchTypeConfirmed {
   confirmed_pieces: number;
   delivery_status: string;
   actual_delivery_date: string | null;
+  delivery_notes: string | null;
   updated_at: string;
   created_at: string;
 }
@@ -34,12 +35,14 @@ export const useBatchTypeConfirmed = (batchId: string) => {
       const confirmedMap: Record<number, number> = {};
       const statusMap: Record<number, DeliveryStatus> = {};
       const actualDeliveryDateMap: Record<number, string | null> = {};
+      const deliveryNotesMap: Record<number, string | null> = {};
       rows.forEach(r => {
         confirmedMap[r.type_index] = r.confirmed_pieces;
         statusMap[r.type_index] = (r.delivery_status || 'in_progress') as DeliveryStatus;
         actualDeliveryDateMap[r.type_index] = r.actual_delivery_date || null;
+        deliveryNotesMap[r.type_index] = r.delivery_notes || null;
       });
-      return { confirmedMap, statusMap, actualDeliveryDateMap };
+      return { confirmedMap, statusMap, actualDeliveryDateMap, deliveryNotesMap };
     },
     enabled: !!batchId,
   });
@@ -70,11 +73,11 @@ export const useUpsertBatchTypeConfirmed = () => {
 export const useUpsertDeliveryStatus = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ batchId, typeIndex, deliveryStatus, actualDeliveryDate }: { batchId: string; typeIndex: number; deliveryStatus: DeliveryStatus; actualDeliveryDate?: string | null }) => {
+    mutationFn: async ({ batchId, typeIndex, deliveryStatus, actualDeliveryDate, deliveryNotes }: { batchId: string; typeIndex: number; deliveryStatus: DeliveryStatus; actualDeliveryDate?: string | null; deliveryNotes?: string | null }) => {
       const { error } = await supabase
         .from('batch_type_confirmed' as any)
         .upsert(
-          { batch_id: batchId, type_index: typeIndex, delivery_status: deliveryStatus, actual_delivery_date: actualDeliveryDate ?? null, updated_at: new Date().toISOString() },
+          { batch_id: batchId, type_index: typeIndex, delivery_status: deliveryStatus, actual_delivery_date: actualDeliveryDate ?? null, delivery_notes: deliveryNotes ?? null, updated_at: new Date().toISOString() },
           { onConflict: 'batch_id,type_index' }
         );
       if (error) throw error;

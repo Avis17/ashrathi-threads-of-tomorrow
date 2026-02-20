@@ -5,12 +5,14 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import {
   CheckCircle, AlertCircle, ChevronDown, ChevronRight,
-  Briefcase, AlertTriangle, Truck, CalendarClock, CalendarCheck, TrendingDown, TrendingUp, CalendarIcon,
+  Briefcase, AlertTriangle, Truck, CalendarClock, CalendarCheck, TrendingDown, TrendingUp, CalendarIcon, StickyNote,
 } from 'lucide-react';
 import { useBatchOperationProgress, useUpsertOperationProgress } from '@/hooks/useBatchOperationProgress';
 import { useBatchJobWorks } from '@/hooks/useJobWorks';
@@ -48,6 +50,7 @@ export const BatchProductionSection = ({
   const { data: typeData } = useBatchTypeConfirmed(batchId);
   const statusMap = typeData?.statusMap ?? {};
   const actualDeliveryDateMap = typeData?.actualDeliveryDateMap ?? {};
+  const deliveryNotesMap = typeData?.deliveryNotesMap ?? {};
   const upsertMutation = useUpsertOperationProgress();
   const upsertStatusMutation = useUpsertDeliveryStatus();
 
@@ -57,8 +60,12 @@ export const BatchProductionSection = ({
   const [allExpanded, setAllExpanded] = useState(true);
   const [openStyles, setOpenStyles] = useState<Record<string, boolean>>({});
   const [openColors, setOpenColors] = useState<Record<number, boolean>>({});
-  // Delivery date popover open state per styleId
-  const [deliveryDatePopovers, setDeliveryDatePopovers] = useState<Record<string, boolean>>({});
+
+  // Delivery dialog state
+  const [deliveryDialogStyle, setDeliveryDialogStyle] = useState<StyleGroup | null>(null);
+  const [deliveryDialogDate, setDeliveryDialogDate] = useState<Date | undefined>(undefined);
+  const [deliveryDialogNotes, setDeliveryDialogNotes] = useState('');
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   // --- Build job work lookup ---
   const jobWorkByType: Record<number, string[]> = {};
@@ -133,10 +140,47 @@ export const BatchProductionSection = ({
   const getStyleActualDeliveryDate = (sg: StyleGroup): string | null =>
     actualDeliveryDateMap[sg.typeIndices[0]] || null;
 
-  const handleSetStyleStatus = (sg: StyleGroup, status: DeliveryStatus, actualDeliveryDate?: string | null) => {
-    // Apply to all type indices of this style
+  const getStyleDeliveryNotes = (sg: StyleGroup): string | null =>
+    deliveryNotesMap[sg.typeIndices[0]] || null;
+
+  const openDeliveryDialog = (sg: StyleGroup) => {
+    const existingDate = getStyleActualDeliveryDate(sg);
+    const existingNotes = getStyleDeliveryNotes(sg);
+    setDeliveryDialogStyle(sg);
+    setDeliveryDialogDate(existingDate ? parseISO(existingDate) : undefined);
+    setDeliveryDialogNotes(existingNotes || '');
+    setCalendarOpen(false);
+  };
+
+  const closeDeliveryDialog = () => {
+    setDeliveryDialogStyle(null);
+    setDeliveryDialogDate(undefined);
+    setDeliveryDialogNotes('');
+    setCalendarOpen(false);
+  };
+
+  const handleConfirmDelivery = () => {
+    if (!deliveryDialogStyle) return;
+    const dateStr = deliveryDialogDate ? format(deliveryDialogDate, 'yyyy-MM-dd') : null;
+    deliveryDialogStyle.typeIndices.forEach(idx => {
+      upsertStatusMutation.mutate({
+        batchId,
+        typeIndex: idx,
+        deliveryStatus: 'delivered',
+        actualDeliveryDate: dateStr,
+        deliveryNotes: deliveryDialogNotes || null,
+      });
+    });
+    closeDeliveryDialog();
+  };
+
+  const handleSetStyleStatus = (sg: StyleGroup, status: DeliveryStatus) => {
+    if (status === 'delivered') {
+      openDeliveryDialog(sg);
+      return;
+    }
     sg.typeIndices.forEach(idx => {
-      upsertStatusMutation.mutate({ batchId, typeIndex: idx, deliveryStatus: status, actualDeliveryDate: actualDeliveryDate });
+      upsertStatusMutation.mutate({ batchId, typeIndex: idx, deliveryStatus: status, actualDeliveryDate: null, deliveryNotes: null });
     });
   };
 
@@ -379,9 +423,9 @@ export const BatchProductionSection = ({
         const styleCut = getStyleCutPieces(sg);
         const styleStatus = getStyleStatus(sg);
         const styleActualDeliveryDate = getStyleActualDeliveryDate(sg);
+        const styleDeliveryNotes = getStyleDeliveryNotes(sg);
         const styleStatusDef = DELIVERY_STATUSES.find(s => s.value === styleStatus);
         const isOpen = isStyleOpen(sg.styleId);
-        const datePopoverOpen = deliveryDatePopovers[sg.styleId] || false;
         const allCompanies = Array.from(
           new Set(sg.typeIndices.flatMap(idx => jobWorkByType[idx] || []))
         );
@@ -409,8 +453,14 @@ export const BatchProductionSection = ({
                             </Badge>
                           )}
                         </div>
-                        <div className="mt-1.5">
+                        <div className="mt-1.5 space-y-1">
                           {renderDateDiff(estimatedDelivery, styleActualDeliveryDate, styleStatus === 'delivered')}
+                          {styleStatus === 'delivered' && styleDeliveryNotes && (
+                            <div className="flex items-start gap-1 text-xs text-muted-foreground">
+                              <StickyNote className="h-3 w-3 mt-0.5 shrink-0" />
+                              <span className="italic">{styleDeliveryNotes}</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -419,14 +469,7 @@ export const BatchProductionSection = ({
                       <div onClick={e => e.stopPropagation()} className="flex items-center gap-1">
                         <Select
                           value={styleStatus}
-                          onValueChange={(val) => {
-                            const newStatus = val as DeliveryStatus;
-                            if (newStatus === 'delivered') {
-                              setDeliveryDatePopovers(prev => ({ ...prev, [sg.styleId]: true }));
-                            } else {
-                              handleSetStyleStatus(sg, newStatus, null);
-                            }
-                          }}
+                          onValueChange={(val) => handleSetStyleStatus(sg, val as DeliveryStatus)}
                         >
                           <SelectTrigger className="w-36 h-7 text-xs bg-background border-border">
                             <div className="flex items-center gap-1.5">
@@ -449,60 +492,18 @@ export const BatchProductionSection = ({
                             ))}
                           </SelectContent>
                         </Select>
-                        {/* Calendar icon to set/change delivery date */}
-                        <Popover open={datePopoverOpen} onOpenChange={(open) => setDeliveryDatePopovers(prev => ({ ...prev, [sg.styleId]: open }))}>
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              className={cn(
-                                'h-7 w-7 shrink-0 transition-opacity',
-                                styleStatus === 'delivered' ? 'border-primary text-primary' : 'opacity-0 pointer-events-none'
-                              )}
-                              title="Set delivery date"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <CalendarIcon className="h-3.5 w-3.5" />
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent
-                            className="w-auto p-0 z-[200]"
-                            align="end"
-                            onInteractOutside={(e) => e.preventDefault()}
-                            onPointerDownOutside={(e) => e.preventDefault()}
-                            onClick={(e) => e.stopPropagation()}
+                        {/* Edit delivery details button */}
+                        {styleStatus === 'delivered' && (
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-7 w-7 shrink-0 border-primary text-primary"
+                            title="Edit delivery details"
+                            onClick={(e) => { e.stopPropagation(); openDeliveryDialog(sg); }}
                           >
-                            <div className="p-3 border-b">
-                              <p className="text-sm font-medium">Select Delivery Date</p>
-                              <p className="text-xs text-muted-foreground">{sg.styleName}</p>
-                            </div>
-                            <Calendar
-                              mode="single"
-                              selected={styleActualDeliveryDate ? parseISO(styleActualDeliveryDate) : undefined}
-                              onSelect={(date) => {
-                                if (date) {
-                                  const dateStr = format(date, 'yyyy-MM-dd');
-                                  handleSetStyleStatus(sg, 'delivered', dateStr);
-                                  setDeliveryDatePopovers(prev => ({ ...prev, [sg.styleId]: false }));
-                                }
-                              }}
-                              initialFocus
-                              className="p-3 pointer-events-auto"
-                            />
-                            {styleActualDeliveryDate && (
-                              <div className="p-2 border-t flex items-center justify-between">
-                                <span className="text-xs text-muted-foreground">
-                                  Delivered: {format(parseISO(styleActualDeliveryDate), 'dd MMM yyyy')}
-                                </span>
-                                <Button size="sm" variant="ghost" className="h-6 text-xs" onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleSetStyleStatus(sg, 'delivered', null);
-                                  setDeliveryDatePopovers(prev => ({ ...prev, [sg.styleId]: false }));
-                                }}>Clear</Button>
-                              </div>
-                            )}
-                          </PopoverContent>
-                        </Popover>
+                            <CalendarIcon className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
                       </div>
                       <span className={`text-sm font-bold ${getStatusColor(styleProgress)}`}>{styleProgress}%</span>
                       <div className="w-24 h-2 rounded-full bg-secondary overflow-hidden">
@@ -718,6 +719,78 @@ export const BatchProductionSection = ({
           </Card>
         );
       })}
+
+      {/* Delivery Details Dialog */}
+      <Dialog open={!!deliveryDialogStyle} onOpenChange={(open) => { if (!open) closeDeliveryDialog(); }}>
+        <DialogContent className="sm:max-w-md" onClick={(e) => e.stopPropagation()}>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Truck className="h-5 w-5 text-primary" />
+              Delivery Details
+            </DialogTitle>
+            {deliveryDialogStyle && (
+              <p className="text-sm text-muted-foreground">{deliveryDialogStyle.styleName}</p>
+            )}
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            {/* Date Picker */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Delivery Date</Label>
+              <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn('w-full justify-start text-left font-normal', !deliveryDialogDate && 'text-muted-foreground')}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {deliveryDialogDate ? format(deliveryDialogDate, 'dd MMM yyyy') : 'Pick a date'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent
+                  className="w-auto p-0 z-[300]"
+                  align="start"
+                  onInteractOutside={(e) => e.preventDefault()}
+                >
+                  <Calendar
+                    mode="single"
+                    selected={deliveryDialogDate}
+                    onSelect={(date) => {
+                      setDeliveryDialogDate(date);
+                      setCalendarOpen(false);
+                    }}
+                    initialFocus
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Notes */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium flex items-center gap-1.5">
+                <StickyNote className="h-3.5 w-3.5" />
+                Delivery Notes
+              </Label>
+              <Textarea
+                placeholder="Add any delivery notes, remarks or observations..."
+                value={deliveryDialogNotes}
+                onChange={(e) => setDeliveryDialogNotes(e.target.value)}
+                rows={3}
+                className="resize-none"
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={closeDeliveryDialog}>Cancel</Button>
+            <Button onClick={handleConfirmDelivery} className="gap-2">
+              <Truck className="h-4 w-4" />
+              Confirm Delivery
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
