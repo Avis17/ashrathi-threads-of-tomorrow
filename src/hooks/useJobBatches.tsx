@@ -19,6 +19,7 @@ export const useJobBatches = () => {
         { data: expenses, error: expError },
         { data: jobWorks, error: jwError },
         { data: allStyles, error: styError },
+        { data: typeConfirmed, error: tcError },
       ] = await Promise.all([
         supabase.from('job_batches').select('*, job_styles(style_name, style_code)').order('date_created', { ascending: false }),
         supabase.from('batch_cutting_logs').select('batch_id, pieces_cut'),
@@ -29,6 +30,7 @@ export const useJobBatches = () => {
         supabase.from('job_batch_expenses').select('batch_id, amount'),
         supabase.from('batch_job_works').select('batch_id, total_amount, paid_amount'),
         supabase.from('job_styles').select('id, style_name, style_code'),
+        supabase.from('batch_type_confirmed' as any).select('batch_id, delivery_status, actual_delivery_date'),
       ]);
       if (error) throw error;
 
@@ -73,6 +75,23 @@ export const useJobBatches = () => {
         jwMap[jw.batch_id].paid += Number(jw.paid_amount);
       });
 
+      // Aggregate delivery status per batch
+      const deliveryMap: Record<string, { in_progress: number; completed: number; delivered: number; latest_delivery_date: string | null }> = {};
+      (typeConfirmed as any[] || []).forEach((tc: any) => {
+        if (!deliveryMap[tc.batch_id]) deliveryMap[tc.batch_id] = { in_progress: 0, completed: 0, delivered: 0, latest_delivery_date: null };
+        const status = tc.delivery_status || 'in_progress';
+        if (status === 'in_progress') deliveryMap[tc.batch_id].in_progress++;
+        else if (status === 'completed') deliveryMap[tc.batch_id].completed++;
+        else if (status === 'delivered') {
+          deliveryMap[tc.batch_id].delivered++;
+          if (tc.actual_delivery_date) {
+            if (!deliveryMap[tc.batch_id].latest_delivery_date || tc.actual_delivery_date > deliveryMap[tc.batch_id].latest_delivery_date!) {
+              deliveryMap[tc.batch_id].latest_delivery_date = tc.actual_delivery_date;
+            }
+          }
+        }
+      });
+
       return (batches || []).map((b: any) => {
         // Extract unique styles from rolls_data
         const rollsData = (b.rolls_data || []) as any[];
@@ -86,6 +105,10 @@ export const useJobBatches = () => {
           pieces: styleCutBreakdown[id] || 0,
         })).filter(s => s.style_name);
 
+        // Get estimated delivery from rolls_data
+        const estimatedDates = rollsData.map((r: any) => r.estimated_delivery).filter(Boolean);
+        const estimatedDelivery = estimatedDates.length > 0 ? estimatedDates[0] : null;
+
         return {
           ...b,
           total_cut_pieces: cutMap[b.id] || 0,
@@ -97,6 +120,8 @@ export const useJobBatches = () => {
           total_expenses: expMap[b.id] || 0,
           total_job_work: jwMap[b.id]?.total || 0,
           total_job_work_paid: jwMap[b.id]?.paid || 0,
+          delivery_summary: deliveryMap[b.id] || null,
+          estimated_delivery: estimatedDelivery,
         };
       });
     },
