@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Edit, Package, IndianRupee, FileText, ExternalLink, Layers, ZoomIn, ZoomOut, RotateCcw, X, Maximize2 } from 'lucide-react';
+import { ArrowLeft, Edit, Package, IndianRupee, FileText, ExternalLink, Layers, ZoomIn, ZoomOut, RotateCcw, X, Maximize2, Images } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -248,6 +248,43 @@ const StyleDetailsPage = () => {
                 )}
               </div>
             )}
+
+            {/* Additional Images Gallery */}
+            {(() => {
+              const extraImages = (style.style_images as any as string[]) || [];
+              if (extraImages.length === 0) return null;
+              return (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <Images className="h-5 w-5" />
+                      Style Gallery
+                      <Badge variant="secondary" className="ml-auto">{extraImages.length} images</Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+                      {extraImages.map((url: string, idx: number) => (
+                        <div
+                          key={idx}
+                          className="aspect-square rounded-lg overflow-hidden bg-muted cursor-pointer relative group border"
+                          onClick={() => setLightbox({ src: url, alt: `${style.style_name} – Image ${idx + 1}` })}
+                        >
+                          <img
+                            src={url}
+                            alt={`Style image ${idx + 1}`}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-200"
+                          />
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                            <Maximize2 className="h-5 w-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })()}
 
             {/* Basic Info */}
             <Card>
