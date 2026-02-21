@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Shirt, Package, Users, DollarSign, Building2 } from 'lucide-react';
+import { Shirt, Package, Users, DollarSign, Building2, Factory } from 'lucide-react';
 import StylesManager from '@/components/admin/jobmanagement/StylesManager';
 import BatchesManager from '@/components/admin/jobmanagement/BatchesManager';
 import EmployeesManager from '@/components/admin/jobmanagement/EmployeesManager';
 import ExpensesManager from '@/components/admin/jobmanagement/ExpensesManager';
 import ContractorsManager from '@/components/admin/jobmanagement/ContractorsManager';
+import CompaniesManager from '@/components/admin/jobmanagement/CompaniesManager';
 
 const JobManagement = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -35,7 +36,7 @@ const JobManagement = () => {
 
       {/* Tabs Navigation */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5 h-auto p-1 bg-muted/50">
+        <TabsList className="grid w-full grid-cols-6 h-auto p-1 bg-muted/50">
           <TabsTrigger 
             value="styles" 
             className="flex items-center gap-2 py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-secondary data-[state=active]:text-primary-foreground transition-all"
@@ -71,6 +72,13 @@ const JobManagement = () => {
             <Building2 className="h-4 w-4" />
             <span className="hidden sm:inline">Contractors</span>
           </TabsTrigger>
+          <TabsTrigger 
+            value="companies"
+            className="flex items-center gap-2 py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-secondary data-[state=active]:text-primary-foreground transition-all"
+          >
+            <Factory className="h-4 w-4" />
+            <span className="hidden sm:inline">Companies</span>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="styles" className="mt-6">
@@ -91,6 +99,10 @@ const JobManagement = () => {
 
         <TabsContent value="contractors" className="mt-6">
           <ContractorsManager />
+        </TabsContent>
+
+        <TabsContent value="companies" className="mt-6">
+          <CompaniesManager />
         </TabsContent>
       </Tabs>
     </div>
