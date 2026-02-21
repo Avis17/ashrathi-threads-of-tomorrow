@@ -131,51 +131,9 @@ const StyleDetailsPage = () => {
 
   const measurementSheetUrl = (style as any).measurement_sheet_url as string | null;
 
-  // Parse process_rate_details
+  // Parse process_rate_details for set item flag
   const processRateDetails = style.process_rate_details as any;
-  const operations = processRateDetails?.operations || [];
-
-  let accessoriesAmount = 0;
-  let accessoriesDescription = '';
-  if (processRateDetails?.accessories_amount !== undefined) {
-    accessoriesAmount = Number(processRateDetails.accessories_amount) || 0;
-    accessoriesDescription = processRateDetails.accessories_description || '';
-  } else if (typeof processRateDetails?.accessories === 'object' && processRateDetails?.accessories !== null) {
-    accessoriesAmount = processRateDetails.accessories.amount || 0;
-    accessoriesDescription = processRateDetails.accessories.description || '';
-  } else if (typeof processRateDetails?.accessories === 'number') {
-    accessoriesAmount = processRateDetails.accessories;
-  }
-
-  let transportationAmount = 0;
-  let transportationNotes = '';
-  if (processRateDetails?.transportation_amount !== undefined) {
-    transportationAmount = Number(processRateDetails.transportation_amount) || 0;
-    transportationNotes = processRateDetails.transportation_notes || '';
-  } else if (typeof processRateDetails?.transportation === 'object' && processRateDetails?.transportation !== null) {
-    transportationAmount = processRateDetails.transportation.amount || 0;
-    transportationNotes = processRateDetails.transportation.notes || '';
-  } else if (typeof processRateDetails?.transportation === 'number') {
-    transportationAmount = processRateDetails.transportation;
-  }
-
-  const companyProfit = processRateDetails?.company_profit || 0;
   const isSetItem = processRateDetails?.is_set_item || false;
-
-  const operationsTotal = operations.reduce((sum: number, op: any) => sum + (op.rate || 0), 0);
-  const finalRate = processRateDetails?.final_rate_per_piece ||
-    (operationsTotal + accessoriesAmount + transportationAmount + companyProfit);
-
-  const legacyRates = [
-    { name: 'Cutting', value: style.rate_cutting, icon: '✂️' },
-    { name: 'Stitching (Singer)', value: style.rate_stitching_singer, icon: '🧵' },
-    { name: 'Stitching (Power)', value: style.rate_stitching_power_table, icon: '⚡' },
-    { name: 'Ironing', value: style.rate_ironing, icon: '👔' },
-    { name: 'Checking', value: style.rate_checking, icon: '✓' },
-    { name: 'Packing', value: style.rate_packing, icon: '📦' },
-  ];
-  const legacyTotal = legacyRates.reduce((sum, rate) => sum + (rate.value || 0), 0);
-  const hasNewOperations = operations.length > 0;
 
   const linkedQuotation = quotations?.find(q => q.id === style.linked_cmt_quotation_id);
   const isQuotationApproved = linkedQuotation?.status === 'approved';
@@ -329,75 +287,96 @@ const StyleDetailsPage = () => {
               </CardContent>
             </Card>
 
-            {/* Process Rates */}
+            {/* Process Rates from CMT Quotation */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <IndianRupee className="h-5 w-5" />
                   Process Rates
+                  {linkedQuotation && (
+                    <Badge variant="outline" className="ml-auto text-xs font-normal">
+                      From CMT: {linkedQuotation.quotation_no}
+                    </Badge>
+                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {hasNewOperations ? (
-                  <div className="space-y-4">
-                    <div className="border rounded-lg overflow-hidden">
-                      <table className="w-full text-sm">
-                        <thead className="bg-muted/50">
-                          <tr>
-                            <th className="text-left p-3 font-medium">Operation</th>
-                            <th className="text-left p-3 font-medium">Description</th>
-                            <th className="text-right p-3 font-medium">Rate (₹)</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {operations.map((op: any, idx: number) => (
-                            <tr key={idx} className="border-t">
-                              <td className="p-3">{op.operation}</td>
-                              <td className="p-3 text-muted-foreground">{op.description || '-'}</td>
-                              <td className="p-3 text-right font-medium">₹{(op.rate || 0).toFixed(2)}</td>
+                {linkedQuotation ? (() => {
+                  const cmtOps = isQuotationApproved && approvedRates?.operations
+                    ? approvedRates.operations
+                    : (linkedQuotation.operations as any[]) || [];
+                  const cmtFinishing = isQuotationApproved && approvedRates
+                    ? approvedRates.finishingPackingCost
+                    : Number(linkedQuotation.finishing_packing_cost) || 0;
+                  const cmtOverheads = isQuotationApproved && approvedRates
+                    ? approvedRates.overheadsCost
+                    : Number(linkedQuotation.overheads_cost) || 0;
+                  const cmtProfitPercent = isQuotationApproved && approvedRates
+                    ? approvedRates.companyProfitPercent
+                    : Number(linkedQuotation.company_profit_percent) || 0;
+                  const cmtFinal = isQuotationApproved && approvedRates?.finalCMTPerPiece
+                    ? approvedRates.finalCMTPerPiece
+                    : Number(linkedQuotation.final_cmt_per_piece) || 0;
+                  const opsTotal = cmtOps.reduce((sum: number, op: any) => sum + (op.rate || op.ratePerPiece || 0), 0);
+
+                  return (
+                    <div className="space-y-4">
+                      <div className="border rounded-lg overflow-hidden">
+                        <table className="w-full text-sm">
+                          <thead className="bg-muted/50">
+                            <tr>
+                              <th className="text-left p-3 font-medium">Category</th>
+                              <th className="text-left p-3 font-medium">Machine</th>
+                              <th className="text-left p-3 font-medium">Description</th>
+                              <th className="text-right p-3 font-medium">Rate (₹)</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="bg-muted/30 rounded-lg p-4">
-                        <p className="text-sm text-muted-foreground">Accessories</p>
-                        <p className="text-lg font-semibold">₹{accessoriesAmount.toFixed(2)}</p>
-                        {accessoriesDescription && <p className="text-xs text-muted-foreground mt-1">{accessoriesDescription}</p>}
+                          </thead>
+                          <tbody>
+                            {cmtOps.map((op: any, idx: number) => (
+                              <tr key={idx} className="border-t">
+                                <td className="p-3 font-medium">{op.category}</td>
+                                <td className="p-3 text-muted-foreground">{op.machineType || op.machine_type || '-'}</td>
+                                <td className="p-3 text-muted-foreground">{op.description || '-'}</td>
+                                <td className="p-3 text-right font-medium">₹{(op.rate || op.ratePerPiece || 0).toFixed(2)}</td>
+                              </tr>
+                            ))}
+                            <tr className="border-t bg-muted/30">
+                              <td className="p-3 font-medium" colSpan={3}>Total Operations Cost</td>
+                              <td className="p-3 text-right font-medium">₹{opsTotal.toFixed(2)}</td>
+                            </tr>
+                          </tbody>
+                        </table>
                       </div>
-                      <div className="bg-muted/30 rounded-lg p-4">
-                        <p className="text-sm text-muted-foreground">Transportation</p>
-                        <p className="text-lg font-semibold">₹{transportationAmount.toFixed(2)}</p>
-                        {transportationNotes && <p className="text-xs text-muted-foreground mt-1">{transportationNotes}</p>}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="bg-muted/30 rounded-lg p-4">
+                          <p className="text-sm text-muted-foreground">Finishing & Packing</p>
+                          <p className="text-lg font-semibold">₹{cmtFinishing.toFixed(2)}</p>
+                        </div>
+                        <div className="bg-muted/30 rounded-lg p-4">
+                          <p className="text-sm text-muted-foreground">Overheads</p>
+                          <p className="text-lg font-semibold">₹{cmtOverheads.toFixed(2)}</p>
+                        </div>
+                        <div className="bg-muted/30 rounded-lg p-4">
+                          <p className="text-sm text-muted-foreground">Profit %</p>
+                          <p className="text-lg font-semibold">{cmtProfitPercent.toFixed(2)}%</p>
+                        </div>
                       </div>
-                      <div className="bg-muted/30 rounded-lg p-4">
-                        <p className="text-sm text-muted-foreground">Company Profit</p>
-                        <p className="text-lg font-semibold">₹{companyProfit.toFixed(2)}</p>
-                      </div>
-                    </div>
-                    <Separator />
-                    <div className="flex items-center justify-between bg-primary/10 rounded-lg p-4">
-                      <span className="font-semibold">Final Job Work Rate per Piece</span>
-                      <span className="text-2xl font-bold text-primary">₹{finalRate.toFixed(2)}</span>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {legacyRates.map((rate) => (
-                      <div key={rate.name} className="flex items-center justify-between">
-                        <span className="flex items-center gap-2">
-                          <span>{rate.icon}</span>
-                          <span>{rate.name}</span>
+                      <Separator />
+                      <div className={`flex items-center justify-between rounded-lg p-4 ${isQuotationApproved ? 'bg-green-100 dark:bg-green-950/40' : 'bg-primary/10'}`}>
+                        <span className="font-semibold">
+                          {isQuotationApproved ? 'Final Approved CMT Rate' : 'Quoted CMT Rate'} per Piece
                         </span>
-                        <span className="font-medium">₹{(rate.value || 0).toFixed(2)}</span>
+                        <span className={`text-2xl font-bold ${isQuotationApproved ? 'text-green-600 dark:text-green-400' : 'text-primary'}`}>
+                          ₹{cmtFinal.toFixed(2)}
+                        </span>
                       </div>
-                    ))}
-                    <Separator />
-                    <div className="flex items-center justify-between font-semibold">
-                      <span>Total per Piece</span>
-                      <span className="text-primary">₹{legacyTotal.toFixed(2)}</span>
                     </div>
+                  );
+                })() : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <FileText className="h-8 w-8 mx-auto mb-2 opacity-40" />
+                    <p className="text-sm">No CMT quotation linked</p>
+                    <p className="text-xs mt-1">Link a CMT quotation from the sidebar to view process rates</p>
                   </div>
                 )}
               </CardContent>
