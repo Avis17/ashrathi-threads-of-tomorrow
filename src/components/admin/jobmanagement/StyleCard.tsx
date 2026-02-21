@@ -15,6 +15,8 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useState } from 'react';
 import { useDeleteJobStyle } from '@/hooks/useJobStyles';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 interface StyleCardProps {
   style: JobStyle;
@@ -26,15 +28,37 @@ const StyleCard = ({ style, onView, onEdit }: StyleCardProps) => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const deleteMutation = useDeleteJobStyle();
 
-  // Calculate total operations rate (excluding company profit, accessories, transportation)
+  // Fetch linked CMT quotation rate if available
+  const { data: linkedCmt } = useQuery({
+    queryKey: ['cmt-for-card', style.linked_cmt_quotation_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('cmt_quotations')
+        .select('final_cmt_per_piece, approved_rates, status')
+        .eq('id', style.linked_cmt_quotation_id!)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!style.linked_cmt_quotation_id,
+  });
+
+  // Calculate total operations rate
   const processRateDetails = style.process_rate_details as any;
   const operations = processRateDetails?.operations || [];
   const hasNewOperations = operations.length > 0;
   
   let totalRate: number;
   if (hasNewOperations) {
-    // Sum only operations (exclude accessories, transportation, company profit)
     totalRate = operations.reduce((sum: number, op: any) => sum + (op.rate || 0), 0);
+  } else if (linkedCmt) {
+    // Use CMT quotation rate
+    const approvedRates = linkedCmt.approved_rates as any;
+    if (linkedCmt.status === 'approved' && approvedRates?.finalCMTPerPiece) {
+      totalRate = approvedRates.finalCMTPerPiece;
+    } else {
+      totalRate = Number(linkedCmt.final_cmt_per_piece) || 0;
+    }
   } else {
     // Legacy: sum all process rates
     totalRate = 
@@ -126,7 +150,9 @@ const StyleCard = ({ style, onView, onEdit }: StyleCardProps) => {
 
         <div className="pt-2 border-t">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Total Rate:</span>
+            <span className="text-muted-foreground">
+              {!hasNewOperations && linkedCmt ? 'CMT Rate:' : 'Total Rate:'}
+            </span>
             <span className="font-bold text-lg text-primary">
               ₹{totalRate.toFixed(2)}/pc
             </span>
