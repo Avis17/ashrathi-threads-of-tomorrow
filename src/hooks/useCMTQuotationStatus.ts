@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { Json } from '@/integrations/supabase/types';
 
 export interface ApprovedRates {
-  operations: Array<{ category: string; rate: number }>;
+  operations: Array<{ category: string; machineType?: string; description?: string; rate: number }>;
   finishingPackingCost: number;
   overheadsCost: number;
   companyProfitPercent: number;
