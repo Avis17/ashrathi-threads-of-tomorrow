@@ -129,6 +129,7 @@ export function CMTQuotationsList({ onEdit, onCreateNew, onClone }: CMTQuotation
               <TableHead>Style</TableHead>
               <TableHead>Code</TableHead>
               <TableHead className="text-right">Final CMT</TableHead>
+              <TableHead className="text-right">Approved CMT</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="w-32">Actions</TableHead>
             </TableRow>
@@ -136,7 +137,7 @@ export function CMTQuotationsList({ onEdit, onCreateNew, onClone }: CMTQuotation
           <TableBody>
             {!filteredQuotations?.length ? (
               <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                   No quotations found. Create your first quotation!
                 </TableCell>
               </TableRow>
@@ -150,7 +151,16 @@ export function CMTQuotationsList({ onEdit, onCreateNew, onClone }: CMTQuotation
                    <TableCell className="text-muted-foreground">{q.style_code || '—'}</TableCell>
                    <TableCell className="text-right font-semibold">
                     ₹{Number(q.final_cmt_per_piece).toFixed(2)}
-                  </TableCell>
+                   </TableCell>
+                   <TableCell className="text-right">
+                    {(() => {
+                      const approved = q.approved_rates as any;
+                      if (q.status === 'approved' && approved?.finalCMTPerPiece) {
+                        return <span className="font-semibold text-green-600 dark:text-green-400">₹{Number(approved.finalCMTPerPiece).toFixed(2)}</span>;
+                      }
+                      return <span className="text-muted-foreground">—</span>;
+                    })()}
+                   </TableCell>
                   <TableCell>{getStatusBadge(q.status)}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">

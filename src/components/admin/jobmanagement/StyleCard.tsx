@@ -1,4 +1,5 @@
-import { Shirt, Edit, Eye, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { Shirt, Edit, Eye, Trash2, Calculator } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -13,10 +14,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { useState } from 'react';
-import { useDeleteJobStyle } from '@/hooks/useJobStyles';
+import { useDeleteJobStyle, useUpdateJobStyle } from '@/hooks/useJobStyles';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import CostingDialog, { CostingData, calculateTotalRate } from './CostingDialog';
 
 interface StyleCardProps {
   style: JobStyle;
@@ -26,7 +27,9 @@ interface StyleCardProps {
 
 const StyleCard = ({ style, onView, onEdit }: StyleCardProps) => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [costingOpen, setCostingOpen] = useState(false);
   const deleteMutation = useDeleteJobStyle();
+  const updateStyle = useUpdateJobStyle();
 
   // Fetch linked CMT quotation rate if available
   const { data: linkedCmt } = useQuery({
@@ -43,36 +46,43 @@ const StyleCard = ({ style, onView, onEdit }: StyleCardProps) => {
     enabled: !!style.linked_cmt_quotation_id,
   });
 
-  // Calculate total operations rate
-  const processRateDetails = style.process_rate_details as any;
-  const operations = processRateDetails?.operations || [];
-  const hasNewOperations = operations.length > 0;
-  
-  let totalRate: number;
-  if (hasNewOperations) {
-    totalRate = operations.reduce((sum: number, op: any) => sum + (op.rate || 0), 0);
-  } else if (linkedCmt) {
-    // Use CMT quotation rate
+  // Get CMT rate
+  let cmtRate = 0;
+  if (linkedCmt) {
     const approvedRates = linkedCmt.approved_rates as any;
     if (linkedCmt.status === 'approved' && approvedRates?.finalCMTPerPiece) {
-      totalRate = approvedRates.finalCMTPerPiece;
+      cmtRate = approvedRates.finalCMTPerPiece;
     } else {
-      totalRate = Number(linkedCmt.final_cmt_per_piece) || 0;
+      cmtRate = Number(linkedCmt.final_cmt_per_piece) || 0;
     }
-  } else {
-    // Legacy: sum all process rates
-    totalRate = 
-      style.rate_cutting +
-      style.rate_stitching_singer +
-      style.rate_stitching_power_table +
-      style.rate_ironing +
-      style.rate_checking +
-      style.rate_packing;
+  }
+
+  // Get costing data from process_rate_details
+  const processRateDetails = style.process_rate_details as any;
+  const costingData = processRateDetails?.costing as CostingData | null;
+
+  // Calculate total rate from costing if available
+  let totalRate = 0;
+  let hasCosting = false;
+  if (costingData && costingData.pieceWeightGrams > 0) {
+    hasCosting = true;
+    const calc = calculateTotalRate(costingData, cmtRate);
+    totalRate = calc.total;
   }
 
   const handleDelete = async () => {
     await deleteMutation.mutateAsync(style.id);
     setDeleteDialogOpen(false);
+  };
+
+  const handleSaveCosting = (data: CostingData) => {
+    const existing = (style.process_rate_details as any) || {};
+    updateStyle.mutate({
+      id: style.id,
+      data: {
+        process_rate_details: { ...existing, costing: data } as any,
+      },
+    });
   };
 
   return (
@@ -97,6 +107,15 @@ const StyleCard = ({ style, onView, onEdit }: StyleCardProps) => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <CostingDialog
+        open={costingOpen}
+        onOpenChange={setCostingOpen}
+        initialData={costingData}
+        cmtRate={cmtRate}
+        onSave={handleSaveCosting}
+      />
+
     <Card className="hover:shadow-2xl hover:scale-105 transition-all duration-300 border-l-4 border-l-primary overflow-hidden group">
       <div className="relative h-48 bg-gradient-to-br from-primary/10 to-secondary/10 overflow-hidden">
         {style.style_image_url ? (
@@ -150,13 +169,31 @@ const StyleCard = ({ style, onView, onEdit }: StyleCardProps) => {
 
         <div className="pt-2 border-t">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">
-              {!hasNewOperations && linkedCmt ? 'CMT Rate:' : 'Total Rate:'}
-            </span>
+            <div className="flex items-center gap-1">
+              <span className="text-muted-foreground">Total Rate:</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCostingOpen(true);
+                }}
+                title="Edit costing"
+              >
+                <Calculator className="h-3.5 w-3.5" />
+              </Button>
+            </div>
             <span className="font-bold text-lg text-primary">
-              ₹{totalRate.toFixed(2)}/pc
+              {hasCosting ? `₹${totalRate.toFixed(2)}/pc` : '—'}
             </span>
           </div>
+          {hasCosting && cmtRate > 0 && (
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Fabric: ₹{calculateTotalRate(costingData!, cmtRate).fabricCost.toFixed(2)} + CMT: ₹{cmtRate.toFixed(2)}
+              {costingData!.additionalOpsAmount > 0 && ` + Ops: ₹${costingData!.additionalOpsAmount.toFixed(2)}`}
+            </p>
+          )}
         </div>
 
         <div className="flex gap-2 pt-2">
