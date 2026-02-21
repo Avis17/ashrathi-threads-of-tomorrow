@@ -302,9 +302,22 @@ const StyleDetailsPage = () => {
               </CardHeader>
               <CardContent>
                 {linkedQuotation ? (() => {
-                  const cmtOps = isQuotationApproved && approvedRates?.operations
-                    ? approvedRates.operations
-                    : (linkedQuotation.operations as any[]) || [];
+                  const originalOps = (linkedQuotation.operations as any[]) || [];
+                  // For approved quotations, merge approved rates with original operations to get machineType/description
+                  let cmtOps: any[];
+                  if (isQuotationApproved && approvedRates?.operations) {
+                    cmtOps = approvedRates.operations.map((approvedOp: any, idx: number) => {
+                      // Match with original operation by index to get machineType and description
+                      const origOp = originalOps[idx] || {};
+                      return {
+                        ...approvedOp,
+                        machineType: approvedOp.machineType || origOp.machineType || '-',
+                        description: approvedOp.description || origOp.description || '',
+                      };
+                    });
+                  } else {
+                    cmtOps = originalOps;
+                  }
                   const cmtFinishing = isQuotationApproved && approvedRates
                     ? approvedRates.finishingPackingCost
                     : Number(linkedQuotation.finishing_packing_cost) || 0;
