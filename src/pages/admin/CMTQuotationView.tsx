@@ -74,7 +74,7 @@ const CMTQuotationView = () => {
         const profitRupees = base * (profitPercent / 100);
         
         setApprovedRates({
-          operations: ops.map((op: any) => ({ category: op.category, rate: op.ratePerPiece })),
+          operations: ops.map((op: any) => ({ category: op.category, machineType: op.machineType, description: op.description, rate: op.ratePerPiece })),
           finishingPackingCost: finPack,
           overheadsCost: overheads,
           companyProfitPercent: profitPercent,
@@ -199,7 +199,7 @@ const CMTQuotationView = () => {
     if (approvedRates) {
       setApprovedRates({
         ...approvedRates,
-        operations: [...approvedRates.operations, { category: 'Stitching', rate: 0 }],
+        operations: [...approvedRates.operations, { category: 'Stitching', machineType: 'Not Defined', description: '', rate: 0 }],
       });
     }
   };
@@ -235,9 +235,9 @@ const CMTQuotationView = () => {
       newOps[idx] = { ...newOps[idx], rate: value as number };
       setApprovedRates({ ...approvedRates, operations: newOps });
     }
-    if (approvedRates && idx >= 0 && field === 'category') {
+    if (approvedRates && idx >= 0 && (field === 'category' || field === 'machineType' || field === 'description')) {
       const newOps = [...approvedRates.operations];
-      newOps[idx] = { ...newOps[idx], category: value as string };
+      newOps[idx] = { ...newOps[idx], [field]: value as string };
       setApprovedRates({ ...approvedRates, operations: newOps });
     }
   };
@@ -656,8 +656,16 @@ const CMTQuotationView = () => {
                     <div className="space-y-3">
                       {(quotation.approved_rates as ApprovedRates).operations.map((op: any, idx: number) => (
                         <div key={idx} className="flex justify-between text-sm">
-                          <span>{op.category}</span>
-                          <span className="font-medium">₹{op.rate.toFixed(2)}</span>
+                          <div>
+                            <span className="font-medium">{op.category}</span>
+                            {op.machineType && op.machineType !== 'Not Defined' && (
+                              <span className="text-muted-foreground ml-1">({op.machineType})</span>
+                            )}
+                            {op.description && (
+                              <p className="text-xs text-muted-foreground">{op.description}</p>
+                            )}
+                          </div>
+                          <span className="font-medium whitespace-nowrap">₹{op.rate.toFixed(2)}</span>
                         </div>
                       ))}
                       <Separator />
