@@ -298,8 +298,15 @@ const StyleForm = ({ style, onClose }: StyleFormProps) => {
   };
 
   const removeExtraImage = (idx: number) => {
+    const preview = extraImagePreviews[idx];
     setExtraImagePreviews(prev => prev.filter((_, i) => i !== idx));
-    setExtraImageFiles(prev => prev.filter((_, i) => i !== idx));
+    // Only remove from files array if it's a newly added file (data URL), not an existing URL
+    if (preview && !preview.startsWith('http')) {
+      // Count how many existing URLs come before this index to get the correct file index
+      const existingBefore = extraImagePreviews.slice(0, idx).filter(p => p.startsWith('http')).length;
+      const fileIdx = idx - existingBefore;
+      setExtraImageFiles(prev => prev.filter((_, i) => i !== fileIdx));
+    }
   };
 
   const uploadExtraImages = async (): Promise<string[]> => {
@@ -629,19 +636,25 @@ const StyleForm = ({ style, onClose }: StyleFormProps) => {
           <span className="text-xs font-normal text-muted-foreground ml-1">({extraImagePreviews.length} added)</span>
         </h3>
         <div className="space-y-3">
-          <label className="flex items-center gap-2 cursor-pointer w-fit">
-            <Button type="button" variant="outline" size="sm" className="gap-2 pointer-events-none">
+          <div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              onClick={() => {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'image/*';
+                input.multiple = true;
+                input.onchange = (e) => handleExtraImagesChange(e as any);
+                input.click();
+              }}
+            >
               <Plus className="h-4 w-4" />
               Add Images
             </Button>
-            <Input
-              type="file"
-              accept="image/*"
-              multiple
-              className="hidden"
-              onChange={handleExtraImagesChange}
-            />
-          </label>
+          </div>
           <p className="text-xs text-muted-foreground">You can select multiple images at once</p>
 
           {extraImagePreviews.length > 0 && (
