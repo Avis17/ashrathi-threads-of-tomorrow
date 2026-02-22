@@ -52,6 +52,16 @@ const StaffDetailsPage = () => {
   const [absenceToDate, setAbsenceToDate] = useState<Date | undefined>();
   const [absenceReason, setAbsenceReason] = useState('');
 
+  // useMemo must be called before any early returns to maintain hook order
+  const dailyAmounts = useMemo(() => {
+    const map: Record<string, number> = {};
+    salaryEntries.forEach((e) => {
+      const key = e.entry_date;
+      map[key] = (map[key] || 0) + e.amount;
+    });
+    return map;
+  }, [salaryEntries]);
+
   if (!id) return null;
 
   if (loadingStaff) {
@@ -100,16 +110,6 @@ const StaffDetailsPage = () => {
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
   const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
-
-  // Map entry_date -> total amount for calendar
-  const dailyAmounts = useMemo(() => {
-    const map: Record<string, number> = {};
-    salaryEntries.forEach((e) => {
-      const key = e.entry_date;
-      map[key] = (map[key] || 0) + e.amount;
-    });
-    return map;
-  }, [salaryEntries]);
 
   // Check if a date falls within any absence
   const isAbsentDay = (day: Date) => {
