@@ -278,13 +278,14 @@ const BatchDetailsPage = () => {
       {/* Weight Analysis Card */}
       {(() => {
         // Build style-wise fabric info
-        const styleMap: Record<string, { styleName: string; totalWeightKg: number; totalCutPieces: number }> = {};
+        const styleMap: Record<string, { styleName: string; totalWeightKg: number; totalCutPieces: number; totalConfirmedPieces: number }> = {};
         rollsData.forEach((r: any, idx: number) => {
           const key = r.style_id || 'unknown';
           const name = styleLookup[key] || r.style_name || `Style ${key.slice(0, 6)}`;
-          if (!styleMap[key]) styleMap[key] = { styleName: name, totalWeightKg: 0, totalCutPieces: 0 };
+          if (!styleMap[key]) styleMap[key] = { styleName: name, totalWeightKg: 0, totalCutPieces: 0, totalConfirmedPieces: 0 };
           styleMap[key].totalWeightKg += (Number(r.number_of_rolls) || 0) * (Number(r.weight) || 0);
           styleMap[key].totalCutPieces += cuttingSummary[idx] || 0;
+          styleMap[key].totalConfirmedPieces += confirmedMap[idx] || 0;
         });
         const styleList = Object.entries(styleMap).map(([styleId, info]) => ({ styleId, ...info }));
         return (

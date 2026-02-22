@@ -15,6 +15,7 @@ interface StyleFabricInfo {
   styleName: string;
   totalWeightKg: number;
   totalCutPieces: number;
+  totalConfirmedPieces: number;
 }
 
 interface BatchWeightAnalysisCardProps {
@@ -229,11 +230,16 @@ export const BatchWeightAnalysisCard = ({ batchId, styles }: BatchWeightAnalysis
       const effectivePerSet = tw * (1 + twp / 100) + bw * (1 + bwp / 100);
       const predictedSets = effectivePerSet > 0 ? Math.floor(totalGrams / effectivePerSet) : 0;
       const actualCut = style.totalCutPieces;
+      const confirmedPieces = style.totalConfirmedPieces;
       const diff = actualCut - predictedSets;
+      const confirmedDiff = confirmedPieces - predictedSets;
       const fabricConsumedByActual = actualCut * (tw + bw);
       const actualWastageGrams = totalGrams - fabricConsumedByActual;
       const actualWastagePct = totalGrams > 0 ? (actualWastageGrams / totalGrams) * 100 : 0;
-      return { predictedSets, actualCut, diff, actualWastagePct, isSet: true, effectivePerSet };
+      const fabricConsumedByConfirmed = confirmedPieces * (tw + bw);
+      const confirmedWastageGrams = totalGrams - fabricConsumedByConfirmed;
+      const confirmedWastagePct = totalGrams > 0 ? (confirmedWastageGrams / totalGrams) * 100 : 0;
+      return { predictedSets, actualCut, confirmedPieces, diff, confirmedDiff, actualWastagePct, confirmedWastagePct, isSet: true, effectivePerSet };
     } else {
       const aw = a.actual_weight_grams;
       const wp = a.wastage_percent ?? 0;
@@ -241,11 +247,16 @@ export const BatchWeightAnalysisCard = ({ batchId, styles }: BatchWeightAnalysis
       const effectivePerPiece = aw * (1 + wp / 100);
       const predictedPieces = effectivePerPiece > 0 ? Math.floor(totalGrams / effectivePerPiece) : 0;
       const actualCut = style.totalCutPieces;
+      const confirmedPieces = style.totalConfirmedPieces;
       const diff = actualCut - predictedPieces;
+      const confirmedDiff = confirmedPieces - predictedPieces;
       const fabricConsumedByActual = actualCut * aw;
       const actualWastageGrams = totalGrams - fabricConsumedByActual;
       const actualWastagePct = totalGrams > 0 ? (actualWastageGrams / totalGrams) * 100 : 0;
-      return { predictedPieces, actualCut, diff, actualWastagePct, isSet: false, effectivePerPiece };
+      const fabricConsumedByConfirmed = confirmedPieces * aw;
+      const confirmedWastageGrams = totalGrams - fabricConsumedByConfirmed;
+      const confirmedWastagePct = totalGrams > 0 ? (confirmedWastageGrams / totalGrams) * 100 : 0;
+      return { predictedPieces, actualCut, confirmedPieces, diff, confirmedDiff, actualWastagePct, confirmedWastagePct, isSet: false, effectivePerPiece };
     }
   };
 
@@ -315,62 +326,117 @@ export const BatchWeightAnalysisCard = ({ batchId, styles }: BatchWeightAnalysis
                   </Button>
                 </div>
 
-                <div className="flex gap-4 text-xs text-muted-foreground">
+                <div className="flex gap-4 text-xs text-muted-foreground flex-wrap">
                   <span>Total Fabric: <span className="font-medium text-foreground">{style.totalWeightKg.toFixed(2)} kg ({(style.totalWeightKg * 1000).toFixed(0)} g)</span></span>
                   <span>Cut Pieces: <span className="font-medium text-foreground">{style.totalCutPieces}</span></span>
+                  <span>Confirmed: <span className="font-medium text-foreground">{style.totalConfirmedPieces}</span></span>
                 </div>
 
                 {pred && (
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                    <div className="bg-muted/40 rounded p-2 text-xs">
-                      <div className="text-muted-foreground mb-0.5">{pred.isSet ? 'Avg Top + Bottom' : 'Avg Weight'}</div>
-                      {pred.isSet ? (
-                        <div className="font-semibold">{analysis!.top_weight_grams?.toFixed(1)}g + {analysis!.bottom_weight_grams?.toFixed(1)}g</div>
-                      ) : (
-                        <div className="font-semibold">{analysis!.actual_weight_grams?.toFixed(1)}g</div>
-                      )}
-                      <div className="text-muted-foreground mt-0.5">
-                        {pred.isSet
-                          ? `+${analysis!.top_wastage_percent ?? 0}% / +${analysis!.bottom_wastage_percent ?? 0}%`
-                          : `+${analysis!.wastage_percent ?? 0}% wastage`}
+                  <div className="space-y-2">
+                    {/* Row 1: Cut Pieces Prediction */}
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Cut Pieces Prediction</p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                      <div className="bg-muted/40 rounded p-2 text-xs">
+                        <div className="text-muted-foreground mb-0.5">{pred.isSet ? 'Avg Top + Bottom' : 'Avg Weight'}</div>
+                        {pred.isSet ? (
+                          <div className="font-semibold">{analysis!.top_weight_grams?.toFixed(1)}g + {analysis!.bottom_weight_grams?.toFixed(1)}g</div>
+                        ) : (
+                          <div className="font-semibold">{analysis!.actual_weight_grams?.toFixed(1)}g</div>
+                        )}
+                        <div className="text-muted-foreground mt-0.5">
+                          {pred.isSet
+                            ? `+${analysis!.top_wastage_percent ?? 0}% / +${analysis!.bottom_wastage_percent ?? 0}%`
+                            : `+${analysis!.wastage_percent ?? 0}% wastage`}
+                        </div>
+                      </div>
+
+                      <div className="bg-primary/10 rounded p-2 text-xs">
+                        <div className="text-muted-foreground mb-0.5">Predicted Pieces</div>
+                        <div className="font-bold text-primary text-base">
+                          {pred.isSet ? pred.predictedSets : pred.predictedPieces}
+                        </div>
+                        <div className="text-muted-foreground mt-0.5">
+                          ~{pred.isSet ? pred.effectivePerSet.toFixed(1) : pred.effectivePerPiece.toFixed(1)}g / {pred.isSet ? 'set' : 'pc'}
+                        </div>
+                      </div>
+
+                      <div className={`rounded p-2 text-xs ${pred.diff > 0 ? 'bg-green-500/10' : pred.diff < 0 ? 'bg-destructive/10' : 'bg-muted/40'}`}>
+                        <div className="text-muted-foreground mb-0.5">Cut vs Predicted</div>
+                        <div className={`font-bold text-base flex items-center gap-1 ${
+                          pred.diff > 0 ? 'text-green-600 dark:text-green-400' :
+                          pred.diff < 0 ? 'text-destructive' : 'text-foreground'
+                        }`}>
+                          {pred.diff > 0 ? <TrendingUp className="h-3 w-3" /> :
+                           pred.diff < 0 ? <TrendingDown className="h-3 w-3" /> :
+                           <Minus className="h-3 w-3" />}
+                          {pred.diff > 0 ? '+' : ''}{pred.diff}
+                        </div>
+                        <div className="text-muted-foreground mt-0.5">
+                          {pred.diff > 0 ? 'Extra cut' : pred.diff < 0 ? 'Short cut' : 'Exact match'}
+                        </div>
+                      </div>
+
+                      <div className="bg-amber-500/10 rounded p-2 text-xs">
+                        <div className="text-muted-foreground mb-0.5">Cut Wastage</div>
+                        <div className="font-bold text-amber-600 dark:text-amber-400 text-base">
+                          {pred.actualWastagePct.toFixed(1)}%
+                        </div>
+                        <div className="text-muted-foreground mt-0.5">
+                          {((style.totalWeightKg * 1000) - (pred.actualCut * (pred.isSet
+                            ? (analysis!.top_weight_grams! + analysis!.bottom_weight_grams!)
+                            : analysis!.actual_weight_grams!))).toFixed(0)}g waste
+                        </div>
                       </div>
                     </div>
 
-                    <div className="bg-primary/10 rounded p-2 text-xs">
-                      <div className="text-muted-foreground mb-0.5">Predicted Pieces</div>
-                      <div className="font-bold text-primary text-base">
-                        {pred.isSet ? pred.predictedSets : pred.predictedPieces}
+                    {/* Row 2: Confirmed Pieces Prediction */}
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mt-3">Confirmed Pieces Prediction</p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                      <div className="bg-muted/40 rounded p-2 text-xs">
+                        <div className="text-muted-foreground mb-0.5">Confirmed Pieces</div>
+                        <div className="font-bold text-base">{pred.confirmedPieces}</div>
+                        <div className="text-muted-foreground mt-0.5">
+                          of {pred.actualCut} cut
+                        </div>
                       </div>
-                      <div className="text-muted-foreground mt-0.5">
-                        ~{pred.isSet ? pred.effectivePerSet.toFixed(1) : pred.effectivePerPiece.toFixed(1)}g / {pred.isSet ? 'set' : 'pc'}
-                      </div>
-                    </div>
 
-                    <div className={`rounded p-2 text-xs ${pred.diff > 0 ? 'bg-green-500/10' : pred.diff < 0 ? 'bg-destructive/10' : 'bg-muted/40'}`}>
-                      <div className="text-muted-foreground mb-0.5">Actual vs Predicted</div>
-                      <div className={`font-bold text-base flex items-center gap-1 ${
-                        pred.diff > 0 ? 'text-green-600 dark:text-green-400' :
-                        pred.diff < 0 ? 'text-destructive' : 'text-foreground'
-                      }`}>
-                        {pred.diff > 0 ? <TrendingUp className="h-3 w-3" /> :
-                         pred.diff < 0 ? <TrendingDown className="h-3 w-3" /> :
-                         <Minus className="h-3 w-3" />}
-                        {pred.diff > 0 ? '+' : ''}{pred.diff}
+                      <div className="bg-primary/10 rounded p-2 text-xs">
+                        <div className="text-muted-foreground mb-0.5">Predicted Pieces</div>
+                        <div className="font-bold text-primary text-base">
+                          {pred.isSet ? pred.predictedSets : pred.predictedPieces}
+                        </div>
+                        <div className="text-muted-foreground mt-0.5">
+                          ~{pred.isSet ? pred.effectivePerSet.toFixed(1) : pred.effectivePerPiece.toFixed(1)}g / {pred.isSet ? 'set' : 'pc'}
+                        </div>
                       </div>
-                      <div className="text-muted-foreground mt-0.5">
-                        {pred.diff > 0 ? 'Extra cut' : pred.diff < 0 ? 'Short cut' : 'Exact match'}
-                      </div>
-                    </div>
 
-                    <div className="bg-amber-500/10 rounded p-2 text-xs">
-                      <div className="text-muted-foreground mb-0.5">Actual Wastage</div>
-                      <div className="font-bold text-amber-600 dark:text-amber-400 text-base">
-                        {pred.actualWastagePct.toFixed(1)}%
+                      <div className={`rounded p-2 text-xs ${pred.confirmedDiff > 0 ? 'bg-green-500/10' : pred.confirmedDiff < 0 ? 'bg-destructive/10' : 'bg-muted/40'}`}>
+                        <div className="text-muted-foreground mb-0.5">Confirmed vs Predicted</div>
+                        <div className={`font-bold text-base flex items-center gap-1 ${
+                          pred.confirmedDiff > 0 ? 'text-green-600 dark:text-green-400' :
+                          pred.confirmedDiff < 0 ? 'text-destructive' : 'text-foreground'
+                        }`}>
+                          {pred.confirmedDiff > 0 ? <TrendingUp className="h-3 w-3" /> :
+                           pred.confirmedDiff < 0 ? <TrendingDown className="h-3 w-3" /> :
+                           <Minus className="h-3 w-3" />}
+                          {pred.confirmedDiff > 0 ? '+' : ''}{pred.confirmedDiff}
+                        </div>
+                        <div className="text-muted-foreground mt-0.5">
+                          {pred.confirmedDiff > 0 ? 'Extra confirmed' : pred.confirmedDiff < 0 ? 'Short confirmed' : 'Exact match'}
+                        </div>
                       </div>
-                      <div className="text-muted-foreground mt-0.5">
-                        {((style.totalWeightKg * 1000) - (pred.actualCut * (pred.isSet
-                          ? (analysis!.top_weight_grams! + analysis!.bottom_weight_grams!)
-                          : analysis!.actual_weight_grams!))).toFixed(0)}g waste
+
+                      <div className="bg-amber-500/10 rounded p-2 text-xs">
+                        <div className="text-muted-foreground mb-0.5">Confirmed Wastage</div>
+                        <div className="font-bold text-amber-600 dark:text-amber-400 text-base">
+                          {pred.confirmedWastagePct.toFixed(1)}%
+                        </div>
+                        <div className="text-muted-foreground mt-0.5">
+                          {((style.totalWeightKg * 1000) - (pred.confirmedPieces * (pred.isSet
+                            ? (analysis!.top_weight_grams! + analysis!.bottom_weight_grams!)
+                            : analysis!.actual_weight_grams!))).toFixed(0)}g waste
+                        </div>
                       </div>
                     </div>
                   </div>
