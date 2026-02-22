@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
@@ -7,8 +8,9 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useStaffMembers } from '@/hooks/useStaff';
+import { supabase } from '@/integrations/supabase/client';
 import StaffForm from './StaffForm';
-import { UserPlus, Phone, Calendar, IndianRupee, Eye, Users, StickyNote } from 'lucide-react';
+import { UserPlus, Phone, Calendar, IndianRupee, Eye, Users, StickyNote, Wallet, TrendingUp } from 'lucide-react';
 import { format } from 'date-fns';
 
 const StaffManager = () => {
@@ -16,6 +18,29 @@ const StaffManager = () => {
   const { data: staffMembers, isLoading } = useStaffMembers();
   const [searchTerm, setSearchTerm] = useState('');
   const [showForm, setShowForm] = useState(false);
+
+  // Fetch all salary entries across all staff
+  const { data: allSalaryEntries } = useQuery({
+    queryKey: ['all-staff-salary-entries'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('staff_salary_entries')
+        .select('staff_id, amount, entry_date');
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const { overallTotalSalary, avgMonthlySalary } = useMemo(() => {
+    if (!allSalaryEntries || allSalaryEntries.length === 0) {
+      return { overallTotalSalary: 0, avgMonthlySalary: 0 };
+    }
+    const total = allSalaryEntries.reduce((sum, e) => sum + e.amount, 0);
+    // Get distinct months
+    const months = new Set(allSalaryEntries.map(e => e.entry_date.substring(0, 7)));
+    const avg = months.size > 0 ? total / months.size : 0;
+    return { overallTotalSalary: total, avgMonthlySalary: avg };
+  }, [allSalaryEntries]);
 
   const filtered = staffMembers?.filter((s) => {
     const name = s.employee?.name || '';
@@ -38,7 +63,7 @@ const StaffManager = () => {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <Card className="p-4 bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-primary/20">
@@ -80,6 +105,28 @@ const StaffManager = () => {
             <div>
               <p className="text-2xl font-bold text-purple-600">{staffMembers?.filter(s => s.salary_type === 'weekly').length || 0}</p>
               <p className="text-xs text-muted-foreground">Weekly</p>
+            </div>
+          </div>
+        </Card>
+        <Card className="p-4 bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 border-emerald-500/20">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-emerald-500/20">
+              <Wallet className="h-5 w-5 text-emerald-500" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-emerald-600">₹{overallTotalSalary.toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground">Overall Total Salary</p>
+            </div>
+          </div>
+        </Card>
+        <Card className="p-4 bg-gradient-to-br from-amber-500/10 to-amber-500/5 border-amber-500/20">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-amber-500/20">
+              <TrendingUp className="h-5 w-5 text-amber-500" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-amber-600">₹{Math.round(avgMonthlySalary).toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground">Avg Monthly Salary</p>
             </div>
           </div>
         </Card>
