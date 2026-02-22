@@ -24,6 +24,7 @@ import Production from './admin/Production';
 import JobOrders from './admin/JobOrders';
 import JobManagement from './admin/JobManagement';
 import EmployeeDetailsPage from './admin/EmployeeDetailsPage';
+import StaffDetailsPage from './admin/StaffDetailsPage';
 import Settings from './admin/Settings';
 import AddProduct from './admin/AddProduct';
 import ExternalJobOrders from './admin/external-jobs/ExternalJobOrders';
@@ -114,6 +115,7 @@ const Admin = () => {
               <Route path="/job-management/batch/:id/dashboard" element={<BatchDashboardPage />} />
               <Route path="/job-management/batch/:id/advances" element={<BatchAdvancesPage />} />
               <Route path="/job-management/employee/:id" element={<EmployeeDetailsPage />} />
+              <Route path="/job-management/staff/:id" element={<StaffDetailsPage />} />
               <Route path="/branches" element={<BranchesManager />} />
               <Route path="/expenses" element={<ExpensesManager />} />
               <Route path="/invoice" element={<InvoiceGenerator />} />

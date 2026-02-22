@@ -5675,6 +5675,123 @@ export type Database = {
         }
         Relationships: []
       }
+      staff_absences: {
+        Row: {
+          created_at: string
+          from_date: string
+          id: string
+          reason: string | null
+          staff_id: string
+          to_date: string
+        }
+        Insert: {
+          created_at?: string
+          from_date: string
+          id?: string
+          reason?: string | null
+          staff_id: string
+          to_date: string
+        }
+        Update: {
+          created_at?: string
+          from_date?: string
+          id?: string
+          reason?: string | null
+          staff_id?: string
+          to_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_absences_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      staff_members: {
+        Row: {
+          created_at: string
+          employee_id: string
+          id: string
+          is_active: boolean
+          joined_date: string | null
+          notes: string | null
+          salary_amount: number | null
+          salary_type: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          employee_id: string
+          id?: string
+          is_active?: boolean
+          joined_date?: string | null
+          notes?: string | null
+          salary_amount?: number | null
+          salary_type?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          employee_id?: string
+          id?: string
+          is_active?: boolean
+          joined_date?: string | null
+          notes?: string | null
+          salary_amount?: number | null
+          salary_type?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_members_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: true
+            referencedRelation: "job_employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      staff_salary_entries: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          entry_date: string
+          id: string
+          notes: string | null
+          staff_id: string
+        }
+        Insert: {
+          amount?: number
+          category?: string
+          created_at?: string
+          entry_date?: string
+          id?: string
+          notes?: string | null
+          staff_id: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          entry_date?: string
+          id?: string
+          notes?: string | null
+          staff_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_salary_entries_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_favorites: {
         Row: {
           created_at: string
