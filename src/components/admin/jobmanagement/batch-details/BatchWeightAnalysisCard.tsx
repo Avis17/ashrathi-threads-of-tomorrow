@@ -375,7 +375,7 @@ export const BatchWeightAnalysisCard = ({ batchId, styles }: BatchWeightAnalysis
                             Yield: {cutYieldPct.toFixed(1)}%
                           </Badge>
                         </p>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                           <div className="text-xs">
                             <div className="text-muted-foreground">Actually Cut</div>
                             <div className="font-bold text-base">{pred.actualCut}</div>
@@ -401,6 +401,21 @@ export const BatchWeightAnalysisCard = ({ batchId, styles }: BatchWeightAnalysis
                             <div className="text-muted-foreground">Fabric Wastage</div>
                             <div className="font-bold text-base text-amber-600 dark:text-amber-400">{pred.actualWastagePct.toFixed(1)}%</div>
                             <div className="text-muted-foreground">{(totalGrams - (pred.actualCut * rawWeight)).toFixed(0)}g</div>
+                          </div>
+                          <div className="text-xs">
+                            <div className="text-muted-foreground">Actual Wastage / pc</div>
+                            {pred.actualCut > 0 ? (() => {
+                              const actualPerPiece = totalGrams / pred.actualCut;
+                              const perPieceWastagePct = ((actualPerPiece - rawWeight) / rawWeight) * 100;
+                              return (
+                                <>
+                                  <div className="font-bold text-base text-orange-600 dark:text-orange-400">{perPieceWastagePct.toFixed(1)}%</div>
+                                  <div className="text-muted-foreground">{actualPerPiece.toFixed(1)}g / pc</div>
+                                </>
+                              );
+                            })() : (
+                              <div className="font-bold text-base text-muted-foreground">-</div>
+                            )}
                           </div>
                         </div>
                       </div>
