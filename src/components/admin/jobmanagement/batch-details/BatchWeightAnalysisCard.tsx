@@ -413,7 +413,7 @@ export const BatchWeightAnalysisCard = ({ batchId, styles }: BatchWeightAnalysis
                             Yield: {confirmedYieldPct.toFixed(1)}%
                           </Badge>
                         </p>
-                        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                        <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
                           <div className="text-xs">
                             <div className="text-muted-foreground">Confirmed</div>
                             <div className="font-bold text-base">{pred.confirmedPieces}</div>
@@ -444,6 +444,21 @@ export const BatchWeightAnalysisCard = ({ batchId, styles }: BatchWeightAnalysis
                             <div className="text-muted-foreground">Confirmed Wastage</div>
                             <div className="font-bold text-base text-amber-600 dark:text-amber-400">{pred.confirmedWastagePct.toFixed(1)}%</div>
                             <div className="text-muted-foreground">{(totalGrams - (pred.confirmedPieces * rawWeight)).toFixed(0)}g</div>
+                          </div>
+                          <div className="text-xs">
+                            <div className="text-muted-foreground">Actual Wastage / pc</div>
+                            {pred.confirmedPieces > 0 ? (() => {
+                              const actualPerPiece = totalGrams / pred.confirmedPieces;
+                              const perPieceWastagePct = ((actualPerPiece - rawWeight) / rawWeight) * 100;
+                              return (
+                                <>
+                                  <div className="font-bold text-base text-orange-600 dark:text-orange-400">{perPieceWastagePct.toFixed(1)}%</div>
+                                  <div className="text-muted-foreground">{actualPerPiece.toFixed(1)}g / pc</div>
+                                </>
+                              );
+                            })() : (
+                              <div className="font-bold text-base text-muted-foreground">-</div>
+                            )}
                           </div>
                         </div>
                       </div>
