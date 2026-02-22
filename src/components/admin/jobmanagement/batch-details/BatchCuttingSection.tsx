@@ -26,9 +26,11 @@ interface BatchCuttingSectionProps {
   rollsData: any[];
   cuttingLogs: CuttingLog[];
   cuttingSummary: Record<number, number>;
+  overallActualCutWastage?: number | null;
+  overallActualConfirmedWastage?: number | null;
 }
 
-export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSummary }: BatchCuttingSectionProps) => {
+export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSummary, overallActualCutWastage, overallActualConfirmedWastage }: BatchCuttingSectionProps) => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [showWastageForm, setShowWastageForm] = useState(false);
   const [selectedTypeIndex, setSelectedTypeIndex] = useState<string>('');
@@ -141,6 +143,8 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
         totalActualWeight={totalActualWeight}
         colorsWithActualWeight={colorsWithActualWeight}
         totalColors={rollsData.length}
+        overallActualCutWastage={overallActualCutWastage}
+        overallActualConfirmedWastage={overallActualConfirmedWastage}
       />
 
       {/* Pieces by Style */}

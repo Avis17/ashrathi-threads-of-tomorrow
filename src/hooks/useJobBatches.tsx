@@ -20,6 +20,7 @@ export const useJobBatches = () => {
         { data: jobWorks, error: jwError },
         { data: allStyles, error: styError },
         { data: typeConfirmed, error: tcError },
+        { data: weightAnalyses, error: waError },
       ] = await Promise.all([
         supabase.from('job_batches').select('*, job_styles(style_name, style_code)').order('date_created', { ascending: false }),
         supabase.from('batch_cutting_logs').select('batch_id, pieces_cut'),
@@ -30,7 +31,8 @@ export const useJobBatches = () => {
         supabase.from('job_batch_expenses').select('batch_id, amount'),
         supabase.from('batch_job_works').select('batch_id, total_amount, paid_amount'),
         supabase.from('job_styles').select('id, style_name, style_code'),
-        supabase.from('batch_type_confirmed' as any).select('batch_id, delivery_status, actual_delivery_date'),
+        supabase.from('batch_type_confirmed' as any).select('batch_id, type_index, confirmed_pieces, delivery_status, actual_delivery_date'),
+        supabase.from('batch_weight_analysis').select('batch_id, style_id, is_set_item, actual_weight_grams, top_weight_grams, bottom_weight_grams'),
       ]);
       if (error) throw error;
 
@@ -96,6 +98,18 @@ export const useJobBatches = () => {
         }
       });
 
+      // Weight analysis grouped by batch_id → style_id
+      const waMap: Record<string, Record<string, { is_set_item: boolean; actual_weight_grams: number | null; top_weight_grams: number | null; bottom_weight_grams: number | null }>> = {};
+      (weightAnalyses || []).forEach((wa: any) => {
+        if (!waMap[wa.batch_id]) waMap[wa.batch_id] = {};
+        waMap[wa.batch_id][wa.style_id] = {
+          is_set_item: wa.is_set_item,
+          actual_weight_grams: wa.actual_weight_grams,
+          top_weight_grams: wa.top_weight_grams,
+          bottom_weight_grams: wa.bottom_weight_grams,
+        };
+      });
+
       return (batches || []).map((b: any) => {
         // Extract unique styles from rolls_data
         const rollsData = (b.rolls_data || []) as any[];
@@ -150,6 +164,47 @@ export const useJobBatches = () => {
           };
         });
 
+        // Compute per-batch actual wastage / pc (cut and confirmed)
+        const batchWa = waMap[b.id] || {};
+        const styleFabric: Record<string, { totalWeightKg: number; totalCutPieces: number; totalConfirmedPieces: number }> = {};
+        const batchCutByStyle = cutByStyleMap[b.id] || {};
+        // Map confirmed pieces per type_index from typeConfirmed
+        const batchConfirmedByType: Record<number, number> = {};
+        (typeConfirmed as any[] || []).forEach((tc: any) => {
+          if (tc.batch_id === b.id) {
+            batchConfirmedByType[tc.type_index] = (batchConfirmedByType[tc.type_index] || 0) + (tc.confirmed_pieces || 0);
+          }
+        });
+        rollsData.forEach((r: any, idx: number) => {
+          const sid = r.style_id;
+          if (!sid) return;
+          if (!styleFabric[sid]) styleFabric[sid] = { totalWeightKg: 0, totalCutPieces: 0, totalConfirmedPieces: 0 };
+          styleFabric[sid].totalWeightKg += (Number(r.number_of_rolls) || 0) * (Number(r.weight) || 0);
+          styleFabric[sid].totalConfirmedPieces += batchConfirmedByType[idx] || 0;
+        });
+        Object.entries(batchCutByStyle).forEach(([sid, pieces]) => {
+          if (styleFabric[sid]) styleFabric[sid].totalCutPieces = pieces;
+        });
+        
+        let cutWSum = 0, cutWCount = 0, confWSum = 0, confWCount = 0;
+        Object.entries(styleFabric).forEach(([sid, info]) => {
+          const wa = batchWa[sid];
+          if (!wa) return;
+          const totalGrams = info.totalWeightKg * 1000;
+          const rawWeight = wa.is_set_item
+            ? (wa.top_weight_grams || 0) + (wa.bottom_weight_grams || 0)
+            : wa.actual_weight_grams || 0;
+          if (rawWeight <= 0 || totalGrams <= 0) return;
+          if (info.totalCutPieces > 0) {
+            cutWSum += ((totalGrams / info.totalCutPieces) - rawWeight) / rawWeight * 100;
+            cutWCount++;
+          }
+          if (info.totalConfirmedPieces > 0) {
+            confWSum += ((totalGrams / info.totalConfirmedPieces) - rawWeight) / rawWeight * 100;
+            confWCount++;
+          }
+        });
+
         return {
           ...b,
           total_cut_pieces: cutMap[b.id] || 0,
@@ -164,6 +219,8 @@ export const useJobBatches = () => {
           delivery_summary: deliveryMap[b.id] || null,
           estimated_delivery: estimatedDelivery,
           style_delivery_analysis: styleDeliveryAnalysis,
+          actual_cut_wastage_pct: cutWCount > 0 ? cutWSum / cutWCount : null,
+          actual_confirmed_wastage_pct: confWCount > 0 ? confWSum / confWCount : null,
         };
       });
     },

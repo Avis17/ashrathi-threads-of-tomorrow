@@ -9,6 +9,8 @@ interface CuttingStatsCardsProps {
   totalActualWeight: number;
   colorsWithActualWeight: number;
   totalColors: number;
+  overallActualCutWastage?: number | null;
+  overallActualConfirmedWastage?: number | null;
 }
 
 export const CuttingStatsCards = ({
@@ -18,6 +20,8 @@ export const CuttingStatsCards = ({
   totalActualWeight,
   colorsWithActualWeight,
   totalColors,
+  overallActualCutWastage,
+  overallActualConfirmedWastage,
 }: CuttingStatsCardsProps) => {
   const goodPieces = totalCutPieces - totalWastagePieces;
   const accuracyRate = totalCutPieces > 0 ? ((goodPieces / totalCutPieces) * 100) : 100;
@@ -33,7 +37,7 @@ export const CuttingStatsCards = ({
   };
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
       <Card>
         <CardContent className="p-4">
           <div className="flex items-center gap-2 mb-2">
@@ -86,6 +90,36 @@ export const CuttingStatsCards = ({
           </div>
           <div className="text-xs text-muted-foreground">
             {totalFabricWeight.toFixed(2)} kg received
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <TrendingUp className="h-4 w-4 text-orange-600" />
+            <span className="text-xs text-muted-foreground font-medium">Actual Cut Wastage</span>
+          </div>
+          <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+            {overallActualCutWastage != null ? `${overallActualCutWastage.toFixed(1)}%` : 'N/A'}
+          </div>
+          <div className="text-xs text-muted-foreground">
+            Avg per piece (cut)
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <TrendingUp className="h-4 w-4 text-red-600" />
+            <span className="text-xs text-muted-foreground font-medium">Actual Confirmed Wastage</span>
+          </div>
+          <div className="text-2xl font-bold text-red-600 dark:text-red-400">
+            {overallActualConfirmedWastage != null ? `${overallActualConfirmedWastage.toFixed(1)}%` : 'N/A'}
+          </div>
+          <div className="text-xs text-muted-foreground">
+            Avg per piece (confirmed)
           </div>
         </CardContent>
       </Card>
