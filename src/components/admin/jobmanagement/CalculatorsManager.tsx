@@ -224,9 +224,83 @@ const UnitConverter = () => {
   );
 };
 
+// ─── Wastage by Fabric Weight ───
+const WastageByWeight = () => {
+  const [totalInputWeight, setTotalInputWeight] = useState('');
+  const [totalPieces, setTotalPieces] = useState('');
+  const [avgWeightPerPiece, setAvgWeightPerPiece] = useState('');
+
+  const inputGrams = parseFloat(totalInputWeight) || 0;
+  const pieces = parseFloat(totalPieces) || 0;
+  const avgWeight = parseFloat(avgWeightPerPiece) || 0;
+
+  const totalGarmentWeight = avgWeight * pieces;
+  const wastageGrams = inputGrams - totalGarmentWeight;
+  const wastagePercent = inputGrams > 0 ? (wastageGrams / inputGrams) * 100 : 0;
+  const hasResult = inputGrams > 0 && pieces > 0 && avgWeight > 0;
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="space-y-2">
+          <Label>Total Input Fabric Weight (grams)</Label>
+          <Input
+            type="number"
+            placeholder="e.g. 10000"
+            value={totalInputWeight}
+            onChange={e => setTotalInputWeight(e.target.value)}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Total Pieces Marked / Produced</Label>
+          <Input
+            type="number"
+            placeholder="e.g. 60"
+            value={totalPieces}
+            onChange={e => setTotalPieces(e.target.value)}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Average Weight per Piece (grams)</Label>
+          <Input
+            type="number"
+            placeholder="e.g. 140"
+            value={avgWeightPerPiece}
+            onChange={e => setAvgWeightPerPiece(e.target.value)}
+          />
+        </div>
+      </div>
+
+      {hasResult && (
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mt-4">
+          <Card className="p-4 bg-gradient-to-br from-blue-500/10 to-blue-500/5 border-blue-500/20">
+            <p className="text-xs text-muted-foreground">Total Garment Weight</p>
+            <p className="text-2xl font-bold text-blue-600">{totalGarmentWeight.toLocaleString()} g</p>
+          </Card>
+          <Card className="p-4 bg-gradient-to-br from-orange-500/10 to-orange-500/5 border-orange-500/20">
+            <p className="text-xs text-muted-foreground">Wastage</p>
+            <p className="text-2xl font-bold text-orange-600">{wastageGrams.toLocaleString()} g</p>
+          </Card>
+          <Card className={`p-4 bg-gradient-to-br ${wastagePercent > 10 ? 'from-red-500/10 to-red-500/5 border-red-500/20' : 'from-green-500/10 to-green-500/5 border-green-500/20'}`}>
+            <p className="text-xs text-muted-foreground">Wastage %</p>
+            <p className={`text-2xl font-bold ${wastagePercent > 10 ? 'text-red-600' : 'text-green-600'}`}>
+              {wastagePercent.toFixed(2)}%
+            </p>
+          </Card>
+          <Card className="p-4 bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-purple-500/20">
+            <p className="text-xs text-muted-foreground">Wastage per Piece</p>
+            <p className="text-2xl font-bold text-purple-600">{pieces > 0 ? (wastageGrams / pieces).toFixed(2) : '0'} g</p>
+          </Card>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ─── Main ───
 const calculators = [
-  { id: 'wastage', title: 'Wastage Checker', description: 'Calculate fabric wastage per piece across styles', icon: Percent, component: WastageChecker },
+  { id: 'wastage', title: 'Wastage Checker (by Pieces)', description: 'Calculate fabric wastage per piece across styles', icon: Percent, component: WastageChecker },
+  { id: 'wastage-weight', title: 'Wastage Checker (by Fabric Weight)', description: 'Calculate wastage from total fabric input vs garment output', icon: Scale, component: WastageByWeight },
   { id: 'converter', title: 'Unit Converter', description: 'Convert between weight and length units', icon: ArrowRightLeft, component: UnitConverter },
 ];
 
