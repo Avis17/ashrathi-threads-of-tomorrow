@@ -332,115 +332,124 @@ export const BatchWeightAnalysisCard = ({ batchId, styles }: BatchWeightAnalysis
                   <span>Confirmed: <span className="font-medium text-foreground">{style.totalConfirmedPieces}</span></span>
                 </div>
 
-                {pred && (
-                  <div className="space-y-2">
-                    {/* Row 1: Cut Pieces Prediction */}
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Cut Pieces Prediction</p>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                      <div className="bg-muted/40 rounded p-2 text-xs">
-                        <div className="text-muted-foreground mb-0.5">{pred.isSet ? 'Avg Top + Bottom' : 'Avg Weight'}</div>
-                        {pred.isSet ? (
-                          <div className="font-semibold">{analysis!.top_weight_grams?.toFixed(1)}g + {analysis!.bottom_weight_grams?.toFixed(1)}g</div>
-                        ) : (
-                          <div className="font-semibold">{analysis!.actual_weight_grams?.toFixed(1)}g</div>
-                        )}
-                        <div className="text-muted-foreground mt-0.5">
-                          {pred.isSet
-                            ? `+${analysis!.top_wastage_percent ?? 0}% / +${analysis!.bottom_wastage_percent ?? 0}%`
-                            : `+${analysis!.wastage_percent ?? 0}% wastage`}
+                {pred && (() => {
+                  const predicted = pred.isSet ? pred.predictedSets : pred.predictedPieces;
+                  const effWeight = pred.isSet ? pred.effectivePerSet : pred.effectivePerPiece;
+                  const rawWeight = pred.isSet
+                    ? (analysis!.top_weight_grams! + analysis!.bottom_weight_grams!)
+                    : analysis!.actual_weight_grams!;
+                  const totalGrams = style.totalWeightKg * 1000;
+                  const cutToConfirmedLoss = pred.actualCut - pred.confirmedPieces;
+                  const cutYieldPct = predicted > 0 ? (pred.actualCut / predicted) * 100 : 0;
+                  const confirmedYieldPct = predicted > 0 ? (pred.confirmedPieces / predicted) * 100 : 0;
+                  const handoverPct = pred.actualCut > 0 ? (pred.confirmedPieces / pred.actualCut) * 100 : 0;
+
+                  return (
+                    <div className="space-y-3">
+                      {/* Predicted Base */}
+                      <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
+                        <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-2">📊 Predicted from Fabric</p>
+                        <div className="grid grid-cols-3 gap-3">
+                          <div className="text-xs">
+                            <div className="text-muted-foreground">Total Fabric</div>
+                            <div className="font-bold text-sm">{style.totalWeightKg.toFixed(2)} kg</div>
+                            <div className="text-muted-foreground">{totalGrams.toFixed(0)}g</div>
+                          </div>
+                          <div className="text-xs">
+                            <div className="text-muted-foreground">Eff. Weight / {pred.isSet ? 'set' : 'pc'}</div>
+                            <div className="font-bold text-sm">{effWeight.toFixed(1)}g</div>
+                            <div className="text-muted-foreground">{rawWeight.toFixed(1)}g + wastage</div>
+                          </div>
+                          <div className="text-xs">
+                            <div className="text-muted-foreground">Predicted {pred.isSet ? 'Sets' : 'Pieces'}</div>
+                            <div className="font-bold text-primary text-lg">{predicted}</div>
+                          </div>
                         </div>
                       </div>
 
-                      <div className="bg-primary/10 rounded p-2 text-xs">
-                        <div className="text-muted-foreground mb-0.5">Predicted Pieces</div>
-                        <div className="font-bold text-primary text-base">
-                          {pred.isSet ? pred.predictedSets : pred.predictedPieces}
-                        </div>
-                        <div className="text-muted-foreground mt-0.5">
-                          ~{pred.isSet ? pred.effectivePerSet.toFixed(1) : pred.effectivePerPiece.toFixed(1)}g / {pred.isSet ? 'set' : 'pc'}
+                      {/* Cut vs Predicted */}
+                      <div className={`border rounded-lg p-3 ${pred.diff >= 0 ? 'border-green-500/30 bg-green-500/5' : 'border-destructive/30 bg-destructive/5'}`}>
+                        <p className="text-xs font-semibold uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                          ✂️ Cut vs Predicted
+                          <Badge variant="outline" className="text-[10px] ml-auto font-normal">
+                            Yield: {cutYieldPct.toFixed(1)}%
+                          </Badge>
+                        </p>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                          <div className="text-xs">
+                            <div className="text-muted-foreground">Actually Cut</div>
+                            <div className="font-bold text-base">{pred.actualCut}</div>
+                          </div>
+                          <div className="text-xs">
+                            <div className="text-muted-foreground">Predicted</div>
+                            <div className="font-bold text-base text-primary">{predicted}</div>
+                          </div>
+                          <div className="text-xs">
+                            <div className="text-muted-foreground">Difference</div>
+                            <div className={`font-bold text-base flex items-center gap-1 ${
+                              pred.diff > 0 ? 'text-green-600 dark:text-green-400' :
+                              pred.diff < 0 ? 'text-destructive' : 'text-foreground'
+                            }`}>
+                              {pred.diff > 0 ? <TrendingUp className="h-3 w-3" /> :
+                               pred.diff < 0 ? <TrendingDown className="h-3 w-3" /> :
+                               <Minus className="h-3 w-3" />}
+                              {pred.diff > 0 ? '+' : ''}{pred.diff}
+                            </div>
+                            <div className="text-muted-foreground">{pred.diff > 0 ? 'Extra cut' : pred.diff < 0 ? 'Short' : 'Exact'}</div>
+                          </div>
+                          <div className="text-xs">
+                            <div className="text-muted-foreground">Fabric Wastage</div>
+                            <div className="font-bold text-base text-amber-600 dark:text-amber-400">{pred.actualWastagePct.toFixed(1)}%</div>
+                            <div className="text-muted-foreground">{(totalGrams - (pred.actualCut * rawWeight)).toFixed(0)}g</div>
+                          </div>
                         </div>
                       </div>
 
-                      <div className={`rounded p-2 text-xs ${pred.diff > 0 ? 'bg-green-500/10' : pred.diff < 0 ? 'bg-destructive/10' : 'bg-muted/40'}`}>
-                        <div className="text-muted-foreground mb-0.5">Cut vs Predicted</div>
-                        <div className={`font-bold text-base flex items-center gap-1 ${
-                          pred.diff > 0 ? 'text-green-600 dark:text-green-400' :
-                          pred.diff < 0 ? 'text-destructive' : 'text-foreground'
-                        }`}>
-                          {pred.diff > 0 ? <TrendingUp className="h-3 w-3" /> :
-                           pred.diff < 0 ? <TrendingDown className="h-3 w-3" /> :
-                           <Minus className="h-3 w-3" />}
-                          {pred.diff > 0 ? '+' : ''}{pred.diff}
-                        </div>
-                        <div className="text-muted-foreground mt-0.5">
-                          {pred.diff > 0 ? 'Extra cut' : pred.diff < 0 ? 'Short cut' : 'Exact match'}
-                        </div>
-                      </div>
-
-                      <div className="bg-amber-500/10 rounded p-2 text-xs">
-                        <div className="text-muted-foreground mb-0.5">Cut Wastage</div>
-                        <div className="font-bold text-amber-600 dark:text-amber-400 text-base">
-                          {pred.actualWastagePct.toFixed(1)}%
-                        </div>
-                        <div className="text-muted-foreground mt-0.5">
-                          {((style.totalWeightKg * 1000) - (pred.actualCut * (pred.isSet
-                            ? (analysis!.top_weight_grams! + analysis!.bottom_weight_grams!)
-                            : analysis!.actual_weight_grams!))).toFixed(0)}g waste
+                      {/* Confirmed vs Predicted */}
+                      <div className={`border rounded-lg p-3 ${pred.confirmedDiff >= 0 ? 'border-blue-500/30 bg-blue-500/5' : 'border-destructive/30 bg-destructive/5'}`}>
+                        <p className="text-xs font-semibold uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                          ✅ Confirmed vs Predicted <span className="text-muted-foreground font-normal">(Handover)</span>
+                          <Badge variant="outline" className="text-[10px] ml-auto font-normal">
+                            Yield: {confirmedYieldPct.toFixed(1)}%
+                          </Badge>
+                        </p>
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                          <div className="text-xs">
+                            <div className="text-muted-foreground">Confirmed</div>
+                            <div className="font-bold text-base">{pred.confirmedPieces}</div>
+                          </div>
+                          <div className="text-xs">
+                            <div className="text-muted-foreground">Predicted</div>
+                            <div className="font-bold text-base text-primary">{predicted}</div>
+                          </div>
+                          <div className="text-xs">
+                            <div className="text-muted-foreground">Difference</div>
+                            <div className={`font-bold text-base flex items-center gap-1 ${
+                              pred.confirmedDiff > 0 ? 'text-green-600 dark:text-green-400' :
+                              pred.confirmedDiff < 0 ? 'text-destructive' : 'text-foreground'
+                            }`}>
+                              {pred.confirmedDiff > 0 ? <TrendingUp className="h-3 w-3" /> :
+                               pred.confirmedDiff < 0 ? <TrendingDown className="h-3 w-3" /> :
+                               <Minus className="h-3 w-3" />}
+                              {pred.confirmedDiff > 0 ? '+' : ''}{pred.confirmedDiff}
+                            </div>
+                            <div className="text-muted-foreground">{pred.confirmedDiff >= 0 ? 'On track' : 'Short'}</div>
+                          </div>
+                          <div className="text-xs">
+                            <div className="text-muted-foreground">Cut → Confirmed Loss</div>
+                            <div className="font-bold text-base text-destructive">{cutToConfirmedLoss}</div>
+                            <div className="text-muted-foreground">Handover: {handoverPct.toFixed(1)}%</div>
+                          </div>
+                          <div className="text-xs">
+                            <div className="text-muted-foreground">Confirmed Wastage</div>
+                            <div className="font-bold text-base text-amber-600 dark:text-amber-400">{pred.confirmedWastagePct.toFixed(1)}%</div>
+                            <div className="text-muted-foreground">{(totalGrams - (pred.confirmedPieces * rawWeight)).toFixed(0)}g</div>
+                          </div>
                         </div>
                       </div>
                     </div>
-
-                    {/* Row 2: Confirmed Pieces Prediction */}
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mt-3">Confirmed Pieces Prediction</p>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                      <div className="bg-muted/40 rounded p-2 text-xs">
-                        <div className="text-muted-foreground mb-0.5">Confirmed Pieces</div>
-                        <div className="font-bold text-base">{pred.confirmedPieces}</div>
-                        <div className="text-muted-foreground mt-0.5">
-                          of {pred.actualCut} cut
-                        </div>
-                      </div>
-
-                      <div className="bg-primary/10 rounded p-2 text-xs">
-                        <div className="text-muted-foreground mb-0.5">Predicted Pieces</div>
-                        <div className="font-bold text-primary text-base">
-                          {pred.isSet ? pred.predictedSets : pred.predictedPieces}
-                        </div>
-                        <div className="text-muted-foreground mt-0.5">
-                          ~{pred.isSet ? pred.effectivePerSet.toFixed(1) : pred.effectivePerPiece.toFixed(1)}g / {pred.isSet ? 'set' : 'pc'}
-                        </div>
-                      </div>
-
-                      <div className={`rounded p-2 text-xs ${pred.confirmedDiff > 0 ? 'bg-green-500/10' : pred.confirmedDiff < 0 ? 'bg-destructive/10' : 'bg-muted/40'}`}>
-                        <div className="text-muted-foreground mb-0.5">Confirmed vs Predicted</div>
-                        <div className={`font-bold text-base flex items-center gap-1 ${
-                          pred.confirmedDiff > 0 ? 'text-green-600 dark:text-green-400' :
-                          pred.confirmedDiff < 0 ? 'text-destructive' : 'text-foreground'
-                        }`}>
-                          {pred.confirmedDiff > 0 ? <TrendingUp className="h-3 w-3" /> :
-                           pred.confirmedDiff < 0 ? <TrendingDown className="h-3 w-3" /> :
-                           <Minus className="h-3 w-3" />}
-                          {pred.confirmedDiff > 0 ? '+' : ''}{pred.confirmedDiff}
-                        </div>
-                        <div className="text-muted-foreground mt-0.5">
-                          {pred.confirmedDiff > 0 ? 'Extra confirmed' : pred.confirmedDiff < 0 ? 'Short confirmed' : 'Exact match'}
-                        </div>
-                      </div>
-
-                      <div className="bg-amber-500/10 rounded p-2 text-xs">
-                        <div className="text-muted-foreground mb-0.5">Confirmed Wastage</div>
-                        <div className="font-bold text-amber-600 dark:text-amber-400 text-base">
-                          {pred.confirmedWastagePct.toFixed(1)}%
-                        </div>
-                        <div className="text-muted-foreground mt-0.5">
-                          {((style.totalWeightKg * 1000) - (pred.confirmedPieces * (pred.isSet
-                            ? (analysis!.top_weight_grams! + analysis!.bottom_weight_grams!)
-                            : analysis!.actual_weight_grams!))).toFixed(0)}g waste
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
+                  );
+                })()}
 
                 {!analysis && (
                   <p className="text-xs text-muted-foreground italic">
