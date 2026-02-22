@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Package, Eye, Trash2, Scissors, IndianRupee, CreditCard, Briefcase, Receipt, Truck, CheckCircle2, Clock, AlertTriangle, TrendingUp, TrendingDown } from 'lucide-react';
+import { Plus, Search, Package, Eye, Trash2, Scissors, IndianRupee, CreditCard, Briefcase, Receipt, Truck, CheckCircle2, Clock, AlertTriangle, TrendingUp, TrendingDown, Scale } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -41,6 +41,12 @@ const BatchesManager = () => {
   // Compute overall stats
   const stats = useMemo(() => {
     if (!batches) return null;
+    // Compute overall actual wastage averages across all batches
+    let cutWSum = 0, cutWCount = 0, confWSum = 0, confWCount = 0;
+    batches.forEach((b: any) => {
+      if (b.actual_cut_wastage_pct != null) { cutWSum += b.actual_cut_wastage_pct; cutWCount++; }
+      if (b.actual_confirmed_wastage_pct != null) { confWSum += b.actual_confirmed_wastage_pct; confWCount++; }
+    });
     return {
       totalBatches: batches.length,
       totalPieces: batches.reduce((s: number, b: any) => s + (b.total_cut_pieces || 0), 0),
@@ -49,6 +55,8 @@ const BatchesManager = () => {
       totalAdvances: batches.reduce((s: number, b: any) => s + (b.total_advances || 0), 0),
       totalExpenses: batches.reduce((s: number, b: any) => s + (b.total_expenses || 0), 0),
       totalJobWork: batches.reduce((s: number, b: any) => s + (b.total_job_work || 0), 0),
+      overallActualCutWastage: cutWCount > 0 ? cutWSum / cutWCount : null,
+      overallActualConfirmedWastage: confWCount > 0 ? confWSum / confWCount : null,
     };
   }, [batches]);
 
@@ -208,7 +216,7 @@ const BatchesManager = () => {
     <div className="space-y-6">
       {/* Stats Cards */}
       {stats && !isLoading && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-9 gap-3">
           <Card className="p-3 space-y-1">
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <Package className="h-3.5 w-3.5" />
@@ -259,6 +267,26 @@ const BatchesManager = () => {
             <div className="text-xl font-bold text-destructive">
               ₹{fmt(stats.totalSalary + stats.totalExpenses + stats.totalJobWork)}
             </div>
+          </Card>
+          <Card className="p-3 space-y-1">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Scale className="h-3.5 w-3.5 text-orange-500" />
+              Avg Cut Wastage
+            </div>
+            <div className="text-xl font-bold text-orange-600 dark:text-orange-400">
+              {stats.overallActualCutWastage != null ? `${stats.overallActualCutWastage.toFixed(1)}%` : 'N/A'}
+            </div>
+            <div className="text-[10px] text-muted-foreground">Per piece (cut)</div>
+          </Card>
+          <Card className="p-3 space-y-1">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Scale className="h-3.5 w-3.5 text-red-500" />
+              Avg Confirmed Wastage
+            </div>
+            <div className="text-xl font-bold text-red-600 dark:text-red-400">
+              {stats.overallActualConfirmedWastage != null ? `${stats.overallActualConfirmedWastage.toFixed(1)}%` : 'N/A'}
+            </div>
+            <div className="text-[10px] text-muted-foreground">Per piece (confirmed)</div>
           </Card>
         </div>
       )}

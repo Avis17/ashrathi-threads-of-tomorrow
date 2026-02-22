@@ -41,6 +41,7 @@ import EditBatchDialog from '@/components/admin/jobmanagement/EditBatchDialog';
 import { GenerateInvoiceDialog } from '@/components/admin/jobmanagement/batch-details/GenerateInvoiceDialog';
 import { BatchPaymentSection } from '@/components/admin/jobmanagement/batch-details/BatchPaymentSection';
 import { BatchWeightAnalysisCard } from '@/components/admin/jobmanagement/batch-details/BatchWeightAnalysisCard';
+import { useBatchWeightAnalysis } from '@/hooks/useBatchWeightAnalysis';
 import { AddWorkerDialog } from '@/components/admin/jobmanagement/batch-details/AddWorkerDialog';
 import { CreateDCFromBatchDialog } from '@/components/admin/jobmanagement/batch-details/CreateDCFromBatchDialog';
 
@@ -71,6 +72,7 @@ const BatchDetailsPage = () => {
   const { data: operationProgress } = useBatchOperationProgress(id || '');
   const { data: typeConfirmedData } = useBatchTypeConfirmed(id || '');
   const confirmedMap = typeConfirmedData?.confirmedMap ?? {};
+  const { data: weightAnalyses = [] } = useBatchWeightAnalysis(id || '');
   const { data: allStyles = [] } = useQuery({
     queryKey: ['job-styles-all'],
     queryFn: async () => {
@@ -140,6 +142,45 @@ const BatchDetailsPage = () => {
     cuttingSummary[log.type_index] = (cuttingSummary[log.type_index] || 0) + log.pieces_cut;
   });
   const totalCutPieces = Object.values(cuttingSummary).reduce((sum, val) => sum + val, 0);
+
+  // Build style-wise fabric info for weight analysis
+  const styleMap: Record<string, { styleName: string; totalWeightKg: number; totalCutPieces: number; totalConfirmedPieces: number }> = {};
+  rollsData.forEach((r: any, idx: number) => {
+    const key = r.style_id || 'unknown';
+    const name = styleLookup[key] || r.style_name || `Style ${key.slice(0, 6)}`;
+    if (!styleMap[key]) styleMap[key] = { styleName: name, totalWeightKg: 0, totalCutPieces: 0, totalConfirmedPieces: 0 };
+    styleMap[key].totalWeightKg += (Number(r.number_of_rolls) || 0) * (Number(r.weight) || 0);
+    styleMap[key].totalCutPieces += cuttingSummary[idx] || 0;
+    styleMap[key].totalConfirmedPieces += confirmedMap[idx] || 0;
+  });
+  const styleList = Object.entries(styleMap).map(([styleId, info]) => ({ styleId, ...info }));
+
+  // Compute overall actual wastage per piece for cut and confirmed
+  const computeOverallWastage = () => {
+    let cutSum = 0, cutCount = 0, confSum = 0, confCount = 0;
+    Object.entries(styleMap).forEach(([styleId, info]) => {
+      const analysis = weightAnalyses.find(a => a.style_id === styleId);
+      if (!analysis) return;
+      const totalGrams = info.totalWeightKg * 1000;
+      const rawWeight = analysis.is_set_item
+        ? (analysis.top_weight_grams || 0) + (analysis.bottom_weight_grams || 0)
+        : analysis.actual_weight_grams || 0;
+      if (rawWeight <= 0 || totalGrams <= 0) return;
+      if (info.totalCutPieces > 0) {
+        cutSum += ((totalGrams / info.totalCutPieces) - rawWeight) / rawWeight * 100;
+        cutCount++;
+      }
+      if (info.totalConfirmedPieces > 0) {
+        confSum += ((totalGrams / info.totalConfirmedPieces) - rawWeight) / rawWeight * 100;
+        confCount++;
+      }
+    });
+    return {
+      cutWastage: cutCount > 0 ? cutSum / cutCount : null,
+      confirmedWastage: confCount > 0 ? confSum / confCount : null,
+    };
+  };
+  const { cutWastage: overallActualCutWastage, confirmedWastage: overallActualConfirmedWastage } = computeOverallWastage();
 
   // Calculate production progress from batch_operation_progress (non-cutting operations)
   const totalProductionPieces = (() => {
@@ -276,25 +317,10 @@ const BatchDetailsPage = () => {
       />
 
       {/* Weight Analysis Card */}
-      {(() => {
-        // Build style-wise fabric info
-        const styleMap: Record<string, { styleName: string; totalWeightKg: number; totalCutPieces: number; totalConfirmedPieces: number }> = {};
-        rollsData.forEach((r: any, idx: number) => {
-          const key = r.style_id || 'unknown';
-          const name = styleLookup[key] || r.style_name || `Style ${key.slice(0, 6)}`;
-          if (!styleMap[key]) styleMap[key] = { styleName: name, totalWeightKg: 0, totalCutPieces: 0, totalConfirmedPieces: 0 };
-          styleMap[key].totalWeightKg += (Number(r.number_of_rolls) || 0) * (Number(r.weight) || 0);
-          styleMap[key].totalCutPieces += cuttingSummary[idx] || 0;
-          styleMap[key].totalConfirmedPieces += confirmedMap[idx] || 0;
-        });
-        const styleList = Object.entries(styleMap).map(([styleId, info]) => ({ styleId, ...info }));
-        return (
-          <BatchWeightAnalysisCard
-            batchId={id || ''}
-            styles={styleList}
-          />
-        );
-      })()}
+      <BatchWeightAnalysisCard
+        batchId={id || ''}
+        styles={styleList}
+      />
 
       {/* Main Tabs */}
       <Tabs defaultValue="cutting" className="w-full">
@@ -339,6 +365,8 @@ const BatchDetailsPage = () => {
             rollsData={rollsData} 
             cuttingLogs={cuttingLogs || []} 
             cuttingSummary={cuttingSummary}
+            overallActualCutWastage={overallActualCutWastage}
+            overallActualConfirmedWastage={overallActualConfirmedWastage}
           />
         </TabsContent>
 
