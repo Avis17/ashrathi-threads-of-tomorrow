@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
-import { Stage, Layer, Rect, Text, Group, Line } from 'react-konva';
+import { Stage, Layer, Rect, Text, Group, Line, Path } from 'react-konva';
 import type { PieceDef } from '@/pages/admin/PatternMarker';
 
 interface MarkerCanvasProps {
@@ -175,26 +175,40 @@ const MarkerCanvas = ({
                 onDblClick={() => onPieceRotate(piece.id)}
                 onDblTap={() => onPieceRotate(piece.id)}
               >
-                <Rect
-                  width={displayW}
-                  height={displayH}
-                  fill={isColliding ? 'hsl(0,70%,80%)' : piece.color}
-                  stroke={isSelected ? 'hsl(210,80%,50%)' : isColliding ? 'hsl(0,70%,40%)' : 'hsl(0,0%,50%)'}
-                  strokeWidth={isSelected ? 3 : 1}
-                  cornerRadius={2}
-                  opacity={0.85}
-                  shadowColor="black"
-                  shadowBlur={isSelected ? 6 : 2}
-                  shadowOpacity={0.15}
-                />
-                {/* Grain line */}
-                <Line
-                  points={[displayW / 2, 4, displayW / 2, displayH - 4]}
-                  stroke="hsl(0,0%,30%)"
-                  strokeWidth={1}
-                  dash={[3, 3]}
-                  opacity={0.4}
-                />
+                {piece.svgPathData ? (
+                  <Path
+                    data={piece.svgPathData}
+                    fill={isColliding ? 'hsl(0,70%,80%)' : piece.color}
+                    stroke={isSelected ? 'hsl(210,80%,50%)' : isColliding ? 'hsl(0,70%,40%)' : 'hsl(0,0%,50%)'}
+                    strokeWidth={(isSelected ? 3 : 1) / (displayW / piece.widthInches)}
+                    opacity={0.85}
+                    scaleX={displayW / piece.widthInches}
+                    scaleY={displayH / piece.heightInches}
+                  />
+                ) : (
+                  <>
+                    <Rect
+                      width={displayW}
+                      height={displayH}
+                      fill={isColliding ? 'hsl(0,70%,80%)' : piece.color}
+                      stroke={isSelected ? 'hsl(210,80%,50%)' : isColliding ? 'hsl(0,70%,40%)' : 'hsl(0,0%,50%)'}
+                      strokeWidth={isSelected ? 3 : 1}
+                      cornerRadius={2}
+                      opacity={0.85}
+                      shadowColor="black"
+                      shadowBlur={isSelected ? 6 : 2}
+                      shadowOpacity={0.15}
+                    />
+                    {/* Grain line */}
+                    <Line
+                      points={[displayW / 2, 4, displayW / 2, displayH - 4]}
+                      stroke="hsl(0,0%,30%)"
+                      strokeWidth={1}
+                      dash={[3, 3]}
+                      opacity={0.4}
+                    />
+                  </>
+                )}
                 {/* Label */}
                 <Text
                   x={4}
