@@ -69,6 +69,7 @@ import JobWorkDetailPage from './admin/JobWorkDetailPage';
 import BatchDashboardPage from './admin/BatchDashboardPage';
 import BatchAdvancesPage from './admin/BatchAdvancesPage';
 import PreProductionPlanner from './admin/PreProductionPlanner';
+import PatternMarker from './admin/PatternMarker';
 const CompanyProfile = lazy(() => import('./admin/CompanyProfile'));
 
 const Admin = () => {
@@ -109,6 +110,7 @@ const Admin = () => {
               <Route path="/job-orders" element={<JobOrders />} />
               <Route path="/job-management" element={<JobManagement />} />
               <Route path="/pre-production" element={<PreProductionPlanner />} />
+              <Route path="/pattern-marker" element={<PatternMarker />} />
               <Route path="/job-management/style/:id" element={<StyleDetailsPage />} />
               <Route path="/job-management/batch/:id" element={<BatchDetailsPage />} />
               <Route path="/job-management/batch/:id/job-work/:jwId" element={<JobWorkDetailPage />} />
