@@ -1,0 +1,1 @@
+ALTER TABLE public.marker_piece_library ADD COLUMN IF NOT EXISTS folder_path TEXT DEFAULT '';
