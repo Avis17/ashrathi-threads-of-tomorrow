@@ -192,9 +192,57 @@ function translatePath(pathStr: string, dx: number, dy: number): string {
   return result;
 }
 
+/**
+ * Preprocess DXF content to remove extended data blocks that dxf-parser cannot handle.
+ * Strips 102 group code blocks (ACAD_REACTORS, ACAD_XDICTIONARY) and 1001+ xdata.
+ */
+function preprocessDxf(content: string): string {
+  const lines = content.split('\n');
+  const result: string[] = [];
+  let i = 0;
+  
+  while (i < lines.length) {
+    const trimmed = lines[i].trim();
+    
+    // Skip 102 { ... 102 } blocks (ACAD_REACTORS, ACAD_XDICTIONARY)
+    if (trimmed === '102') {
+      const nextLine = (i + 1 < lines.length) ? lines[i + 1].trim() : '';
+      if (nextLine.startsWith('{')) {
+        // Skip until matching 102 }
+        i += 2; // skip '102' and '{...'
+        while (i < lines.length) {
+          const t = lines[i].trim();
+          if (t === '102') {
+            const next = (i + 1 < lines.length) ? lines[i + 1].trim() : '';
+            if (next === '}') {
+              i += 2; // skip closing '102' and '}'
+              break;
+            }
+          }
+          i++;
+        }
+        continue;
+      }
+    }
+    
+    // Skip xdata groups (1001, 1002, 1000, 1070, 1040, 1071, 1010, 1020, 1030)
+    const groupCode = parseInt(trimmed, 10);
+    if (groupCode >= 1000 && groupCode <= 1071) {
+      i += 2; // skip group code + value
+      continue;
+    }
+    
+    result.push(lines[i]);
+    i++;
+  }
+  
+  return result.join('\n');
+}
+
 export function parseDxfToSvg(dxfContent: string, scaleInput: number = 1): DxfParseResult {
   const parser = new DxfParser();
-  const dxf = parser.parseSync(dxfContent);
+  const cleanedContent = preprocessDxf(dxfContent);
+  const dxf = parser.parseSync(cleanedContent);
   
   if (!dxf || !dxf.entities || dxf.entities.length === 0) {
     throw new Error('No entities found in DXF file. Please check the file format.');
