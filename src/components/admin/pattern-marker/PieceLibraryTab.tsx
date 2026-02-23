@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, Trash2, Plus, FileType, Eye } from 'lucide-react';
+import { Upload, Trash2, Plus, FileType, Eye, FolderOpen, ChevronRight, FolderPlus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { parseDxfToSvg, type DxfParseResult } from '@/utils/dxf-to-svg';
@@ -24,6 +24,7 @@ interface LibraryPiece {
   height_inches: number;
   svg_path_data: string;
   original_filename: string | null;
+  folder_path: string;
 }
 
 interface PieceLibraryTabProps {
@@ -35,6 +36,55 @@ const PIECE_COLORS = [
   'hsl(0, 70%, 75%)', 'hsl(270, 60%, 75%)', 'hsl(180, 50%, 70%)',
   'hsl(330, 60%, 75%)', 'hsl(60, 70%, 75%)',
 ];
+
+// Build a tree structure from folder paths
+interface FolderNode {
+  name: string;
+  path: string;
+  children: Record<string, FolderNode>;
+  pieceCount: number;
+}
+
+function buildFolderTree(pieces: LibraryPiece[]): FolderNode {
+  const root: FolderNode = { name: 'All Pieces', path: '', children: {}, pieceCount: pieces.length };
+
+  for (const piece of pieces) {
+    const folderPath = (piece.folder_path || '').trim();
+    if (!folderPath) continue;
+
+    const parts = folderPath.split('/').filter(Boolean);
+    let current = root;
+    let pathSoFar = '';
+
+    for (const part of parts) {
+      pathSoFar = pathSoFar ? `${pathSoFar}/${part}` : part;
+      if (!current.children[part]) {
+        current.children[part] = { name: part, path: pathSoFar, children: {}, pieceCount: 0 };
+      }
+      current.children[part].pieceCount++;
+      current = current.children[part];
+    }
+  }
+
+  return root;
+}
+
+function renderSvgPreview(svgPath: string, w: number, h: number, size: number = 100) {
+  const aspect = w / h;
+  const viewW = aspect >= 1 ? size : size * aspect;
+  const viewH = aspect >= 1 ? size / aspect : size;
+  return (
+    <svg width={viewW} height={viewH} viewBox={`0 0 ${w} ${h}`} className="border rounded bg-muted/30">
+      <path
+        d={svgPath}
+        fill="hsl(210, 70%, 85%)"
+        stroke="hsl(210, 70%, 40%)"
+        strokeWidth={Math.max(w, h) * 0.01}
+        fillOpacity={0.6}
+      />
+    </svg>
+  );
+}
 
 const PieceLibraryTab = ({ onAddToCanvas }: PieceLibraryTabProps) => {
   const { toast } = useToast();
@@ -51,10 +101,12 @@ const PieceLibraryTab = ({ onAddToCanvas }: PieceLibraryTabProps) => {
   const [dxfScale, setDxfScale] = useState(1);
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<DxfParseResult | null>(null);
+  const [folderPath, setFolderPath] = useState('');
 
   // Library state
   const [pieces, setPieces] = useState<LibraryPiece[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentFolder, setCurrentFolder] = useState('');
 
   useEffect(() => {
     loadLibrary();
@@ -64,12 +116,66 @@ const PieceLibraryTab = ({ onAddToCanvas }: PieceLibraryTabProps) => {
     setLoading(true);
     const { data, error } = await supabase
       .from('marker_piece_library')
-      .select('id, name, garment_type, size, set_type, grain_line, quantity_per_garment, width_inches, height_inches, svg_path_data, original_filename')
+      .select('id, name, garment_type, size, set_type, grain_line, quantity_per_garment, width_inches, height_inches, svg_path_data, original_filename, folder_path')
       .order('created_at', { ascending: false });
     if (data) setPieces(data as LibraryPiece[]);
     if (error) console.error('Load library error:', error);
     setLoading(false);
   };
+
+  const folderTree = useMemo(() => buildFolderTree(pieces), [pieces]);
+
+  // Pieces visible in the current folder
+  const filteredPieces = useMemo(() => {
+    if (!currentFolder) return pieces;
+    return pieces.filter((p) => {
+      const fp = (p.folder_path || '').trim();
+      return fp === currentFolder || fp.startsWith(currentFolder + '/');
+    });
+  }, [pieces, currentFolder]);
+
+  // Direct children pieces (exact folder match)
+  const directPieces = useMemo(() => {
+    return pieces.filter((p) => {
+      const fp = (p.folder_path || '').trim();
+      if (!currentFolder) return !fp; // root shows pieces with no folder
+      return fp === currentFolder;
+    });
+  }, [pieces, currentFolder]);
+
+  // Get child folders of current path
+  const childFolders = useMemo(() => {
+    const children: { name: string; path: string; count: number }[] = [];
+    const prefix = currentFolder ? currentFolder + '/' : '';
+
+    const seen = new Set<string>();
+    for (const piece of pieces) {
+      const fp = (piece.folder_path || '').trim();
+      if (!fp) continue;
+
+      if (currentFolder ? fp.startsWith(prefix) && fp !== currentFolder : true) {
+        const remaining = currentFolder ? fp.slice(prefix.length) : fp;
+        const nextPart = remaining.split('/')[0];
+        if (nextPart && !seen.has(nextPart)) {
+          seen.add(nextPart);
+          const childPath = prefix + nextPart;
+          const count = pieces.filter((pp) => {
+            const f = (pp.folder_path || '').trim();
+            return f === childPath || f.startsWith(childPath + '/');
+          }).length;
+          children.push({ name: nextPart, path: childPath, count });
+        }
+      }
+    }
+
+    return children.sort((a, b) => a.name.localeCompare(b.name));
+  }, [pieces, currentFolder]);
+
+  // Breadcrumb
+  const breadcrumb = useMemo(() => {
+    if (!currentFolder) return [];
+    return currentFolder.split('/').filter(Boolean);
+  }, [currentFolder]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -77,7 +183,6 @@ const PieceLibraryTab = ({ onAddToCanvas }: PieceLibraryTabProps) => {
     setFile(f);
     if (!pieceName) setPieceName(f.name.replace(/\.dxf$/i, ''));
 
-    // Parse preview
     try {
       const text = await f.text();
       const result = parseDxfToSvg(text, dxfScale);
@@ -88,7 +193,6 @@ const PieceLibraryTab = ({ onAddToCanvas }: PieceLibraryTabProps) => {
     }
   };
 
-  // Re-parse when scale changes
   const handleScaleChange = async (newScale: number) => {
     setDxfScale(newScale);
     if (file) {
@@ -107,12 +211,12 @@ const PieceLibraryTab = ({ onAddToCanvas }: PieceLibraryTabProps) => {
     }
     setUploading(true);
     try {
-      // Upload DXF to pp-assets bucket
       const filePath = `marker-pieces/${Date.now()}-${file.name}`;
       const { error: uploadErr } = await supabase.storage.from('pp-assets').upload(filePath, file);
       const dxfUrl = uploadErr ? null : supabase.storage.from('pp-assets').getPublicUrl(filePath).data.publicUrl;
 
-      // Insert into database
+      const cleanFolder = folderPath.trim().replace(/^\/+|\/+$/g, '').replace(/\/+/g, '/');
+
       const { error: dbErr } = await supabase.from('marker_piece_library').insert({
         name: pieceName.trim(),
         garment_type: garmentType,
@@ -125,13 +229,13 @@ const PieceLibraryTab = ({ onAddToCanvas }: PieceLibraryTabProps) => {
         svg_path_data: preview.svgPath,
         original_filename: file.name,
         dxf_file_url: dxfUrl,
+        folder_path: cleanFolder,
         created_by: user?.id || null,
       } as any);
 
       if (dbErr) throw dbErr;
 
       toast({ title: 'Piece saved to library!' });
-      // Reset form
       setFile(null);
       setPieceName('');
       setPreview(null);
@@ -162,28 +266,6 @@ const PieceLibraryTab = ({ onAddToCanvas }: PieceLibraryTabProps) => {
     toast({ title: `${piece.name} added to canvas` });
   };
 
-  const renderSvgPreview = (svgPath: string, w: number, h: number, size: number = 100) => {
-    const aspect = w / h;
-    const viewW = aspect >= 1 ? size : size * aspect;
-    const viewH = aspect >= 1 ? size / aspect : size;
-    return (
-      <svg
-        width={viewW}
-        height={viewH}
-        viewBox={`0 0 ${w} ${h}`}
-        className="border rounded bg-muted/30"
-      >
-        <path
-          d={svgPath}
-          fill="hsl(210, 70%, 85%)"
-          stroke="hsl(210, 70%, 40%)"
-          strokeWidth={Math.max(w, h) * 0.01}
-          fillOpacity={0.6}
-        />
-      </svg>
-    );
-  };
-
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       {/* Upload Form */}
@@ -196,30 +278,30 @@ const PieceLibraryTab = ({ onAddToCanvas }: PieceLibraryTabProps) => {
         <CardContent className="space-y-3">
           <div className="space-y-1">
             <Label className="text-xs">DXF File</Label>
+            <Input id="dxf-file-input" type="file" accept=".dxf" onChange={handleFileChange} />
+          </div>
+
+          {/* Folder Path */}
+          <div className="space-y-1">
+            <Label className="text-xs flex items-center gap-1">
+              <FolderPlus className="h-3 w-3" /> Folder Path
+            </Label>
             <Input
-              id="dxf-file-input"
-              type="file"
-              accept=".dxf"
-              onChange={handleFileChange}
+              placeholder="e.g. ladies/pyjama/set/lps-112"
+              value={folderPath}
+              onChange={(e) => setFolderPath(e.target.value)}
             />
+            <p className="text-[10px] text-muted-foreground">Use "/" to create nested folders</p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label className="text-xs">Piece Name</Label>
-              <Input
-                placeholder="e.g. Front Panel"
-                value={pieceName}
-                onChange={(e) => setPieceName(e.target.value)}
-              />
+              <Input placeholder="e.g. Front Panel" value={pieceName} onChange={(e) => setPieceName(e.target.value)} />
             </div>
             <div className="space-y-1">
               <Label className="text-xs">Size</Label>
-              <Input
-                placeholder="e.g. M, L, XL"
-                value={size}
-                onChange={(e) => setSize(e.target.value)}
-              />
+              <Input placeholder="e.g. M, L, XL" value={size} onChange={(e) => setSize(e.target.value)} />
             </div>
           </div>
 
@@ -264,22 +346,11 @@ const PieceLibraryTab = ({ onAddToCanvas }: PieceLibraryTabProps) => {
             </div>
             <div className="space-y-1">
               <Label className="text-xs">Qty / Garment</Label>
-              <Input
-                type="number"
-                min={1}
-                value={quantityPerGarment}
-                onChange={(e) => setQuantityPerGarment(+e.target.value || 1)}
-              />
+              <Input type="number" min={1} value={quantityPerGarment} onChange={(e) => setQuantityPerGarment(+e.target.value || 1)} />
             </div>
             <div className="space-y-1">
               <Label className="text-xs">DXF Scale (in/unit)</Label>
-              <Input
-                type="number"
-                step="0.01"
-                min={0.01}
-                value={dxfScale}
-                onChange={(e) => handleScaleChange(+e.target.value || 1)}
-              />
+              <Input type="number" step="0.01" min={0.01} value={dxfScale} onChange={(e) => handleScaleChange(+e.target.value || 1)} />
             </div>
           </div>
 
@@ -305,22 +376,68 @@ const PieceLibraryTab = ({ onAddToCanvas }: PieceLibraryTabProps) => {
         </CardContent>
       </Card>
 
-      {/* Library Grid */}
+      {/* Library Browser */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <FileType className="h-4 w-4" /> Piece Library
-            <Badge variant="secondary" className="ml-auto">{pieces.length} pieces</Badge>
+            <Badge variant="secondary" className="ml-auto">{pieces.length} total</Badge>
           </CardTitle>
         </CardHeader>
         <CardContent>
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-1 text-xs mb-3 flex-wrap">
+            <button
+              onClick={() => setCurrentFolder('')}
+              className={`hover:underline ${!currentFolder ? 'font-bold text-primary' : 'text-muted-foreground'}`}
+            >
+              📁 Root
+            </button>
+            {breadcrumb.map((part, i) => {
+              const path = breadcrumb.slice(0, i + 1).join('/');
+              const isLast = i === breadcrumb.length - 1;
+              return (
+                <span key={path} className="flex items-center gap-1">
+                  <ChevronRight className="h-3 w-3 text-muted-foreground" />
+                  <button
+                    onClick={() => setCurrentFolder(path)}
+                    className={`hover:underline ${isLast ? 'font-bold text-primary' : 'text-muted-foreground'}`}
+                  >
+                    {part}
+                  </button>
+                </span>
+              );
+            })}
+            {filteredPieces.length > 0 && (
+              <Badge variant="outline" className="ml-2 text-[10px]">{filteredPieces.length} pieces</Badge>
+            )}
+          </div>
+
           {loading ? (
             <p className="text-sm text-muted-foreground">Loading library...</p>
-          ) : pieces.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No pieces uploaded yet. Upload a DXF file to get started.</p>
           ) : (
-            <div className="space-y-2 max-h-[500px] overflow-y-auto">
-              {pieces.map((piece) => (
+            <div className="space-y-1 max-h-[500px] overflow-y-auto">
+              {/* Child folders */}
+              {childFolders.map((folder) => (
+                <button
+                  key={folder.path}
+                  onClick={() => setCurrentFolder(folder.path)}
+                  className="w-full flex items-center gap-2 p-2 border rounded-md hover:bg-muted/50 text-left"
+                >
+                  <FolderOpen className="h-4 w-4 text-amber-500 flex-shrink-0" />
+                  <span className="text-sm font-medium flex-1">{folder.name}</span>
+                  <Badge variant="secondary" className="text-[10px]">{folder.count}</Badge>
+                  <ChevronRight className="h-3 w-3 text-muted-foreground" />
+                </button>
+              ))}
+
+              {/* Pieces in current folder */}
+              {directPieces.length === 0 && childFolders.length === 0 && (
+                <p className="text-sm text-muted-foreground py-4 text-center">
+                  {pieces.length === 0 ? 'No pieces uploaded yet. Upload a DXF file to get started.' : 'No pieces in this folder.'}
+                </p>
+              )}
+              {directPieces.map((piece) => (
                 <div key={piece.id} className="flex items-center gap-3 p-2 border rounded-md">
                   <div className="flex-shrink-0">
                     {renderSvgPreview(piece.svg_path_data, Number(piece.width_inches), Number(piece.height_inches), 50)}

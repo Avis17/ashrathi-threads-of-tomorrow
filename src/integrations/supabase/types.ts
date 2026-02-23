@@ -4076,6 +4076,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           dxf_file_url: string | null
+          folder_path: string | null
           garment_type: string
           grain_line: string
           height_inches: number
@@ -4093,6 +4094,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           dxf_file_url?: string | null
+          folder_path?: string | null
           garment_type?: string
           grain_line?: string
           height_inches?: number
@@ -4110,6 +4112,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           dxf_file_url?: string | null
+          folder_path?: string | null
           garment_type?: string
           grain_line?: string
           height_inches?: number
