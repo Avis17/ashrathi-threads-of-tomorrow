@@ -24,7 +24,8 @@ import {
   FlaskConical,
   Ship,
   Scissors,
-  Layers
+  Layers,
+  PencilRuler
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import {
@@ -47,6 +48,7 @@ const menuItems = [
   { title: 'Quotation Generator', url: '/admin/quotation', icon: FileText },
   { title: 'CMT Quotation', url: '/admin/cmt-quotation', icon: Scissors },
   { title: 'Pre-Production Planner', url: '/admin/pre-production', icon: Layers },
+  { title: 'Pattern Marker', url: '/admin/pattern-marker', icon: PencilRuler },
   { title: 'Orders', url: '/admin/orders', icon: ClipboardList },
   { title: 'External Job Orders', url: '/admin/external-jobs', icon: Briefcase },
   { title: 'Delivery Challan', url: '/admin/delivery-challan', icon: Truck },
