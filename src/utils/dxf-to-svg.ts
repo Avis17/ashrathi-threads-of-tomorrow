@@ -200,9 +200,16 @@ export function parseDxfToSvg(dxfContent: string, scaleInput: number = 1): DxfPa
     throw new Error('No entities found in DXF file. Please check the file format.');
   }
 
-  // Convert entities to SVG path segments
+  // Filter out non-geometry entities (dimensions, text, points, etc.)
+  // and skip annotation layers like AM_5, Defpoints
+  const skipLayers = new Set(['am_5', 'defpoints', 'am_bor']);
+  const skipTypes = new Set(['DIMENSION', 'MTEXT', 'TEXT', 'POINT', 'INSERT', 'HATCH', 'VIEWPORT', 'ATTRIB', 'ATTDEF']);
+  
   const pathSegments: string[] = [];
   for (const entity of dxf.entities as DxfEntity[]) {
+    const layer = ((entity as any).layer || '').toLowerCase();
+    if (skipLayers.has(layer)) continue;
+    if (skipTypes.has(entity.type)) continue;
     const seg = entityToSvgPath(entity);
     if (seg) pathSegments.push(seg);
   }
