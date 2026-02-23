@@ -4071,6 +4071,60 @@ export type Database = {
         }
         Relationships: []
       }
+      marker_piece_library: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          dxf_file_url: string | null
+          garment_type: string
+          grain_line: string
+          height_inches: number
+          id: string
+          metadata: Json | null
+          name: string
+          original_filename: string | null
+          quantity_per_garment: number
+          set_type: string
+          size: string
+          svg_path_data: string
+          width_inches: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          dxf_file_url?: string | null
+          garment_type?: string
+          grain_line?: string
+          height_inches?: number
+          id?: string
+          metadata?: Json | null
+          name: string
+          original_filename?: string | null
+          quantity_per_garment?: number
+          set_type?: string
+          size?: string
+          svg_path_data: string
+          width_inches?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          dxf_file_url?: string | null
+          garment_type?: string
+          grain_line?: string
+          height_inches?: number
+          id?: string
+          metadata?: Json | null
+          name?: string
+          original_filename?: string | null
+          quantity_per_garment?: number
+          set_type?: string
+          size?: string
+          svg_path_data?: string
+          width_inches?: number
+        }
+        Relationships: []
+      }
       market_intel_shops: {
         Row: {
           address: string

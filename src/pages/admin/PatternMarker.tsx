@@ -8,8 +8,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Save, Upload, RotateCw, Trash2, Plus, Download, Ruler, BarChart3 } from 'lucide-react';
+import { Save, Upload, RotateCw, Trash2, Plus, Download, Ruler, BarChart3, FileType } from 'lucide-react';
 import MarkerCanvas from '@/components/admin/pattern-marker/MarkerCanvas';
+import PieceLibraryTab from '@/components/admin/pattern-marker/PieceLibraryTab';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -24,6 +25,8 @@ export interface PieceDef {
   y: number;
   rotation: number;
   color: string;
+  svgPathData?: string;
+  libraryPieceId?: string;
 }
 
 interface MeasurementRow {
@@ -168,6 +171,17 @@ const PatternMarker = () => {
     setPieces((prev) => prev.filter((p) => p.id !== id));
   };
 
+  const handleAddFromLibrary = (piece: Omit<PieceDef, 'id' | 'x' | 'y' | 'rotation'>) => {
+    const newPiece: PieceDef = {
+      ...piece,
+      id: `lib-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      x: fabricBuffer * SCALE + 20,
+      y: 20,
+      rotation: 0,
+    };
+    setPieces((prev) => [...prev, newPiece]);
+  };
+
   // Analytics calculations
   const totalPieceArea = pieces.reduce((sum, p) => sum + p.widthInches * p.heightInches, 0);
   const maxY = pieces.length > 0
@@ -309,6 +323,7 @@ const PatternMarker = () => {
           <TabsTrigger value="canvas">Canvas & Layout</TabsTrigger>
           <TabsTrigger value="measurements">Measurement Table</TabsTrigger>
           <TabsTrigger value="analytics">Analytics HUD</TabsTrigger>
+          <TabsTrigger value="library" className="gap-1"><FileType className="h-3 w-3" /> Piece Library</TabsTrigger>
           <TabsTrigger value="styles">Style Management</TabsTrigger>
         </TabsList>
 
@@ -512,6 +527,11 @@ const PatternMarker = () => {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        {/* Piece Library Tab */}
+        <TabsContent value="library">
+          <PieceLibraryTab onAddToCanvas={handleAddFromLibrary} />
         </TabsContent>
 
         {/* Style Management Tab */}
