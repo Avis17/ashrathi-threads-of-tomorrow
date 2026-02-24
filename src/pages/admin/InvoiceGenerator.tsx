@@ -678,7 +678,7 @@ export default function InvoiceGenerator() {
     const bankDetails = `Bank: ${invoiceSettings.bank_name || 'N/A'} | A/C No: ${accountNumber} | IFSC: ${invoiceSettings.bank_ifsc_code || 'N/A'} | Branch: ${invoiceSettings.bank_branch || 'N/A'}`;
     doc.text(bankDetails, 18, currentY + 13);
     
-    currentY += 20;
+    currentY += 50;
 
     // ========== DECLARATION & SIGNATURE ==========
     ensureSpace(20);
@@ -693,12 +693,12 @@ export default function InvoiceGenerator() {
     // Signature on the right, same row as declaration
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(7.5);
-    doc.text('Authorized Signatory', 160, currentY, { align: 'center' });
+    doc.text('Authorized Signatory', 180, currentY, { align: 'center' });
     try {
-      doc.addImage(signature, 'PNG', 145, currentY + 2, 32, 12);
+      doc.addImage(signature, 'PNG', 165, currentY + 2, 32, 12);
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(6);
-      doc.text('(Company Seal)', 160, currentY + 15, { align: 'center' });
+      // doc.text('(Company Seal)', 160, currentY + 15, { align: 'center' });
     } catch (error) {
       console.error('Failed to add signature:', error);
       doc.setFont('helvetica', 'normal');
