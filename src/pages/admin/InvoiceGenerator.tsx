@@ -445,7 +445,8 @@ export default function InvoiceGenerator() {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7);
     doc.text(selectedCustomer.company_name, 18, currentY + 9);
-    doc.text(`${selectedCustomer.email} | ${selectedCustomer.phone}`, 18, currentY + 13);
+    const contactParts = [selectedCustomer.email, selectedCustomer.phone].filter(Boolean);
+    doc.text(contactParts.join(' | '), 18, currentY + 13);
     if (selectedCustomer.gst_number) {
       doc.text(`GST: ${selectedCustomer.gst_number}`, 18, currentY + 17);
     }
@@ -676,10 +677,10 @@ export default function InvoiceGenerator() {
     const bankDetails = `Bank: ${invoiceSettings.bank_name || 'N/A'} | A/C No: ${accountNumber} | IFSC: ${invoiceSettings.bank_ifsc_code || 'N/A'} | Branch: ${invoiceSettings.bank_branch || 'N/A'}`;
     doc.text(bankDetails, 18, currentY + 13);
     
-    currentY += 17;
+    currentY += 20;
 
-    // ========== DECLARATION ==========
-    ensureSpace(10);
+    // ========== DECLARATION & SIGNATURE ==========
+    ensureSpace(20);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(7.5);
     doc.text('Declaration:', 15, currentY);
