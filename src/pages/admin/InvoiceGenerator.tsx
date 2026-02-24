@@ -102,15 +102,38 @@ export default function InvoiceGenerator() {
   }, []);
 
   const { data: customers } = useQuery({
-    queryKey: ['customers'],
+    queryKey: ['customers-with-job-workers'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('customers')
-        .select('*')
-        .eq('is_active', true)
-        .order('company_name');
-      if (error) throw error;
-      return data;
+      const [custRes, jwRes] = await Promise.all([
+        supabase.from('customers').select('*').eq('is_active', true).order('company_name'),
+        supabase.from('job_workers').select('*').eq('is_active', true).order('name'),
+      ]);
+      if (custRes.error) throw custRes.error;
+      if (jwRes.error) throw jwRes.error;
+
+      const existingNames = new Set(custRes.data.map(c => c.company_name.toLowerCase()));
+      const jobWorkerCustomers = (jwRes.data || [])
+        .filter(jw => !existingNames.has(jw.name.toLowerCase()))
+        .map(jw => ({
+          id: `jw-${jw.id}`,
+          company_name: jw.name,
+          address_1: jw.address || '',
+          address_2: null,
+          city: '',
+          state: '',
+          pincode: '',
+          country: 'India',
+          email: jw.email || '',
+          phone: jw.phone || '',
+          alt_phone: null,
+          gst_number: jw.gstin || null,
+          is_active: true,
+          created_at: jw.created_at,
+        }));
+
+      return [...custRes.data, ...jobWorkerCustomers].sort((a, b) =>
+        a.company_name.localeCompare(b.company_name)
+      );
     },
   });
 
