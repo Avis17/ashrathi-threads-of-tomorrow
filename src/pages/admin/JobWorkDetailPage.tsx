@@ -511,6 +511,8 @@ const JobWorkDetailPage = () => {
 // Payment Section Component
 const PaymentSection = ({ jobWork, jwId, queryClient }: { jobWork: BatchJobWork; jwId: string; queryClient: any }) => {
   const [showForm, setShowForm] = useState(false);
+  const [paymentType, setPaymentType] = useState<'advance' | 'payment'>('payment');
+  const [amount, setAmount] = useState(0);
   const [adjustment, setAdjustment] = useState(0);
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
@@ -532,8 +534,12 @@ const PaymentSection = ({ jobWork, jwId, queryClient }: { jobWork: BatchJobWork;
     enabled: !!jwId,
   });
 
-  const calculatedAmount = jobWork.balance_amount;
-  const finalAmount = calculatedAmount + adjustment;
+  const advances = payments.filter(p => (p as any).payment_type === 'advance');
+  const unsettledAdvances = advances.filter(p => !(p as any).is_settled);
+  const totalAdvances = advances.reduce((s, p) => s + p.payment_amount, 0);
+  const unsettledAdvanceTotal = unsettledAdvances.reduce((s, p) => s + p.payment_amount, 0);
+
+  const calculatedBalance = jobWork.balance_amount;
 
   const invalidateAll = () => {
     refetchPayments();
@@ -541,28 +547,43 @@ const PaymentSection = ({ jobWork, jwId, queryClient }: { jobWork: BatchJobWork;
     queryClient.invalidateQueries({ queryKey: ['batch-job-works'] });
   };
 
+  const openForm = (type: 'advance' | 'payment') => {
+    setPaymentType(type);
+    setAmount(type === 'advance' ? 0 : calculatedBalance);
+    setAdjustment(0);
+    setNotes('');
+    setShowForm(true);
+  };
+
   const handleRecordPayment = async () => {
+    const finalAmount = paymentType === 'advance' ? amount : (calculatedBalance + adjustment);
     if (finalAmount <= 0) {
-      toast.error('Payment amount must be greater than 0');
+      toast.error('Amount must be greater than 0');
       return;
     }
     setSaving(true);
     try {
       const { error } = await supabase.from('job_work_payments').insert({
         job_work_id: jwId,
-        calculated_amount: calculatedAmount,
-        adjustment,
+        calculated_amount: paymentType === 'advance' ? 0 : calculatedBalance,
+        adjustment: paymentType === 'advance' ? 0 : adjustment,
         payment_amount: finalAmount,
+        payment_type: paymentType,
         notes: notes || null,
-      });
+      } as any);
       if (error) throw error;
+
+      // If this is a settlement payment, mark all unsettled advances as settled
+      if (paymentType === 'payment' && unsettledAdvances.length > 0) {
+        const ids = unsettledAdvances.map(a => a.id);
+        await supabase.from('job_work_payments').update({ is_settled: true } as any).in('id', ids);
+      }
+
       invalidateAll();
-      toast.success(`Payment of ₹${finalAmount.toFixed(2)} recorded`);
+      toast.success(`${paymentType === 'advance' ? 'Advance' : 'Payment'} of ₹${finalAmount.toFixed(2)} recorded`);
       setShowForm(false);
-      setAdjustment(0);
-      setNotes('');
     } catch (e: any) {
-      toast.error(e.message || 'Failed to record payment');
+      toast.error(e.message || 'Failed to record');
     } finally {
       setSaving(false);
     }
@@ -589,7 +610,7 @@ const PaymentSection = ({ jobWork, jwId, queryClient }: { jobWork: BatchJobWork;
     if (!editingPayment || editAmount <= 0) return;
     setSaving(true);
     try {
-      const newAdjustment = editAmount - editingPayment.calculated_amount;
+      const newAdjustment = editingPayment.payment_type === 'advance' ? 0 : editAmount - editingPayment.calculated_amount;
       const { error } = await supabase.from('job_work_payments').update({
         payment_amount: editAmount,
         adjustment: newAdjustment,
@@ -606,24 +627,50 @@ const PaymentSection = ({ jobWork, jwId, queryClient }: { jobWork: BatchJobWork;
     }
   };
 
+  const handleSettleAdvance = async (advanceId: string) => {
+    try {
+      const { error } = await supabase.from('job_work_payments').update({ is_settled: true } as any).eq('id', advanceId);
+      if (error) throw error;
+      invalidateAll();
+      toast.success('Advance marked as settled');
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to settle advance');
+    }
+  };
+
+  const settlementPaymentAmount = calculatedBalance + adjustment;
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-base">Payments</CardTitle>
+        <CardTitle className="text-base">Payments & Advances</CardTitle>
         {!showForm && (
-          <Button size="sm" onClick={() => setShowForm(true)} disabled={jobWork.balance_amount <= 0}>
-            <CreditCard className="h-4 w-4 mr-1" /> Record Payment
-          </Button>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" onClick={() => openForm('advance')}>
+              <Plus className="h-4 w-4 mr-1" /> Record Advance
+            </Button>
+            <Button size="sm" onClick={() => openForm('payment')} disabled={jobWork.balance_amount <= 0}>
+              <CreditCard className="h-4 w-4 mr-1" /> Record Payment
+            </Button>
+          </div>
         )}
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-3 gap-4">
+        {/* Summary */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="p-3 rounded-lg bg-muted/50">
             <p className="text-xs text-muted-foreground">Total Amount</p>
             <p className="text-lg font-bold">₹{jobWork.total_amount.toFixed(2)}</p>
           </div>
+          <div className="p-3 rounded-lg bg-amber-500/10">
+            <p className="text-xs text-muted-foreground">Advances Given</p>
+            <p className="text-lg font-bold text-amber-600">₹{totalAdvances.toFixed(2)}</p>
+            {unsettledAdvanceTotal > 0 && (
+              <p className="text-xs text-amber-600">₹{unsettledAdvanceTotal.toFixed(2)} unsettled</p>
+            )}
+          </div>
           <div className="p-3 rounded-lg bg-green-500/10">
-            <p className="text-xs text-muted-foreground">Paid</p>
+            <p className="text-xs text-muted-foreground">Paid (Total)</p>
             <p className="text-lg font-bold text-green-600">₹{jobWork.paid_amount.toFixed(2)}</p>
           </div>
           <div className="p-3 rounded-lg bg-orange-500/10">
@@ -632,38 +679,89 @@ const PaymentSection = ({ jobWork, jwId, queryClient }: { jobWork: BatchJobWork;
           </div>
         </div>
 
+        {/* Unsettled Advances Alert */}
+        {unsettledAdvances.length > 0 && (
+          <div className="border border-amber-300 bg-amber-50 dark:bg-amber-500/10 rounded-lg p-3">
+            <p className="text-sm font-medium text-amber-800 dark:text-amber-400 mb-2">
+              {unsettledAdvances.length} Unsettled Advance{unsettledAdvances.length > 1 ? 's' : ''} — ₹{unsettledAdvanceTotal.toFixed(2)}
+            </p>
+            <div className="space-y-1">
+              {unsettledAdvances.map(adv => (
+                <div key={adv.id} className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">
+                    {format(new Date(adv.created_at), 'dd MMM yyyy')} — ₹{adv.payment_amount.toFixed(2)}
+                    {adv.notes && <span className="ml-2 text-xs">({adv.notes})</span>}
+                  </span>
+                  <Button variant="ghost" size="sm" className="h-6 text-xs text-amber-700" onClick={() => handleSettleAdvance(adv.id)}>
+                    Mark Settled
+                  </Button>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              Advances will be auto-settled when you record a final payment.
+            </p>
+          </div>
+        )}
+
+        {/* Record Form */}
         {showForm && (
           <div className="border rounded-lg p-4 space-y-4">
-            <div className="grid grid-cols-3 gap-4">
+            <div className="flex items-center gap-2 mb-1">
+              <Badge variant={paymentType === 'advance' ? 'secondary' : 'default'}>
+                {paymentType === 'advance' ? '🔸 Advance' : '💰 Settlement Payment'}
+              </Badge>
+            </div>
+
+            {paymentType === 'advance' ? (
               <div>
-                <Label className="text-xs text-muted-foreground">Calculated Amount</Label>
-                <div className="text-xl font-bold mt-1">₹{calculatedAmount.toFixed(2)}</div>
-              </div>
-              <div>
-                <Label className="text-xs">Adjustment (+/-)</Label>
+                <Label className="text-xs">Advance Amount</Label>
                 <Input
                   type="number"
                   step="0.01"
-                  value={adjustment}
-                  onChange={e => setAdjustment(parseFloat(e.target.value) || 0)}
-                  placeholder="0.00"
+                  value={amount}
+                  onChange={e => setAmount(parseFloat(e.target.value) || 0)}
+                  placeholder="Enter advance amount"
                 />
               </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Final Payment</Label>
-                <div className={`text-xl font-bold mt-1 ${finalAmount > 0 ? 'text-green-600' : 'text-destructive'}`}>
-                  ₹{finalAmount.toFixed(2)}
+            ) : (
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Label className="text-xs text-muted-foreground">Balance Due</Label>
+                  <div className="text-xl font-bold mt-1">₹{calculatedBalance.toFixed(2)}</div>
+                  {unsettledAdvanceTotal > 0 && (
+                    <p className="text-xs text-amber-600 mt-1">
+                      Includes ₹{unsettledAdvanceTotal.toFixed(2)} in advances (already paid)
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <Label className="text-xs">Adjustment (+/-)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={adjustment}
+                    onChange={e => setAdjustment(parseFloat(e.target.value) || 0)}
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Final Payment</Label>
+                  <div className={`text-xl font-bold mt-1 ${settlementPaymentAmount > 0 ? 'text-green-600' : 'text-destructive'}`}>
+                    ₹{settlementPaymentAmount.toFixed(2)}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
+
             <div>
               <Label className="text-xs">Notes (optional)</Label>
-              <Input value={notes} onChange={e => setNotes(e.target.value)} placeholder="Payment notes..." />
+              <Input value={notes} onChange={e => setNotes(e.target.value)} placeholder={paymentType === 'advance' ? 'Advance purpose...' : 'Payment notes...'} />
             </div>
             <div className="flex justify-end gap-2">
-              <Button variant="outline" size="sm" onClick={() => { setShowForm(false); setAdjustment(0); }}>Cancel</Button>
-              <Button size="sm" onClick={handleRecordPayment} disabled={saving || finalAmount <= 0}>
-                {saving ? 'Recording...' : `Record ₹${finalAmount.toFixed(2)}`}
+              <Button variant="outline" size="sm" onClick={() => setShowForm(false)}>Cancel</Button>
+              <Button size="sm" onClick={handleRecordPayment} disabled={saving || (paymentType === 'advance' ? amount <= 0 : settlementPaymentAmount <= 0)}>
+                {saving ? 'Recording...' : paymentType === 'advance' ? `Record Advance ₹${amount.toFixed(2)}` : `Record ₹${settlementPaymentAmount.toFixed(2)}`}
               </Button>
             </div>
           </div>
@@ -677,72 +775,74 @@ const PaymentSection = ({ jobWork, jwId, queryClient }: { jobWork: BatchJobWork;
               <TableHeader>
                 <TableRow>
                   <TableHead>Date</TableHead>
-                  <TableHead className="text-right">Calculated</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
                   <TableHead className="text-right">Adjustment</TableHead>
-                  <TableHead className="text-right">Amount Paid</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead>Notes</TableHead>
                   <TableHead className="w-[80px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {payments.map(p => (
-                  <TableRow key={p.id}>
-                    {editingPayment?.id === p.id ? (
-                      <>
-                        <TableCell>{format(new Date(p.created_at), 'dd MMM yyyy')}</TableCell>
-                        <TableCell className="text-right">₹{p.calculated_amount.toFixed(2)}</TableCell>
-                        <TableCell className="text-right text-muted-foreground">—</TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={editAmount}
-                            onChange={e => setEditAmount(parseFloat(e.target.value) || 0)}
-                            className="h-8 w-24 text-right text-sm"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            value={editNotes}
-                            onChange={e => setEditNotes(e.target.value)}
-                            className="h-8 text-sm"
-                            placeholder="Notes"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-1">
-                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={handleUpdatePayment} disabled={saving}>
-                              <Save className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditingPayment(null)}>
-                              <ArrowLeft className="h-3.5 w-3.5" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </>
-                    ) : (
-                      <>
-                        <TableCell className="text-sm">{format(new Date(p.created_at), 'dd MMM yyyy')}</TableCell>
-                        <TableCell className="text-right text-sm">₹{p.calculated_amount.toFixed(2)}</TableCell>
-                        <TableCell className="text-right text-sm text-muted-foreground">
-                          {p.adjustment !== 0 ? `${p.adjustment > 0 ? '+' : ''}₹${p.adjustment.toFixed(2)}` : '—'}
-                        </TableCell>
-                        <TableCell className="text-right text-sm font-semibold">₹{p.payment_amount.toFixed(2)}</TableCell>
-                        <TableCell className="text-sm text-muted-foreground">{p.notes || '—'}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-1">
-                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => startEditPayment(p)}>
-                              <Pencil className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => handleDeletePayment(p.id)}>
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </>
-                    )}
-                  </TableRow>
-                ))}
+                {payments.map(p => {
+                  const pType = (p as any).payment_type || 'payment';
+                  const isSettled = (p as any).is_settled;
+                  return (
+                    <TableRow key={p.id} className={pType === 'advance' ? 'bg-amber-500/5' : ''}>
+                      {editingPayment?.id === p.id ? (
+                        <>
+                          <TableCell>{format(new Date(p.created_at), 'dd MMM yyyy')}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className={pType === 'advance' ? 'border-amber-400 text-amber-700' : ''}>
+                              {pType === 'advance' ? 'Advance' : 'Payment'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Input type="number" step="0.01" value={editAmount} onChange={e => setEditAmount(parseFloat(e.target.value) || 0)} className="h-8 w-24 text-right text-sm" />
+                          </TableCell>
+                          <TableCell className="text-right text-muted-foreground">—</TableCell>
+                          <TableCell>—</TableCell>
+                          <TableCell>
+                            <Input value={editNotes} onChange={e => setEditNotes(e.target.value)} className="h-8 text-sm" placeholder="Notes" />
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-1">
+                              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={handleUpdatePayment} disabled={saving}><Save className="h-3.5 w-3.5" /></Button>
+                              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditingPayment(null)}><ArrowLeft className="h-3.5 w-3.5" /></Button>
+                            </div>
+                          </TableCell>
+                        </>
+                      ) : (
+                        <>
+                          <TableCell className="text-sm">{format(new Date(p.created_at), 'dd MMM yyyy')}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className={pType === 'advance' ? 'border-amber-400 text-amber-700' : 'border-green-400 text-green-700'}>
+                              {pType === 'advance' ? 'Advance' : 'Payment'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right text-sm font-semibold">₹{p.payment_amount.toFixed(2)}</TableCell>
+                          <TableCell className="text-right text-sm text-muted-foreground">
+                            {p.adjustment !== 0 ? `${p.adjustment > 0 ? '+' : ''}₹${p.adjustment.toFixed(2)}` : '—'}
+                          </TableCell>
+                          <TableCell>
+                            {pType === 'advance' ? (
+                              <Badge variant="outline" className={isSettled ? 'border-green-400 text-green-700' : 'border-amber-400 text-amber-700'}>
+                                {isSettled ? '✓ Settled' : 'Unsettled'}
+                              </Badge>
+                            ) : '—'}
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">{p.notes || '—'}</TableCell>
+                          <TableCell>
+                            <div className="flex gap-1">
+                              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => startEditPayment(p)}><Pencil className="h-3.5 w-3.5" /></Button>
+                              <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => handleDeletePayment(p.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                            </div>
+                          </TableCell>
+                        </>
+                      )}
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>

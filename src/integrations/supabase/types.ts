@@ -3961,30 +3961,36 @@ export type Database = {
           calculated_amount: number
           created_at: string
           id: string
+          is_settled: boolean
           job_work_id: string
           notes: string | null
           payment_amount: number
           payment_date: string
+          payment_type: string
         }
         Insert: {
           adjustment?: number
           calculated_amount?: number
           created_at?: string
           id?: string
+          is_settled?: boolean
           job_work_id: string
           notes?: string | null
           payment_amount?: number
           payment_date?: string
+          payment_type?: string
         }
         Update: {
           adjustment?: number
           calculated_amount?: number
           created_at?: string
           id?: string
+          is_settled?: boolean
           job_work_id?: string
           notes?: string | null
           payment_amount?: number
           payment_date?: string
+          payment_type?: string
         }
         Relationships: [
           {
