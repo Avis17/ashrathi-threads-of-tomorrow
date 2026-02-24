@@ -207,9 +207,7 @@ const CompaniesManager = () => {
                       variant="outline"
                       size="sm"
                       onClick={() =>
-                        company.source === 'external'
-                          ? navigate(`/admin/external-jobs/company/${company.id}`)
-                          : navigate(`/admin/job-management?tab=companies&worker=${company.id}`)
+                        navigate(`/admin/company-view/${company.source === 'external' ? 'external' : 'job_worker'}/${company.id}`)
                       }
                     >
                       <Eye className="h-4 w-4 mr-1" />

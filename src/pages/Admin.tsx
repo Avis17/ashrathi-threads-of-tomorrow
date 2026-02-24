@@ -70,6 +70,7 @@ import BatchDashboardPage from './admin/BatchDashboardPage';
 import BatchAdvancesPage from './admin/BatchAdvancesPage';
 import PreProductionPlanner from './admin/PreProductionPlanner';
 import PatternMarker from './admin/PatternMarker';
+import UnifiedCompanyView from './admin/UnifiedCompanyView';
 const CompanyProfile = lazy(() => import('./admin/CompanyProfile'));
 
 const Admin = () => {
@@ -161,6 +162,7 @@ const Admin = () => {
               <Route path="/external-jobs/add-rate-card" element={<AddRateCard />} />
               <Route path="/external-jobs/edit-rate-card/:id" element={<AddRateCard />} />
               <Route path="/external-jobs/companies" element={<CompaniesList />} />
+              <Route path="/company-view/:source/:id" element={<UnifiedCompanyView />} />
               <Route path="/external-jobs/generic-expenses" element={<GenericJobExpenses />} />
               <Route path="/external-jobs/salaries" element={<ExternalJobSalaries />} />
               <Route path="/external-jobs/salaries/add" element={<AddSalaryEntry />} />
