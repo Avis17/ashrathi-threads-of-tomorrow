@@ -605,7 +605,7 @@ export default function InvoiceHistory() {
                   <TableRow key={invoice.id}>
                     <TableCell>{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}</TableCell>
                     <TableCell className="font-medium">{invoice.invoice_number}</TableCell>
-                    <TableCell>{invoice.customers.company_name}</TableCell>
+                    <TableCell>{invoice.customers?.company_name || '-'}</TableCell>
                     <TableCell className="max-w-xs truncate">{invoice.delivery_address}</TableCell>
                     <TableCell>₹{invoice.total_amount.toFixed(2)}</TableCell>
                     <TableCell>{getPaymentStatusBadge(invoice.payment_status || 'unpaid')}</TableCell>
