@@ -3008,7 +3008,7 @@ export type Database = {
           cgst_amount: number
           cgst_rate: number
           created_at: string
-          customer_id: string
+          customer_id: string | null
           delivery_address: string
           discount: number | null
           id: string
@@ -3033,7 +3033,7 @@ export type Database = {
           cgst_amount?: number
           cgst_rate?: number
           created_at?: string
-          customer_id: string
+          customer_id?: string | null
           delivery_address: string
           discount?: number | null
           id?: string
@@ -3058,7 +3058,7 @@ export type Database = {
           cgst_amount?: number
           cgst_rate?: number
           created_at?: string
-          customer_id?: string
+          customer_id?: string | null
           delivery_address?: string
           discount?: number | null
           id?: string
