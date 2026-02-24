@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Briefcase, Truck, Plus, Trash2, Save, CreditCard, Pencil } from 'lucide-react';
+import { ArrowLeft, Briefcase, Truck, Plus, Trash2, Save, CreditCard, Pencil, CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -8,6 +8,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 import { useJobWorkOperations, useUpdateJobWork } from '@/hooks/useJobWorks';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -515,6 +518,7 @@ const PaymentSection = ({ jobWork, jwId, queryClient }: { jobWork: BatchJobWork;
   const [amount, setAmount] = useState(0);
   const [adjustment, setAdjustment] = useState(0);
   const [notes, setNotes] = useState('');
+  const [advanceDate, setAdvanceDate] = useState<Date>(new Date());
   const [saving, setSaving] = useState(false);
   const [editingPayment, setEditingPayment] = useState<any | null>(null);
   const [editAmount, setEditAmount] = useState(0);
@@ -552,6 +556,7 @@ const PaymentSection = ({ jobWork, jwId, queryClient }: { jobWork: BatchJobWork;
     setAmount(type === 'advance' ? 0 : calculatedBalance);
     setAdjustment(0);
     setNotes('');
+    setAdvanceDate(new Date());
     setShowForm(true);
   };
 
@@ -570,6 +575,7 @@ const PaymentSection = ({ jobWork, jwId, queryClient }: { jobWork: BatchJobWork;
         payment_amount: finalAmount,
         payment_type: paymentType,
         notes: notes || null,
+        created_at: paymentType === 'advance' ? advanceDate.toISOString() : new Date().toISOString(),
       } as any);
       if (error) throw error;
 
@@ -581,7 +587,14 @@ const PaymentSection = ({ jobWork, jwId, queryClient }: { jobWork: BatchJobWork;
 
       invalidateAll();
       toast.success(`${paymentType === 'advance' ? 'Advance' : 'Payment'} of ₹${finalAmount.toFixed(2)} recorded`);
-      setShowForm(false);
+      
+      if (paymentType === 'advance') {
+        // Keep form open, reset amount & notes for next entry
+        setAmount(0);
+        setNotes('');
+      } else {
+        setShowForm(false);
+      }
     } catch (e: any) {
       toast.error(e.message || 'Failed to record');
     } finally {
@@ -714,15 +727,43 @@ const PaymentSection = ({ jobWork, jwId, queryClient }: { jobWork: BatchJobWork;
             </div>
 
             {paymentType === 'advance' ? (
-              <div>
-                <Label className="text-xs">Advance Amount</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={amount}
-                  onChange={e => setAmount(parseFloat(e.target.value) || 0)}
-                  placeholder="Enter advance amount"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-xs">Advance Amount</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={amount}
+                    onChange={e => setAmount(parseFloat(e.target.value) || 0)}
+                    placeholder="Enter advance amount"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Date</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !advanceDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {advanceDate ? format(advanceDate, 'dd MMM yyyy') : 'Pick a date'}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={advanceDate}
+                        onSelect={(d) => d && setAdvanceDate(d)}
+                        initialFocus
+                        className={cn("p-3 pointer-events-auto")}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
               </div>
             ) : (
               <div className="grid grid-cols-3 gap-4">
