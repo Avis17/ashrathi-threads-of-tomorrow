@@ -410,19 +410,59 @@ export const JobWorkCreateForm = ({ batchId, rollsData, cuttingSummary, open, on
               </div>
             </div>
 
-            {/* Total */}
-            <div className="bg-muted/50 rounded-lg p-3 space-y-1">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Operations Total</span>
-                <span className="font-semibold">₹{totalAmount.toFixed(2)}</span>
+            {/* Per-Item & Total Summary */}
+            <div className="bg-muted/50 rounded-lg p-4 space-y-3">
+              <p className="text-sm font-semibold text-foreground">Cost Breakdown</p>
+
+              {/* Per-item operation rates */}
+              {operations.filter(op => op.operation).length > 0 && (
+                <div className="space-y-1">
+                  {operations.filter(op => op.operation).map((op, idx) => (
+                    <div key={idx} className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">{op.operation} (₹{op.rate_per_piece}/pc × {op.quantity})</span>
+                      <span>₹{(op.rate_per_piece * op.quantity).toFixed(2)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="border-t pt-2 space-y-1">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Operations Total</span>
+                  <span className="font-semibold">₹{totalAmount.toFixed(2)}</span>
+                </div>
+                {totalPieces > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Operations Cost / Item</span>
+                    <span className="font-medium">₹{(totalAmount / totalPieces).toFixed(2)}</span>
+                  </div>
+                )}
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Company Profit ({profitPercent}%)</span>
-                <span className="font-semibold">₹{profitAmount.toFixed(2)}</span>
+
+              <div className="border-t pt-2 space-y-1">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Company Profit ({profitPercent}%)</span>
+                  <span className="font-semibold">₹{profitAmount.toFixed(2)}</span>
+                </div>
+                {totalPieces > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Profit / Item</span>
+                    <span className="font-medium text-emerald-600">₹{profitPerPiece.toFixed(2)}</span>
+                  </div>
+                )}
               </div>
-              <div className="flex justify-between items-center border-t pt-1">
-                <span className="font-medium">Grand Total</span>
-                <span className="text-lg font-bold">₹{(totalAmount + profitAmount).toFixed(2)}</span>
+
+              <div className="border-t pt-2 space-y-1">
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">Grand Total</span>
+                  <span className="text-lg font-bold">₹{(totalAmount + profitAmount).toFixed(2)}</span>
+                </div>
+                {totalPieces > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Total Cost / Item (incl. profit)</span>
+                    <span className="font-semibold text-primary">₹{((totalAmount + profitAmount) / totalPieces).toFixed(2)}</span>
+                  </div>
+                )}
               </div>
             </div>
 
