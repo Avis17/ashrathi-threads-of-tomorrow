@@ -3796,6 +3796,7 @@ export type Database = {
           min_order_qty: number | null
           pattern_number: string
           process_rate_details: Json | null
+          product_code: string | null
           rate_checking: number | null
           rate_cutting: number | null
           rate_ironing: number | null
@@ -3826,6 +3827,7 @@ export type Database = {
           min_order_qty?: number | null
           pattern_number: string
           process_rate_details?: Json | null
+          product_code?: string | null
           rate_checking?: number | null
           rate_cutting?: number | null
           rate_ironing?: number | null
@@ -3856,6 +3858,7 @@ export type Database = {
           min_order_qty?: number | null
           pattern_number?: string
           process_rate_details?: Json | null
+          product_code?: string | null
           rate_checking?: number | null
           rate_cutting?: number | null
           rate_ironing?: number | null

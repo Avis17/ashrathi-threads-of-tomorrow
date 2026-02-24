@@ -1,0 +1,1 @@
+ALTER TABLE public.job_styles ADD COLUMN product_code text;

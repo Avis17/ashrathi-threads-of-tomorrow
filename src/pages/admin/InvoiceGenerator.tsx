@@ -48,7 +48,7 @@ export default function InvoiceGenerator() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const location = useLocation();
-  const prefillState = location.state as { prefillItems?: any[]; prefillGst?: { taxType: 'intra' | 'inter'; cgstRate: string; sgstRate: string }; prefillSource?: string } | null;
+  const prefillState = location.state as { prefillItems?: any[]; prefillGst?: { taxType: 'intra' | 'inter'; cgstRate: string; sgstRate: string }; prefillSource?: string; prefillCompanyName?: string } | null;
   const [invoiceDate, setInvoiceDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [invoiceType, setInvoiceType] = useState('Feather Fashions');
   const [customerId, setCustomerId] = useState('');
@@ -133,6 +133,17 @@ export default function InvoiceGenerator() {
       );
     },
   });
+
+  // Auto-select customer when prefillCompanyName is provided and customers are loaded
+  useEffect(() => {
+    if (prefillState?.prefillCompanyName && customers && customers.length > 0 && !customerId) {
+      const companyName = prefillState.prefillCompanyName.toLowerCase();
+      const match = customers.find(c => c.company_name.toLowerCase() === companyName);
+      if (match) {
+        setCustomerId(match.id);
+      }
+    }
+  }, [customers]);
 
   const { data: products } = useQuery({
     queryKey: ['products-with-price'],
