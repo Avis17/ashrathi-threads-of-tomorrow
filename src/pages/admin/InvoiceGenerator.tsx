@@ -60,11 +60,8 @@ export default function InvoiceGenerator() {
   const [sgstRate, setSgstRate] = useState('9');
   const [igstRate, setIgstRate] = useState('18');
   const [discount, setDiscount] = useState(0);
-  const [termsAndConditions, setTermsAndConditions] = useState([
-    'Payment is due within 30 days of invoice date.',
-    'Goods once sold will not be taken back or exchanged.',
-    'All disputes are subject to Tirupur jurisdiction only.',
-  ]);
+  const [termsAndConditions, setTermsAndConditions] = useState<string[]>([]);
+  const [declaration] = useState('We hereby declare that this invoice shows the actual price of the goods described and that all particulars are true and correct.');
   const [items, setItems] = useState<InvoiceItem[]>([{
     product_id: '',
     custom_product_name: '',
@@ -699,27 +696,39 @@ export default function InvoiceGenerator() {
     
     currentY += 26;
 
+    // ========== DECLARATION ==========
+    ensureSpace(12);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.text('Declaration:', 15, currentY);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    const declLines = doc.splitTextToSize(declaration, 180);
+    doc.text(declLines, 15, currentY + 5);
+    currentY += 5 + (declLines.length * 4) + 3;
+
     // ========== TERMS & CONDITIONS ==========
     const terms = termsAndConditions.length > 0 && termsAndConditions.some(t => t.trim() !== '')
       ? termsAndConditions.filter(t => t.trim() !== '')
       : (Array.isArray(invoiceSettings.default_terms) ? invoiceSettings.default_terms : []);
-    const termsHeight = 5 + (terms.length * 4) + 5;
     
-    // Ensure entire terms section stays together on one page
-    ensureSpace(termsHeight);
-    
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(9);
-    doc.text('Terms & Conditions:', 15, currentY);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    terms.forEach((term: string, index: number) => {
-      if (term.trim()) {
-        doc.text(`${index + 1}. ${term}`, 15, currentY + 5 + (index * 4));
-      }
-    });
-    
-    currentY += termsHeight;
+    if (terms.length > 0) {
+      const termsHeight = 5 + (terms.length * 4) + 5;
+      ensureSpace(termsHeight);
+      
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.text('Terms & Conditions:', 15, currentY);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      terms.forEach((term: string, index: number) => {
+        if (term.trim()) {
+          doc.text(`${index + 1}. ${term}`, 15, currentY + 5 + (index * 4));
+        }
+      });
+      
+      currentY += termsHeight;
+    }
 
     // ========== SIGNATURE SECTION ==========
     ensureSpace(25);
@@ -888,12 +897,17 @@ export default function InvoiceGenerator() {
           </div>
 
           <div className="space-y-2">
-            <Label>Terms and Conditions</Label>
+            <Label>Declaration</Label>
+            <p className="text-sm text-muted-foreground italic">{declaration}</p>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Terms and Conditions <span className="text-xs text-muted-foreground">(Optional)</span></Label>
             <Textarea
               value={termsAndConditions.join('\n')}
-              onChange={(e) => setTermsAndConditions(e.target.value.split('\n'))}
-              rows={5}
-              placeholder="Enter terms and conditions (one per line)"
+              onChange={(e) => setTermsAndConditions(e.target.value.split('\n').filter(l => l !== '' || e.target.value.endsWith('\n')))}
+              rows={4}
+              placeholder="Enter terms and conditions (one per line) — leave empty to skip"
             />
           </div>
         </CardContent>
