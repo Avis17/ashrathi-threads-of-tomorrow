@@ -738,6 +738,7 @@ const BatchDetailsPage = () => {
         onOpenChange={setInvoiceDialogOpen}
         batchId={id || ''}
         batchNumber={batch.batch_number}
+        companyName={batch.company_name || ''}
         rollsData={rollsData}
         cuttingSummary={cuttingSummary}
       />

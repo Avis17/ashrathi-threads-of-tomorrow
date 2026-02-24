@@ -22,6 +22,7 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   batchId: string;
   batchNumber: string;
+  companyName: string;
   rollsData: any[];
   cuttingSummary: Record<number, number>;
 }
@@ -30,12 +31,13 @@ interface InvoiceStyleItem {
   styleId: string;
   styleName: string;
   styleCode: string;
+  productCode: string;
   cmtRate: number;
   pieces: number;
   selected: boolean;
 }
 
-export const GenerateInvoiceDialog = ({ open, onOpenChange, batchId, batchNumber, rollsData, cuttingSummary }: Props) => {
+export const GenerateInvoiceDialog = ({ open, onOpenChange, batchId, batchNumber, companyName, rollsData, cuttingSummary }: Props) => {
   const navigate = useNavigate();
   const [gstPercent, setGstPercent] = useState<string>('0');
   const [invoiceItems, setInvoiceItems] = useState<InvoiceStyleItem[]>([]);
@@ -61,7 +63,7 @@ export const GenerateInvoiceDialog = ({ open, onOpenChange, batchId, batchNumber
       if (styleIds.length === 0) return [];
       const { data, error } = await supabase
         .from('job_styles')
-        .select('id, style_code, style_name, linked_cmt_quotation_id')
+        .select('id, style_code, style_name, product_code, linked_cmt_quotation_id')
         .in('id', styleIds);
       if (error) throw error;
       return data;
@@ -94,6 +96,7 @@ export const GenerateInvoiceDialog = ({ open, onOpenChange, batchId, batchNumber
         styleId: group.styleId,
         styleName: style?.style_name || 'Unknown',
         styleCode: style?.style_code || '',
+        productCode: (style as any)?.product_code || '',
         cmtRate: cmt?.final_cmt_per_piece || 0,
         pieces: totalPieces,
         selected: true,
@@ -125,7 +128,7 @@ export const GenerateInvoiceDialog = ({ open, onOpenChange, batchId, batchNumber
     const invoiceLineItems = selectedItems.map(item => ({
       custom_product_name: `${item.styleCode} - ${item.styleName}`,
       hsn_code: '',
-      product_code: item.styleCode,
+      product_code: item.productCode || item.styleCode,
       price: item.cmtRate,
       quantity: item.pieces,
       amount: item.cmtRate * item.pieces,
@@ -144,6 +147,7 @@ export const GenerateInvoiceDialog = ({ open, onOpenChange, batchId, batchNumber
           sgstRate: halfGst,
         },
         prefillSource: `Batch ${batchNumber}`,
+        prefillCompanyName: companyName,
       },
     });
   };

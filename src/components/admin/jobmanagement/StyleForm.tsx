@@ -53,6 +53,7 @@ type OperationRate = {
 
 type FormData = {
   style_code: string;
+  product_code: string;
   pattern_number: string;
   style_name: string;
   custom_style_name?: string;
@@ -137,6 +138,7 @@ const StyleForm = ({ style, onClose }: StyleFormProps) => {
   const { register, handleSubmit, setValue, watch, control } = useForm<FormData>({
     defaultValues: {
       style_code: style?.style_code || '',
+      product_code: (style as any)?.product_code || '',
       pattern_number: style?.pattern_number || '',
       style_name: style?.style_name && STYLE_NAMES.includes(style.style_name) 
         ? style.style_name 
@@ -375,6 +377,7 @@ const StyleForm = ({ style, onClose }: StyleFormProps) => {
 
     const submitData = {
       style_code: data.style_code,
+      product_code: data.product_code || null,
       pattern_number: data.pattern_number,
       style_name: finalStyleName,
       garment_type: data.garment_type,
@@ -433,6 +436,10 @@ const StyleForm = ({ style, onClose }: StyleFormProps) => {
           <div className="space-y-2">
             <Label>Style Code *</Label>
             <Input {...register('style_code')} required placeholder="FF-001" disabled={!style} />
+          </div>
+          <div className="space-y-2">
+            <Label>Product Code</Label>
+            <Input {...register('product_code')} placeholder="e.g. PROD-001" />
           </div>
           <div className="space-y-2 md:col-span-2">
             <div className="flex items-center justify-between">
