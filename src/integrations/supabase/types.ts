@@ -3998,7 +3998,9 @@ export type Database = {
       }
       job_workers: {
         Row: {
+          account_details: string | null
           address: string | null
+          alternate_number: string | null
           contact_person: string | null
           created_at: string
           email: string | null
@@ -4006,11 +4008,15 @@ export type Database = {
           id: string
           is_active: boolean | null
           name: string
+          notes: string | null
           phone: string | null
           updated_at: string
+          upi_id: string | null
         }
         Insert: {
+          account_details?: string | null
           address?: string | null
+          alternate_number?: string | null
           contact_person?: string | null
           created_at?: string
           email?: string | null
@@ -4018,11 +4024,15 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           name: string
+          notes?: string | null
           phone?: string | null
           updated_at?: string
+          upi_id?: string | null
         }
         Update: {
+          account_details?: string | null
           address?: string | null
+          alternate_number?: string | null
           contact_person?: string | null
           created_at?: string
           email?: string | null
@@ -4030,8 +4040,10 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           name?: string
+          notes?: string | null
           phone?: string | null
           updated_at?: string
+          upi_id?: string | null
         }
         Relationships: []
       }
