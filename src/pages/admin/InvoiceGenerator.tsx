@@ -274,7 +274,7 @@ export default function InvoiceGenerator() {
           invoice_number: invoiceNumber,
           invoice_date: invoiceDate,
           invoice_type: invoiceType,
-          customer_id: customerId,
+          customer_id: customerId.startsWith('jw-') ? null : customerId,
           delivery_address: deliveryAddress,
           purchase_order_no: purchaseOrderNo || null,
           number_of_packages: Number(numberOfPackages),
@@ -719,9 +719,7 @@ export default function InvoiceGenerator() {
     currentY += 5 + (declLines.length * 4) + 3;
 
     // ========== TERMS & CONDITIONS ==========
-    const terms = termsAndConditions.length > 0 && termsAndConditions.some(t => t.trim() !== '')
-      ? termsAndConditions.filter(t => t.trim() !== '')
-      : (Array.isArray(invoiceSettings.default_terms) ? invoiceSettings.default_terms : []);
+    const terms = termsAndConditions.filter(t => t.trim() !== '');
     
     if (terms.length > 0) {
       const termsHeight = 5 + (terms.length * 4) + 5;
