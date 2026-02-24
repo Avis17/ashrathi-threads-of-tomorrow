@@ -176,7 +176,8 @@ export default function InvoiceGenerator() {
     setCustomerId(value);
     const customer = customers?.find(c => c.id === value);
     if (customer) {
-      setDeliveryAddress(`${customer.address_1}${customer.address_2 ? ', ' + customer.address_2 : ''}, ${customer.city}, ${customer.state} - ${customer.pincode}`);
+      const parts = [customer.address_1, customer.address_2, customer.city, customer.state ? `${customer.state} - ${customer.pincode}` : customer.pincode].filter(Boolean);
+      setDeliveryAddress(parts.join(', '));
     }
   };
 
