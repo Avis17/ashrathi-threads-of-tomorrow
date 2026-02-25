@@ -29,7 +29,7 @@ interface LibraryPiece {
 }
 
 interface PieceLibraryTabProps {
-  onAddToCanvas: (piece: Omit<PieceDef, 'id' | 'x' | 'y' | 'rotation'>) => void;
+  onAddToCanvas: (piece: Omit<PieceDef, 'id' | 'xInches' | 'yInches' | 'rotation'>) => void;
 }
 
 const PIECE_COLORS = [
