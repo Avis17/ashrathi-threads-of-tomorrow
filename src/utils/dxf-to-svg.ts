@@ -20,6 +20,23 @@ export interface DxfParseResult {
   svgPath: string;
   widthInches: number;
   heightInches: number;
+  detectedUnits: string;
+  rawWidth: number;
+  rawHeight: number;
+}
+
+/**
+ * Convert $INSUNITS value to a multiplier that converts to inches.
+ */
+function getUnitMultiplierToInch(insUnits?: number): { multiplier: number; label: string } {
+  switch (insUnits) {
+    case 1: return { multiplier: 1, label: 'Inches' };
+    case 2: return { multiplier: 12, label: 'Feet' };
+    case 4: return { multiplier: 1 / 25.4, label: 'Millimeters' };
+    case 5: return { multiplier: 1 / 2.54, label: 'Centimeters' };
+    case 6: return { multiplier: 1 / 0.0254, label: 'Meters' };
+    default: return { multiplier: 1, label: insUnits === undefined ? 'Unknown (assuming Inches)' : `Code ${insUnits} (assuming Inches)` };
+  }
 }
 
 function degToRad(deg: number) {
@@ -248,6 +265,11 @@ export function parseDxfToSvg(dxfContent: string, scaleInput: number = 1): DxfPa
     throw new Error('No entities found in DXF file. Please check the file format.');
   }
 
+  // Detect DXF units from header
+  const insUnits = dxf.header?.['$INSUNITS'] as number | undefined;
+  const { multiplier: unitFactor, label: detectedUnits } = getUnitMultiplierToInch(insUnits);
+  const finalScale = unitFactor * scaleInput;
+
   // Filter out non-geometry entities (dimensions, text, points, etc.)
   // and skip annotation layers like AM_5, Defpoints
   const skipLayers = new Set(['am_5', 'defpoints', 'am_bor']);
@@ -268,7 +290,7 @@ export function parseDxfToSvg(dxfContent: string, scaleInput: number = 1): DxfPa
 
   let combinedPath = pathSegments.join(' ');
 
-  // Get bounding box
+  // Get bounding box in raw DXF units
   const bounds = getPathBounds(combinedPath);
   
   // Normalize to origin (0,0)
@@ -277,13 +299,29 @@ export function parseDxfToSvg(dxfContent: string, scaleInput: number = 1): DxfPa
   const rawWidth = bounds.maxX - bounds.minX;
   const rawHeight = bounds.maxY - bounds.minY;
 
-  // Apply scale: scaleInput = how many inches per 1 DXF unit
-  const widthInches = rawWidth * scaleInput;
-  const heightInches = rawHeight * scaleInput;
+  // Convert to inches using unit detection + user scale
+  const widthInches = rawWidth * finalScale;
+  const heightInches = rawHeight * finalScale;
+
+  // Debug logging for validation
+  console.log('[DXF Parser]', {
+    insUnits,
+    detectedUnits,
+    unitFactor,
+    userScale: scaleInput,
+    finalScale,
+    rawWidth: rawWidth.toFixed(4),
+    rawHeight: rawHeight.toFixed(4),
+    widthInches: widthInches.toFixed(4),
+    heightInches: heightInches.toFixed(4),
+  });
 
   return {
     svgPath: combinedPath,
     widthInches: Math.max(widthInches, 0.1),
     heightInches: Math.max(heightInches, 0.1),
+    detectedUnits,
+    rawWidth,
+    rawHeight,
   };
 }

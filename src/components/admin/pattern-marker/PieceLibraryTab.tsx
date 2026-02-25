@@ -6,7 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, Trash2, Plus, FileType, Eye, FolderOpen, ChevronRight, FolderPlus } from 'lucide-react';
+import { Upload, Trash2, Plus, FileType, Eye, FolderOpen, ChevronRight, FolderPlus, Settings2 } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { parseDxfToSvg, type DxfParseResult } from '@/utils/dxf-to-svg';
@@ -332,7 +333,7 @@ const PieceLibraryTab = ({ onAddToCanvas }: PieceLibraryTabProps) => {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label className="text-xs">Grain Line</Label>
               <Select value={grainLine} onValueChange={setGrainLine}>
@@ -348,11 +349,23 @@ const PieceLibraryTab = ({ onAddToCanvas }: PieceLibraryTabProps) => {
               <Label className="text-xs">Qty / Garment</Label>
               <Input type="number" min={1} value={quantityPerGarment} onChange={(e) => setQuantityPerGarment(+e.target.value || 1)} />
             </div>
-            <div className="space-y-1">
-              <Label className="text-xs">DXF Scale (in/unit)</Label>
-              <Input type="number" step="0.01" min={0.01} value={dxfScale} onChange={(e) => handleScaleChange(+e.target.value || 1)} />
-            </div>
           </div>
+
+          {/* Advanced: DXF Scale override */}
+          <Collapsible>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" size="sm" className="w-full justify-start gap-2 text-xs text-muted-foreground h-7">
+                <Settings2 className="h-3 w-3" /> Advanced Settings
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="pt-2">
+              <div className="space-y-1">
+                <Label className="text-xs">DXF Scale Override (default 1)</Label>
+                <Input type="number" step="0.01" min={0.01} value={dxfScale} onChange={(e) => handleScaleChange(+e.target.value || 1)} />
+                <p className="text-[10px] text-muted-foreground">Only change if auto-detected units are wrong</p>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
 
           {/* Preview */}
           {preview && (
@@ -360,9 +373,15 @@ const PieceLibraryTab = ({ onAddToCanvas }: PieceLibraryTabProps) => {
               <div className="flex items-center gap-2 mb-2">
                 <Eye className="h-4 w-4 text-muted-foreground" />
                 <span className="text-xs text-muted-foreground">
-                  Parsed: {preview.widthInches.toFixed(1)}" × {preview.heightInches.toFixed(1)}"
+                  Parsed: {preview.widthInches.toFixed(2)}" × {preview.heightInches.toFixed(2)}"
                 </span>
+                <Badge variant="outline" className="text-[10px] ml-auto">
+                  Units: {preview.detectedUnits}
+                </Badge>
               </div>
+              <p className="text-[10px] text-muted-foreground mb-2">
+                Raw DXF: {preview.rawWidth.toFixed(2)} × {preview.rawHeight.toFixed(2)} {preview.detectedUnits.split(' ')[0].toLowerCase()}
+              </p>
               <div className="flex justify-center">
                 {renderSvgPreview(preview.svgPath, preview.widthInches, preview.heightInches, 150)}
               </div>
