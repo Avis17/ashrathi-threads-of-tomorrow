@@ -200,13 +200,29 @@ function getPathBounds(pathStr: string): { minX: number; minY: number; maxX: num
 }
 
 function translatePath(pathStr: string, dx: number, dy: number): string {
-  // Translate all coordinate values in the path
   const result = pathStr.replace(/([MLCSQTA])\s*([-+]?[0-9]*\.?[0-9]+),([-+]?[0-9]*\.?[0-9]+)/gi,
     (_match, cmd, x, y) => {
       return `${cmd} ${(parseFloat(x) + dx).toFixed(4)},${(parseFloat(y) + dy).toFixed(4)}`;
     }
   );
   return result;
+}
+
+/**
+ * Scale all coordinate values in an SVG path string by a factor.
+ * This converts path coordinates from raw DXF units to inches.
+ */
+function scalePath(pathStr: string, factor: number): string {
+  if (factor === 1) return pathStr;
+  return pathStr.replace(/([MLCSQTA])\s*([-+]?[0-9]*\.?[0-9]+),([-+]?[0-9]*\.?[0-9]+)/gi,
+    (_match, cmd, x, y) => {
+      return `${cmd} ${(parseFloat(x) * factor).toFixed(4)},${(parseFloat(y) * factor).toFixed(4)}`;
+    }
+  ).replace(/(A)\s*([-+]?[0-9]*\.?[0-9]+),([-+]?[0-9]*\.?[0-9]+)\s+(\S+)\s+(\S+)\s+(\S+)\s+([-+]?[0-9]*\.?[0-9]+),([-+]?[0-9]*\.?[0-9]+)/gi,
+    (_match, cmd, rx, ry, rot, large, sweep, ex, ey) => {
+      return `${cmd} ${(parseFloat(rx) * factor).toFixed(4)},${(parseFloat(ry) * factor).toFixed(4)} ${rot} ${large} ${sweep} ${(parseFloat(ex) * factor).toFixed(4)},${(parseFloat(ey) * factor).toFixed(4)}`;
+    }
+  );
 }
 
 /**
@@ -298,6 +314,12 @@ export function parseDxfToSvg(dxfContent: string, scaleInput: number = 1): DxfPa
 
   const rawWidth = bounds.maxX - bounds.minX;
   const rawHeight = bounds.maxY - bounds.minY;
+
+  // Scale path coordinates from raw DXF units to inches
+  // This ensures SVG path data is in inch units, matching widthInches/heightInches
+  if (finalScale !== 1) {
+    combinedPath = scalePath(combinedPath, finalScale);
+  }
 
   // Convert to inches using unit detection + user scale
   const widthInches = rawWidth * finalScale;
