@@ -27,6 +27,10 @@ export interface PieceDef {
   color: string;
   svgPathData?: string;
   libraryPieceId?: string;
+  /** Raw DXF bounding box width (in original DXF units, before inch conversion). Used to compute SVG→inch scale. */
+  rawWidth?: number;
+  /** Raw DXF bounding box height (in original DXF units, before inch conversion). Used to compute SVG→inch scale. */
+  rawHeight?: number;
 }
 
 interface MeasurementRow {
@@ -214,8 +218,8 @@ const PatternMarker = () => {
         fabricWidth,
         fabricBuffer,
         measurements,
-        pieces: pieces.map(({ id, name, widthInches, heightInches, xInches, yInches, rotation, color, svgPathData, libraryPieceId }) => ({
-          id, name, widthInches, heightInches, xInches, yInches, rotation, color, svgPathData, libraryPieceId,
+        pieces: pieces.map(({ id, name, widthInches, heightInches, xInches, yInches, rotation, color, svgPathData, libraryPieceId, rawWidth, rawHeight }) => ({
+          id, name, widthInches, heightInches, xInches, yInches, rotation, color, svgPathData, libraryPieceId, rawWidth, rawHeight,
         })),
       } as any,
       results: {

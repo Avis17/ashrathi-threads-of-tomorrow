@@ -4106,6 +4106,8 @@ export type Database = {
           name: string
           original_filename: string | null
           quantity_per_garment: number
+          raw_height: number | null
+          raw_width: number | null
           set_type: string
           size: string
           svg_path_data: string
@@ -4124,6 +4126,8 @@ export type Database = {
           name: string
           original_filename?: string | null
           quantity_per_garment?: number
+          raw_height?: number | null
+          raw_width?: number | null
           set_type?: string
           size?: string
           svg_path_data: string
@@ -4142,6 +4146,8 @@ export type Database = {
           name?: string
           original_filename?: string | null
           quantity_per_garment?: number
+          raw_height?: number | null
+          raw_width?: number | null
           set_type?: string
           size?: string
           svg_path_data?: string
