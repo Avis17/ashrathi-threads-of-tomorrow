@@ -21,8 +21,8 @@ export interface PieceDef {
   name: string;
   widthInches: number;
   heightInches: number;
-  x: number;
-  y: number;
+  xInches: number;
+  yInches: number;
   rotation: number;
   color: string;
   svgPathData?: string;
@@ -140,8 +140,8 @@ const PatternMarker = () => {
         name: row.piece,
         widthInches: w,
         heightInches: h,
-        x: fabricBuffer * SCALE + (i % 3) * (w * SCALE + 20),
-        y: 20 + Math.floor(i / 3) * (h * SCALE + 20),
+        xInches: fabricBuffer + (i % 3) * (w + 1),
+        yInches: 1 + Math.floor(i / 3) * (h + 1),
         rotation: 0,
         color: PIECE_COLORS[i % PIECE_COLORS.length],
       };
@@ -150,8 +150,8 @@ const PatternMarker = () => {
     toast({ title: 'Pieces Generated', description: `${newPieces.length} pieces placed on canvas` });
   }, [measurements, fabricBuffer, toast]);
 
-  const handlePieceMove = (id: string, x: number, y: number) => {
-    setPieces((prev) => prev.map((p) => (p.id === id ? { ...p, x, y } : p)));
+  const handlePieceMove = (id: string, xInches: number, yInches: number) => {
+    setPieces((prev) => prev.map((p) => (p.id === id ? { ...p, xInches, yInches } : p)));
   };
 
   const handlePieceRotate = (id: string) => {
@@ -171,12 +171,12 @@ const PatternMarker = () => {
     setPieces((prev) => prev.filter((p) => p.id !== id));
   };
 
-  const handleAddFromLibrary = (piece: Omit<PieceDef, 'id' | 'x' | 'y' | 'rotation'>) => {
+  const handleAddFromLibrary = (piece: Omit<PieceDef, 'id' | 'xInches' | 'yInches' | 'rotation'>) => {
     const newPiece: PieceDef = {
       ...piece,
       id: `lib-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-      x: fabricBuffer * SCALE + 20,
-      y: 20,
+      xInches: fabricBuffer + 1,
+      yInches: 1,
       rotation: 0,
     };
     setPieces((prev) => [...prev, newPiece]);
@@ -189,7 +189,7 @@ const PatternMarker = () => {
         ...pieces.map((p) => {
           const isRotated = p.rotation === 90 || p.rotation === 270;
           const h = isRotated ? p.widthInches : p.heightInches;
-          return (p.y / SCALE) + h;
+          return p.yInches + h;
         })
       )
     : 0;
@@ -214,8 +214,8 @@ const PatternMarker = () => {
         fabricWidth,
         fabricBuffer,
         measurements,
-        pieces: pieces.map(({ id, name, widthInches, heightInches, x, y, rotation, color }) => ({
-          id, name, widthInches, heightInches, x, y, rotation, color,
+        pieces: pieces.map(({ id, name, widthInches, heightInches, xInches, yInches, rotation, color, svgPathData, libraryPieceId }) => ({
+          id, name, widthInches, heightInches, xInches, yInches, rotation, color, svgPathData, libraryPieceId,
         })),
       } as any,
       results: {
@@ -342,8 +342,8 @@ const PatternMarker = () => {
             <CardContent className="p-2">
               <MarkerCanvas
                 pieces={pieces}
-                fabricWidthPx={usableWidth * SCALE}
-                fabricBufferPx={fabricBuffer * SCALE}
+                fabricWidthInches={usableWidth}
+                fabricBufferInches={fabricBuffer}
                 scale={SCALE}
                 onPieceMove={handlePieceMove}
                 onPieceRotate={handlePieceRotate}
@@ -517,7 +517,7 @@ const PatternMarker = () => {
                           <TableCell className="text-center font-mono">{(p.widthInches * p.heightInches).toFixed(1)}</TableCell>
                           <TableCell className="text-center font-mono">{p.rotation}°</TableCell>
                           <TableCell className="text-center font-mono text-xs">
-                            ({(p.x / SCALE).toFixed(1)}", {(p.y / SCALE).toFixed(1)}")
+                            ({p.xInches.toFixed(1)}", {p.yInches.toFixed(1)}")
                           </TableCell>
                         </TableRow>
                       ))}

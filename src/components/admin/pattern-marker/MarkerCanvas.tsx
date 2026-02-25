@@ -4,10 +4,10 @@ import type { PieceDef } from '@/pages/admin/PatternMarker';
 
 interface MarkerCanvasProps {
   pieces: PieceDef[];
-  fabricWidthPx: number;
-  fabricBufferPx: number;
-  scale: number;
-  onPieceMove: (id: string, x: number, y: number) => void;
+  fabricWidthInches: number;
+  fabricBufferInches: number;
+  scale: number; // pixels per inch
+  onPieceMove: (id: string, xInches: number, yInches: number) => void;
   onPieceRotate: (id: string) => void;
   onPieceDelete: (id: string) => void;
 }
@@ -16,8 +16,8 @@ const MIN_CANVAS_HEIGHT = 800;
 
 const MarkerCanvas = ({
   pieces,
-  fabricWidthPx,
-  fabricBufferPx,
+  fabricWidthInches,
+  fabricBufferInches,
   scale,
   onPieceMove,
   onPieceRotate,
@@ -26,6 +26,10 @@ const MarkerCanvas = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(1200);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  // Derived pixel values for canvas chrome only
+  const fabricWidthPx = fabricWidthInches * scale;
+  const fabricBufferPx = fabricBufferInches * scale;
 
   useEffect(() => {
     const updateSize = () => {
@@ -40,67 +44,80 @@ const MarkerCanvas = ({
 
   const totalCanvasWidth = fabricWidthPx + fabricBufferPx * 2;
 
-  // Dynamic canvas height based on piece positions
+  // Dynamic canvas height based on piece positions (all math in inches, convert to px at end)
   const canvasHeight = useMemo(() => {
     if (pieces.length === 0) return MIN_CANVAS_HEIGHT;
-    const maxBottom = Math.max(
+    const maxBottomInches = Math.max(
       ...pieces.map((p) => {
         const isRotated = p.rotation === 90 || p.rotation === 270;
-        const h = (isRotated ? p.widthInches : p.heightInches) * scale;
-        return p.y + h;
+        const h = isRotated ? p.widthInches : p.heightInches;
+        return p.yInches + h;
       })
     );
-    return Math.max(MIN_CANVAS_HEIGHT, maxBottom + 200); // 200px extra space below
+    return Math.max(MIN_CANVAS_HEIGHT, maxBottomInches * scale + 200);
   }, [pieces, scale]);
 
-  // Check collisions
+  // Collision detection — all in inches
   const collisions = useMemo(() => {
     const set = new Set<string>();
     for (let i = 0; i < pieces.length; i++) {
       const a = pieces[i];
       const aRotated = a.rotation === 90 || a.rotation === 270;
-      const aw = (aRotated ? a.heightInches : a.widthInches) * scale;
-      const ah = (aRotated ? a.widthInches : a.heightInches) * scale;
+      const aw = aRotated ? a.heightInches : a.widthInches;
+      const ah = aRotated ? a.widthInches : a.heightInches;
 
-      if (a.x < fabricBufferPx || a.x + aw > fabricBufferPx + fabricWidthPx || a.y < 0) {
+      // Boundary check in inches
+      if (
+        a.xInches < fabricBufferInches ||
+        a.xInches + aw > fabricBufferInches + fabricWidthInches ||
+        a.yInches < 0
+      ) {
         set.add(a.id);
       }
 
       for (let j = i + 1; j < pieces.length; j++) {
         const b = pieces[j];
         const bRotated = b.rotation === 90 || b.rotation === 270;
-        const bw = (bRotated ? b.heightInches : b.widthInches) * scale;
-        const bh = (bRotated ? b.widthInches : b.heightInches) * scale;
+        const bw = bRotated ? b.heightInches : b.widthInches;
+        const bh = bRotated ? b.widthInches : b.heightInches;
 
-        if (a.x < b.x + bw && a.x + aw > b.x && a.y < b.y + bh && a.y + ah > b.y) {
+        if (
+          a.xInches < b.xInches + bw &&
+          a.xInches + aw > b.xInches &&
+          a.yInches < b.yInches + bh &&
+          a.yInches + ah > b.yInches
+        ) {
           set.add(a.id);
           set.add(b.id);
         }
       }
     }
     return set;
-  }, [pieces, fabricBufferPx, fabricWidthPx, scale]);
+  }, [pieces, fabricBufferInches, fabricWidthInches]);
 
-  // Grid lines
+  // Grid lines — step every 5 inches
   const gridLines = useMemo(() => {
     const lines: { points: number[]; dash?: number[] }[] = [];
-    for (let x = fabricBufferPx; x <= fabricBufferPx + fabricWidthPx; x += scale * 5) {
+    for (let inch = 0; inch <= fabricWidthInches; inch += 5) {
+      const x = fabricBufferPx + inch * scale;
       lines.push({ points: [x, 0, x, canvasHeight], dash: [2, 4] });
     }
-    for (let y = 0; y <= canvasHeight; y += scale * 5) {
+    const canvasHeightInches = canvasHeight / scale;
+    for (let inch = 0; inch <= canvasHeightInches; inch += 5) {
+      const y = inch * scale;
       lines.push({ points: [fabricBufferPx, y, fabricBufferPx + fabricWidthPx, y], dash: [2, 4] });
     }
     return lines;
-  }, [fabricBufferPx, fabricWidthPx, scale, canvasHeight]);
+  }, [fabricBufferPx, fabricWidthPx, fabricWidthInches, scale, canvasHeight]);
 
-  // Ruler ticks
+  // Ruler ticks — every 5 inches
   const rulerTicks = useMemo(() => {
     const ticks: { x: number; label: string }[] = [];
-    for (let inch = 0; inch <= fabricWidthPx / scale; inch += 5) {
+    for (let inch = 0; inch <= fabricWidthInches; inch += 5) {
       ticks.push({ x: fabricBufferPx + inch * scale, label: `${inch}"` });
     }
     return ticks;
-  }, [fabricBufferPx, fabricWidthPx, scale]);
+  }, [fabricBufferPx, fabricWidthInches, scale]);
 
   return (
     <div
@@ -172,19 +189,35 @@ const MarkerCanvas = ({
           {/* Pieces */}
           {pieces.map((piece) => {
             const isRotated = piece.rotation === 90 || piece.rotation === 270;
-            const displayW = (isRotated ? piece.heightInches : piece.widthInches) * scale;
-            const displayH = (isRotated ? piece.widthInches : piece.heightInches) * scale;
+            const displayW = isRotated ? piece.heightInches : piece.widthInches;
+            const displayH = isRotated ? piece.widthInches : piece.heightInches;
             const isColliding = collisions.has(piece.id);
             const isSelected = selectedId === piece.id;
+
+            // Position: inches → pixels
+            const xPx = piece.xInches * scale;
+            const yPx = piece.yInches * scale;
+
+            // Offset for center-pivot rotation (in inches, scaled by group)
+            const offsetX = piece.widthInches / 2;
+            const offsetY = piece.heightInches / 2;
 
             return (
               <Group
                 key={piece.id}
-                x={piece.x}
-                y={piece.y}
+                x={xPx + offsetX * scale}
+                y={yPx + offsetY * scale}
+                offsetX={offsetX}
+                offsetY={offsetY}
+                rotation={piece.rotation}
+                scaleX={scale}
+                scaleY={scale}
                 draggable
                 onDragEnd={(e) => {
-                  onPieceMove(piece.id, e.target.x(), e.target.y());
+                  // Convert back from pixel to inches, accounting for offset
+                  const newXInches = (e.target.x() - offsetX * scale) / scale;
+                  const newYInches = (e.target.y() - offsetY * scale) / scale;
+                  onPieceMove(piece.id, newXInches, newYInches);
                 }}
                 onClick={() => setSelectedId(piece.id)}
                 onTap={() => setSelectedId(piece.id)}
@@ -196,61 +229,59 @@ const MarkerCanvas = ({
                     data={piece.svgPathData}
                     fill={isColliding ? 'hsl(0,70%,80%)' : piece.color}
                     stroke={isSelected ? 'hsl(210,80%,50%)' : isColliding ? 'hsl(0,70%,40%)' : 'hsl(0,0%,50%)'}
-                    strokeWidth={(isSelected ? 3 : 1) / (displayW / piece.widthInches)}
+                    strokeWidth={1 / scale}
                     opacity={0.85}
-                    scaleX={displayW / piece.widthInches}
-                    scaleY={displayH / piece.heightInches}
                   />
                 ) : (
                   <>
                     <Rect
-                      width={displayW}
-                      height={displayH}
+                      width={piece.widthInches}
+                      height={piece.heightInches}
                       fill={isColliding ? 'hsl(0,70%,80%)' : piece.color}
                       stroke={isSelected ? 'hsl(210,80%,50%)' : isColliding ? 'hsl(0,70%,40%)' : 'hsl(0,0%,50%)'}
-                      strokeWidth={isSelected ? 3 : 1}
-                      cornerRadius={2}
+                      strokeWidth={(isSelected ? 3 : 1) / scale}
+                      cornerRadius={2 / scale}
                       opacity={0.85}
                       shadowColor="black"
-                      shadowBlur={isSelected ? 6 : 2}
+                      shadowBlur={isSelected ? 6 / scale : 2 / scale}
                       shadowOpacity={0.15}
                     />
                     {/* Grain line */}
                     <Line
-                      points={[displayW / 2, 4, displayW / 2, displayH - 4]}
+                      points={[piece.widthInches / 2, 0.2, piece.widthInches / 2, piece.heightInches - 0.2]}
                       stroke="hsl(0,0%,30%)"
-                      strokeWidth={1}
-                      dash={[3, 3]}
+                      strokeWidth={1 / scale}
+                      dash={[3 / scale, 3 / scale]}
                       opacity={0.4}
                     />
                   </>
                 )}
                 {/* Label */}
                 <Text
-                  x={4}
-                  y={4}
+                  x={0.2}
+                  y={0.2}
                   text={piece.name}
-                  fontSize={Math.min(11, displayW / 6)}
+                  fontSize={Math.min(0.55, displayW / 6)}
                   fill="hsl(0,0%,15%)"
                   fontStyle="bold"
-                  width={displayW - 8}
+                  width={piece.widthInches - 0.4}
                   ellipsis
                   wrap="none"
                 />
                 {/* Dimensions */}
                 <Text
-                  x={4}
-                  y={displayH - 16}
+                  x={0.2}
+                  y={piece.heightInches - 0.8}
                   text={`${piece.widthInches.toFixed(1)}" × ${piece.heightInches.toFixed(1)}"`}
-                  fontSize={8}
+                  fontSize={0.4}
                   fill="hsl(0,0%,35%)"
                 />
                 {piece.rotation !== 0 && (
                   <Text
-                    x={displayW - 22}
-                    y={4}
+                    x={piece.widthInches - 1.1}
+                    y={0.2}
                     text={`${piece.rotation}°`}
-                    fontSize={8}
+                    fontSize={0.4}
                     fill="hsl(210,80%,50%)"
                     fontStyle="bold"
                   />
