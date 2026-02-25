@@ -188,35 +188,39 @@ const MarkerCanvas = ({
 
           {/* Pieces */}
           {pieces.map((piece) => {
-            const isRotated = piece.rotation === 90 || piece.rotation === 270;
-            const displayW = isRotated ? piece.heightInches : piece.widthInches;
-            const displayH = isRotated ? piece.widthInches : piece.heightInches;
             const isColliding = collisions.has(piece.id);
             const isSelected = selectedId === piece.id;
 
-            // Position: inches → pixels
-            const xPx = piece.xInches * scale;
-            const yPx = piece.yInches * scale;
+            // For SVG pieces: path is in raw DXF units, need to scale raw→inches→pixels
+            // For rect pieces: dimensions are in inches, scale inches→pixels
+            const hasSvg = !!piece.svgPathData;
+            const rawW = piece.rawWidth || piece.widthInches;
+            const rawH = piece.rawHeight || piece.heightInches;
+            // rawToInch converts 1 raw DXF unit to inches
+            const rawToInch = piece.widthInches / rawW;
+            // For SVG pieces, group scale converts raw DXF units → pixels
+            // For rect pieces, rawToInch === 1, so groupScale === scale
+            const groupScale = rawToInch * scale;
 
-            // Offset for center-pivot rotation (in inches, scaled by group)
-            const offsetX = piece.widthInches / 2;
-            const offsetY = piece.heightInches / 2;
+            // Offset for center-pivot rotation (in group-local units)
+            // For SVG: offset in raw DXF units; for rect: offset in inches
+            const offsetX = rawW / 2;
+            const offsetY = rawH / 2;
 
             return (
               <Group
                 key={piece.id}
-                x={xPx + offsetX * scale}
-                y={yPx + offsetY * scale}
+                x={piece.xInches * scale + offsetX * groupScale}
+                y={piece.yInches * scale + offsetY * groupScale}
                 offsetX={offsetX}
                 offsetY={offsetY}
                 rotation={piece.rotation}
-                scaleX={scale}
-                scaleY={scale}
+                scaleX={groupScale}
+                scaleY={groupScale}
                 draggable
                 onDragEnd={(e) => {
-                  // Convert back from pixel to inches, accounting for offset
-                  const newXInches = (e.target.x() - offsetX * scale) / scale;
-                  const newYInches = (e.target.y() - offsetY * scale) / scale;
+                  const newXInches = (e.target.x() - offsetX * groupScale) / scale;
+                  const newYInches = (e.target.y() - offsetY * groupScale) / scale;
                   onPieceMove(piece.id, newXInches, newYInches);
                 }}
                 onClick={() => setSelectedId(piece.id)}
@@ -224,12 +228,12 @@ const MarkerCanvas = ({
                 onDblClick={() => onPieceRotate(piece.id)}
                 onDblTap={() => onPieceRotate(piece.id)}
               >
-                {piece.svgPathData ? (
+                {hasSvg ? (
                   <Path
-                    data={piece.svgPathData}
+                    data={piece.svgPathData!}
                     fill={isColliding ? 'hsl(0,70%,80%)' : piece.color}
                     stroke={isSelected ? 'hsl(210,80%,50%)' : isColliding ? 'hsl(0,70%,40%)' : 'hsl(0,0%,50%)'}
-                    strokeWidth={1 / scale}
+                    strokeWidth={1 / groupScale}
                     opacity={0.85}
                   />
                 ) : (
@@ -239,49 +243,49 @@ const MarkerCanvas = ({
                       height={piece.heightInches}
                       fill={isColliding ? 'hsl(0,70%,80%)' : piece.color}
                       stroke={isSelected ? 'hsl(210,80%,50%)' : isColliding ? 'hsl(0,70%,40%)' : 'hsl(0,0%,50%)'}
-                      strokeWidth={(isSelected ? 3 : 1) / scale}
-                      cornerRadius={2 / scale}
+                      strokeWidth={(isSelected ? 3 : 1) / groupScale}
+                      cornerRadius={2 / groupScale}
                       opacity={0.85}
                       shadowColor="black"
-                      shadowBlur={isSelected ? 6 / scale : 2 / scale}
+                      shadowBlur={isSelected ? 6 / groupScale : 2 / groupScale}
                       shadowOpacity={0.15}
                     />
                     {/* Grain line */}
                     <Line
                       points={[piece.widthInches / 2, 0.2, piece.widthInches / 2, piece.heightInches - 0.2]}
                       stroke="hsl(0,0%,30%)"
-                      strokeWidth={1 / scale}
-                      dash={[3 / scale, 3 / scale]}
+                      strokeWidth={1 / groupScale}
+                      dash={[3 / groupScale, 3 / groupScale]}
                       opacity={0.4}
                     />
                   </>
                 )}
                 {/* Label */}
                 <Text
-                  x={0.2}
-                  y={0.2}
+                  x={0.2 / rawToInch}
+                  y={0.2 / rawToInch}
                   text={piece.name}
-                  fontSize={Math.min(0.55, displayW / 6)}
+                  fontSize={Math.min(0.55, piece.widthInches / 6) / rawToInch}
                   fill="hsl(0,0%,15%)"
                   fontStyle="bold"
-                  width={piece.widthInches - 0.4}
+                  width={(piece.widthInches - 0.4) / rawToInch}
                   ellipsis
                   wrap="none"
                 />
                 {/* Dimensions */}
                 <Text
-                  x={0.2}
-                  y={piece.heightInches - 0.8}
+                  x={0.2 / rawToInch}
+                  y={(piece.heightInches - 0.8) / rawToInch}
                   text={`${piece.widthInches.toFixed(1)}" × ${piece.heightInches.toFixed(1)}"`}
-                  fontSize={0.4}
+                  fontSize={0.4 / rawToInch}
                   fill="hsl(0,0%,35%)"
                 />
                 {piece.rotation !== 0 && (
                   <Text
-                    x={piece.widthInches - 1.1}
-                    y={0.2}
+                    x={(piece.widthInches - 1.1) / rawToInch}
+                    y={0.2 / rawToInch}
                     text={`${piece.rotation}°`}
-                    fontSize={0.4}
+                    fontSize={0.4 / rawToInch}
                     fill="hsl(210,80%,50%)"
                     fontStyle="bold"
                   />

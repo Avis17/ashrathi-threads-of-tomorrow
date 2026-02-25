@@ -315,13 +315,7 @@ export function parseDxfToSvg(dxfContent: string, scaleInput: number = 1): DxfPa
   const rawWidth = bounds.maxX - bounds.minX;
   const rawHeight = bounds.maxY - bounds.minY;
 
-  // Scale path coordinates from raw DXF units to inches
-  // This ensures SVG path data is in inch units, matching widthInches/heightInches
-  if (finalScale !== 1) {
-    combinedPath = scalePath(combinedPath, finalScale);
-  }
-
-  // Convert to inches using unit detection + user scale
+  // Convert dimensions to inches (but do NOT scale the path coordinates)
   const widthInches = rawWidth * finalScale;
   const heightInches = rawHeight * finalScale;
 

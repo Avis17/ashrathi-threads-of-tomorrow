@@ -232,6 +232,8 @@ const PieceLibraryTab = ({ onAddToCanvas }: PieceLibraryTabProps) => {
         dxf_file_url: dxfUrl,
         folder_path: cleanFolder,
         created_by: user?.id || null,
+        raw_width: preview.rawWidth,
+        raw_height: preview.rawHeight,
       } as any);
 
       if (dbErr) throw dbErr;
@@ -263,6 +265,8 @@ const PieceLibraryTab = ({ onAddToCanvas }: PieceLibraryTabProps) => {
       color: PIECE_COLORS[Math.floor(Math.random() * PIECE_COLORS.length)],
       svgPathData: piece.svg_path_data,
       libraryPieceId: piece.id,
+      rawWidth: (piece as any).raw_width ? Number((piece as any).raw_width) : undefined,
+      rawHeight: (piece as any).raw_height ? Number((piece as any).raw_height) : undefined,
     });
     toast({ title: `${piece.name} added to canvas` });
   };
