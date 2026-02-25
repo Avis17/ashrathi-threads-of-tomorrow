@@ -641,7 +641,7 @@ export default function InvoiceGenerator() {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(8.5);
     doc.setTextColor(255, 255, 255);
-    doc.text('Grand Total:', 133, yOffset + 2);
+    doc.text('Net Amount:', 133, yOffset + 2);
     doc.text(sanitizePdfText(formatCurrencyAscii(total)), 192, yOffset + 2, { align: 'right' });
     doc.setTextColor(0, 0, 0);
 
@@ -695,7 +695,7 @@ export default function InvoiceGenerator() {
     doc.setFontSize(7.5);
     doc.text('Authorized Signatory', 180, currentY, { align: 'center' });
     try {
-      doc.addImage(signature, 'PNG', 165, currentY + 2, 32, 12);
+      // doc.addImage(signature, 'PNG', 165, currentY + 2, 32, 12);
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(6);
       // doc.text('(Company Seal)', 160, currentY + 15, { align: 'center' });
