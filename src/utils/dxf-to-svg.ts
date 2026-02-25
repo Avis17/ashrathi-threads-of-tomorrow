@@ -368,16 +368,51 @@ export function parseDxfToSvg(dxfContent: string, scaleInput: number = 1): DxfPa
   // Filter out non-geometry entities (dimensions, text, points, etc.)
   // and skip annotation layers like AM_5, Defpoints
   const skipLayers = new Set(['am_5', 'defpoints', 'am_bor']);
-  const skipTypes = new Set(['DIMENSION', 'MTEXT', 'TEXT', 'POINT', 'INSERT', 'HATCH', 'VIEWPORT', 'ATTRIB', 'ATTDEF']);
+  const skipTypes = new Set(['DIMENSION', 'MTEXT', 'TEXT', 'POINT', 'HATCH', 'VIEWPORT', 'ATTRIB', 'ATTDEF']);
+
+  // Helper: process a single entity, returning svg path segment with optional translation
+  function processEntity(entity: DxfEntity, tx = 0, ty = 0): string {
+    const layer = ((entity as any).layer || '').toLowerCase();
+    if (skipLayers.has(layer)) return '';
+    if (skipTypes.has(entity.type)) return '';
+
+    // Handle INSERT → expand block entities
+    if (entity.type === 'INSERT') {
+      const insertEnt = entity as any;
+      const blockName = insertEnt.name;
+      const block = (dxf as any).blocks?.[blockName];
+      if (!block || !block.entities) {
+        console.log('INSERT block not found:', blockName);
+        return '';
+      }
+      console.log('INSERT block:', blockName);
+      console.log('Block entity count:', block.entities.length);
+
+      const ix = (insertEnt.position?.x || 0) + tx;
+      const iy = (insertEnt.position?.y || 0) + ty;
+
+      let blockPath = '';
+      for (const bEntity of block.entities) {
+        blockPath += processEntity(bEntity as DxfEntity, ix, iy);
+      }
+      return blockPath;
+    }
+
+    let seg = entityToSvgPath(entity);
+    if (!seg) return '';
+
+    // Apply translation from INSERT position
+    if (tx !== 0 || ty !== 0) {
+      seg = translatePath(seg, tx, -ty);
+    }
+
+    return seg + ' ';
+  }
 
   let combinedPath = '';
   let isFirst = true;
   for (const entity of dxf.entities as DxfEntity[]) {
-    const layer = ((entity as any).layer || '').toLowerCase();
-    if (skipLayers.has(layer)) continue;
-    if (skipTypes.has(entity.type)) continue;
-
-    const seg = entityToSvgPath(entity);
+    const seg = processEntity(entity);
     if (!seg) continue;
 
     if (isFirst) {
@@ -388,7 +423,7 @@ export function parseDxfToSvg(dxfContent: string, scaleInput: number = 1): DxfPa
       }
     }
 
-    combinedPath += seg + ' ';
+    combinedPath += seg;
   }
 
   combinedPath = normalizeSvgPath(combinedPath);
