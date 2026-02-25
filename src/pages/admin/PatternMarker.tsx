@@ -176,11 +176,14 @@ const PatternMarker = () => {
   };
 
   const handleAddFromLibrary = (piece: Omit<PieceDef, 'id' | 'xInches' | 'yInches' | 'rotation'>) => {
+    // Center the piece on the visible fabric area
+    const centerX = fabricBuffer + (fabricWidth / 2) - (piece.widthInches / 2);
+    const centerY = 10; // Place near top-center of canvas (10 inches from top)
     const newPiece: PieceDef = {
       ...piece,
       id: `lib-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-      xInches: fabricBuffer + 1,
-      yInches: 1,
+      xInches: centerX,
+      yInches: centerY,
       rotation: 0,
     };
     setPieces((prev) => [...prev, newPiece]);
