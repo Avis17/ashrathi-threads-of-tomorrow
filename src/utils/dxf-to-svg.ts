@@ -81,13 +81,35 @@ function bulgeArcToSvg(
   return `A ${r},${r} 0 ${largeArc} ${sweepFlag} ${x2},${y2}`;
 }
 
+function sampleSpline(entity: any, segments = 40) {
+  if (!entity.controlPoints || entity.controlPoints.length < 4) return [];
+
+  const pts = entity.controlPoints;
+
+  function cubic(p0: any, p1: any, p2: any, p3: any, t: number) {
+    const u = 1 - t;
+    return {
+      x: u * u * u * p0.x + 3 * u * u * t * p1.x + 3 * u * t * t * p2.x + t * t * t * p3.x,
+      y: u * u * u * p0.y + 3 * u * u * t * p1.y + 3 * u * t * t * p2.y + t * t * t * p3.y,
+    };
+  }
+
+  const out: any[] = [];
+  for (let i = 0; i < pts.length - 3; i += 3) {
+    for (let t = 0; t <= 1; t += 1 / segments) {
+      out.push(cubic(pts[i], pts[i + 1], pts[i + 2], pts[i + 3], t));
+    }
+  }
+  return out;
+}
+
 function entityToSvgPath(entity: DxfEntity): string {
   switch (entity.type) {
     case 'LINE': {
       if (!entity.startPoint || !entity.endPoint) return '';
       const { x: x1, y: y1 } = entity.startPoint;
       const { x: x2, y: y2 } = entity.endPoint;
-      return `M ${x1},${-y1} L ${x2},${-y2}`;
+      return `L ${x2},${-y2}`;
     }
 
     case 'LWPOLYLINE':
@@ -113,17 +135,60 @@ function entityToSvgPath(entity: DxfEntity): string {
         }
         path += ' Z';
       }
+
+
       return path;
+    }
+
+    case 'ELLIPSE': {
+      const c = (entity as any).center;
+      const major = (entity as any).majorAxisEndPoint;
+      const ratio = (entity as any).axisRatio || 1;
+
+      if (!c || !major) return '';
+
+      const rx = Math.hypot(major.x, major.y);
+      const ry = rx * ratio;
+
+      const start = (entity as any).startAngle || 0;
+      const end = (entity as any).endAngle || Math.PI * 2;
+
+      const sx = c.x + rx * Math.cos(start);
+      const sy = -(c.y + ry * Math.sin(start));
+      const ex = c.x + rx * Math.cos(end);
+      const ey = -(c.y + ry * Math.sin(end));
+
+      return `M ${sx},${sy} A ${rx},${ry} 0 1 0 ${ex},${ey}`;
     }
 
     case 'ARC': {
       if (!entity.center || entity.radius === undefined) return '';
-      return arcToSvg(
-        entity.center.x, -entity.center.y,
-        entity.radius,
-        -(entity.endAngle || 0),
-        -(entity.startAngle || 0)
-      );
+
+      const cx = entity.center.x;
+      const cy = -entity.center.y;
+      const r = entity.radius;
+
+      const start = (entity.startAngle ?? 0) * Math.PI / 180;
+      const end = (entity.endAngle ?? 0) * Math.PI / 180;
+
+      const sx = cx + r * Math.cos(start);
+      const sy = cy + r * Math.sin(start);
+      const ex = cx + r * Math.cos(end);
+      const ey = cy + r * Math.sin(end);
+
+      let delta = end - start;
+      if (delta < 0) delta += Math.PI * 2;
+
+      const largeArcFlag = delta > Math.PI ? 1 : 0;
+      const sweepFlag = 1; // DXF arcs go CCW
+
+      console.log('ARC', {
+        start: entity.startAngle,
+        end: entity.endAngle,
+        r: entity.radius
+      });
+
+      return `A ${r},${r} 0 ${largeArcFlag} ${sweepFlag} ${ex},${ey}`;
     }
 
     case 'CIRCLE': {
@@ -136,12 +201,13 @@ function entityToSvgPath(entity: DxfEntity): string {
     }
 
     case 'SPLINE': {
-      const pts = entity.fitPoints || entity.controlPoints;
-      if (!pts || pts.length < 2) return '';
-      // Approximate as polyline through points
-      let path = `M ${pts[0].x},${-pts[0].y}`;
-      for (let i = 1; i < pts.length; i++) {
-        path += ` L ${pts[i].x},${-pts[i].y}`;
+      console.log('SPLINE ENTITY FOUND', entity);
+      const sampled = sampleSpline(entity, 60);
+      console.log('SPLINE SAMPLED POINTS:', sampled.length);
+      if (sampled.length < 2) return '';
+      let path = `M ${sampled[0].x},${-sampled[0].y}`;
+      for (let i = 1; i < sampled.length; i++) {
+        path += ` L ${sampled[i].x},${-sampled[i].y}`;
       }
       return path;
     }
@@ -152,50 +218,33 @@ function entityToSvgPath(entity: DxfEntity): string {
 }
 
 function getPathBounds(pathStr: string): { minX: number; minY: number; maxX: number; maxY: number } {
-  // Extract all numeric coordinate pairs from the path
   const numRegex = /[-+]?[0-9]*\.?[0-9]+/g;
-  const commands = pathStr.match(/[MLACQSTHVZ][^MLACQSTHVZ]*/gi) || [];
-  
+  const nums = pathStr.match(numRegex);
+
+  if (!nums) {
+    return { minX: 0, minY: 0, maxX: 0, maxY: 0 };
+  }
+
+  const values = nums.map(Number);
+
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-  
-  for (const cmd of commands) {
-    const type = cmd.charAt(0).toUpperCase();
-    if (type === 'Z') continue;
-    
-    const nums = cmd.slice(1).match(numRegex);
-    if (!nums) continue;
-    
-    const values = nums.map(Number);
-    
-    if (type === 'M' || type === 'L') {
-      for (let i = 0; i < values.length - 1; i += 2) {
-        minX = Math.min(minX, values[i]);
-        maxX = Math.max(maxX, values[i]);
-        minY = Math.min(minY, values[i + 1]);
-        maxY = Math.max(maxY, values[i + 1]);
-      }
-    } else if (type === 'A') {
-      // For arcs, use the endpoint (last two values)
-      if (values.length >= 7) {
-        const ex = values[values.length - 2];
-        const ey = values[values.length - 1];
-        minX = Math.min(minX, ex);
-        maxX = Math.max(maxX, ex);
-        minY = Math.min(minY, ey);
-        maxY = Math.max(maxY, ey);
-      }
-    } else {
-      // For other commands, treat pairs as coordinates
-      for (let i = 0; i < values.length - 1; i += 2) {
-        minX = Math.min(minX, values[i]);
-        maxX = Math.max(maxX, values[i]);
-        minY = Math.min(minY, values[i + 1]);
-        maxY = Math.max(maxY, values[i + 1]);
-      }
+
+  for (let i = 0; i < values.length - 1; i += 2) {
+    const x = values[i];
+    const y = values[i + 1];
+
+    if (isFinite(x) && isFinite(y)) {
+      minX = Math.min(minX, x);
+      maxX = Math.max(maxX, x);
+      minY = Math.min(minY, y);
+      maxY = Math.max(maxY, y);
     }
   }
-  
-  if (!isFinite(minX)) return { minX: 0, minY: 0, maxX: 0, maxY: 0 };
+
+  if (!isFinite(minX)) {
+    return { minX: 0, minY: 0, maxX: 0, maxY: 0 };
+  }
+
   return { minX, minY, maxX, maxY };
 }
 
@@ -225,6 +274,36 @@ function scalePath(pathStr: string, factor: number): string {
   );
 }
 
+function normalizeSvgPath(path: string) {
+  const numbers = path.match(/-?\d*\.?\d+/g);
+  if (!numbers || numbers.length < 2) return path;
+
+  const vals = numbers.map(n => Number(n)).filter(n => Number.isFinite(n));
+  if (vals.length < 2) return path;
+
+  let minX = Infinity;
+  let minY = Infinity;
+
+  for (let i = 0; i < vals.length - 1; i += 2) {
+    minX = Math.min(minX, vals[i]);
+    minY = Math.min(minY, vals[i + 1]);
+  }
+
+  if (!isFinite(minX) || !isFinite(minY)) return path;
+
+  if (minX >= 0 && minY >= 0) return path;
+
+  return path.replace(
+    /([MLA])\s*(-?\d*\.?\d+),(-?\d*\.?\d+)/gi,
+    (_, cmd, x, y) => {
+      const nx = Number(x);
+      const ny = Number(y);
+      if (!isFinite(nx) || !isFinite(ny)) return `${cmd} ${x},${y}`;
+      return `${cmd} ${(nx - minX).toFixed(4)},${(ny - minY).toFixed(4)}`;
+    }
+  );
+}
+
 /**
  * Preprocess DXF content to remove extended data blocks that dxf-parser cannot handle.
  * Strips 102 group code blocks (ACAD_REACTORS, ACAD_XDICTIONARY) and 1001+ xdata.
@@ -233,10 +312,10 @@ function preprocessDxf(content: string): string {
   const lines = content.split('\n');
   const result: string[] = [];
   let i = 0;
-  
+
   while (i < lines.length) {
     const trimmed = lines[i].trim();
-    
+
     // Skip 102 { ... 102 } blocks (ACAD_REACTORS, ACAD_XDICTIONARY)
     if (trimmed === '102') {
       const nextLine = (i + 1 < lines.length) ? lines[i + 1].trim() : '';
@@ -257,18 +336,18 @@ function preprocessDxf(content: string): string {
         continue;
       }
     }
-    
+
     // Skip xdata groups (1001, 1002, 1000, 1070, 1040, 1071, 1010, 1020, 1030)
     const groupCode = parseInt(trimmed, 10);
     if (groupCode >= 1000 && groupCode <= 1071) {
       i += 2; // skip group code + value
       continue;
     }
-    
+
     result.push(lines[i]);
     i++;
   }
-  
+
   return result.join('\n');
 }
 
@@ -276,7 +355,7 @@ export function parseDxfToSvg(dxfContent: string, scaleInput: number = 1): DxfPa
   const parser = new DxfParser();
   const cleanedContent = preprocessDxf(dxfContent);
   const dxf = parser.parseSync(cleanedContent);
-  
+
   if (!dxf || !dxf.entities || dxf.entities.length === 0) {
     throw new Error('No entities found in DXF file. Please check the file format.');
   }
@@ -290,25 +369,33 @@ export function parseDxfToSvg(dxfContent: string, scaleInput: number = 1): DxfPa
   // and skip annotation layers like AM_5, Defpoints
   const skipLayers = new Set(['am_5', 'defpoints', 'am_bor']);
   const skipTypes = new Set(['DIMENSION', 'MTEXT', 'TEXT', 'POINT', 'INSERT', 'HATCH', 'VIEWPORT', 'ATTRIB', 'ATTDEF']);
-  
-  const pathSegments: string[] = [];
+
+  let combinedPath = '';
+  let isFirst = true;
   for (const entity of dxf.entities as DxfEntity[]) {
     const layer = ((entity as any).layer || '').toLowerCase();
     if (skipLayers.has(layer)) continue;
     if (skipTypes.has(entity.type)) continue;
+
     const seg = entityToSvgPath(entity);
-    if (seg) pathSegments.push(seg);
+    if (!seg) continue;
+
+    if (isFirst) {
+      const match = seg.match(/-?\d*\.?\d+/g);
+      if (match && match.length >= 2) {
+        combinedPath += `M ${match[0]},${match[1]} `;
+        isFirst = false;
+      }
+    }
+
+    combinedPath += seg + ' ';
   }
 
-  if (pathSegments.length === 0) {
-    throw new Error('Could not extract any drawable entities from DXF file.');
-  }
-
-  let combinedPath = pathSegments.join(' ');
-
+  combinedPath = normalizeSvgPath(combinedPath);
+  console.log("POST NORMALIZE PATH START", combinedPath.slice(0, 120));
   // Get bounding box in raw DXF units
   const bounds = getPathBounds(combinedPath);
-  
+
   // Normalize to origin (0,0)
   combinedPath = translatePath(combinedPath, -bounds.minX, -bounds.minY);
 

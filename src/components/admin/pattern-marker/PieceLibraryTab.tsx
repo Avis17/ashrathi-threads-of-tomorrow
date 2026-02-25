@@ -74,14 +74,20 @@ function renderSvgPreview(svgPath: string, w: number, h: number, size: number = 
   const aspect = w / h;
   const viewW = aspect >= 1 ? size : size * aspect;
   const viewH = aspect >= 1 ? size / aspect : size;
+  
+  console.log("RENDER SVG:", {
+  width: w,
+  height: h,
+  pathLength: svgPath?.length,
+});
   return (
-    <svg width={viewW} height={viewH} viewBox={`0 0 ${w} ${h}`} className="border rounded bg-muted/30">
+    <svg width={viewW} height={viewH} viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="xMidYMid meet" className="border rounded bg-muted/30">
       <path
         d={svgPath}
         fill="hsl(210, 70%, 85%)"
         stroke="hsl(210, 70%, 40%)"
-        strokeWidth={Math.max(w, h) * 0.01}
-        fillOpacity={0.6}
+        strokeWidth={1}
+        fillOpacity={1}
       />
     </svg>
   );
@@ -187,6 +193,16 @@ const PieceLibraryTab = ({ onAddToCanvas }: PieceLibraryTabProps) => {
     try {
       const text = await f.text();
       const result = parseDxfToSvg(text, dxfScale);
+      console.log("=== DXF PREVIEW RESULT ===");
+      console.log("Width inches:", result.widthInches);
+      console.log("Height inches:", result.heightInches);
+      console.log("Raw Width:", result.rawWidth);
+      console.log("Raw Height:", result.rawHeight);
+      console.log("SVG Path Length:", result.svgPath?.length);
+      console.log("SVG Path Start:", result.svgPath?.slice(0, 300));
+      console.log("SVG Path End:", result.svgPath?.slice(-100));
+      const nums = result.svgPath.match(/[-+]?[0-9]*\.?[0-9]+/g);
+      console.log("First 20 Numbers:", nums?.slice(0, 20));
       setPreview(result);
     } catch (err: any) {
       toast({ title: 'DXF Parse Error', description: err.message, variant: 'destructive' });
