@@ -214,6 +214,16 @@ export default function InvoiceGenerator() {
     setItems(newItems);
   };
 
+  const handleAmountChange = (index: number, amount: number) => {
+    const newItems = [...items];
+    newItems[index].amount = amount;
+    // Adjust price based on amount / quantity
+    if (newItems[index].quantity > 0) {
+      newItems[index].price = parseFloat((amount / newItems[index].quantity).toFixed(2));
+    }
+    setItems(newItems);
+  };
+
   const handleHsnChange = (index: number, hsn_code: string) => {
     const newItems = [...items];
     newItems[index].hsn_code = hsn_code;
@@ -1026,7 +1036,13 @@ export default function InvoiceGenerator() {
 
               <div className="col-span-1 space-y-2">
                 <Label>Amount</Label>
-                <Input value={item.amount.toFixed(2)} disabled />
+                <Input 
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={item.amount || ''}
+                  onChange={(e) => handleAmountChange(index, Number(e.target.value))}
+                />
               </div>
 
               <div className="col-span-1">
