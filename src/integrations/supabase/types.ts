@@ -1878,6 +1878,128 @@ export type Database = {
           },
         ]
       }
+      debit_note_items: {
+        Row: {
+          amount: number
+          created_at: string
+          debit_note_id: string
+          description: string
+          hsn_code: string | null
+          id: string
+          quantity: number
+          rate: number
+          sort_order: number
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          debit_note_id: string
+          description: string
+          hsn_code?: string | null
+          id?: string
+          quantity?: number
+          rate?: number
+          sort_order?: number
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          debit_note_id?: string
+          description?: string
+          hsn_code?: string | null
+          id?: string
+          quantity?: number
+          rate?: number
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "debit_note_items_debit_note_id_fkey"
+            columns: ["debit_note_id"]
+            isOneToOne: false
+            referencedRelation: "debit_notes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      debit_notes: {
+        Row: {
+          cgst_amount: number
+          cgst_rate: number
+          created_at: string
+          created_by: string | null
+          debit_note_date: string
+          debit_note_no: string
+          id: string
+          igst_amount: number
+          igst_rate: number
+          original_invoice_date: string | null
+          original_invoice_no: string | null
+          party_address: string | null
+          party_gstin: string | null
+          party_name: string
+          party_state: string | null
+          party_state_code: string | null
+          reason: string | null
+          sgst_amount: number
+          sgst_rate: number
+          subtotal: number
+          tax_type: string
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          cgst_amount?: number
+          cgst_rate?: number
+          created_at?: string
+          created_by?: string | null
+          debit_note_date?: string
+          debit_note_no: string
+          id?: string
+          igst_amount?: number
+          igst_rate?: number
+          original_invoice_date?: string | null
+          original_invoice_no?: string | null
+          party_address?: string | null
+          party_gstin?: string | null
+          party_name: string
+          party_state?: string | null
+          party_state_code?: string | null
+          reason?: string | null
+          sgst_amount?: number
+          sgst_rate?: number
+          subtotal?: number
+          tax_type?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          cgst_amount?: number
+          cgst_rate?: number
+          created_at?: string
+          created_by?: string | null
+          debit_note_date?: string
+          debit_note_no?: string
+          id?: string
+          igst_amount?: number
+          igst_rate?: number
+          original_invoice_date?: string | null
+          original_invoice_no?: string | null
+          party_address?: string | null
+          party_gstin?: string | null
+          party_name?: string
+          party_state?: string | null
+          party_state_code?: string | null
+          reason?: string | null
+          sgst_amount?: number
+          sgst_rate?: number
+          subtotal?: number
+          tax_type?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       delivery_challan_items: {
         Row: {
           color: string | null

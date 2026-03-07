@@ -1,25 +1,19 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Plus, Trash2, Download, Eye } from 'lucide-react';
+import { Plus, Trash2, Download, Eye, Save, ArrowLeft } from 'lucide-react';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
-import logo from '@/assets/logo.png';
-import signature from '@/assets/signature.png';
-import { formatCurrency, numberToWords, sanitizePdfText, formatCurrencyAscii } from '@/lib/invoiceUtils';
-
-const loadPdfLibs = async () => {
-  const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
-    import('jspdf'),
-    import('jspdf-autotable')
-  ]);
-  return { jsPDF, autoTable };
-};
+import { formatCurrency } from '@/lib/invoiceUtils';
+import { generateDebitNotePDF } from '@/lib/debitNoteUtils';
 
 interface DebitNoteItem {
   description: string;
@@ -29,25 +23,13 @@ interface DebitNoteItem {
   amount: number;
 }
 
-const COMPANY_INFO = {
-  name: 'FEATHER FASHIONS',
-  address: '15/153, Kuttiyar Street, Erode - 638001, Tamil Nadu, India',
-  gstin: '33AALPN7662P1ZR',
-  phone: '+91 96006 72707',
-  email: 'info.featherfashions@gmail.com',
-  state: 'Tamil Nadu',
-  stateCode: '33',
-  pan: 'AALPN7662P',
-  bank: {
-    name: 'HDFC Bank',
-    branch: 'Erode Main Branch',
-    accountNo: '50200085396498',
-    ifsc: 'HDFC0000665',
-  },
-};
-
 export default function DebitNote() {
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const queryClient = useQueryClient();
+  const isEdit = !!id;
+
   const [debitNoteNo, setDebitNoteNo] = useState('');
   const [debitNoteDate, setDebitNoteDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [originalInvoiceNo, setOriginalInvoiceNo] = useState('');
@@ -67,6 +49,46 @@ export default function DebitNote() {
   ]);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewPdfUrl, setPreviewPdfUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  // Load existing debit note for editing
+  useEffect(() => {
+    if (!id) return;
+    const load = async () => {
+      setLoading(true);
+      const [{ data: note }, { data: noteItems }] = await Promise.all([
+        supabase.from('debit_notes').select('*').eq('id', id).single(),
+        supabase.from('debit_note_items').select('*').eq('debit_note_id', id).order('sort_order'),
+      ]);
+      if (note) {
+        setDebitNoteNo(note.debit_note_no);
+        setDebitNoteDate(note.debit_note_date);
+        setOriginalInvoiceNo(note.original_invoice_no || '');
+        setOriginalInvoiceDate(note.original_invoice_date || '');
+        setPartyName(note.party_name);
+        setPartyAddress(note.party_address || '');
+        setPartyGstin(note.party_gstin || '');
+        setPartyState(note.party_state || '');
+        setPartyStateCode(note.party_state_code || '');
+        setReason(note.reason || '');
+        setTaxType(note.tax_type as 'intra' | 'inter');
+        setCgstRate(String(note.cgst_rate));
+        setSgstRate(String(note.sgst_rate));
+        setIgstRate(String(note.igst_rate));
+      }
+      if (noteItems?.length) {
+        setItems(noteItems.map((i: any) => ({
+          description: i.description,
+          hsn_code: i.hsn_code || '',
+          quantity: Number(i.quantity),
+          rate: Number(i.rate),
+          amount: Number(i.amount),
+        })));
+      }
+      setLoading(false);
+    };
+    load();
+  }, [id]);
 
   const addItem = () => {
     setItems([...items, { description: '', hsn_code: '', quantity: 1, rate: 0, amount: 0 }]);
@@ -101,231 +123,122 @@ export default function DebitNote() {
   const totalAmount = subtotal + cgstAmt + sgstAmt + igstAmt;
   const roundedTotal = Math.round(totalAmount);
 
-  const generatePDF = async (action: 'download' | 'preview') => {
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      if (!debitNoteNo || !partyName || items.some(i => !i.description || i.amount <= 0)) {
+        throw new Error('Please fill in all required fields.');
+      }
+
+      const noteData = {
+        debit_note_no: debitNoteNo,
+        debit_note_date: debitNoteDate,
+        original_invoice_no: originalInvoiceNo || null,
+        original_invoice_date: originalInvoiceDate || null,
+        party_name: partyName,
+        party_address: partyAddress || null,
+        party_gstin: partyGstin || null,
+        party_state: partyState || null,
+        party_state_code: partyStateCode || null,
+        reason: reason || null,
+        tax_type: taxType,
+        cgst_rate: parseFloat(cgstRate),
+        sgst_rate: parseFloat(sgstRate),
+        igst_rate: parseFloat(igstRate),
+        subtotal,
+        cgst_amount: cgstAmt,
+        sgst_amount: sgstAmt,
+        igst_amount: igstAmt,
+        total_amount: roundedTotal,
+      };
+
+      let noteId = id;
+
+      if (isEdit) {
+        const { error } = await supabase.from('debit_notes').update(noteData).eq('id', id);
+        if (error) throw error;
+        // Delete old items and re-insert
+        await supabase.from('debit_note_items').delete().eq('debit_note_id', id);
+      } else {
+        const { data, error } = await supabase.from('debit_notes').insert(noteData).select('id').single();
+        if (error) throw error;
+        noteId = data.id;
+      }
+
+      // Insert items
+      const itemsData = items.map((item, i) => ({
+        debit_note_id: noteId,
+        description: item.description,
+        hsn_code: item.hsn_code || null,
+        quantity: item.quantity,
+        rate: item.rate,
+        amount: item.amount,
+        sort_order: i,
+      }));
+
+      const { error: itemsError } = await supabase.from('debit_note_items').insert(itemsData);
+      if (itemsError) throw itemsError;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['debit-notes'] });
+      toast({ title: 'Saved', description: `Debit note ${isEdit ? 'updated' : 'created'} successfully.` });
+      navigate('/admin/debit-note');
+    },
+    onError: (err: any) => {
+      toast({ title: 'Error', description: err.message || 'Failed to save.', variant: 'destructive' });
+    },
+  });
+
+  const handlePreview = async () => {
     if (!debitNoteNo || !partyName || items.some(i => !i.description || i.amount <= 0)) {
       toast({ title: 'Missing fields', description: 'Please fill in all required fields.', variant: 'destructive' });
       return;
     }
-
-    const { jsPDF, autoTable } = await loadPdfLibs();
-    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-    const pageW = doc.internal.pageSize.getWidth();
-    const margin = 12;
-    const contentW = pageW - margin * 2;
-    let y = margin;
-
-    // Background
-    doc.setFillColor(250, 250, 247);
-    doc.rect(0, 0, pageW, doc.internal.pageSize.getHeight(), 'F');
-
-    // Border
-    doc.setDrawColor(200, 180, 140);
-    doc.setLineWidth(0.5);
-    doc.rect(margin - 2, margin - 2, contentW + 4, doc.internal.pageSize.getHeight() - margin * 2 + 4);
-
-    // Logo
-    try {
-      const img = new Image();
-      img.src = logo;
-      await new Promise(r => { img.onload = r; });
-      doc.addImage(img, 'PNG', margin, y, 22, 22);
-    } catch {}
-
-    // Company header
-    doc.setFontSize(16);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(30, 30, 30);
-    doc.text(sanitizePdfText(COMPANY_INFO.name), margin + 26, y + 7);
-
-    doc.setFontSize(7);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(80, 80, 80);
-    doc.text(sanitizePdfText(COMPANY_INFO.address), margin + 26, y + 13);
-    doc.text(`GSTIN: ${COMPANY_INFO.gstin} | PAN: ${COMPANY_INFO.pan}`, margin + 26, y + 17);
-    doc.text(`Phone: ${COMPANY_INFO.phone} | Email: ${COMPANY_INFO.email}`, margin + 26, y + 21);
-
-    y += 28;
-
-    // Title
-    doc.setFillColor(139, 69, 19);
-    doc.rect(margin, y, contentW, 8, 'F');
-    doc.setFontSize(13);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(255, 255, 255);
-    doc.text('DEBIT NOTE', pageW / 2, y + 5.5, { align: 'center' });
-    y += 12;
-
-    // Debit Note details row
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(30, 30, 30);
-
-    const detailsY = y;
-    const halfW = contentW / 2;
-
-    // Left column - Party details
-    doc.setFont('helvetica', 'bold');
-    doc.text('Debit Note To:', margin, detailsY);
-    doc.setFont('helvetica', 'normal');
-    doc.text(sanitizePdfText(partyName), margin, detailsY + 5);
-    if (partyAddress) {
-      const addrLines = doc.splitTextToSize(sanitizePdfText(partyAddress), halfW - 5);
-      doc.text(addrLines, margin, detailsY + 10);
-    }
-    if (partyGstin) doc.text(`GSTIN: ${partyGstin}`, margin, detailsY + 20);
-    if (partyState) doc.text(`State: ${partyState}${partyStateCode ? ` (${partyStateCode})` : ''}`, margin, detailsY + 24);
-
-    // Right column - Note details
-    const rx = margin + halfW + 5;
-    doc.setFont('helvetica', 'bold');
-    doc.text('Debit Note No:', rx, detailsY);
-    doc.setFont('helvetica', 'normal');
-    doc.text(sanitizePdfText(debitNoteNo), rx + 30, detailsY);
-
-    doc.setFont('helvetica', 'bold');
-    doc.text('Date:', rx, detailsY + 5);
-    doc.setFont('helvetica', 'normal');
-    doc.text(format(new Date(debitNoteDate), 'dd/MM/yyyy'), rx + 30, detailsY + 5);
-
-    if (originalInvoiceNo) {
-      doc.setFont('helvetica', 'bold');
-      doc.text('Orig. Invoice No:', rx, detailsY + 10);
-      doc.setFont('helvetica', 'normal');
-      doc.text(sanitizePdfText(originalInvoiceNo), rx + 30, detailsY + 10);
-    }
-    if (originalInvoiceDate) {
-      doc.setFont('helvetica', 'bold');
-      doc.text('Orig. Invoice Date:', rx, detailsY + 15);
-      doc.setFont('helvetica', 'normal');
-      doc.text(format(new Date(originalInvoiceDate), 'dd/MM/yyyy'), rx + 30, detailsY + 15);
-    }
-
-    y = detailsY + 30;
-
-    // Reason
-    if (reason) {
-      doc.setFont('helvetica', 'bold');
-      doc.text('Reason for Debit Note:', margin, y);
-      doc.setFont('helvetica', 'normal');
-      const reasonLines = doc.splitTextToSize(sanitizePdfText(reason), contentW);
-      doc.text(reasonLines, margin, y + 5);
-      y += 5 + reasonLines.length * 4;
-    }
-
-    y += 3;
-
-    // Items table
-    const tableBody = items.map((item, i) => [
-      (i + 1).toString(),
-      sanitizePdfText(item.description),
-      item.hsn_code || '-',
-      item.quantity.toString(),
-      formatCurrencyAscii(item.rate),
-      formatCurrencyAscii(item.amount),
-    ]);
-
-    autoTable(doc, {
-      startY: y,
-      head: [['#', 'Description', 'HSN', 'Qty', 'Rate', 'Amount']],
-      body: tableBody,
-      theme: 'grid',
-      margin: { left: margin, right: margin },
-      styles: { fontSize: 7.5, cellPadding: 2, textColor: [30, 30, 30] },
-      headStyles: { fillColor: [139, 69, 19], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 7.5 },
-      columnStyles: {
-        0: { cellWidth: 10, halign: 'center' },
-        1: { cellWidth: 'auto' },
-        2: { cellWidth: 22, halign: 'center' },
-        3: { cellWidth: 18, halign: 'center' },
-        4: { cellWidth: 28, halign: 'right' },
-        5: { cellWidth: 30, halign: 'right' },
-      },
-      alternateRowStyles: { fillColor: [250, 248, 240] },
-    });
-
-    y = (doc as any).lastAutoTable.finalY + 5;
-
-    // Tax summary - right aligned
-    const summaryX = pageW - margin - 65;
-    const valX = pageW - margin;
-
-    const drawSummaryRow = (label: string, value: string, bold = false) => {
-      doc.setFont('helvetica', bold ? 'bold' : 'normal');
-      doc.setFontSize(8);
-      doc.text(label, summaryX, y);
-      doc.text(value, valX, y, { align: 'right' });
-      y += 5;
+    const noteData = {
+      debit_note_no: debitNoteNo, debit_note_date: debitNoteDate,
+      original_invoice_no: originalInvoiceNo, original_invoice_date: originalInvoiceDate,
+      party_name: partyName, party_address: partyAddress, party_gstin: partyGstin,
+      party_state: partyState, party_state_code: partyStateCode, reason,
+      tax_type: taxType, cgst_rate: cgstRate, sgst_rate: sgstRate, igst_rate: igstRate,
+      subtotal, cgst_amount: cgstAmt, sgst_amount: sgstAmt, igst_amount: igstAmt, total_amount: roundedTotal,
     };
-
-    drawSummaryRow('Subtotal:', formatCurrencyAscii(subtotal));
-    if (taxType === 'intra') {
-      drawSummaryRow(`CGST @ ${cgstRate}%:`, formatCurrencyAscii(cgstAmt));
-      drawSummaryRow(`SGST @ ${sgstRate}%:`, formatCurrencyAscii(sgstAmt));
-    } else {
-      drawSummaryRow(`IGST @ ${igstRate}%:`, formatCurrencyAscii(igstAmt));
-    }
-
-    // Total line
-    doc.setDrawColor(139, 69, 19);
-    doc.setLineWidth(0.3);
-    doc.line(summaryX, y - 1, valX, y - 1);
-    drawSummaryRow('Total Amount:', formatCurrencyAscii(roundedTotal), true);
-
-    // Amount in words
-    y += 2;
-    doc.setFontSize(7.5);
-    doc.setFont('helvetica', 'italic');
-    doc.text(`Amount in Words: ${numberToWords(roundedTotal)} Rupees Only`, margin, y);
-    y += 8;
-
-    // Bank details
-    doc.setFillColor(245, 240, 230);
-    doc.rect(margin, y, contentW / 2 - 2, 22, 'F');
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8);
-    doc.setTextColor(30, 30, 30);
-    doc.text('Bank Details', margin + 3, y + 5);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7);
-    doc.text(`Bank: ${COMPANY_INFO.bank.name}`, margin + 3, y + 10);
-    doc.text(`A/C No: ${COMPANY_INFO.bank.accountNo}`, margin + 3, y + 14);
-    doc.text(`IFSC: ${COMPANY_INFO.bank.ifsc}`, margin + 3, y + 18);
-
-    // Signature block
-    const sigX = margin + contentW / 2 + 5;
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8);
-    doc.text(`For ${COMPANY_INFO.name}`, sigX, y + 5);
-
-    try {
-      const sigImg = new Image();
-      sigImg.src = signature;
-      await new Promise(r => { sigImg.onload = r; });
-      doc.addImage(sigImg, 'PNG', sigX, y + 7, 25, 10);
-    } catch {}
-
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7);
-    doc.text('Authorized Signatory', sigX, y + 20);
-
-    if (action === 'download') {
-      doc.save(`DebitNote-${debitNoteNo}.pdf`);
-      toast({ title: 'Downloaded', description: 'Debit note PDF saved.' });
-    } else {
-      const blob = doc.output('blob');
-      const url = URL.createObjectURL(blob);
-      setPreviewPdfUrl(url);
-      setPreviewOpen(true);
-    }
+    const url = await generateDebitNotePDF(noteData, items, 'preview');
+    if (url) { setPreviewPdfUrl(url as string); setPreviewOpen(true); }
   };
+
+  const handleDownload = async () => {
+    if (!debitNoteNo || !partyName || items.some(i => !i.description || i.amount <= 0)) {
+      toast({ title: 'Missing fields', description: 'Please fill in all required fields.', variant: 'destructive' });
+      return;
+    }
+    const noteData = {
+      debit_note_no: debitNoteNo, debit_note_date: debitNoteDate,
+      original_invoice_no: originalInvoiceNo, original_invoice_date: originalInvoiceDate,
+      party_name: partyName, party_address: partyAddress, party_gstin: partyGstin,
+      party_state: partyState, party_state_code: partyStateCode, reason,
+      tax_type: taxType, cgst_rate: cgstRate, sgst_rate: sgstRate, igst_rate: igstRate,
+      subtotal, cgst_amount: cgstAmt, sgst_amount: sgstAmt, igst_amount: igstAmt, total_amount: roundedTotal,
+    };
+    await generateDebitNotePDF(noteData, items, 'download');
+    toast({ title: 'Downloaded', description: 'Debit note PDF saved.' });
+  };
+
+  if (loading) return <p className="text-muted-foreground p-6">Loading...</p>;
 
   return (
     <div className="space-y-6 max-w-5xl">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Debit Note Generator</h1>
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => navigate('/admin/debit-note')}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <h1 className="text-2xl font-bold">{isEdit ? 'Edit' : 'Create'} Debit Note</h1>
+        </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => generatePDF('preview')}><Eye className="h-4 w-4 mr-2" />Preview</Button>
-          <Button onClick={() => generatePDF('download')}><Download className="h-4 w-4 mr-2" />Download PDF</Button>
+          <Button variant="outline" onClick={handlePreview}><Eye className="h-4 w-4 mr-2" />Preview</Button>
+          <Button variant="outline" onClick={handleDownload}><Download className="h-4 w-4 mr-2" />Download</Button>
+          <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
+            <Save className="h-4 w-4 mr-2" />{saveMutation.isPending ? 'Saving...' : 'Save'}
+          </Button>
         </div>
       </div>
 
@@ -461,7 +374,6 @@ export default function DebitNote() {
             )}
           </div>
 
-          {/* Summary */}
           <div className="bg-muted/50 rounded-lg p-4 space-y-2 max-w-sm ml-auto text-sm">
             <div className="flex justify-between"><span>Subtotal</span><span>{formatCurrency(subtotal)}</span></div>
             {taxType === 'intra' ? (
@@ -484,7 +396,7 @@ export default function DebitNote() {
           {previewPdfUrl && <iframe src={previewPdfUrl} className="w-full flex-1 rounded border" style={{ minHeight: '70vh' }} />}
           <DialogFooter>
             <Button variant="outline" onClick={() => setPreviewOpen(false)}>Close</Button>
-            <Button onClick={() => generatePDF('download')}><Download className="h-4 w-4 mr-2" />Download</Button>
+            <Button onClick={handleDownload}><Download className="h-4 w-4 mr-2" />Download</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
