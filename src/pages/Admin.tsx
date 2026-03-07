@@ -71,6 +71,7 @@ import BatchAdvancesPage from './admin/BatchAdvancesPage';
 import PreProductionPlanner from './admin/PreProductionPlanner';
 import PatternMarker from './admin/PatternMarker';
 import UnifiedCompanyView from './admin/UnifiedCompanyView';
+import DebitNote from './admin/DebitNote';
 const CompanyProfile = lazy(() => import('./admin/CompanyProfile'));
 
 const Admin = () => {
