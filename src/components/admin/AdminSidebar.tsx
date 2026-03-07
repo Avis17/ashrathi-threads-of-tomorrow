@@ -25,7 +25,8 @@ import {
   Ship,
   Scissors,
   Layers,
-  PencilRuler
+  PencilRuler,
+  FileMinus
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import {
