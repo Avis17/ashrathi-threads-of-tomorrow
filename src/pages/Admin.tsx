@@ -123,6 +123,7 @@ const Admin = () => {
               <Route path="/branches" element={<BranchesManager />} />
               <Route path="/expenses" element={<ExpensesManager />} />
               <Route path="/invoice" element={<InvoiceGenerator />} />
+              <Route path="/debit-note" element={<DebitNote />} />
               <Route path="/customers" element={<CustomersManager />} />
               <Route path="/customers/:id" element={<CustomerDetails />} />
               <Route path="/products" element={<ProductsManager />} />
