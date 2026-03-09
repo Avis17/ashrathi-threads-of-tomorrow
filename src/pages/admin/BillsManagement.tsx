@@ -486,8 +486,80 @@ export default function BillsManagement() {
                   </div>
                 </div>
               )}
+
+              {/* Action buttons - show for Pending bills */}
+              {selectedBill.status === 'Pending' && (
+                <div className="flex gap-2 pt-2 border-t">
+                  <Button
+                    className="flex-1 gap-1"
+                    variant="default"
+                    onClick={() => {
+                      setActionBill({ bill: selectedBill, action: 'Approved' });
+                      setAdminNote('');
+                    }}
+                  >
+                    <CheckCircle2 className="h-4 w-4" />
+                    Approve
+                  </Button>
+                  <Button
+                    className="flex-1 gap-1"
+                    variant="destructive"
+                    onClick={() => {
+                      setActionBill({ bill: selectedBill, action: 'Rejected' });
+                      setAdminNote('');
+                    }}
+                  >
+                    <XCircle className="h-4 w-4" />
+                    Reject
+                  </Button>
+                </div>
+              )}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Approve/Reject Confirmation Dialog */}
+      <Dialog open={!!actionBill} onOpenChange={() => { setActionBill(null); setAdminNote(''); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {actionBill?.action === 'Approved' ? 'Approve' : 'Reject'} Bill
+            </DialogTitle>
+          </DialogHeader>
+          {actionBill && (
+            <div className="space-y-4">
+              <div className="bg-muted p-3 rounded-lg space-y-1">
+                <p className="text-sm"><span className="text-muted-foreground">Employee:</span> {getEmployeeName(actionBill.bill.staff_id)}</p>
+                <p className="text-sm"><span className="text-muted-foreground">Amount:</span> <span className="font-semibold">{formatCurrency(actionBill.bill.amount)}</span></p>
+                <p className="text-sm"><span className="text-muted-foreground">Reason:</span> {actionBill.bill.reason}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium">
+                  Admin Note {actionBill.action === 'Rejected' && <span className="text-destructive">*</span>}
+                </label>
+                <Textarea
+                  placeholder={actionBill.action === 'Rejected' ? 'Reason for rejection (required)...' : 'Optional note...'}
+                  value={adminNote}
+                  onChange={(e) => setAdminNote(e.target.value)}
+                  className="mt-1.5"
+                  rows={3}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setActionBill(null); setAdminNote(''); }}>
+              Cancel
+            </Button>
+            <Button
+              variant={actionBill?.action === 'Rejected' ? 'destructive' : 'default'}
+              onClick={handleAction}
+              disabled={updateStatusMutation.isPending || (actionBill?.action === 'Rejected' && !adminNote.trim())}
+            >
+              {updateStatusMutation.isPending ? 'Updating...' : `Confirm ${actionBill?.action === 'Approved' ? 'Approval' : 'Rejection'}`}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
