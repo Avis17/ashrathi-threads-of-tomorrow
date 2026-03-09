@@ -400,31 +400,52 @@ const StaffDetailsPage = () => {
         </Card>
       )}
 
-      {/* Salary Entry Dialog */}
       <Dialog open={showSalaryForm} onOpenChange={setShowSalaryForm}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add Salary Entry</DialogTitle>
-            <DialogDescription>Record a payment or expense for this staff member</DialogDescription>
+            <DialogDescription>Record a payment or expense. Select a date range to create daily recurring entries.</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleAddSalaryEntry} className="space-y-4">
-            <div className="space-y-2">
-              <Label>Date *</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className={cn('w-full justify-start text-left', !salaryDate && 'text-muted-foreground')}>
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {salaryDate ? format(salaryDate, 'PPP') : 'Pick a date'}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar mode="single" selected={salaryDate} onSelect={setSalaryDate} initialFocus className="p-3 pointer-events-auto" />
-                </PopoverContent>
-              </Popover>
-            </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Amount *</Label>
+                <Label>From Date *</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className={cn('w-full justify-start text-left', !salaryFromDate && 'text-muted-foreground')}>
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {salaryFromDate ? format(salaryFromDate, 'PPP') : 'From date'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={salaryFromDate} onSelect={setSalaryFromDate} initialFocus className="p-3 pointer-events-auto" />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div className="space-y-2">
+                <Label>To Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className={cn('w-full justify-start text-left', !salaryToDate && 'text-muted-foreground')}>
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {salaryToDate ? format(salaryToDate, 'PPP') : 'Same day'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={salaryToDate} onSelect={setSalaryToDate} disabled={(date) => salaryFromDate ? date < salaryFromDate : false} initialFocus className="p-3 pointer-events-auto" />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+            {salaryFromDate && salaryToDate && salaryFromDate !== salaryToDate && (
+              <p className="text-sm text-muted-foreground">
+                This will create <span className="font-semibold text-foreground">{eachDayOfInterval({ start: salaryFromDate, end: salaryToDate }).length}</span> entries of ₹{salaryAmount || '0'} each
+                {salaryAmount ? <> (Total: <span className="font-semibold text-foreground">₹{(parseFloat(salaryAmount) * eachDayOfInterval({ start: salaryFromDate, end: salaryToDate }).length).toLocaleString()}</span>)</> : null}
+              </p>
+            )}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Amount per day *</Label>
                 <Input type="number" placeholder="Enter amount" value={salaryAmount} onChange={(e) => setSalaryAmount(e.target.value)} required />
               </div>
               <div className="space-y-2">
@@ -445,8 +466,8 @@ const StaffDetailsPage = () => {
             </div>
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => setShowSalaryForm(false)}>Cancel</Button>
-              <Button type="submit" disabled={!salaryDate || !salaryAmount || createSalaryEntry.isPending}>
-                {createSalaryEntry.isPending ? 'Adding...' : 'Add Entry'}
+              <Button type="submit" disabled={!salaryFromDate || !salaryAmount || isSubmittingSalary}>
+                {isSubmittingSalary ? 'Adding...' : 'Add Entry'}
               </Button>
             </div>
           </form>
