@@ -42,8 +42,10 @@ const StaffDetailsPage = () => {
   const [showAbsenceForm, setShowAbsenceForm] = useState(false);
 
   // Salary form state
-  const [salaryDate, setSalaryDate] = useState<Date | undefined>();
+  const [salaryFromDate, setSalaryFromDate] = useState<Date | undefined>();
+  const [salaryToDate, setSalaryToDate] = useState<Date | undefined>();
   const [salaryAmount, setSalaryAmount] = useState('');
+  const [isSubmittingSalary, setIsSubmittingSalary] = useState(false);
   const [salaryCategory, setSalaryCategory] = useState('Salary');
   const [salaryNotes, setSalaryNotes] = useState('');
 
