@@ -79,7 +79,7 @@ export default function BillsManagement() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('job_employees')
-        .select('id, full_name, role');
+        .select('id, name, employee_type');
       if (error) throw error;
       return (data || []) as EmployeeInfo[];
     },
