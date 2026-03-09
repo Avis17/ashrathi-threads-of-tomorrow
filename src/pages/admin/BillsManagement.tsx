@@ -42,8 +42,8 @@ interface CashRequest {
 
 interface EmployeeInfo {
   id: string;
-  full_name: string;
-  role: string;
+  name: string;
+  employee_type: string;
 }
 
 const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; icon: typeof Clock }> = {
