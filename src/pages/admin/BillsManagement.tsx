@@ -141,7 +141,7 @@ export default function BillsManagement() {
     };
   }, [bills]);
 
-  const getEmployeeName = (staffId: string) => employeeMap[staffId]?.full_name || 'Unknown';
+  const getEmployeeName = (staffId: string) => employeeMap[staffId]?.name || 'Unknown';
 
   const clearFilters = () => {
     setSearch('');
