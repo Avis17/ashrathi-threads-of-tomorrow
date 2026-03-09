@@ -73,6 +73,7 @@ import PatternMarker from './admin/PatternMarker';
 import UnifiedCompanyView from './admin/UnifiedCompanyView';
 import DebitNote from './admin/DebitNote';
 import DebitNoteList from './admin/DebitNoteList';
+import BillsManagement from './admin/BillsManagement';
 const CompanyProfile = lazy(() => import('./admin/CompanyProfile'));
 
 const Admin = () => {
