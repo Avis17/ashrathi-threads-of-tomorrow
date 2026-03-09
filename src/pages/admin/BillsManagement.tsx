@@ -108,7 +108,7 @@ export default function BillsManagement() {
       if (employeeFilter !== 'all' && b.staff_id !== employeeFilter) return false;
       if (search) {
         const q = search.toLowerCase();
-        const empName = employeeMap[b.staff_id]?.full_name || '';
+        const empName = employeeMap[b.staff_id]?.name || '';
         return (
           b.reason.toLowerCase().includes(q) ||
           b.category.toLowerCase().includes(q) ||
