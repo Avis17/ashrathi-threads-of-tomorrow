@@ -26,7 +26,8 @@ import {
   Scissors,
   Layers,
   PencilRuler,
-  FileMinus
+  FileMinus,
+  Wallet
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import {
