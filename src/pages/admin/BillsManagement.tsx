@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { externalSupabase } from '@/integrations/supabase/externalClient';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,7 +23,9 @@ import {
   AlertCircle,
   Eye,
 } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { toast } from 'sonner';
 
 interface CashRequest {
   id: string;
@@ -59,6 +61,9 @@ export default function BillsManagement() {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [employeeFilter, setEmployeeFilter] = useState('all');
   const [selectedBill, setSelectedBill] = useState<CashRequest | null>(null);
+  const [actionBill, setActionBill] = useState<{ bill: CashRequest; action: 'Approved' | 'Rejected' } | null>(null);
+  const [adminNote, setAdminNote] = useState('');
+  const queryClient = useQueryClient();
 
   // Fetch cash requests from external project
   const { data: bills = [], isLoading, refetch } = useQuery({
@@ -142,6 +147,36 @@ export default function BillsManagement() {
   }, [bills]);
 
   const getEmployeeName = (staffId: string) => employeeMap[staffId]?.name || 'Unknown';
+
+  // Status update mutation
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ id, status, admin_note }: { id: string; status: string; admin_note: string }) => {
+      const { error } = await externalSupabase
+        .from('cash_requests')
+        .update({ status, admin_note })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['external-cash-requests'] });
+      toast.success(`Bill ${actionBill?.action?.toLowerCase()} successfully`);
+      setActionBill(null);
+      setAdminNote('');
+      setSelectedBill(null);
+    },
+    onError: (err: any) => {
+      toast.error('Failed to update: ' + err.message);
+    },
+  });
+
+  const handleAction = () => {
+    if (!actionBill) return;
+    updateStatusMutation.mutate({
+      id: actionBill.bill.id,
+      status: actionBill.action,
+      admin_note: adminNote,
+    });
+  };
 
   const clearFilters = () => {
     setSearch('');
@@ -451,8 +486,80 @@ export default function BillsManagement() {
                   </div>
                 </div>
               )}
+
+              {/* Action buttons - show for Pending bills */}
+              {selectedBill.status === 'Pending' && (
+                <div className="flex gap-2 pt-2 border-t">
+                  <Button
+                    className="flex-1 gap-1"
+                    variant="default"
+                    onClick={() => {
+                      setActionBill({ bill: selectedBill, action: 'Approved' });
+                      setAdminNote('');
+                    }}
+                  >
+                    <CheckCircle2 className="h-4 w-4" />
+                    Approve
+                  </Button>
+                  <Button
+                    className="flex-1 gap-1"
+                    variant="destructive"
+                    onClick={() => {
+                      setActionBill({ bill: selectedBill, action: 'Rejected' });
+                      setAdminNote('');
+                    }}
+                  >
+                    <XCircle className="h-4 w-4" />
+                    Reject
+                  </Button>
+                </div>
+              )}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Approve/Reject Confirmation Dialog */}
+      <Dialog open={!!actionBill} onOpenChange={() => { setActionBill(null); setAdminNote(''); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {actionBill?.action === 'Approved' ? 'Approve' : 'Reject'} Bill
+            </DialogTitle>
+          </DialogHeader>
+          {actionBill && (
+            <div className="space-y-4">
+              <div className="bg-muted p-3 rounded-lg space-y-1">
+                <p className="text-sm"><span className="text-muted-foreground">Employee:</span> {getEmployeeName(actionBill.bill.staff_id)}</p>
+                <p className="text-sm"><span className="text-muted-foreground">Amount:</span> <span className="font-semibold">{formatCurrency(actionBill.bill.amount)}</span></p>
+                <p className="text-sm"><span className="text-muted-foreground">Reason:</span> {actionBill.bill.reason}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium">
+                  Admin Note {actionBill.action === 'Rejected' && <span className="text-destructive">*</span>}
+                </label>
+                <Textarea
+                  placeholder={actionBill.action === 'Rejected' ? 'Reason for rejection (required)...' : 'Optional note...'}
+                  value={adminNote}
+                  onChange={(e) => setAdminNote(e.target.value)}
+                  className="mt-1.5"
+                  rows={3}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setActionBill(null); setAdminNote(''); }}>
+              Cancel
+            </Button>
+            <Button
+              variant={actionBill?.action === 'Rejected' ? 'destructive' : 'default'}
+              onClick={handleAction}
+              disabled={updateStatusMutation.isPending || (actionBill?.action === 'Rejected' && !adminNote.trim())}
+            >
+              {updateStatusMutation.isPending ? 'Updating...' : `Confirm ${actionBill?.action === 'Approved' ? 'Approval' : 'Rejection'}`}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
