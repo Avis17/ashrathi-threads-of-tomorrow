@@ -150,6 +150,7 @@ const Admin = () => {
               <Route path="/exporters" element={<ExportersList />} />
               <Route path="/activity-logs" element={<ActivityLogs />} />
               <Route path="/activity-logs" element={<ActivityLogs />} />
+              <Route path="/bills" element={<BillsManagement />} />
               <Route path="/sampling" element={<SamplingPreparation />} />
               <Route path="/sampling-terms" element={<SamplingTermsGenerator />} />
               <Route path="/quotation" element={<QuotationGenerator />} />
