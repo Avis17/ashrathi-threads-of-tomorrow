@@ -331,7 +331,7 @@ const StaffDetailsPage = () => {
               size="sm"
               variant="outline"
               onClick={() => {
-                setSalaryDate(selectedDate);
+                setSalaryFromDate(selectedDate);
                 setShowSalaryForm(true);
               }}
               className="gap-1"
