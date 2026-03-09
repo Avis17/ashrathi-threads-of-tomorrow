@@ -132,19 +132,29 @@ const StaffDetailsPage = () => {
 
   const handleAddSalaryEntry = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!salaryDate || !salaryAmount) return;
-    await createSalaryEntry.mutateAsync({
-      staff_id: id,
-      entry_date: format(salaryDate, 'yyyy-MM-dd'),
-      amount: parseFloat(salaryAmount),
-      category: salaryCategory,
-      notes: salaryNotes || undefined,
-    });
-    setShowSalaryForm(false);
-    setSalaryDate(undefined);
-    setSalaryAmount('');
-    setSalaryCategory('Salary');
-    setSalaryNotes('');
+    if (!salaryFromDate || !salaryAmount) return;
+    setIsSubmittingSalary(true);
+    try {
+      const toDate = salaryToDate || salaryFromDate;
+      const days = eachDayOfInterval({ start: salaryFromDate, end: toDate });
+      for (const day of days) {
+        await createSalaryEntry.mutateAsync({
+          staff_id: id,
+          entry_date: format(day, 'yyyy-MM-dd'),
+          amount: parseFloat(salaryAmount),
+          category: salaryCategory,
+          notes: salaryNotes || undefined,
+        });
+      }
+      setShowSalaryForm(false);
+      setSalaryFromDate(undefined);
+      setSalaryToDate(undefined);
+      setSalaryAmount('');
+      setSalaryCategory('Salary');
+      setSalaryNotes('');
+    } finally {
+      setIsSubmittingSalary(false);
+    }
   };
 
   const handleAddAbsence = async (e: React.FormEvent) => {
