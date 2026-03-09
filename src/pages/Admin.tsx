@@ -73,6 +73,7 @@ import PatternMarker from './admin/PatternMarker';
 import UnifiedCompanyView from './admin/UnifiedCompanyView';
 import DebitNote from './admin/DebitNote';
 import DebitNoteList from './admin/DebitNoteList';
+import BillsManagement from './admin/BillsManagement';
 const CompanyProfile = lazy(() => import('./admin/CompanyProfile'));
 
 const Admin = () => {
@@ -149,6 +150,7 @@ const Admin = () => {
               <Route path="/exporters" element={<ExportersList />} />
               <Route path="/activity-logs" element={<ActivityLogs />} />
               <Route path="/activity-logs" element={<ActivityLogs />} />
+              <Route path="/bills" element={<BillsManagement />} />
               <Route path="/sampling" element={<SamplingPreparation />} />
               <Route path="/sampling-terms" element={<SamplingTermsGenerator />} />
               <Route path="/quotation" element={<QuotationGenerator />} />
