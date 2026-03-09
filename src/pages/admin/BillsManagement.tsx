@@ -61,6 +61,9 @@ export default function BillsManagement() {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [employeeFilter, setEmployeeFilter] = useState('all');
   const [selectedBill, setSelectedBill] = useState<CashRequest | null>(null);
+  const [actionBill, setActionBill] = useState<{ bill: CashRequest; action: 'Approved' | 'Rejected' } | null>(null);
+  const [adminNote, setAdminNote] = useState('');
+  const queryClient = useQueryClient();
 
   // Fetch cash requests from external project
   const { data: bills = [], isLoading, refetch } = useQuery({
