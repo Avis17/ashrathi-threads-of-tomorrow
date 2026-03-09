@@ -148,6 +148,36 @@ export default function BillsManagement() {
 
   const getEmployeeName = (staffId: string) => employeeMap[staffId]?.name || 'Unknown';
 
+  // Status update mutation
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ id, status, admin_note }: { id: string; status: string; admin_note: string }) => {
+      const { error } = await externalSupabase
+        .from('cash_requests')
+        .update({ status, admin_note })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['external-cash-requests'] });
+      toast.success(`Bill ${actionBill?.action?.toLowerCase()} successfully`);
+      setActionBill(null);
+      setAdminNote('');
+      setSelectedBill(null);
+    },
+    onError: (err: any) => {
+      toast.error('Failed to update: ' + err.message);
+    },
+  });
+
+  const handleAction = () => {
+    if (!actionBill) return;
+    updateStatusMutation.mutate({
+      id: actionBill.bill.id,
+      status: actionBill.action,
+      admin_note: adminNote,
+    });
+  };
+
   const clearFilters = () => {
     setSearch('');
     setStatusFilter('all');
