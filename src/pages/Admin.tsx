@@ -75,6 +75,7 @@ import DebitNote from './admin/DebitNote';
 import DebitNoteList from './admin/DebitNoteList';
 import BillsManagement from './admin/BillsManagement';
 import LeaveManagement from './admin/LeaveManagement';
+import CompanyExpenses from './admin/CompanyExpenses';
 const CompanyProfile = lazy(() => import('./admin/CompanyProfile'));
 
 const Admin = () => {
