@@ -151,13 +151,20 @@ export default function LeaveManagement() {
   // Approve mutation: update external + insert local absence + sync back
   const approveMutation = useMutation({
     mutationFn: async ({ leave, note }: { leave: LeaveRequest; note: string }) => {
-      // 1. Look up staff_members.id from job_employees.id (leave.staff_id = job_employees.id)
+      // 1. Look up job_employees.id by employee_code, then find staff_members.id
+      const { data: employee, error: empError } = await supabase
+        .from('job_employees')
+        .select('id')
+        .eq('employee_code', leave.employee_code)
+        .single();
+      if (empError || !employee) throw new Error(`Employee with code "${leave.employee_code}" not found in this project.`);
+
       const { data: staffMember, error: smError } = await supabase
         .from('staff_members')
         .select('id')
-        .eq('employee_id', leave.staff_id)
+        .eq('employee_id', employee.id)
         .single();
-      if (smError || !staffMember) throw new Error('Staff member not found for this employee. Ensure they are registered as staff.');
+      if (smError || !staffMember) throw new Error(`Employee "${leave.employee_code}" is not registered as staff. Please add them to staff first.`);
 
       // 2. Insert into local staff_absences using staff_members.id
       const { data: absence, error: absError } = await supabase
