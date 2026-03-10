@@ -86,22 +86,23 @@ async function syncBillToExpense(bill: CashRequest) {
       .maybeSingle();
     
     if (batch) {
-      // Check if already synced
+      // Check if already synced via RPC or raw query
       const { data: existing } = await supabase
         .from('job_batch_expenses')
         .select('id')
-        .eq('cash_request_id' as any, bill.id)
+        .eq('cash_request_id', bill.id)
         .maybeSingle();
       
       if (!existing) {
+        const expenseDate = bill.request_date || bill.created_at?.split('T')[0] || new Date().toISOString().split('T')[0];
         const { error } = await supabase.from('job_batch_expenses').insert({
           batch_id: batch.id,
           category: bill.category,
           description: bill.reason,
           amount: bill.amount,
-          date: bill.request_date || bill.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
+          date: expenseDate,
           cash_request_id: bill.id,
-        } as any);
+        });
         if (error) throw error;
       }
     } else {
