@@ -74,6 +74,7 @@ import UnifiedCompanyView from './admin/UnifiedCompanyView';
 import DebitNote from './admin/DebitNote';
 import DebitNoteList from './admin/DebitNoteList';
 import BillsManagement from './admin/BillsManagement';
+import LeaveManagement from './admin/LeaveManagement';
 const CompanyProfile = lazy(() => import('./admin/CompanyProfile'));
 
 const Admin = () => {
