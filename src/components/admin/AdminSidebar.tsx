@@ -27,7 +27,8 @@ import {
   Layers,
   PencilRuler,
   FileMinus,
-  Wallet
+  Wallet,
+  CalendarOff
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import {
