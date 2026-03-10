@@ -166,11 +166,13 @@ const StaffDetailsPage = () => {
       from_date: format(absenceFromDate, 'yyyy-MM-dd'),
       to_date: format(absenceToDate, 'yyyy-MM-dd'),
       reason: absenceReason || undefined,
+      leave_type: absenceLeaveType,
     });
     setShowAbsenceForm(false);
     setAbsenceFromDate(undefined);
     setAbsenceToDate(undefined);
     setAbsenceReason('');
+    setAbsenceLeaveType('full_day');
   };
 
   // Weekday headers
