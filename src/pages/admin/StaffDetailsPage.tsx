@@ -516,6 +516,19 @@ const StaffDetailsPage = () => {
               </div>
             </div>
             <div className="space-y-2">
+              <Label>Leave Type *</Label>
+              <Select value={absenceLeaveType} onValueChange={setAbsenceLeaveType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select leave type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="full_day">Full Day</SelectItem>
+                  <SelectItem value="first_half">First Half (AM)</SelectItem>
+                  <SelectItem value="second_half">Second Half (PM)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
               <Label>Reason</Label>
               <Textarea placeholder="Reason for absence..." value={absenceReason} onChange={(e) => setAbsenceReason(e.target.value)} rows={2} />
             </div>
