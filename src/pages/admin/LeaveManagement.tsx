@@ -426,7 +426,7 @@ export default function LeaveManagement() {
                           {format(new Date(leave.created_at), 'hh:mm a')}
                         </span>
                       </TableCell>
-                      <TableCell className="font-medium">{getEmployeeName(leave.staff_id)}</TableCell>
+                      <TableCell className="font-medium">{getEmployeeName(leave.employee_code)}</TableCell>
                       <TableCell className="text-xs font-mono text-muted-foreground">{leave.employee_code}</TableCell>
                       <TableCell className="text-sm whitespace-nowrap">
                         {getDateRange(leave.from_date, leave.to_date, leave.leave_type)}
