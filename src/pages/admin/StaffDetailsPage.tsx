@@ -53,6 +53,7 @@ const StaffDetailsPage = () => {
   const [absenceFromDate, setAbsenceFromDate] = useState<Date | undefined>();
   const [absenceToDate, setAbsenceToDate] = useState<Date | undefined>();
   const [absenceReason, setAbsenceReason] = useState('');
+  const [absenceLeaveType, setAbsenceLeaveType] = useState('full_day');
 
   // useMemo must be called before any early returns to maintain hook order
   const dailyAmounts = useMemo(() => {
