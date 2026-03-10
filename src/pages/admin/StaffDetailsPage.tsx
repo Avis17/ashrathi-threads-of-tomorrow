@@ -388,7 +388,7 @@ const StaffDetailsPage = () => {
                     {format(parseISO(a.from_date), 'dd MMM yyyy')} → {format(parseISO(a.to_date), 'dd MMM yyyy')}
                   </span>
                   <span className="text-muted-foreground text-xs ml-2">
-                    ({differenceInDays(parseISO(a.to_date), parseISO(a.from_date)) + 1} days)
+                    ({getAbsenceDays(a)} {getAbsenceDays(a) === 1 ? 'day' : 'days'})
                   </span>
                   {a.reason && <p className="text-sm text-muted-foreground mt-0.5">{a.reason}</p>}
                 </div>
