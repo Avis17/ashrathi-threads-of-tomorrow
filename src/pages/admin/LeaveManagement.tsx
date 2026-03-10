@@ -111,10 +111,10 @@ export default function LeaveManagement() {
     return leaves.filter((l) => {
       if (statusFilter !== 'all' && l.status !== statusFilter) return false;
       if (leaveTypeFilter !== 'all' && l.leave_type !== leaveTypeFilter) return false;
-      if (employeeFilter !== 'all' && l.staff_id !== employeeFilter) return false;
+      if (employeeFilter !== 'all' && l.employee_code !== employeeFilter) return false;
       if (search) {
         const q = search.toLowerCase();
-        const empName = employeeMap[l.staff_id]?.name || '';
+        const empName = employeeByCodeMap[l.employee_code]?.name || '';
         return (
           (l.reason || '').toLowerCase().includes(q) ||
           l.employee_code.toLowerCase().includes(q) ||
@@ -123,7 +123,7 @@ export default function LeaveManagement() {
       }
       return true;
     });
-  }, [leaves, statusFilter, leaveTypeFilter, employeeFilter, search, employeeMap]);
+  }, [leaves, statusFilter, leaveTypeFilter, employeeFilter, search, employeeByCodeMap]);
 
   const stats = useMemo(() => {
     const pending = leaves.filter((l) => l.status === 'Pending');
