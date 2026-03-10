@@ -564,7 +564,7 @@ export default function LeaveManagement() {
           {actionLeave && (
             <div className="space-y-4">
               <div className="bg-muted p-3 rounded-lg space-y-1">
-                <p className="text-sm"><span className="text-muted-foreground">Employee:</span> {getEmployeeName(actionLeave.leave.staff_id)}</p>
+                <p className="text-sm"><span className="text-muted-foreground">Employee:</span> {getEmployeeName(actionLeave.leave.employee_code)}</p>
                 <p className="text-sm"><span className="text-muted-foreground">Dates:</span> {getDateRange(actionLeave.leave.from_date, actionLeave.leave.to_date, actionLeave.leave.leave_type)}</p>
                 <p className="text-sm"><span className="text-muted-foreground">Type:</span> {getLeaveTypeLabel(actionLeave.leave.leave_type)}</p>
                 {actionLeave.leave.reason && (
