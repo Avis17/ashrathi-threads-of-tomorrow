@@ -48,6 +48,7 @@ interface EmployeeInfo {
   id: string;
   name: string;
   employee_type: string;
+  employee_code: string;
 }
 
 const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; icon: typeof Clock }> = {
@@ -91,28 +92,29 @@ export default function LeaveManagement() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('job_employees')
-        .select('id, name, employee_type');
+        .select('id, name, employee_type, employee_code');
       if (error) throw error;
       return (data || []) as EmployeeInfo[];
     },
   });
 
-  const employeeMap = useMemo(() => {
+  // Build lookup by employee_code for name resolution
+  const employeeByCodeMap = useMemo(() => {
     const map: Record<string, EmployeeInfo> = {};
-    employees.forEach((e) => { map[e.id] = e; });
+    employees.forEach((e) => { map[e.employee_code] = e; });
     return map;
   }, [employees]);
 
-  const leaveEmployeeIds = useMemo(() => [...new Set(leaves.map((l) => l.staff_id))], [leaves]);
+  const leaveEmployeeCodes = useMemo(() => [...new Set(leaves.map((l) => l.employee_code))], [leaves]);
 
   const filtered = useMemo(() => {
     return leaves.filter((l) => {
       if (statusFilter !== 'all' && l.status !== statusFilter) return false;
       if (leaveTypeFilter !== 'all' && l.leave_type !== leaveTypeFilter) return false;
-      if (employeeFilter !== 'all' && l.staff_id !== employeeFilter) return false;
+      if (employeeFilter !== 'all' && l.employee_code !== employeeFilter) return false;
       if (search) {
         const q = search.toLowerCase();
-        const empName = employeeMap[l.staff_id]?.name || '';
+        const empName = employeeByCodeMap[l.employee_code]?.name || '';
         return (
           (l.reason || '').toLowerCase().includes(q) ||
           l.employee_code.toLowerCase().includes(q) ||
@@ -121,7 +123,7 @@ export default function LeaveManagement() {
       }
       return true;
     });
-  }, [leaves, statusFilter, leaveTypeFilter, employeeFilter, search, employeeMap]);
+  }, [leaves, statusFilter, leaveTypeFilter, employeeFilter, search, employeeByCodeMap]);
 
   const stats = useMemo(() => {
     const pending = leaves.filter((l) => l.status === 'Pending');
@@ -135,7 +137,7 @@ export default function LeaveManagement() {
     };
   }, [leaves]);
 
-  const getEmployeeName = (staffId: string) => employeeMap[staffId]?.name || 'Unknown';
+  const getEmployeeName = (code: string) => employeeByCodeMap[code]?.name || code;
 
   const getLeaveTypeLabel = (type: string) => leaveTypeConfig[type]?.label || type;
 
@@ -151,13 +153,20 @@ export default function LeaveManagement() {
   // Approve mutation: update external + insert local absence + sync back
   const approveMutation = useMutation({
     mutationFn: async ({ leave, note }: { leave: LeaveRequest; note: string }) => {
-      // 1. Look up staff_members.id from job_employees.id (leave.staff_id = job_employees.id)
+      // 1. Look up job_employees.id by employee_code, then find staff_members.id
+      const { data: employee, error: empError } = await supabase
+        .from('job_employees')
+        .select('id')
+        .eq('employee_code', leave.employee_code)
+        .single();
+      if (empError || !employee) throw new Error(`Employee with code "${leave.employee_code}" not found in this project.`);
+
       const { data: staffMember, error: smError } = await supabase
         .from('staff_members')
         .select('id')
-        .eq('employee_id', leave.staff_id)
+        .eq('employee_id', employee.id)
         .single();
-      if (smError || !staffMember) throw new Error('Staff member not found for this employee. Ensure they are registered as staff.');
+      if (smError || !staffMember) throw new Error(`Employee "${leave.employee_code}" is not registered as staff. Please add them to staff first.`);
 
       // 2. Insert into local staff_absences using staff_members.id
       const { data: absence, error: absError } = await supabase
@@ -357,9 +366,9 @@ export default function LeaveManagement() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Employees</SelectItem>
-                {leaveEmployeeIds.map((id) => (
-                  <SelectItem key={id} value={id}>
-                    {getEmployeeName(id)}
+                {leaveEmployeeCodes.map((code) => (
+                  <SelectItem key={code} value={code}>
+                    {getEmployeeName(code)} ({code})
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -417,7 +426,7 @@ export default function LeaveManagement() {
                           {format(new Date(leave.created_at), 'hh:mm a')}
                         </span>
                       </TableCell>
-                      <TableCell className="font-medium">{getEmployeeName(leave.staff_id)}</TableCell>
+                      <TableCell className="font-medium">{getEmployeeName(leave.employee_code)}</TableCell>
                       <TableCell className="text-xs font-mono text-muted-foreground">{leave.employee_code}</TableCell>
                       <TableCell className="text-sm whitespace-nowrap">
                         {getDateRange(leave.from_date, leave.to_date, leave.leave_type)}
@@ -465,7 +474,7 @@ export default function LeaveManagement() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-xs text-muted-foreground">Employee</p>
-                  <p className="font-medium">{getEmployeeName(selectedLeave.staff_id)}</p>
+                  <p className="font-medium">{getEmployeeName(selectedLeave.employee_code)}</p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Employee Code</p>
@@ -555,7 +564,7 @@ export default function LeaveManagement() {
           {actionLeave && (
             <div className="space-y-4">
               <div className="bg-muted p-3 rounded-lg space-y-1">
-                <p className="text-sm"><span className="text-muted-foreground">Employee:</span> {getEmployeeName(actionLeave.leave.staff_id)}</p>
+                <p className="text-sm"><span className="text-muted-foreground">Employee:</span> {getEmployeeName(actionLeave.leave.employee_code)}</p>
                 <p className="text-sm"><span className="text-muted-foreground">Dates:</span> {getDateRange(actionLeave.leave.from_date, actionLeave.leave.to_date, actionLeave.leave.leave_type)}</p>
                 <p className="text-sm"><span className="text-muted-foreground">Type:</span> {getLeaveTypeLabel(actionLeave.leave.leave_type)}</p>
                 {actionLeave.leave.reason && (
