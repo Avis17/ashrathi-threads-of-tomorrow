@@ -92,19 +92,20 @@ export default function LeaveManagement() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('job_employees')
-        .select('id, name, employee_type');
+        .select('id, name, employee_type, employee_code');
       if (error) throw error;
       return (data || []) as EmployeeInfo[];
     },
   });
 
-  const employeeMap = useMemo(() => {
+  // Build lookup by employee_code for name resolution
+  const employeeByCodeMap = useMemo(() => {
     const map: Record<string, EmployeeInfo> = {};
-    employees.forEach((e) => { map[e.id] = e; });
+    employees.forEach((e) => { map[e.employee_code] = e; });
     return map;
   }, [employees]);
 
-  const leaveEmployeeIds = useMemo(() => [...new Set(leaves.map((l) => l.staff_id))], [leaves]);
+  const leaveEmployeeCodes = useMemo(() => [...new Set(leaves.map((l) => l.employee_code))], [leaves]);
 
   const filtered = useMemo(() => {
     return leaves.filter((l) => {
