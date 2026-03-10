@@ -1,0 +1,1 @@
+ALTER TABLE public.staff_absences ADD COLUMN leave_type TEXT NOT NULL DEFAULT 'full_day';

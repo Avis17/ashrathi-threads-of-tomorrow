@@ -74,6 +74,7 @@ import UnifiedCompanyView from './admin/UnifiedCompanyView';
 import DebitNote from './admin/DebitNote';
 import DebitNoteList from './admin/DebitNoteList';
 import BillsManagement from './admin/BillsManagement';
+import LeaveManagement from './admin/LeaveManagement';
 const CompanyProfile = lazy(() => import('./admin/CompanyProfile'));
 
 const Admin = () => {
@@ -151,6 +152,7 @@ const Admin = () => {
               <Route path="/activity-logs" element={<ActivityLogs />} />
               <Route path="/activity-logs" element={<ActivityLogs />} />
               <Route path="/bills" element={<BillsManagement />} />
+              <Route path="/leave-management" element={<LeaveManagement />} />
               <Route path="/sampling" element={<SamplingPreparation />} />
               <Route path="/sampling-terms" element={<SamplingTermsGenerator />} />
               <Route path="/quotation" element={<QuotationGenerator />} />

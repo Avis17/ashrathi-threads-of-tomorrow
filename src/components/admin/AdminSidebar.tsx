@@ -27,7 +27,8 @@ import {
   Layers,
   PencilRuler,
   FileMinus,
-  Wallet
+  Wallet,
+  CalendarOff
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import {
@@ -72,6 +73,7 @@ const menuItems = [
   { title: 'Buyer Follow-ups', url: '/admin/buyer-followups', icon: MessageCircle },
   { title: 'Export Buyers', url: '/admin/export-buyers', icon: Globe },
   { title: 'Indian Exporters', url: '/admin/exporters', icon: Ship },
+  { title: 'Leave Management', url: '/admin/leave-management', icon: CalendarOff },
   { title: 'Activity Logs', url: '/admin/activity-logs', icon: Activity },
   { title: 'Invoice Reset', url: '/admin/invoice-reset', icon: Settings },
   { title: 'Settings', url: '/admin/settings', icon: Settings },
