@@ -137,7 +137,7 @@ export default function LeaveManagement() {
     };
   }, [leaves]);
 
-  const getEmployeeName = (staffId: string) => employeeMap[staffId]?.name || 'Unknown';
+  const getEmployeeName = (code: string) => employeeByCodeMap[code]?.name || code;
 
   const getLeaveTypeLabel = (type: string) => leaveTypeConfig[type]?.label || type;
 
