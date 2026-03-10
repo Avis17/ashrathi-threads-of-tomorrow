@@ -5913,6 +5913,7 @@ export type Database = {
           created_at: string
           from_date: string
           id: string
+          leave_type: string
           reason: string | null
           staff_id: string
           to_date: string
@@ -5921,6 +5922,7 @@ export type Database = {
           created_at?: string
           from_date: string
           id?: string
+          leave_type?: string
           reason?: string | null
           staff_id: string
           to_date: string
@@ -5929,6 +5931,7 @@ export type Database = {
           created_at?: string
           from_date?: string
           id?: string
+          leave_type?: string
           reason?: string | null
           staff_id?: string
           to_date?: string
