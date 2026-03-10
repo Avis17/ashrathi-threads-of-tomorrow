@@ -168,7 +168,7 @@ export const useStaffAbsences = (staffId: string) => {
 export const useCreateStaffAbsence = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: { staff_id: string; from_date: string; to_date: string; reason?: string }) => {
+    mutationFn: async (data: { staff_id: string; from_date: string; to_date: string; reason?: string; leave_type?: string }) => {
       const { data: absence, error } = await supabase
         .from('staff_absences')
         .insert([data])

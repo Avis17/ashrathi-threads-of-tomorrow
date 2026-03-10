@@ -53,6 +53,7 @@ const StaffDetailsPage = () => {
   const [absenceFromDate, setAbsenceFromDate] = useState<Date | undefined>();
   const [absenceToDate, setAbsenceToDate] = useState<Date | undefined>();
   const [absenceReason, setAbsenceReason] = useState('');
+  const [absenceLeaveType, setAbsenceLeaveType] = useState('full_day');
 
   // useMemo must be called before any early returns to maintain hook order
   const dailyAmounts = useMemo(() => {
@@ -165,11 +166,13 @@ const StaffDetailsPage = () => {
       from_date: format(absenceFromDate, 'yyyy-MM-dd'),
       to_date: format(absenceToDate, 'yyyy-MM-dd'),
       reason: absenceReason || undefined,
+      leave_type: absenceLeaveType,
     });
     setShowAbsenceForm(false);
     setAbsenceFromDate(undefined);
     setAbsenceToDate(undefined);
     setAbsenceReason('');
+    setAbsenceLeaveType('full_day');
   };
 
   // Weekday headers
@@ -511,6 +514,19 @@ const StaffDetailsPage = () => {
                   </PopoverContent>
                 </Popover>
               </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Leave Type *</Label>
+              <Select value={absenceLeaveType} onValueChange={setAbsenceLeaveType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select leave type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="full_day">Full Day</SelectItem>
+                  <SelectItem value="first_half">First Half (AM)</SelectItem>
+                  <SelectItem value="second_half">Second Half (PM)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label>Reason</Label>
