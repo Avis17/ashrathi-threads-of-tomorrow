@@ -37,6 +37,7 @@ export interface StaffAbsence {
   staff_id: string;
   from_date: string;
   to_date: string;
+  leave_type: string;
   reason: string | null;
   created_at: string;
 }
