@@ -48,6 +48,7 @@ interface EmployeeInfo {
   id: string;
   name: string;
   employee_type: string;
+  employee_code: string;
 }
 
 const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; icon: typeof Clock }> = {
