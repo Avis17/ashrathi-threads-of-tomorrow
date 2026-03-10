@@ -92,9 +92,12 @@ const StaffDetailsPage = () => {
 
   // ─── Stats calculations ───
   const totalSalaryPaid = salaryEntries.reduce((sum, e) => sum + e.amount, 0);
-  const totalAbsenceDays = absences.reduce((sum, a) => {
-    return sum + differenceInDays(parseISO(a.to_date), parseISO(a.from_date)) + 1;
-  }, 0);
+  const getAbsenceDays = (a: { from_date: string; to_date: string; leave_type?: string }) => {
+    const fullDays = differenceInDays(parseISO(a.to_date), parseISO(a.from_date)) + 1;
+    return a.leave_type === 'first_half' || a.leave_type === 'second_half' ? 0.5 : fullDays;
+  };
+
+  const totalAbsenceDays = absences.reduce((sum, a) => sum + getAbsenceDays(a), 0);
 
   const monthsActive = staff.joined_date
     ? Math.max(1, Math.ceil(differenceInDays(new Date(), parseISO(staff.joined_date)) / 30))
