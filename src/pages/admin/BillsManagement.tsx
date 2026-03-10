@@ -2,14 +2,16 @@ import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { externalSupabase } from '@/integrations/supabase/externalClient';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { formatCurrency } from '@/lib/utils';
-import { format } from 'date-fns';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { formatCurrency, cn } from '@/lib/utils';
+import { format, parseISO, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 import {
   IndianRupee,
   Clock,
@@ -22,6 +24,8 @@ import {
   Receipt,
   AlertCircle,
   Eye,
+  CalendarIcon,
+  Upload,
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
@@ -40,6 +44,8 @@ interface CashRequest {
   created_at: string;
   updated_at: string;
   employee_code: string;
+  batch_number: string | null;
+  request_date: string;
 }
 
 interface EmployeeInfo {
@@ -55,14 +61,78 @@ const statusConfig: Record<string, { label: string; variant: 'default' | 'second
   Paid: { label: 'Paid', variant: 'secondary', icon: CheckCircle2 },
 };
 
+async function syncBillToExpense(bill: CashRequest) {
+  const batchNumber = bill.batch_number || '';
+  
+  if (batchNumber.toUpperCase() === 'COMPANY' || !batchNumber) {
+    // Insert into company_expenses
+    const { error } = await supabase.from('company_expenses').upsert({
+      cash_request_id: bill.id,
+      employee_code: bill.employee_code,
+      category: bill.category,
+      item_name: bill.reason,
+      amount: bill.amount,
+      date: bill.request_date || bill.created_at,
+      note: bill.admin_note,
+      batch_number: 'COMPANY',
+    }, { onConflict: 'cash_request_id' });
+    if (error) throw error;
+  } else {
+    // Find batch by batch_number
+    const { data: batch } = await supabase
+      .from('job_batches')
+      .select('id')
+      .eq('batch_number', batchNumber)
+      .maybeSingle();
+    
+    if (batch) {
+      // Check if already synced
+      const { data: existing } = await supabase
+        .from('job_batch_expenses')
+        .select('id')
+        .eq('cash_request_id' as any, bill.id)
+        .maybeSingle();
+      
+      if (!existing) {
+        const { error } = await supabase.from('job_batch_expenses').insert({
+          batch_id: batch.id,
+          category: bill.category,
+          description: bill.reason,
+          amount: bill.amount,
+          date: bill.request_date || bill.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
+          cash_request_id: bill.id,
+        } as any);
+        if (error) throw error;
+      }
+    } else {
+      // Batch not found, treat as company expense
+      const { error } = await supabase.from('company_expenses').upsert({
+        cash_request_id: bill.id,
+        employee_code: bill.employee_code,
+        category: bill.category,
+        item_name: bill.reason,
+        amount: bill.amount,
+        date: bill.request_date || bill.created_at,
+        note: bill.admin_note,
+        batch_number: batchNumber,
+      }, { onConflict: 'cash_request_id' });
+      if (error) throw error;
+    }
+  }
+}
+
 export default function BillsManagement() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [employeeFilter, setEmployeeFilter] = useState('all');
+  const [batchFilter, setBatchFilter] = useState('all');
+  const [dateFrom, setDateFrom] = useState<Date | undefined>();
+  const [dateTo, setDateTo] = useState<Date | undefined>();
   const [selectedBill, setSelectedBill] = useState<CashRequest | null>(null);
   const [actionBill, setActionBill] = useState<{ bill: CashRequest; action: 'Approved' | 'Rejected' } | null>(null);
   const [adminNote, setAdminNote] = useState('');
+  const [isSyncing, setIsSyncing] = useState(false);
   const queryClient = useQueryClient();
 
   // Fetch cash requests from external project
@@ -99,10 +169,9 @@ export default function BillsManagement() {
     return map;
   }, [employees]);
 
-  // Unique categories for filter
+  // Unique categories and batch numbers for filters
   const categories = useMemo(() => [...new Set(bills.map((b) => b.category))].sort(), [bills]);
-
-  // Unique employees who have bills
+  const batchNumbers = useMemo(() => [...new Set(bills.map((b) => b.batch_number).filter(Boolean))].sort() as string[], [bills]);
   const billEmployeeIds = useMemo(() => [...new Set(bills.map((b) => b.staff_id))], [bills]);
 
   // Filter logic
@@ -111,6 +180,15 @@ export default function BillsManagement() {
       if (statusFilter !== 'all' && b.status !== statusFilter) return false;
       if (categoryFilter !== 'all' && b.category !== categoryFilter) return false;
       if (employeeFilter !== 'all' && b.staff_id !== employeeFilter) return false;
+      if (batchFilter !== 'all' && (b.batch_number || '') !== batchFilter) return false;
+      
+      // Date range filter on request_date
+      if (dateFrom || dateTo) {
+        const billDate = b.request_date ? parseISO(b.request_date) : new Date(b.created_at);
+        if (dateFrom && billDate < startOfDay(dateFrom)) return false;
+        if (dateTo && billDate > endOfDay(dateTo)) return false;
+      }
+
       if (search) {
         const q = search.toLowerCase();
         const empName = employeeMap[b.staff_id]?.name || '';
@@ -118,12 +196,13 @@ export default function BillsManagement() {
           b.reason.toLowerCase().includes(q) ||
           b.category.toLowerCase().includes(q) ||
           b.employee_code.toLowerCase().includes(q) ||
-          empName.toLowerCase().includes(q)
+          empName.toLowerCase().includes(q) ||
+          (b.batch_number || '').toLowerCase().includes(q)
         );
       }
       return true;
     });
-  }, [bills, statusFilter, categoryFilter, employeeFilter, search, employeeMap]);
+  }, [bills, statusFilter, categoryFilter, employeeFilter, batchFilter, dateFrom, dateTo, search, employeeMap]);
 
   // Stats
   const stats = useMemo(() => {
@@ -148,7 +227,7 @@ export default function BillsManagement() {
 
   const getEmployeeName = (staffId: string) => employeeMap[staffId]?.name || 'Unknown';
 
-  // Status update mutation
+  // Status update mutation with expense sync
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status, admin_note }: { id: string; status: string; admin_note: string }) => {
       const { error } = await externalSupabase
@@ -156,6 +235,11 @@ export default function BillsManagement() {
         .update({ status, admin_note })
         .eq('id', id);
       if (error) throw error;
+
+      // If approving, sync to expense table
+      if (status === 'Approved' && actionBill) {
+        await syncBillToExpense({ ...actionBill.bill, admin_note });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['external-cash-requests'] });
@@ -178,14 +262,48 @@ export default function BillsManagement() {
     });
   };
 
+  // Sync past approvals
+  const handleSyncPastApprovals = async () => {
+    setIsSyncing(true);
+    try {
+      const approvedBills = bills.filter((b) => b.status === 'Approved' || b.status === 'Paid');
+      let synced = 0;
+      let skipped = 0;
+      let errors = 0;
+
+      for (const bill of approvedBills) {
+        try {
+          await syncBillToExpense(bill);
+          synced++;
+        } catch (err: any) {
+          if (err?.message?.includes('duplicate') || err?.code === '23505') {
+            skipped++;
+          } else {
+            errors++;
+            console.error('Sync error for bill', bill.id, err);
+          }
+        }
+      }
+
+      toast.success(`Sync complete: ${synced} synced, ${skipped} already existed, ${errors} errors`);
+    } catch (err: any) {
+      toast.error('Sync failed: ' + err.message);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   const clearFilters = () => {
     setSearch('');
     setStatusFilter('all');
     setCategoryFilter('all');
     setEmployeeFilter('all');
+    setBatchFilter('all');
+    setDateFrom(undefined);
+    setDateTo(undefined);
   };
 
-  const hasActiveFilters = search || statusFilter !== 'all' || categoryFilter !== 'all' || employeeFilter !== 'all';
+  const hasActiveFilters = search || statusFilter !== 'all' || categoryFilter !== 'all' || employeeFilter !== 'all' || batchFilter !== 'all' || dateFrom || dateTo;
 
   return (
     <div className="space-y-6">
@@ -195,10 +313,22 @@ export default function BillsManagement() {
           <h1 className="text-3xl font-bold tracking-tight">Bills Management</h1>
           <p className="text-muted-foreground mt-1">Track and manage all cash requests from staff</p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => refetch()} className="gap-2">
-          <RefreshCw className="h-4 w-4" />
-          Refresh
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleSyncPastApprovals}
+            disabled={isSyncing}
+            className="gap-2"
+          >
+            <Upload className="h-4 w-4" />
+            {isSyncing ? 'Syncing...' : 'Sync Past Approvals'}
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => refetch()} className="gap-2">
+            <RefreshCw className="h-4 w-4" />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -338,6 +468,42 @@ export default function BillsManagement() {
               </SelectContent>
             </Select>
           </div>
+          {/* Second row: batch filter + date range */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-3">
+            <Select value={batchFilter} onValueChange={setBatchFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Batch" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Batches</SelectItem>
+                {batchNumbers.map((b) => (
+                  <SelectItem key={b} value={b}>{b}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className={cn("justify-start text-left font-normal", !dateFrom && "text-muted-foreground")}>
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {dateFrom ? format(dateFrom, 'dd MMM yyyy') : 'From date'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar mode="single" selected={dateFrom} onSelect={setDateFrom} initialFocus className="p-3 pointer-events-auto" />
+              </PopoverContent>
+            </Popover>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className={cn("justify-start text-left font-normal", !dateTo && "text-muted-foreground")}>
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {dateTo ? format(dateTo, 'dd MMM yyyy') : 'To date'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar mode="single" selected={dateTo} onSelect={setDateTo} initialFocus className="p-3 pointer-events-auto" />
+              </PopoverContent>
+            </Popover>
+          </div>
         </CardContent>
       </Card>
 
@@ -374,6 +540,7 @@ export default function BillsManagement() {
                   <TableHead>Date</TableHead>
                   <TableHead>Employee</TableHead>
                   <TableHead>Code</TableHead>
+                  <TableHead>Batch</TableHead>
                   <TableHead>Category</TableHead>
                   <TableHead>Reason</TableHead>
                   <TableHead className="text-right">Amount</TableHead>
@@ -385,17 +552,19 @@ export default function BillsManagement() {
                 {filtered.map((bill) => {
                   const cfg = statusConfig[bill.status] || statusConfig.Pending;
                   const StatusIcon = cfg.icon;
+                  const displayDate = bill.request_date || bill.created_at;
                   return (
                     <TableRow key={bill.id} className="group">
                       <TableCell className="text-sm whitespace-nowrap">
-                        {format(new Date(bill.created_at), 'dd MMM yyyy')}
-                        <br />
-                        <span className="text-xs text-muted-foreground">
-                          {format(new Date(bill.created_at), 'hh:mm a')}
-                        </span>
+                        {format(new Date(displayDate), 'dd MMM yyyy')}
                       </TableCell>
                       <TableCell className="font-medium">{getEmployeeName(bill.staff_id)}</TableCell>
                       <TableCell className="text-xs font-mono text-muted-foreground">{bill.employee_code}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="font-normal text-xs">
+                          {bill.batch_number || '-'}
+                        </Badge>
+                      </TableCell>
                       <TableCell>
                         <Badge variant="secondary" className="font-normal">{bill.category}</Badge>
                       </TableCell>
@@ -450,6 +619,10 @@ export default function BillsManagement() {
                   <Badge variant="secondary">{selectedBill.category}</Badge>
                 </div>
                 <div>
+                  <p className="text-xs text-muted-foreground">Batch</p>
+                  <Badge variant="outline">{selectedBill.batch_number || '-'}</Badge>
+                </div>
+                <div>
                   <p className="text-xs text-muted-foreground">Status</p>
                   <Badge variant={statusConfig[selectedBill.status]?.variant || 'outline'}>
                     {selectedBill.status}
@@ -460,7 +633,11 @@ export default function BillsManagement() {
                   <p className="text-xl font-bold">{formatCurrency(selectedBill.amount)}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Date</p>
+                  <p className="text-xs text-muted-foreground">Request Date</p>
+                  <p className="text-sm">{selectedBill.request_date ? format(parseISO(selectedBill.request_date), 'dd MMM yyyy') : format(new Date(selectedBill.created_at), 'dd MMM yyyy')}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Submitted</p>
                   <p className="text-sm">{format(new Date(selectedBill.created_at), 'dd MMM yyyy, hh:mm a')}</p>
                 </div>
               </div>
@@ -532,6 +709,7 @@ export default function BillsManagement() {
               <div className="bg-muted p-3 rounded-lg space-y-1">
                 <p className="text-sm"><span className="text-muted-foreground">Employee:</span> {getEmployeeName(actionBill.bill.staff_id)}</p>
                 <p className="text-sm"><span className="text-muted-foreground">Amount:</span> <span className="font-semibold">{formatCurrency(actionBill.bill.amount)}</span></p>
+                <p className="text-sm"><span className="text-muted-foreground">Batch:</span> {actionBill.bill.batch_number || 'N/A'}</p>
                 <p className="text-sm"><span className="text-muted-foreground">Reason:</span> {actionBill.bill.reason}</p>
               </div>
               <div>
