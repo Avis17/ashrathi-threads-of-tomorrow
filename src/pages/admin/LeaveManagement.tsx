@@ -366,9 +366,9 @@ export default function LeaveManagement() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Employees</SelectItem>
-                {leaveEmployeeIds.map((id) => (
-                  <SelectItem key={id} value={id}>
-                    {getEmployeeName(id)}
+                {leaveEmployeeCodes.map((code) => (
+                  <SelectItem key={code} value={code}>
+                    {getEmployeeName(code)} ({code})
                   </SelectItem>
                 ))}
               </SelectContent>
