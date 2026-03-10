@@ -1097,6 +1097,48 @@ export type Database = {
         }
         Relationships: []
       }
+      company_expenses: {
+        Row: {
+          amount: number
+          batch_number: string | null
+          cash_request_id: string
+          category: string
+          created_at: string | null
+          date: string
+          employee_code: string | null
+          id: string
+          item_name: string
+          note: string | null
+          supplier_name: string | null
+        }
+        Insert: {
+          amount?: number
+          batch_number?: string | null
+          cash_request_id: string
+          category: string
+          created_at?: string | null
+          date: string
+          employee_code?: string | null
+          id?: string
+          item_name: string
+          note?: string | null
+          supplier_name?: string | null
+        }
+        Update: {
+          amount?: number
+          batch_number?: string | null
+          cash_request_id?: string
+          category?: string
+          created_at?: string | null
+          date?: string
+          employee_code?: string | null
+          id?: string
+          item_name?: string
+          note?: string | null
+          supplier_name?: string | null
+        }
+        Relationships: []
+      }
       company_letterheads: {
         Row: {
           closing: string | null
@@ -3215,6 +3257,7 @@ export type Database = {
           amount: number
           batch_id: string | null
           bill_number: string | null
+          cash_request_id: string | null
           created_at: string | null
           date: string
           expense_type: string
@@ -3230,6 +3273,7 @@ export type Database = {
           amount: number
           batch_id?: string | null
           bill_number?: string | null
+          cash_request_id?: string | null
           created_at?: string | null
           date?: string
           expense_type: string
@@ -3245,6 +3289,7 @@ export type Database = {
           amount?: number
           batch_id?: string | null
           bill_number?: string | null
+          cash_request_id?: string | null
           created_at?: string | null
           date?: string
           expense_type?: string

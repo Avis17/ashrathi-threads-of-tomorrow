@@ -61,6 +61,7 @@ const menuItems = [
   { title: 'Generate Invoice', url: '/admin/invoice', icon: FileText },
   { title: 'Debit Note', url: '/admin/debit-note', icon: FileMinus },
   { title: 'Bills Management', url: '/admin/bills', icon: Wallet },
+  { title: 'Company Expenses', url: '/admin/company-expenses', icon: Building2 },
   { title: 'Company Letterhead', url: '/admin/letterhead', icon: ScrollText },
   { title: 'Company Profile', url: '/admin/company-profile', icon: Building2 },
   { title: 'Label Generator', url: '/admin/label-generator', icon: Tags },

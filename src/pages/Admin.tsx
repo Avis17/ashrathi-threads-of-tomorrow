@@ -75,6 +75,7 @@ import DebitNote from './admin/DebitNote';
 import DebitNoteList from './admin/DebitNoteList';
 import BillsManagement from './admin/BillsManagement';
 import LeaveManagement from './admin/LeaveManagement';
+import CompanyExpenses from './admin/CompanyExpenses';
 const CompanyProfile = lazy(() => import('./admin/CompanyProfile'));
 
 const Admin = () => {
@@ -152,6 +153,7 @@ const Admin = () => {
               <Route path="/activity-logs" element={<ActivityLogs />} />
               <Route path="/activity-logs" element={<ActivityLogs />} />
               <Route path="/bills" element={<BillsManagement />} />
+              <Route path="/company-expenses" element={<CompanyExpenses />} />
               <Route path="/leave-management" element={<LeaveManagement />} />
               <Route path="/sampling" element={<SamplingPreparation />} />
               <Route path="/sampling-terms" element={<SamplingTermsGenerator />} />

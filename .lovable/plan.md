@@ -1,98 +1,141 @@
 
 
-# Plan: Bills Management Enhancements
+# CAD Piece Upload System for Pattern Marker
 
 ## Overview
-Three changes: (1) Add batch-wise and date range filters to Bills Management, (2) On approval, auto-create corresponding batch expense or company expense, (3) Create a new `company_expenses` table with its own page/route, (4) Migrate existing approved bills into their corresponding tables.
+Add a **Piece Library** tab to the Pattern Marker page where you can upload DXF files of individual pattern pieces. Each uploaded piece stores its parsed outline (as SVG path data) along with metadata (name, size, garment type, grain line, quantity). These library pieces can then be placed onto the marker canvas as **actual shaped outlines** instead of plain rectangles.
 
 ---
 
-## 1. Database Migration
+## What You'll Do
+1. Upload a `.dxf` file for each pattern piece (e.g., "Front Panel - M", "Back Panel - L")
+2. Fill in piece details: name, size, garment type, grain line direction, quantity per garment, set or individual
+3. The system parses the DXF client-side, extracts the outline, and stores it
+4. From the Piece Library, you pick pieces and place them on the marker canvas
+5. Pieces render as their actual CAD shapes (curves, notches) -- draggable and rotatable
 
-### New table: `company_expenses`
-```sql
-CREATE TABLE company_expenses (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  cash_request_id TEXT NOT NULL,
-  employee_code TEXT,
-  category TEXT NOT NULL,
-  item_name TEXT NOT NULL,
-  amount NUMERIC NOT NULL,
-  date TEXT NOT NULL,
-  note TEXT,
-  supplier_name TEXT,
-  created_at TIMESTAMPTZ DEFAULT now()
-);
--- RLS: admin only
+---
+
+## Implementation Steps
+
+### Step 1: New Database Table -- `marker_piece_library`
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | UUID (PK) | Auto-generated |
+| `name` | TEXT | e.g. "Front Panel" |
+| `garment_type` | TEXT | pant, top, shorts, etc. |
+| `size` | TEXT | M, L, XL, etc. |
+| `set_type` | TEXT | "set" or "individual" |
+| `grain_line` | TEXT | lengthwise, crosswise, bias |
+| `quantity_per_garment` | INT | e.g. 2 for sleeves |
+| `width_inches` | NUMERIC | Bounding box width from DXF |
+| `height_inches` | NUMERIC | Bounding box height from DXF |
+| `svg_path_data` | TEXT | The parsed SVG path `d` attribute |
+| `original_filename` | TEXT | The uploaded DXF filename |
+| `dxf_file_url` | TEXT | URL in pp-assets bucket |
+| `metadata` | JSONB | Any extra info |
+| `created_by` | UUID | Auth user |
+| `created_at` | TIMESTAMPTZ | Default now() |
+
+RLS: Authenticated users can CRUD their own rows.
+
+### Step 2: Install `dxf-parser` npm package
+
+Use the `dxf-parser` library to parse DXF content client-side in the browser. It reads DXF text into a JS object with entities (LINE, LWPOLYLINE, ARC, CIRCLE, SPLINE, etc.).
+
+### Step 3: DXF-to-SVG Path Converter Utility
+
+Create `src/utils/dxf-to-svg.ts`:
+- Read the DXF file as text
+- Parse with `dxf-parser`
+- Extract all entities from the DXF (lines, polylines, arcs, circles, splines)
+- Convert each entity to SVG path commands (`M`, `L`, `A`, `C`)
+- Compute bounding box to determine `width_inches` and `height_inches`
+- Normalize the path so it starts at origin (0,0)
+- Accept a `scaleInput` parameter (user specifies what 1 unit in their DXF equals in inches)
+- Return: `{ svgPath: string, widthInches: number, heightInches: number }`
+
+### Step 4: New Component -- `PieceLibraryTab`
+
+Create `src/components/admin/pattern-marker/PieceLibraryTab.tsx`:
+
+**Upload Form:**
+- File input (accept `.dxf`)
+- Piece Name (text)
+- Garment Type (dropdown: pant, top, shorts, custom)
+- Size (text, e.g. M / L / XL)
+- Set Type (radio: Set Item / Individual)
+- Grain Line Direction (dropdown: Lengthwise / Crosswise / Bias)
+- Quantity per Garment (number, default 1)
+- DXF Scale (number -- how many inches = 1 DXF unit, default 1)
+
+**Upload Flow:**
+1. User selects DXF file and fills metadata
+2. On submit: parse DXF client-side, extract SVG path + bounding box
+3. Upload original DXF file to `pp-assets` bucket under `marker-pieces/`
+4. Insert row into `marker_piece_library` with parsed SVG path data
+5. Show a small preview of the parsed outline shape
+
+**Library Grid:**
+- List all saved pieces as cards with shape preview (rendered as inline SVG), name, size, garment type
+- Delete button on each card
+- "Add to Canvas" button to place the piece onto the marker
+
+### Step 5: Update `PieceDef` Interface
+
+Extend the existing `PieceDef` to support SVG path pieces:
+
+```text
+PieceDef {
+  ...existing fields...
+  svgPathData?: string    // If present, render as shape instead of rectangle
+  libraryPieceId?: string // Reference to marker_piece_library row
+}
 ```
 
-### Add `cash_request_id` column to `job_batch_expenses`
-To track which bills have already been synced and prevent duplicates:
-```sql
-ALTER TABLE job_batch_expenses ADD COLUMN cash_request_id TEXT;
-```
+### Step 6: Update `MarkerCanvas` to Render SVG Shapes
 
-### Data migration for existing approved bills
-An edge function or a one-time SQL migration that:
-- Fetches all approved/paid bills from the external `cash_requests` table (cannot do cross-DB in SQL, so this will be handled via a one-time script in the approval mutation or a manual button)
+When a piece has `svgPathData`:
+- Use Konva's `Path` component instead of `Rect`
+- Scale the path to match the piece's `widthInches * scale` and `heightInches * scale`
+- Keep all existing behavior: draggable, 90-degree rotation, collision detection (using bounding box), selection, delete
 
-**Decision**: Since external DB can't be queried from a migration, we'll add a "Sync Existing Bills" button in the UI that processes all Approved/Paid bills and inserts them into the correct table.
+When a piece does NOT have `svgPathData` (measurement-generated pieces):
+- Continue rendering as rectangles (no change)
 
----
+### Step 7: Add "Piece Library" Tab to PatternMarker Page
 
-## 2. Bills Management Page Updates (`BillsManagement.tsx`)
-
-### Add to CashRequest interface
-```typescript
-batch_number: string | null;
-request_date: string;
-```
-
-### New filters
-- **Batch filter**: Dropdown populated from unique `batch_number` values in bills
-- **Date range filter**: Two date pickers (from/to) filtering on `request_date`
-
-### Approval logic change
-When approving a bill, after updating external status:
-1. Look up `batch_number` from the bill
-2. If `batch_number` is `'COMPANY'` → insert into `company_expenses`
-3. Otherwise → find matching `job_batches` row by `batch_number` → insert into `job_batch_expenses` with the batch's ID
-
-### Sync existing button
-A "Sync Past Approvals" button that iterates all Approved/Paid bills and inserts missing entries into `job_batch_expenses` or `company_expenses` (checking `cash_request_id` to skip duplicates).
+Add a new tab alongside Canvas, Measurements, Analytics, and Styles:
+- Tab label: "Piece Library"
+- Renders `PieceLibraryTab`
+- Passes a callback `onAddToCanvas(piece)` that converts a library piece into a `PieceDef` and adds it to the canvas pieces array
 
 ---
 
-## 3. Company Expenses Page
+## Technical Details
 
-### New file: `src/pages/admin/CompanyExpenses.tsx`
-- Lists all rows from `company_expenses` table
-- Search, date range filter, category filter
-- Summary cards (total amount, count, by category)
-- Table view with date, employee, category, amount, notes
+**DXF Parsing Strategy:**
+- Use `dxf-parser` (well-maintained, supports LINE, LWPOLYLINE, ARC, CIRCLE, SPLINE, INSERT)
+- Entity-to-SVG mapping:
+  - `LINE` -> `M x1,y1 L x2,y2`
+  - `LWPOLYLINE` / `POLYLINE` -> `M x0,y0 L x1,y1 L x2,y2 ... Z`
+  - `ARC` -> SVG arc command `A rx,ry rotation large-arc sweep ex,ey`
+  - `CIRCLE` -> Two arc commands forming a full circle
+  - `SPLINE` -> Approximate with cubic bezier `C` commands
+- DXF Y-axis is flipped vs SVG; the converter will negate Y values
 
-### Route & Navigation
-- Route: `/admin/company-expenses` in `Admin.tsx`
-- Sidebar entry in `AdminSidebar.tsx` near "Bills Management"
+**Collision Detection:**
+- For shaped pieces, collision detection will still use the bounding box (width x height) for performance. Pixel-perfect collision with arbitrary paths is too expensive for real-time dragging.
 
----
+**Storage:**
+- Original DXF files stored in `pp-assets` bucket (already public)
+- SVG path data stored as TEXT in the database (typically a few KB per piece)
 
-## 4. Files to Create/Modify
-
-| File | Action |
-|------|--------|
-| Migration SQL | Create `company_expenses` table, add `cash_request_id` to `job_batch_expenses` |
-| `src/pages/admin/BillsManagement.tsx` | Add batch filter, date range filter, approval sync logic |
-| `src/pages/admin/CompanyExpenses.tsx` | New page for company expenses |
-| `src/hooks/useCompanyExpenses.tsx` | New hook for CRUD on company_expenses |
-| `src/pages/Admin.tsx` | Add route for company expenses |
-| `src/components/admin/AdminSidebar.tsx` | Add nav link |
-
----
-
-## Technical Notes
-- The external `cash_requests` table has `batch_number` and `request_date` fields that will be read but not modified
-- Batch matching: `cash_request.batch_number` matched against `job_batches.batch_number`
-- `cash_request_id` (the external ID) stored to prevent duplicate expense entries
-- Company expenses are completely isolated in a new table — no existing tables are modified for this purpose
+**Files to create/modify:**
+- Create: `src/utils/dxf-to-svg.ts`
+- Create: `src/components/admin/pattern-marker/PieceLibraryTab.tsx`
+- Modify: `src/pages/admin/PatternMarker.tsx` (add tab, extend PieceDef, add-to-canvas handler)
+- Modify: `src/components/admin/pattern-marker/MarkerCanvas.tsx` (render Path when svgPathData exists)
+- Migration: Create `marker_piece_library` table with RLS
 
