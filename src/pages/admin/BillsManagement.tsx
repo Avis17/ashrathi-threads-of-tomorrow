@@ -97,8 +97,8 @@ async function syncBillToExpense(bill: CashRequest) {
         const expenseDate = bill.request_date || bill.created_at?.split('T')[0] || new Date().toISOString().split('T')[0];
         const { error } = await supabase.from('job_batch_expenses').insert({
           batch_id: batch.id,
-          category: bill.category,
-          description: bill.reason,
+          expense_type: bill.category,
+          item_name: bill.reason,
           amount: bill.amount,
           date: expenseDate,
           cash_request_id: bill.id,
