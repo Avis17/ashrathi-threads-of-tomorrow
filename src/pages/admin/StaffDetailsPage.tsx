@@ -802,6 +802,17 @@ const StaffDetailsPage = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Profile Edit Dialog */}
+      <Dialog open={showProfileEdit} onOpenChange={setShowProfileEdit}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Staff Profile</DialogTitle>
+            <DialogDescription>Update personal, employment, and identification details</DialogDescription>
+          </DialogHeader>
+          <StaffProfileEditForm staff={staff} onClose={() => setShowProfileEdit(false)} />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
