@@ -111,6 +111,30 @@ export const useCreateStaffMember = () => {
   });
 };
 
+export const useUpdateStaffMember = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Record<string, any> }) => {
+      const { data: staff, error } = await supabase
+        .from('staff_members')
+        .update(data)
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return staff;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['staff-members'] });
+      queryClient.invalidateQueries({ queryKey: ['staff-member', variables.id] });
+      toast.success('Staff profile updated');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to update profile');
+    },
+  });
+};
+
 export const useStaffSalaryEntries = (staffId: string) => {
   return useQuery({
     queryKey: ['staff-salary-entries', staffId],
