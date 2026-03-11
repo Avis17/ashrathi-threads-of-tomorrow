@@ -1,136 +1,141 @@
 
 
-# Plan: Enable Staff Project to Create DCs + Display as Separate Tab
+# CAD Piece Upload System for Pattern Marker
 
-## Context
-You have a **separate staff project** that connects to this project's database using the anon key. Staff already raise bills and apply for leaves from there. Now they need to create Delivery Challans too, and those DCs should appear in your admin DC list under a separate tab.
-
-## Architecture
-
-Since the staff project uses your database's **anon key** (same pattern as `job_batches` and `job_employees` public access), we need:
-
-1. **RLS policy updates** on this project's tables
-2. **Schema guidance** for the staff project's DC creation form
-3. **A "Staff DCs" tab** in your existing DC list page
+## Overview
+Add a **Piece Library** tab to the Pattern Marker page where you can upload DXF files of individual pattern pieces. Each uploaded piece stores its parsed outline (as SVG path data) along with metadata (name, size, garment type, grain line, quantity). These library pieces can then be placed onto the marker canvas as **actual shaped outlines** instead of plain rectangles.
 
 ---
 
-## 1. RLS Policy Updates (This Project)
+## What You'll Do
+1. Upload a `.dxf` file for each pattern piece (e.g., "Front Panel - M", "Back Panel - L")
+2. Fill in piece details: name, size, garment type, grain line direction, quantity per garment, set or individual
+3. The system parses the DXF client-side, extracts the outline, and stores it
+4. From the Piece Library, you pick pieces and place them on the marker canvas
+5. Pieces render as their actual CAD shapes (curves, notches) -- draggable and rotatable
 
-Currently all three tables (`delivery_challans`, `delivery_challan_items`, `job_workers`) only allow access via `has_role(auth.uid(), 'admin')`. The staff project uses the **anon** role.
+---
 
-### Tables to add public SELECT policies:
+## Implementation Steps
 
-| Table | Policy | Why |
-|-------|--------|-----|
-| `job_workers` | `SELECT` for `anon` | Staff need the job worker dropdown list |
-| `delivery_challans` | `INSERT` for `anon` | Staff create DCs |
-| `delivery_challan_items` | `INSERT` for `anon` | Staff create DC line items |
+### Step 1: New Database Table -- `marker_piece_library`
 
-### Add a `created_by_employee_code` column to `delivery_challans`
-This identifies which staff member created the DC (mirrors the `employee_code` pattern used elsewhere). Also add a `source` column (`'admin'` or `'staff'`) to distinguish origin.
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | UUID (PK) | Auto-generated |
+| `name` | TEXT | e.g. "Front Panel" |
+| `garment_type` | TEXT | pant, top, shorts, etc. |
+| `size` | TEXT | M, L, XL, etc. |
+| `set_type` | TEXT | "set" or "individual" |
+| `grain_line` | TEXT | lengthwise, crosswise, bias |
+| `quantity_per_garment` | INT | e.g. 2 for sleeves |
+| `width_inches` | NUMERIC | Bounding box width from DXF |
+| `height_inches` | NUMERIC | Bounding box height from DXF |
+| `svg_path_data` | TEXT | The parsed SVG path `d` attribute |
+| `original_filename` | TEXT | The uploaded DXF filename |
+| `dxf_file_url` | TEXT | URL in pp-assets bucket |
+| `metadata` | JSONB | Any extra info |
+| `created_by` | UUID | Auth user |
+| `created_at` | TIMESTAMPTZ | Default now() |
 
-```sql
-ALTER TABLE delivery_challans 
-  ADD COLUMN source TEXT NOT NULL DEFAULT 'admin',
-  ADD COLUMN created_by_employee_code TEXT;
+RLS: Authenticated users can CRUD their own rows.
 
--- Staff can read job workers list
-CREATE POLICY "Public can read job workers" ON job_workers
-  FOR SELECT TO anon USING (is_active = true);
+### Step 2: Install `dxf-parser` npm package
 
--- Staff can insert DCs (must set source = 'staff')
-CREATE POLICY "Staff can insert DCs" ON delivery_challans
-  FOR INSERT TO anon WITH CHECK (source = 'staff');
+Use the `dxf-parser` library to parse DXF content client-side in the browser. It reads DXF text into a JS object with entities (LINE, LWPOLYLINE, ARC, CIRCLE, SPLINE, etc.).
 
--- Staff can read their own DCs
-CREATE POLICY "Staff can read own DCs" ON delivery_challans
-  FOR SELECT TO anon USING (source = 'staff');
+### Step 3: DXF-to-SVG Path Converter Utility
 
--- Staff can insert DC items for staff-created DCs
-CREATE POLICY "Staff can insert DC items" ON delivery_challan_items
-  FOR INSERT TO anon WITH CHECK (
-    EXISTS (SELECT 1 FROM delivery_challans WHERE id = delivery_challan_id AND source = 'staff')
-  );
+Create `src/utils/dxf-to-svg.ts`:
+- Read the DXF file as text
+- Parse with `dxf-parser`
+- Extract all entities from the DXF (lines, polylines, arcs, circles, splines)
+- Convert each entity to SVG path commands (`M`, `L`, `A`, `C`)
+- Compute bounding box to determine `width_inches` and `height_inches`
+- Normalize the path so it starts at origin (0,0)
+- Accept a `scaleInput` parameter (user specifies what 1 unit in their DXF equals in inches)
+- Return: `{ svgPath: string, widthInches: number, heightInches: number }`
 
--- Staff can read DC items for staff-created DCs
-CREATE POLICY "Staff can read DC items" ON delivery_challan_items
-  FOR SELECT TO anon USING (
-    EXISTS (SELECT 1 FROM delivery_challans WHERE id = delivery_challan_id AND source = 'staff')
-  );
+### Step 4: New Component -- `PieceLibraryTab`
+
+Create `src/components/admin/pattern-marker/PieceLibraryTab.tsx`:
+
+**Upload Form:**
+- File input (accept `.dxf`)
+- Piece Name (text)
+- Garment Type (dropdown: pant, top, shorts, custom)
+- Size (text, e.g. M / L / XL)
+- Set Type (radio: Set Item / Individual)
+- Grain Line Direction (dropdown: Lengthwise / Crosswise / Bias)
+- Quantity per Garment (number, default 1)
+- DXF Scale (number -- how many inches = 1 DXF unit, default 1)
+
+**Upload Flow:**
+1. User selects DXF file and fills metadata
+2. On submit: parse DXF client-side, extract SVG path + bounding box
+3. Upload original DXF file to `pp-assets` bucket under `marker-pieces/`
+4. Insert row into `marker_piece_library` with parsed SVG path data
+5. Show a small preview of the parsed outline shape
+
+**Library Grid:**
+- List all saved pieces as cards with shape preview (rendered as inline SVG), name, size, garment type
+- Delete button on each card
+- "Add to Canvas" button to place the piece onto the marker
+
+### Step 5: Update `PieceDef` Interface
+
+Extend the existing `PieceDef` to support SVG path pieces:
+
+```text
+PieceDef {
+  ...existing fields...
+  svgPathData?: string    // If present, render as shape instead of rectangle
+  libraryPieceId?: string // Reference to marker_piece_library row
+}
 ```
 
----
+### Step 6: Update `MarkerCanvas` to Render SVG Shapes
 
-## 2. What the Staff Project Needs to Build
+When a piece has `svgPathData`:
+- Use Konva's `Path` component instead of `Rect`
+- Scale the path to match the piece's `widthInches * scale` and `heightInches * scale`
+- Keep all existing behavior: draggable, 90-degree rotation, collision detection (using bounding box), selection, delete
 
-### Tables they DON'T need to create
-They write directly to **your** `delivery_challans` and `delivery_challan_items` tables using your anon key. No separate DC tables needed.
+When a piece does NOT have `svgPathData` (measurement-generated pieces):
+- Continue rendering as rectangles (no change)
 
-### Their DC creation form should collect:
+### Step 7: Add "Piece Library" Tab to PatternMarker Page
 
-| Field | Required | Notes |
-|-------|----------|-------|
-| `dc_date` | Yes | Date picker |
-| `dc_type` | Yes | job_work / return / rework |
-| `purpose` | Yes | cutting/stitching/ironing/etc |
-| `purposes` | No | Array of multiple purposes |
-| `job_work_direction` | Yes | given / taken |
-| `job_worker_name` | Yes | Dropdown from `job_workers` table (fetched via anon) |
-| `job_worker_address` | No | Auto-filled from selected worker |
-| `job_worker_gstin` | No | Auto-filled from selected worker |
-| `vehicle_number` | Yes | Text input |
-| `driver_name` | Yes | Text input |
-| `driver_mobile` | Yes | Text input |
-| `expected_return_date` | No | Date picker |
-| `notes` | No | Textarea |
-| `source` | Auto | Always `'staff'` |
-| `created_by_employee_code` | Auto | From logged-in staff's employee_code |
-
-**Items** (array):
-
-| Field | Required |
-|-------|----------|
-| `product_name` | Yes |
-| `sku` | No |
-| `size` | No |
-| `color` | No |
-| `quantity` | Yes |
-| `uom` | Yes (pcs/kg) |
-| `remarks` | No |
-
-### DC number generation
-The `dc_number` is auto-generated by a trigger (`set_dc_number`), so the staff project just needs to pass a dummy or let the DB generate it. Since the insert schema shows `dc_number` is required, we should **make it optional** by adding a default or adjusting the trigger to always overwrite.
+Add a new tab alongside Canvas, Measurements, Analytics, and Styles:
+- Tab label: "Piece Library"
+- Renders `PieceLibraryTab`
+- Passes a callback `onAddToCanvas(piece)` that converts a library piece into a `PieceDef` and adds it to the canvas pieces array
 
 ---
 
-## 3. UI Changes (This Project)
+## Technical Details
 
-### DeliveryChallanList.tsx — Add Tabs
-- **"Our DCs" tab**: Shows DCs where `source = 'admin'` (or `source IS NULL` for legacy)
-- **"Staff DCs" tab**: Shows DCs where `source = 'staff'`
-- Staff DCs are read-only (no edit/delete), but can be viewed, printed, and status-changed by admin
+**DXF Parsing Strategy:**
+- Use `dxf-parser` (well-maintained, supports LINE, LWPOLYLINE, ARC, CIRCLE, SPLINE, INSERT)
+- Entity-to-SVG mapping:
+  - `LINE` -> `M x1,y1 L x2,y2`
+  - `LWPOLYLINE` / `POLYLINE` -> `M x0,y0 L x1,y1 L x2,y2 ... Z`
+  - `ARC` -> SVG arc command `A rx,ry rotation large-arc sweep ex,ey`
+  - `CIRCLE` -> Two arc commands forming a full circle
+  - `SPLINE` -> Approximate with cubic bezier `C` commands
+- DXF Y-axis is flipped vs SVG; the converter will negate Y values
 
----
+**Collision Detection:**
+- For shaped pieces, collision detection will still use the bounding box (width x height) for performance. Pixel-perfect collision with arbitrary paths is too expensive for real-time dragging.
 
-## 4. Files to Modify
+**Storage:**
+- Original DXF files stored in `pp-assets` bucket (already public)
+- SVG path data stored as TEXT in the database (typically a few KB per piece)
 
-| File | Change |
-|------|--------|
-| Migration SQL | Add `source` + `created_by_employee_code` columns, add anon RLS policies, update `dc_number` default |
-| `src/pages/admin/delivery-challan/DeliveryChallanList.tsx` | Add tab UI to split "Our DCs" vs "Staff DCs" |
-| `src/hooks/useDeliveryChallans.ts` | Add query variant that filters by `source` |
-| `src/types/deliveryChallan.ts` | Add `source` and `created_by_employee_code` to interface |
-
----
-
-## 5. Summary for Staff Project Team
-
-Tell them:
-1. Connect to this project's database using the **anon key** (same as bills/leaves)
-2. Fetch `job_workers` (active only) for the dropdown
-3. Insert into `delivery_challans` with `source = 'staff'` and `created_by_employee_code`
-4. Insert items into `delivery_challan_items` referencing the new DC's `id`
-5. `dc_number` is auto-generated — no need to provide it
-6. They can read back their own staff-created DCs for confirmation
+**Files to create/modify:**
+- Create: `src/utils/dxf-to-svg.ts`
+- Create: `src/components/admin/pattern-marker/PieceLibraryTab.tsx`
+- Modify: `src/pages/admin/PatternMarker.tsx` (add tab, extend PieceDef, add-to-canvas handler)
+- Modify: `src/components/admin/pattern-marker/MarkerCanvas.tsx` (render Path when svgPathData exists)
+- Migration: Create `marker_piece_library` table with RLS
 

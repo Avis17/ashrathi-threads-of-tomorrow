@@ -2093,6 +2093,7 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          created_by_employee_code: string | null
           dc_date: string
           dc_number: string
           dc_type: string
@@ -2107,6 +2108,7 @@ export type Database = {
           notes: string | null
           purpose: string
           purposes: string[] | null
+          source: string
           status: string
           total_quantity: number
           updated_at: string
@@ -2115,8 +2117,9 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by?: string | null
+          created_by_employee_code?: string | null
           dc_date?: string
-          dc_number: string
+          dc_number?: string
           dc_type: string
           driver_mobile: string
           driver_name: string
@@ -2129,6 +2132,7 @@ export type Database = {
           notes?: string | null
           purpose: string
           purposes?: string[] | null
+          source?: string
           status?: string
           total_quantity?: number
           updated_at?: string
@@ -2137,6 +2141,7 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string | null
+          created_by_employee_code?: string | null
           dc_date?: string
           dc_number?: string
           dc_type?: string
@@ -2151,6 +2156,7 @@ export type Database = {
           notes?: string | null
           purpose?: string
           purposes?: string[] | null
+          source?: string
           status?: string
           total_quantity?: number
           updated_at?: string
