@@ -33,6 +33,7 @@ import {
   useDeleteStaffWeeklyPayout,
 } from '@/hooks/useStaffAdvances';
 import StaffWeeklyPayoutForm from '@/components/admin/jobmanagement/StaffWeeklyPayoutForm';
+import StaffProfileEditForm from '@/components/admin/jobmanagement/StaffProfileEditForm';
 
 const StaffDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
