@@ -124,30 +124,22 @@ export default function DeliveryChallanList() {
         </div>
       </div>
 
+      {/* Tabs for Our DCs vs Staff DCs */}
+      <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); setSearch(''); setStatusFilter('all'); setTypeFilter('all'); setDirectionFilter('all'); }}>
+        <TabsList className="mb-4">
+          <TabsTrigger value="our-dcs" className="gap-2">
+            <Truck className="h-4 w-4" />
+            Our DCs ({adminChallans.length})
+          </TabsTrigger>
+          <TabsTrigger value="staff-dcs" className="gap-2">
+            <Users className="h-4 w-4" />
+            Staff DCs ({staffChallans.length})
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="our-dcs" className="space-y-8 mt-0">
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        <Card className="border-0 shadow-sm bg-gradient-to-br from-slate-50 to-white">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground font-medium">Total DCs</p>
-                <p className="text-3xl font-bold mt-1">{stats.total}</p>
-              </div>
-              <div className="h-12 w-12 rounded-xl bg-slate-100 flex items-center justify-center">
-                <FileText className="h-6 w-6 text-slate-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-0 shadow-sm bg-gradient-to-br from-indigo-50 to-white">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground font-medium">Given</p>
-                <p className="text-3xl font-bold mt-1 text-indigo-600">{stats.given}</p>
-              </div>
-              <div className="h-12 w-12 rounded-xl bg-indigo-100 flex items-center justify-center">
-                <ArrowUpRight className="h-6 w-6 text-indigo-600" />
               </div>
             </div>
           </CardContent>
