@@ -249,7 +249,6 @@ export default function BillsManagement() {
       toast.success(`Bill ${actionBill?.action?.toLowerCase()} successfully`);
       setActionBill(null);
       setAdminNote('');
-      setSelectedBill(null);
     },
     onError: (err: any) => {
       toast.error('Failed to update: ' + err.message);
