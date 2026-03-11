@@ -12,6 +12,23 @@ export interface StaffMember {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  date_of_birth: string | null;
+  blood_group: string | null;
+  qualification: string | null;
+  education: string | null;
+  aadhar_number: string | null;
+  driving_license: string | null;
+  place: string | null;
+  address: string | null;
+  emergency_contact_name: string | null;
+  emergency_contact_phone: string | null;
+  father_name: string | null;
+  marital_status: string | null;
+  gender: string | null;
+  bank_account_number: string | null;
+  bank_name: string | null;
+  ifsc_code: string | null;
+  pan_number: string | null;
   employee?: {
     id: string;
     name: string;
@@ -90,6 +107,30 @@ export const useCreateStaffMember = () => {
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to add staff member');
+    },
+  });
+};
+
+export const useUpdateStaffMember = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Record<string, any> }) => {
+      const { data: staff, error } = await supabase
+        .from('staff_members')
+        .update(data)
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return staff;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['staff-members'] });
+      queryClient.invalidateQueries({ queryKey: ['staff-member', variables.id] });
+      toast.success('Staff profile updated');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to update profile');
     },
   });
 };

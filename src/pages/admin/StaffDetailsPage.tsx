@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, IndianRupee, Calendar as CalendarIcon, UserX, Trash2, TrendingUp, TrendingDown, DollarSign, CalendarDays, Banknote, Wallet } from 'lucide-react';
+import { ArrowLeft, Plus, IndianRupee, Calendar as CalendarIcon, UserX, Trash2, TrendingUp, TrendingDown, DollarSign, CalendarDays, Banknote, Wallet, Edit, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -33,6 +33,7 @@ import {
   useDeleteStaffWeeklyPayout,
 } from '@/hooks/useStaffAdvances';
 import StaffWeeklyPayoutForm from '@/components/admin/jobmanagement/StaffWeeklyPayoutForm';
+import StaffProfileEditForm from '@/components/admin/jobmanagement/StaffProfileEditForm';
 
 const StaffDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -56,6 +57,7 @@ const StaffDetailsPage = () => {
   const [showAbsenceForm, setShowAbsenceForm] = useState(false);
   const [showAdvanceForm, setShowAdvanceForm] = useState(false);
   const [showPayoutForm, setShowPayoutForm] = useState(false);
+  const [showProfileEdit, setShowProfileEdit] = useState(false);
   const [deletingPayout, setDeletingPayout] = useState<string | null>(null);
 
   // Salary form state
@@ -233,6 +235,9 @@ const StaffDetailsPage = () => {
           </p>
         </div>
         <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" size="sm" onClick={() => setShowProfileEdit(true)} className="gap-1">
+            <Edit className="h-4 w-4" /> Edit Profile
+          </Button>
           <Button variant="outline" size="sm" onClick={() => setShowAdvanceForm(true)} className="gap-1">
             <Wallet className="h-4 w-4" /> Record Advance
           </Button>
@@ -300,6 +305,38 @@ const StaffDetailsPage = () => {
           <p className="text-xl font-bold">₹{dailyRate}</p>
         </Card>
       </div>
+
+      {/* Staff Profile Card */}
+      <Card className="p-4">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-semibold flex items-center gap-2"><User className="h-4 w-4" /> Staff Profile</h3>
+          <Button variant="outline" size="sm" onClick={() => setShowProfileEdit(true)} className="gap-1">
+            <Edit className="h-3 w-3" /> Edit
+          </Button>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-3 text-sm">
+          {staff.date_of_birth && <div><span className="text-muted-foreground">DOB:</span> <span className="font-medium">{staff.date_of_birth}</span></div>}
+          {staff.gender && <div><span className="text-muted-foreground">Gender:</span> <span className="font-medium capitalize">{staff.gender}</span></div>}
+          {staff.blood_group && <div><span className="text-muted-foreground">Blood Group:</span> <span className="font-medium">{staff.blood_group}</span></div>}
+          {staff.father_name && <div><span className="text-muted-foreground">Father:</span> <span className="font-medium">{staff.father_name}</span></div>}
+          {staff.marital_status && <div><span className="text-muted-foreground">Marital Status:</span> <span className="font-medium capitalize">{staff.marital_status}</span></div>}
+          {staff.place && <div><span className="text-muted-foreground">Place:</span> <span className="font-medium">{staff.place}</span></div>}
+          {staff.education && <div><span className="text-muted-foreground">Education:</span> <span className="font-medium">{staff.education}</span></div>}
+          {staff.qualification && <div><span className="text-muted-foreground">Qualification:</span> <span className="font-medium">{staff.qualification}</span></div>}
+          {staff.aadhar_number && <div><span className="text-muted-foreground">Aadhar:</span> <span className="font-medium">{staff.aadhar_number}</span></div>}
+          {staff.pan_number && <div><span className="text-muted-foreground">PAN:</span> <span className="font-medium">{staff.pan_number}</span></div>}
+          {staff.driving_license && <div><span className="text-muted-foreground">DL:</span> <span className="font-medium">{staff.driving_license}</span></div>}
+          {staff.address && <div className="col-span-2"><span className="text-muted-foreground">Address:</span> <span className="font-medium">{staff.address}</span></div>}
+          {staff.emergency_contact_name && <div><span className="text-muted-foreground">Emergency:</span> <span className="font-medium">{staff.emergency_contact_name} {staff.emergency_contact_phone && `(${staff.emergency_contact_phone})`}</span></div>}
+          {staff.bank_name && <div><span className="text-muted-foreground">Bank:</span> <span className="font-medium">{staff.bank_name}</span></div>}
+          {staff.bank_account_number && <div><span className="text-muted-foreground">A/C:</span> <span className="font-medium">{staff.bank_account_number}</span></div>}
+          {staff.ifsc_code && <div><span className="text-muted-foreground">IFSC:</span> <span className="font-medium">{staff.ifsc_code}</span></div>}
+          {staff.employee?.phone && <div><span className="text-muted-foreground">Phone:</span> <span className="font-medium">{staff.employee.phone}</span></div>}
+        </div>
+        {!staff.date_of_birth && !staff.aadhar_number && !staff.place && !staff.education && (
+          <p className="text-sm text-muted-foreground mt-2">No profile details added yet. Click "Edit" to add personal details.</p>
+        )}
+      </Card>
 
       {/* Category Breakdown */}
       {Object.keys(categoryTotals).length > 0 && (
@@ -765,6 +802,17 @@ const StaffDetailsPage = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Profile Edit Dialog */}
+      <Dialog open={showProfileEdit} onOpenChange={setShowProfileEdit}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Staff Profile</DialogTitle>
+            <DialogDescription>Update personal, employment, and identification details</DialogDescription>
+          </DialogHeader>
+          <StaffProfileEditForm staff={staff} onClose={() => setShowProfileEdit(false)} />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
