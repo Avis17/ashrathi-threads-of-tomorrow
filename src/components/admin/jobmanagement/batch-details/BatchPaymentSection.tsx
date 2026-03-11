@@ -142,7 +142,7 @@ export const BatchPaymentSection = ({ batchId, rollsData }: BatchPaymentSectionP
         <div className="flex items-center gap-4">
           <Card className="px-4 py-2">
             <div className="text-xs text-muted-foreground">Total Payments</div>
-            <div className="text-lg font-bold text-emerald-600">₹{totalPayments.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+            <div className="text-lg font-bold text-primary">₹{totalPayments.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
           </Card>
           <Card className="px-4 py-2">
             <div className="text-xs text-muted-foreground">Transactions</div>
