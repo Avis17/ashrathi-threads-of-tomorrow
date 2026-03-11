@@ -751,11 +751,50 @@ export default function BillsManagement() {
           </DialogHeader>
           {actionBill && (
             <div className="space-y-4">
-              <div className="bg-muted p-3 rounded-lg space-y-1">
-                <p className="text-sm"><span className="text-muted-foreground">Employee:</span> {getEmployeeName(actionBill.bill.staff_id)}</p>
-                <p className="text-sm"><span className="text-muted-foreground">Amount:</span> <span className="font-semibold">{formatCurrency(actionBill.bill.amount)}</span></p>
-                <p className="text-sm"><span className="text-muted-foreground">Batch:</span> {actionBill.bill.batch_number || 'N/A'}</p>
-                <p className="text-sm"><span className="text-muted-foreground">Reason:</span> {actionBill.bill.reason}</p>
+              <div className="bg-muted rounded-lg p-4 space-y-2">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="font-medium">{getEmployeeName(actionBill.bill.staff_id)}</p>
+                    <p className="text-xs text-muted-foreground font-mono">{actionBill.bill.employee_code}</p>
+                  </div>
+                  <p className="text-lg font-bold">{formatCurrency(actionBill.bill.amount)}</p>
+                </div>
+                <div className="border-t pt-2 mt-2 grid grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <span className="text-muted-foreground text-xs">Category:</span>
+                    <p>{actionBill.bill.category}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground text-xs">Batch:</span>
+                    <p>{actionBill.bill.batch_number || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground text-xs">Request Date:</span>
+                    <p>{actionBill.bill.request_date ? format(parseISO(actionBill.bill.request_date), 'dd MMM yyyy') : '-'}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground text-xs">Submitted:</span>
+                    <p>{format(new Date(actionBill.bill.created_at), 'dd MMM, hh:mm a')}</p>
+                  </div>
+                </div>
+                {actionBill.bill.reason && (
+                  <div className="border-t pt-2 mt-1">
+                    <span className="text-muted-foreground text-xs">Reason:</span>
+                    <p className="text-sm whitespace-pre-wrap">{actionBill.bill.reason}</p>
+                  </div>
+                )}
+                {actionBill.bill.image_urls && actionBill.bill.image_urls.length > 0 && actionBill.bill.image_urls[0] !== '' && (
+                  <div className="border-t pt-2 mt-1">
+                    <span className="text-muted-foreground text-xs">Attachments:</span>
+                    <div className="flex gap-2 mt-1">
+                      {actionBill.bill.image_urls.filter(u => u).map((url, i) => (
+                        <a key={i} href={url} target="_blank" rel="noopener noreferrer">
+                          <img src={url} alt={`Attachment ${i + 1}`} className="h-14 w-14 rounded border object-cover" />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
               <div>
                 <label className="text-sm font-medium">
