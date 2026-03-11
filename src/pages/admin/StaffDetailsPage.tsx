@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, IndianRupee, Calendar as CalendarIcon, UserX, Trash2, TrendingUp, TrendingDown, DollarSign, CalendarDays } from 'lucide-react';
+import { ArrowLeft, Plus, IndianRupee, Calendar as CalendarIcon, UserX, Trash2, TrendingUp, TrendingDown, DollarSign, CalendarDays, Banknote, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Skeleton } from '@/components/ui/skeleton';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isWithinInterval, parseISO, differenceInDays, subMonths, addMonths, isSameMonth } from 'date-fns';
 import {
@@ -24,6 +25,14 @@ import {
   useDeleteStaffAbsence,
   STAFF_SALARY_CATEGORIES,
 } from '@/hooks/useStaff';
+import {
+  useStaffAdvances,
+  useCreateStaffAdvance,
+  useDeleteStaffAdvance,
+  useStaffWeeklyPayouts,
+  useDeleteStaffWeeklyPayout,
+} from '@/hooks/useStaffAdvances';
+import StaffWeeklyPayoutForm from '@/components/admin/jobmanagement/StaffWeeklyPayoutForm';
 
 const StaffDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -31,15 +40,23 @@ const StaffDetailsPage = () => {
   const { data: staff, isLoading: loadingStaff } = useStaffMember(id || '');
   const { data: salaryEntries = [] } = useStaffSalaryEntries(id || '');
   const { data: absences = [] } = useStaffAbsences(id || '');
+  const { data: advances = [] } = useStaffAdvances(id || '');
+  const { data: weeklyPayouts = [] } = useStaffWeeklyPayouts(id || '');
   const createSalaryEntry = useCreateStaffSalaryEntry();
   const deleteSalaryEntry = useDeleteStaffSalaryEntry();
   const createAbsence = useCreateStaffAbsence();
   const deleteAbsence = useDeleteStaffAbsence();
+  const createAdvance = useCreateStaffAdvance();
+  const deleteAdvance = useDeleteStaffAdvance();
+  const deletePayout = useDeleteStaffWeeklyPayout();
 
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [showSalaryForm, setShowSalaryForm] = useState(false);
   const [showAbsenceForm, setShowAbsenceForm] = useState(false);
+  const [showAdvanceForm, setShowAdvanceForm] = useState(false);
+  const [showPayoutForm, setShowPayoutForm] = useState(false);
+  const [deletingPayout, setDeletingPayout] = useState<string | null>(null);
 
   // Salary form state
   const [salaryFromDate, setSalaryFromDate] = useState<Date | undefined>();
@@ -55,7 +72,11 @@ const StaffDetailsPage = () => {
   const [absenceReason, setAbsenceReason] = useState('');
   const [absenceLeaveType, setAbsenceLeaveType] = useState('full_day');
 
-  // useMemo must be called before any early returns to maintain hook order
+  // Advance form state
+  const [advanceAmount, setAdvanceAmount] = useState('');
+  const [advanceDate, setAdvanceDate] = useState<Date | undefined>(new Date());
+  const [advanceNotes, setAdvanceNotes] = useState('');
+
   const dailyAmounts = useMemo(() => {
     const map: Record<string, number> = {};
     salaryEntries.forEach((e) => {
@@ -90,34 +111,32 @@ const StaffDetailsPage = () => {
     );
   }
 
-  // ─── Stats calculations ───
+  const dailyRate = staff.salary_amount || 0;
+
+  // ─── Stats ───
   const totalSalaryPaid = salaryEntries.reduce((sum, e) => sum + e.amount, 0);
   const getAbsenceDays = (a: { from_date: string; to_date: string; leave_type?: string }) => {
     const fullDays = differenceInDays(parseISO(a.to_date), parseISO(a.from_date)) + 1;
     return a.leave_type === 'first_half' || a.leave_type === 'second_half' ? 0.5 : fullDays;
   };
-
   const totalAbsenceDays = absences.reduce((sum, a) => sum + getAbsenceDays(a), 0);
-
   const monthsActive = staff.joined_date
     ? Math.max(1, Math.ceil(differenceInDays(new Date(), parseISO(staff.joined_date)) / 30))
     : Math.max(1, Math.ceil(differenceInDays(new Date(), parseISO(staff.created_at)) / 30));
-
   const avgMonthlySalary = totalSalaryPaid / monthsActive;
-  const avgMonthlyLeaves = totalAbsenceDays / monthsActive;
 
-  // Category-wise breakdown
+  const totalPendingAdvances = advances.filter(a => a.remaining_amount > 0).reduce((s, a) => s + a.remaining_amount, 0);
+
   const categoryTotals = salaryEntries.reduce((acc, e) => {
     acc[e.category] = (acc[e.category] || 0) + e.amount;
     return acc;
   }, {} as Record<string, number>);
 
-  // ─── Calendar data ───
+  // ─── Calendar ───
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
   const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
 
-  // Check if a date falls within any absence
   const isAbsentDay = (day: Date) => {
     return absences.some((a) => {
       const from = parseISO(a.from_date);
@@ -126,13 +145,14 @@ const StaffDetailsPage = () => {
     });
   };
 
-  // Entries for selected date
   const selectedDateEntries = selectedDate
     ? salaryEntries.filter((e) => isSameDay(parseISO(e.entry_date), selectedDate))
     : [];
 
   const currentMonthEntries = salaryEntries.filter(e => isSameMonth(parseISO(e.entry_date), currentMonth));
   const currentMonthTotal = currentMonthEntries.reduce((s, e) => s + e.amount, 0);
+
+  const existingPayoutWeeks = weeklyPayouts.map(p => p.week_start_date);
 
   const handleAddSalaryEntry = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -178,7 +198,21 @@ const StaffDetailsPage = () => {
     setAbsenceLeaveType('full_day');
   };
 
-  // Weekday headers
+  const handleAddAdvance = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!advanceAmount || !advanceDate) return;
+    await createAdvance.mutateAsync({
+      staff_id: id,
+      amount: parseFloat(advanceAmount),
+      advance_date: format(advanceDate, 'yyyy-MM-dd'),
+      notes: advanceNotes || undefined,
+    });
+    setShowAdvanceForm(false);
+    setAdvanceAmount('');
+    setAdvanceDate(new Date());
+    setAdvanceNotes('');
+  };
+
   const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const firstDayOfWeek = monthStart.getDay();
 
@@ -194,22 +228,28 @@ const StaffDetailsPage = () => {
           <p className="text-muted-foreground text-sm">
             {staff.employee?.employee_code}
             {staff.salary_type && <> · <span className="capitalize">{staff.salary_type}</span></>}
-            {staff.salary_amount && <> · ₹{staff.salary_amount.toLocaleString()}</>}
+            {dailyRate > 0 && <> · ₹{dailyRate}/day</>}
             {staff.joined_date && <> · Joined {format(parseISO(staff.joined_date), 'dd MMM yyyy')}</>}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" size="sm" onClick={() => setShowAdvanceForm(true)} className="gap-1">
+            <Wallet className="h-4 w-4" /> Record Advance
+          </Button>
           <Button variant="outline" size="sm" onClick={() => setShowAbsenceForm(true)} className="gap-1">
             <UserX className="h-4 w-4" /> Mark Absence
           </Button>
-          <Button size="sm" onClick={() => setShowSalaryForm(true)} className="gap-1">
+          <Button variant="default" size="sm" onClick={() => setShowPayoutForm(true)} className="gap-1">
+            <Banknote className="h-4 w-4" /> Weekly Payout
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setShowSalaryForm(true)} className="gap-1">
             <Plus className="h-4 w-4" /> Add Entry
           </Button>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4">
         <Card className="p-4">
           <div className="flex items-center gap-2 mb-1">
             <DollarSign className="h-4 w-4 text-primary" />
@@ -233,6 +273,13 @@ const StaffDetailsPage = () => {
         </Card>
         <Card className="p-4">
           <div className="flex items-center gap-2 mb-1">
+            <Wallet className="h-4 w-4 text-orange-500" />
+            <span className="text-xs text-muted-foreground">Pending Advance</span>
+          </div>
+          <p className="text-xl font-bold text-orange-600">₹{totalPendingAdvances.toLocaleString()}</p>
+        </Card>
+        <Card className="p-4">
+          <div className="flex items-center gap-2 mb-1">
             <CalendarDays className="h-4 w-4 text-red-500" />
             <span className="text-xs text-muted-foreground">Total Leaves</span>
           </div>
@@ -240,17 +287,17 @@ const StaffDetailsPage = () => {
         </Card>
         <Card className="p-4">
           <div className="flex items-center gap-2 mb-1">
-            <TrendingDown className="h-4 w-4 text-orange-500" />
-            <span className="text-xs text-muted-foreground">Avg Monthly Leaves</span>
+            <Banknote className="h-4 w-4 text-purple-500" />
+            <span className="text-xs text-muted-foreground">Weekly Payouts</span>
           </div>
-          <p className="text-xl font-bold">{avgMonthlyLeaves.toFixed(1)}</p>
+          <p className="text-xl font-bold">{weeklyPayouts.length}</p>
         </Card>
         <Card className="p-4">
           <div className="flex items-center gap-2 mb-1">
-            <CalendarIcon className="h-4 w-4 text-purple-500" />
-            <span className="text-xs text-muted-foreground">Total Entries</span>
+            <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">Daily Rate</span>
           </div>
-          <p className="text-xl font-bold">{salaryEntries.length}</p>
+          <p className="text-xl font-bold">₹{dailyRate}</p>
         </Card>
       </div>
 
@@ -270,6 +317,37 @@ const StaffDetailsPage = () => {
         </Card>
       )}
 
+      {/* Pending Advances */}
+      {advances.filter(a => a.remaining_amount > 0).length > 0 && (
+        <Card className="p-4">
+          <h3 className="font-semibold mb-3 flex items-center gap-2">
+            <Wallet className="h-4 w-4 text-orange-500" /> Pending Advances
+          </h3>
+          <div className="space-y-2">
+            {advances.filter(a => a.remaining_amount > 0).map((a) => (
+              <div key={a.id} className="flex items-center justify-between p-3 rounded-lg bg-orange-500/5 border border-orange-500/20">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold">₹{a.remaining_amount.toLocaleString()}</span>
+                    {a.remaining_amount < a.amount && (
+                      <Badge variant="outline" className="text-xs">of ₹{a.amount.toLocaleString()}</Badge>
+                    )}
+                    <Badge variant={a.status === 'pending' ? 'destructive' : 'secondary'} className="text-xs">{a.status}</Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {format(parseISO(a.advance_date), 'dd MMM yyyy')}
+                    {a.notes && ` · ${a.notes}`}
+                  </p>
+                </div>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteAdvance.mutate({ id: a.id, staffId: id })}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
       {/* Calendar View */}
       <Card className="p-4">
         <div className="flex items-center justify-between mb-4">
@@ -281,13 +359,10 @@ const StaffDetailsPage = () => {
             Next →
           </Button>
         </div>
-
-        {/* Calendar Grid */}
         <div className="grid grid-cols-7 gap-1">
           {weekDays.map((d) => (
             <div key={d} className="text-center text-xs font-medium text-muted-foreground py-2">{d}</div>
           ))}
-          {/* Empty cells before first day */}
           {Array.from({ length: firstDayOfWeek }).map((_, i) => (
             <div key={`empty-${i}`} className="aspect-square" />
           ))}
@@ -304,14 +379,14 @@ const StaffDetailsPage = () => {
                 onClick={() => setSelectedDate(isSameDay(day, selectedDate || new Date(0)) ? null : day)}
                 className={cn(
                   'aspect-square rounded-lg border p-1 cursor-pointer transition-all text-center flex flex-col items-center justify-center gap-0.5 relative',
-                  absent && 'bg-red-500/10 border-red-500/30',
+                  absent && 'bg-destructive/10 border-destructive/30',
                   isSelected && 'ring-2 ring-primary',
                   isToday && !isSelected && 'border-primary',
                   !absent && amount && 'bg-green-500/10 border-green-500/30',
                   'hover:bg-muted/50'
                 )}
               >
-                <span className={cn('text-sm font-medium', absent && 'text-red-500')}>
+                <span className={cn('text-sm font-medium', absent && 'text-destructive')}>
                   {format(day, 'd')}
                 </span>
                 {amount && (
@@ -320,7 +395,7 @@ const StaffDetailsPage = () => {
                   </span>
                 )}
                 {absent && !amount && (
-                  <span className="text-[9px] text-red-500 leading-none font-medium">Absent</span>
+                  <span className="text-[9px] text-destructive leading-none font-medium">Absent</span>
                 )}
               </div>
             );
@@ -356,12 +431,7 @@ const StaffDetailsPage = () => {
                     </div>
                     {entry.notes && <p className="text-sm text-muted-foreground mt-1">{entry.notes}</p>}
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-destructive"
-                    onClick={() => deleteSalaryEntry.mutate({ id: entry.id, staffId: id })}
-                  >
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteSalaryEntry.mutate({ id: entry.id, staffId: id })}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
@@ -370,9 +440,43 @@ const StaffDetailsPage = () => {
           ) : (
             <p className="text-sm text-muted-foreground">
               No entries for this date.
-              {isAbsentDay(selectedDate) && <span className="text-red-500 ml-1">Staff was absent.</span>}
+              {isAbsentDay(selectedDate) && <span className="text-destructive ml-1">Staff was absent.</span>}
             </p>
           )}
+        </Card>
+      )}
+
+      {/* Weekly Payouts History */}
+      {weeklyPayouts.length > 0 && (
+        <Card className="p-4">
+          <h3 className="font-semibold mb-3 flex items-center gap-2">
+            <Banknote className="h-4 w-4 text-primary" /> Weekly Payouts
+          </h3>
+          <div className="space-y-2">
+            {weeklyPayouts.map((p) => (
+              <div key={p.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-semibold text-sm">
+                      {format(parseISO(p.week_start_date), 'dd MMM')} – {format(parseISO(p.week_end_date), 'dd MMM yyyy')}
+                    </span>
+                    <Badge variant="default" className="text-xs">₹{p.net_paid.toLocaleString()}</Badge>
+                    {p.advance_deducted > 0 && (
+                      <Badge variant="outline" className="text-xs text-orange-600">Adv: -₹{p.advance_deducted.toLocaleString()}</Badge>
+                    )}
+                    <Badge variant="outline" className="text-xs">{p.working_days}/{p.total_days} days</Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Gross: ₹{p.gross_salary.toLocaleString()} · {p.payment_mode}
+                    {p.notes && ` · ${p.notes}`}
+                  </p>
+                </div>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => setDeletingPayout(p.id)}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
         </Card>
       )}
 
@@ -382,7 +486,7 @@ const StaffDetailsPage = () => {
           <h3 className="font-semibold mb-3">Absences</h3>
           <div className="space-y-2">
             {absences.map((a) => (
-              <div key={a.id} className="flex items-center justify-between p-3 rounded-lg bg-red-500/5 border border-red-500/20">
+              <div key={a.id} className="flex items-center justify-between p-3 rounded-lg bg-destructive/5 border border-destructive/20">
                 <div>
                   <span className="font-medium text-sm">
                     {format(parseISO(a.from_date), 'dd MMM yyyy')} → {format(parseISO(a.to_date), 'dd MMM yyyy')}
@@ -392,12 +496,7 @@ const StaffDetailsPage = () => {
                   </span>
                   {a.reason && <p className="text-sm text-muted-foreground mt-0.5">{a.reason}</p>}
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-destructive"
-                  onClick={() => deleteAbsence.mutate({ id: a.id, staffId: id })}
-                >
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteAbsence.mutate({ id: a.id, staffId: id })}>
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
@@ -406,6 +505,40 @@ const StaffDetailsPage = () => {
         </Card>
       )}
 
+      {/* All Advances History */}
+      {advances.length > 0 && (
+        <Card className="p-4">
+          <h3 className="font-semibold mb-3">All Advances</h3>
+          <div className="space-y-2">
+            {advances.map((a) => (
+              <div key={a.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold">₹{a.amount.toLocaleString()}</span>
+                    <Badge variant={a.status === 'fully_deducted' ? 'secondary' : a.status === 'partially_deducted' ? 'outline' : 'destructive'} className="text-xs capitalize">
+                      {a.status.replace('_', ' ')}
+                    </Badge>
+                    {a.remaining_amount > 0 && a.remaining_amount < a.amount && (
+                      <span className="text-xs text-muted-foreground">Remaining: ₹{a.remaining_amount.toLocaleString()}</span>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {format(parseISO(a.advance_date), 'dd MMM yyyy')}
+                    {a.notes && ` · ${a.notes}`}
+                  </p>
+                </div>
+                {a.status === 'pending' && (
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteAdvance.mutate({ id: a.id, staffId: id })}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {/* Salary Entry Dialog */}
       <Dialog open={showSalaryForm} onOpenChange={setShowSalaryForm}>
         <DialogContent>
           <DialogHeader>
@@ -521,9 +654,7 @@ const StaffDetailsPage = () => {
             <div className="space-y-2">
               <Label>Leave Type *</Label>
               <Select value={absenceLeaveType} onValueChange={setAbsenceLeaveType}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select leave type" />
-                </SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Select leave type" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="full_day">Full Day</SelectItem>
                   <SelectItem value="first_half">First Half (AM)</SelectItem>
@@ -544,6 +675,96 @@ const StaffDetailsPage = () => {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Advance Dialog */}
+      <Dialog open={showAdvanceForm} onOpenChange={setShowAdvanceForm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Record Advance</DialogTitle>
+            <DialogDescription>Record an advance payment requested by the staff member</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleAddAdvance} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Amount *</Label>
+                <Input type="number" placeholder="Enter amount" value={advanceAmount} onChange={(e) => setAdvanceAmount(e.target.value)} required min={1} />
+              </div>
+              <div className="space-y-2">
+                <Label>Date *</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className={cn('w-full justify-start text-left', !advanceDate && 'text-muted-foreground')}>
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {advanceDate ? format(advanceDate, 'PPP') : 'Pick date'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={advanceDate} onSelect={setAdvanceDate} initialFocus className="p-3 pointer-events-auto" />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Notes</Label>
+              <Textarea placeholder="Reason for advance..." value={advanceNotes} onChange={(e) => setAdvanceNotes(e.target.value)} rows={2} />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setShowAdvanceForm(false)}>Cancel</Button>
+              <Button type="submit" disabled={!advanceAmount || !advanceDate || createAdvance.isPending}>
+                {createAdvance.isPending ? 'Recording...' : 'Record Advance'}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Weekly Payout Dialog */}
+      <Dialog open={showPayoutForm} onOpenChange={setShowPayoutForm}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Weekly Salary Payout</DialogTitle>
+            <DialogDescription>Calculate and record weekly salary with optional advance deduction</DialogDescription>
+          </DialogHeader>
+          {dailyRate > 0 ? (
+            <StaffWeeklyPayoutForm
+              staffId={id}
+              staffName={staff.employee?.name || 'Staff'}
+              dailyRate={dailyRate}
+              advances={advances}
+              absences={absences}
+              existingPayoutWeeks={existingPayoutWeeks}
+              onSuccess={() => setShowPayoutForm(false)}
+              onCancel={() => setShowPayoutForm(false)}
+            />
+          ) : (
+            <div className="text-center py-6">
+              <p className="text-muted-foreground">Daily rate is not set for this staff member. Please update the staff profile with a salary amount first.</p>
+              <Button variant="outline" className="mt-4" onClick={() => setShowPayoutForm(false)}>Close</Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Payout Confirmation */}
+      <AlertDialog open={!!deletingPayout} onOpenChange={() => setDeletingPayout(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Weekly Payout?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will delete the payout record, remove calendar salary entries for that week, and restore any advance deductions. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={async () => {
+              if (deletingPayout) {
+                await deletePayout.mutateAsync({ id: deletingPayout, staffId: id });
+                setDeletingPayout(null);
+              }
+            }}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
