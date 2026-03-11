@@ -44,6 +44,7 @@ interface CashRequest {
   created_at: string;
   updated_at: string;
   employee_code: string;
+  notes: string | null;
   batch_number: string | null;
   request_date: string;
 }
