@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
-import { Plus, Search, Eye, Printer, Edit, Filter, Truck, Package, FileText, ArrowUpRight, ArrowDownLeft, Trash2 } from 'lucide-react';
+import { Plus, Search, Eye, Printer, Edit, Filter, Truck, Package, FileText, ArrowUpRight, ArrowDownLeft, Trash2, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
   Table,
   TableBody,

@@ -17,6 +17,8 @@ export interface DeliveryChallan {
   status: 'created' | 'dispatched' | 'closed';
   notes?: string;
   created_by?: string;
+  source: 'admin' | 'staff';
+  created_by_employee_code?: string;
   created_at: string;
   updated_at: string;
 }

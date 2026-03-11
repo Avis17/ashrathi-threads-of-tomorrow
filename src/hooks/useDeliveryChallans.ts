@@ -3,15 +3,22 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { DeliveryChallan, DeliveryChallanItem, JobWorker, CreateDeliveryChallanInput } from '@/types/deliveryChallan';
 
-export const useDeliveryChallans = () => {
+export const useDeliveryChallans = (source?: 'admin' | 'staff') => {
   return useQuery({
-    queryKey: ['delivery-challans'],
+    queryKey: ['delivery-challans', source || 'all'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('delivery_challans')
         .select('*')
         .order('created_at', { ascending: false });
       
+      if (source === 'admin') {
+        query = query.or('source.eq.admin,source.is.null');
+      } else if (source === 'staff') {
+        query = query.eq('source', 'staff');
+      }
+      
+      const { data, error } = await query;
       if (error) throw error;
       return data as DeliveryChallan[];
     },
