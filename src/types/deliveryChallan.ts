@@ -3,7 +3,7 @@ export interface DeliveryChallan {
   dc_number: string;
   dc_date: string;
   dc_type: 'job_work' | 'return' | 'rework';
-  purpose: 'cutting' | 'checking' |'stitching' | 'ironing' | 'packing' | 'embroidery' | 'printing';
+  purpose: 'cutting' | 'checking' | 'stitching' | 'stitching_singer' | 'stitching_powertable' | 'ironing' | 'washing' | 'packing' | 'embroidery' | 'printing' | 'other';
   purposes?: string[];
   job_work_direction: 'given' | 'taken';
   job_worker_name: string;
