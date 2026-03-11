@@ -16,8 +16,10 @@ interface BatchExpenseFormProps {
 }
 
 const EXPENSE_TYPES = [
-  'Thread', 'Buttons', 'Labels', 'Packaging', 'Transport',
-  'Electricity', 'Maintenance', 'Accessories', 'Consumables', 'Other'
+  'Production', 'Transport', 'Maintenance', 'Welfare', 'Packaging',
+  'Raw Materials', 'Office & Admin', 'Marketing & Sales', 'Equipment & Tools',
+  'Utilities', 'Salary & Wages', 'Quality Control', 'IT & Technology',
+  'Thread', 'Buttons', 'Labels', 'Accessories', 'Consumables', 'Other'
 ];
 
 export const BatchExpenseForm = ({ batchId, open, onOpenChange, editingExpense }: BatchExpenseFormProps) => {
