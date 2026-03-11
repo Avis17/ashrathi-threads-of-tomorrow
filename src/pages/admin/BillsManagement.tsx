@@ -63,61 +63,83 @@ const statusConfig: Record<string, { label: string; variant: 'default' | 'second
   Paid: { label: 'Paid', variant: 'secondary', icon: CheckCircle2 },
 };
 
+function mapCategoryToExpenseType(category: string): string {
+  const mapping: Record<string, string> = {
+    'Production': 'Production',
+    'Logistics': 'Transport',
+    'Maintenance': 'Maintenance',
+    'Welfare': 'Welfare',
+    'Packaging': 'Packaging',
+    'Raw Materials': 'Raw Materials',
+    'Office & Admin': 'Office & Admin',
+    'Marketing & Sales': 'Marketing & Sales',
+    'Equipment & Tools': 'Equipment & Tools',
+    'Utilities': 'Utilities',
+    'Travel & Conveyance': 'Transport',
+    'Salary & Wages': 'Salary & Wages',
+    'Quality Control': 'Quality Control',
+    'IT & Technology': 'IT & Technology',
+    'Miscellaneous': 'Other',
+  };
+  return mapping[category] || category;
+}
+
 async function syncBillToExpense(bill: CashRequest) {
   const batchNumber = bill.batch_number || '';
-  
+  const expenseDate = bill.request_date || bill.created_at?.split('T')[0] || new Date().toISOString().split('T')[0];
+  const combinedNote = [bill.notes, bill.admin_note].filter(Boolean).join(' | Admin: ');
+
   if (batchNumber.toUpperCase() === 'COMPANY' || !batchNumber) {
-    // Insert into company_expenses
     const { error } = await supabase.from('company_expenses').upsert({
       cash_request_id: bill.id,
       employee_code: bill.employee_code,
       category: bill.category,
       item_name: bill.reason,
       amount: bill.amount,
-      date: bill.request_date || bill.created_at,
-      note: bill.admin_note,
+      date: expenseDate,
+      note: combinedNote || null,
       batch_number: 'COMPANY',
+      supplier_name: null,
     }, { onConflict: 'cash_request_id' });
     if (error) throw error;
   } else {
-    // Find batch by batch_number
     const { data: batch } = await supabase
       .from('job_batches')
       .select('id')
       .eq('batch_number', batchNumber)
       .maybeSingle();
-    
+
     if (batch) {
-      // Check if already synced via RPC or raw query
       const { data: existing } = await supabase
         .from('job_batch_expenses')
         .select('id')
         .eq('cash_request_id', bill.id)
         .maybeSingle();
-      
+
       if (!existing) {
-        const expenseDate = bill.request_date || bill.created_at?.split('T')[0] || new Date().toISOString().split('T')[0];
         const { error } = await supabase.from('job_batch_expenses').insert({
           batch_id: batch.id,
-          expense_type: bill.category,
-          item_name: bill.reason,
+          expense_type: mapCategoryToExpenseType(bill.category),
+          item_name: `${bill.reason}${bill.notes ? ' - ' + bill.notes : ''}`,
           amount: bill.amount,
           date: expenseDate,
           cash_request_id: bill.id,
+          note: combinedNote || null,
+          supplier_name: null,
         });
         if (error) throw error;
       }
     } else {
-      // Batch not found, treat as company expense
       const { error } = await supabase.from('company_expenses').upsert({
         cash_request_id: bill.id,
         employee_code: bill.employee_code,
         category: bill.category,
         item_name: bill.reason,
         amount: bill.amount,
-        date: bill.request_date || bill.created_at,
-        note: bill.admin_note,
+        date: expenseDate,
+        note: combinedNote || null,
         batch_number: batchNumber,
+        supplier_name: null,
       }, { onConflict: 'cash_request_id' });
       if (error) throw error;
     }
