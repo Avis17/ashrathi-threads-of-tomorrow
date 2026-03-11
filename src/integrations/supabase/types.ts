@@ -2097,8 +2097,8 @@ export type Database = {
           dc_date: string
           dc_number: string
           dc_type: string
-          driver_mobile: string
-          driver_name: string
+          driver_mobile: string | null
+          driver_name: string | null
           expected_return_date: string | null
           id: string
           job_work_direction: string
@@ -2121,8 +2121,8 @@ export type Database = {
           dc_date?: string
           dc_number?: string
           dc_type: string
-          driver_mobile: string
-          driver_name: string
+          driver_mobile?: string | null
+          driver_name?: string | null
           expected_return_date?: string | null
           id?: string
           job_work_direction?: string
@@ -2145,8 +2145,8 @@ export type Database = {
           dc_date?: string
           dc_number?: string
           dc_type?: string
-          driver_mobile?: string
-          driver_name?: string
+          driver_mobile?: string | null
+          driver_name?: string | null
           expected_return_date?: string | null
           id?: string
           job_work_direction?: string
