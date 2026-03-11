@@ -167,9 +167,12 @@ export const BatchPaymentSection = ({ batchId, rollsData }: BatchPaymentSectionP
               <tr>
                 <th className="px-4 py-3 text-left text-sm font-semibold">Date</th>
                 <th className="px-4 py-3 text-left text-sm font-semibold">Style</th>
+                <th className="px-4 py-3 text-right text-sm font-semibold">Qty</th>
+                <th className="px-4 py-3 text-right text-sm font-semibold">Rate</th>
+                <th className="px-4 py-3 text-right text-sm font-semibold">Subtotal</th>
+                <th className="px-4 py-3 text-right text-sm font-semibold">GST</th>
+                <th className="px-4 py-3 text-right text-sm font-semibold">Total</th>
                 <th className="px-4 py-3 text-left text-sm font-semibold">Mode</th>
-                <th className="px-4 py-3 text-right text-sm font-semibold">Amount</th>
-                <th className="px-4 py-3 text-left text-sm font-semibold">Notes</th>
                 <th className="px-4 py-3 text-center text-sm font-semibold">Actions</th>
               </tr>
             </thead>
@@ -184,16 +187,21 @@ export const BatchPaymentSection = ({ batchId, rollsData }: BatchPaymentSectionP
                       <span className="text-muted-foreground">—</span>
                     )}
                   </td>
+                  <td className="px-4 py-3 text-sm text-right">{payment.quantity || '—'}</td>
+                  <td className="px-4 py-3 text-sm text-right">{payment.rate_per_piece ? `₹${Number(payment.rate_per_piece).toFixed(2)}` : '—'}</td>
+                  <td className="px-4 py-3 text-sm text-right">{payment.subtotal ? `₹${Number(payment.subtotal).toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '—'}</td>
+                  <td className="px-4 py-3 text-sm text-right">
+                    {payment.gst_percent > 0 ? (
+                      <span>{payment.gst_percent}% <span className="text-muted-foreground">(₹{Number(payment.gst_amount).toFixed(2)})</span></span>
+                    ) : '—'}
+                  </td>
+                  <td className="px-4 py-3 text-sm font-semibold text-right text-primary">
+                    ₹{Number(payment.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                  </td>
                   <td className="px-4 py-3">
                     <Badge variant="outline" className="text-xs">
                       {getModeLabel(payment.payment_mode)}
                     </Badge>
-                  </td>
-                  <td className="px-4 py-3 text-sm font-semibold text-right text-emerald-600">
-                    ₹{Number(payment.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-muted-foreground max-w-[200px] truncate">
-                    {payment.notes || '—'}
                   </td>
                   <td className="px-4 py-3 text-center">
                     <Button size="sm" variant="destructive" onClick={() => setDeleteId(payment.id)}>
