@@ -5991,6 +5991,86 @@ export type Database = {
           },
         ]
       }
+      staff_advance_deductions: {
+        Row: {
+          advance_id: string
+          amount_deducted: number
+          created_at: string
+          id: string
+          payout_id: string
+        }
+        Insert: {
+          advance_id: string
+          amount_deducted: number
+          created_at?: string
+          id?: string
+          payout_id: string
+        }
+        Update: {
+          advance_id?: string
+          amount_deducted?: number
+          created_at?: string
+          id?: string
+          payout_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_advance_deductions_advance_id_fkey"
+            columns: ["advance_id"]
+            isOneToOne: false
+            referencedRelation: "staff_advances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_advance_deductions_payout_id_fkey"
+            columns: ["payout_id"]
+            isOneToOne: false
+            referencedRelation: "staff_weekly_payouts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      staff_advances: {
+        Row: {
+          advance_date: string
+          amount: number
+          created_at: string
+          id: string
+          notes: string | null
+          remaining_amount: number
+          staff_id: string
+          status: string
+        }
+        Insert: {
+          advance_date?: string
+          amount: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          remaining_amount: number
+          staff_id: string
+          status?: string
+        }
+        Update: {
+          advance_date?: string
+          amount?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          remaining_amount?: number
+          staff_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_advances_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       staff_members: {
         Row: {
           created_at: string
@@ -6066,6 +6146,68 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "staff_salary_entries_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      staff_weekly_payouts: {
+        Row: {
+          absent_days: number
+          advance_deducted: number
+          created_at: string
+          daily_rate: number
+          gross_salary: number
+          id: string
+          net_paid: number
+          notes: string | null
+          payment_date: string
+          payment_mode: string | null
+          staff_id: string
+          total_days: number
+          week_end_date: string
+          week_start_date: string
+          working_days: number
+        }
+        Insert: {
+          absent_days?: number
+          advance_deducted?: number
+          created_at?: string
+          daily_rate: number
+          gross_salary: number
+          id?: string
+          net_paid: number
+          notes?: string | null
+          payment_date: string
+          payment_mode?: string | null
+          staff_id: string
+          total_days?: number
+          week_end_date: string
+          week_start_date: string
+          working_days?: number
+        }
+        Update: {
+          absent_days?: number
+          advance_deducted?: number
+          created_at?: string
+          daily_rate?: number
+          gross_salary?: number
+          id?: string
+          net_paid?: number
+          notes?: string | null
+          payment_date?: string
+          payment_mode?: string | null
+          staff_id?: string
+          total_days?: number
+          week_end_date?: string
+          week_start_date?: string
+          working_days?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_weekly_payouts_staff_id_fkey"
             columns: ["staff_id"]
             isOneToOne: false
             referencedRelation: "staff_members"
