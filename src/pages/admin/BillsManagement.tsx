@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { externalSupabase } from '@/integrations/supabase/externalClient';
 import { supabase } from '@/integrations/supabase/client';
@@ -44,6 +45,7 @@ interface CashRequest {
   created_at: string;
   updated_at: string;
   employee_code: string;
+  notes: string | null;
   batch_number: string | null;
   request_date: string;
 }
@@ -123,6 +125,7 @@ async function syncBillToExpense(bill: CashRequest) {
 }
 
 export default function BillsManagement() {
+  const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -130,7 +133,6 @@ export default function BillsManagement() {
   const [batchFilter, setBatchFilter] = useState('all');
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
-  const [selectedBill, setSelectedBill] = useState<CashRequest | null>(null);
   const [actionBill, setActionBill] = useState<{ bill: CashRequest; action: 'Approved' | 'Rejected' } | null>(null);
   const [adminNote, setAdminNote] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
@@ -247,7 +249,6 @@ export default function BillsManagement() {
       toast.success(`Bill ${actionBill?.action?.toLowerCase()} successfully`);
       setActionBill(null);
       setAdminNote('');
-      setSelectedBill(null);
     },
     onError: (err: any) => {
       toast.error('Failed to update: ' + err.message);
@@ -584,7 +585,7 @@ export default function BillsManagement() {
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8"
-                          onClick={() => setSelectedBill(bill)}
+                          onClick={() => navigate(`/admin/bills/${bill.id}`)}
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
@@ -598,148 +599,6 @@ export default function BillsManagement() {
         </CardContent>
       </Card>
 
-      {/* Detail Dialog */}
-      <Dialog open={!!selectedBill} onOpenChange={() => setSelectedBill(null)}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center justify-between">
-              <span>Bill Details</span>
-              {selectedBill && (
-                <Badge variant={statusConfig[selectedBill.status]?.variant || 'outline'} className="gap-1 ml-2">
-                  {(() => { const Ic = statusConfig[selectedBill.status]?.icon || Clock; return <Ic className="h-3 w-3" />; })()}
-                  {selectedBill.status}
-                </Badge>
-              )}
-            </DialogTitle>
-          </DialogHeader>
-          {selectedBill && (
-            <div className="space-y-5">
-              {/* Amount highlight */}
-              <div className="bg-primary/5 border border-primary/10 rounded-lg p-4 text-center">
-                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Requested Amount</p>
-                <p className="text-3xl font-bold text-primary">{formatCurrency(selectedBill.amount)}</p>
-              </div>
-
-              {/* Employee & Code */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-xs text-muted-foreground mb-0.5">Employee</p>
-                  <p className="font-medium">{getEmployeeName(selectedBill.staff_id)}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground mb-0.5">Employee Code</p>
-                  <p className="font-mono text-sm">{selectedBill.employee_code}</p>
-                </div>
-              </div>
-
-              {/* Category & Batch */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">Category</p>
-                  <Badge variant="secondary">{selectedBill.category}</Badge>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">Batch</p>
-                  <Badge variant="outline">{selectedBill.batch_number || 'No batch'}</Badge>
-                </div>
-              </div>
-
-              {/* Dates */}
-              <div className="bg-muted/50 rounded-lg p-3 space-y-2">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Timeline</p>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Request Date</p>
-                    <p className="text-sm font-medium">
-                      {selectedBill.request_date 
-                        ? format(parseISO(selectedBill.request_date), 'dd MMM yyyy') 
-                        : '-'}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Submitted At</p>
-                    <p className="text-sm font-medium">
-                      {format(new Date(selectedBill.created_at), 'dd MMM yyyy, hh:mm a')}
-                    </p>
-                  </div>
-                  {selectedBill.updated_at && selectedBill.updated_at !== selectedBill.created_at && (
-                    <div className="col-span-2">
-                      <p className="text-xs text-muted-foreground">Last Updated</p>
-                      <p className="text-sm font-medium">
-                        {format(new Date(selectedBill.updated_at), 'dd MMM yyyy, hh:mm a')}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Reason */}
-              <div>
-                <p className="text-xs text-muted-foreground mb-1">Reason / Description</p>
-                <p className="text-sm bg-muted/50 p-3 rounded-lg whitespace-pre-wrap">{selectedBill.reason || '-'}</p>
-              </div>
-
-              {/* Admin Note */}
-              {selectedBill.admin_note && (
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">Admin Note</p>
-                  <p className="text-sm bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 p-3 rounded-lg whitespace-pre-wrap">
-                    {selectedBill.admin_note}
-                  </p>
-                </div>
-              )}
-
-              {/* Attachments */}
-              {selectedBill.image_urls && selectedBill.image_urls.length > 0 && selectedBill.image_urls[0] !== '' && (
-                <div>
-                  <p className="text-xs text-muted-foreground mb-2">
-                    Attachments ({selectedBill.image_urls.filter(u => u).length})
-                  </p>
-                  <div className="grid grid-cols-3 gap-2">
-                    {selectedBill.image_urls.filter(u => u).map((url, i) => (
-                      <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="group/img">
-                        <img 
-                          src={url} 
-                          alt={`Attachment ${i + 1}`} 
-                          className="h-24 w-full rounded-lg border object-cover transition-opacity group-hover/img:opacity-80" 
-                        />
-                      </a>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Action buttons for Pending */}
-              {selectedBill.status === 'Pending' && (
-                <div className="flex gap-2 pt-3 border-t">
-                  <Button
-                    className="flex-1 gap-1"
-                    variant="default"
-                    onClick={() => {
-                      setActionBill({ bill: selectedBill, action: 'Approved' });
-                      setAdminNote('');
-                    }}
-                  >
-                    <CheckCircle2 className="h-4 w-4" />
-                    Approve
-                  </Button>
-                  <Button
-                    className="flex-1 gap-1"
-                    variant="destructive"
-                    onClick={() => {
-                      setActionBill({ bill: selectedBill, action: 'Rejected' });
-                      setAdminNote('');
-                    }}
-                  >
-                    <XCircle className="h-4 w-4" />
-                    Reject
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
 
       {/* Approve/Reject Confirmation Dialog */}
       <Dialog open={!!actionBill} onOpenChange={() => { setActionBill(null); setAdminNote(''); }}>
