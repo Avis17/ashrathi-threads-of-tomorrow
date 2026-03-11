@@ -3,7 +3,7 @@ export interface DeliveryChallan {
   dc_number: string;
   dc_date: string;
   dc_type: 'job_work' | 'return' | 'rework';
-  purpose: 'cutting' | 'checking' |'stitching' | 'ironing' | 'packing' | 'embroidery' | 'printing';
+  purpose: 'cutting' | 'checking' | 'stitching' | 'stitching_singer' | 'stitching_powertable' | 'ironing' | 'washing' | 'packing' | 'embroidery' | 'printing' | 'other';
   purposes?: string[];
   job_work_direction: 'given' | 'taken';
   job_worker_name: string;
@@ -52,7 +52,7 @@ export interface JobWorker {
 export interface CreateDeliveryChallanInput {
   dc_date: string;
   dc_type: 'job_work' | 'return' | 'rework';
-  purpose: 'checking' | 'cutting' | 'stitching' | 'ironing' | 'packing' | 'embroidery' | 'printing';
+  purpose: 'cutting' | 'checking' | 'stitching' | 'stitching_singer' | 'stitching_powertable' | 'ironing' | 'washing' | 'packing' | 'embroidery' | 'printing' | 'other';
   purposes: string[];
   job_work_direction: 'given' | 'taken';
   job_worker_name: string;
@@ -74,12 +74,16 @@ export const DC_TYPE_LABELS: Record<DeliveryChallan['dc_type'], string> = {
 
 export const PURPOSE_LABELS: Record<DeliveryChallan['purpose'], string> = {
   cutting: 'Cutting',
-  checking : 'Checking',
+  checking: 'Checking',
   stitching: 'Stitching',
+  stitching_singer: 'Stitching (Singer)',
+  stitching_powertable: 'Stitching (Powertable)',
   ironing: 'Ironing',
+  washing: 'Washing',
   packing: 'Packing',
   embroidery: 'Embroidery',
   printing: 'Printing',
+  other: 'Other',
 };
 
 export const STATUS_LABELS: Record<DeliveryChallan['status'], string> = {
