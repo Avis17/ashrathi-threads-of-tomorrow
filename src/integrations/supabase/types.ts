@@ -6073,34 +6073,85 @@ export type Database = {
       }
       staff_members: {
         Row: {
+          aadhar_number: string | null
+          address: string | null
+          bank_account_number: string | null
+          bank_name: string | null
+          blood_group: string | null
           created_at: string
+          date_of_birth: string | null
+          driving_license: string | null
+          education: string | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
           employee_id: string
+          father_name: string | null
+          gender: string | null
           id: string
+          ifsc_code: string | null
           is_active: boolean
           joined_date: string | null
+          marital_status: string | null
           notes: string | null
+          pan_number: string | null
+          place: string | null
+          qualification: string | null
           salary_amount: number | null
           salary_type: string | null
           updated_at: string
         }
         Insert: {
+          aadhar_number?: string | null
+          address?: string | null
+          bank_account_number?: string | null
+          bank_name?: string | null
+          blood_group?: string | null
           created_at?: string
+          date_of_birth?: string | null
+          driving_license?: string | null
+          education?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
           employee_id: string
+          father_name?: string | null
+          gender?: string | null
           id?: string
+          ifsc_code?: string | null
           is_active?: boolean
           joined_date?: string | null
+          marital_status?: string | null
           notes?: string | null
+          pan_number?: string | null
+          place?: string | null
+          qualification?: string | null
           salary_amount?: number | null
           salary_type?: string | null
           updated_at?: string
         }
         Update: {
+          aadhar_number?: string | null
+          address?: string | null
+          bank_account_number?: string | null
+          bank_name?: string | null
+          blood_group?: string | null
           created_at?: string
+          date_of_birth?: string | null
+          driving_license?: string | null
+          education?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
           employee_id?: string
+          father_name?: string | null
+          gender?: string | null
           id?: string
+          ifsc_code?: string | null
           is_active?: boolean
           joined_date?: string | null
+          marital_status?: string | null
           notes?: string | null
+          pan_number?: string | null
+          place?: string | null
+          qualification?: string | null
           salary_amount?: number | null
           salary_type?: string | null
           updated_at?: string

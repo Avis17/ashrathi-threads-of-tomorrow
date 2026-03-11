@@ -1,0 +1,19 @@
+
+ALTER TABLE public.staff_members
+  ADD COLUMN IF NOT EXISTS date_of_birth TEXT,
+  ADD COLUMN IF NOT EXISTS blood_group TEXT,
+  ADD COLUMN IF NOT EXISTS qualification TEXT,
+  ADD COLUMN IF NOT EXISTS education TEXT,
+  ADD COLUMN IF NOT EXISTS aadhar_number TEXT,
+  ADD COLUMN IF NOT EXISTS driving_license TEXT,
+  ADD COLUMN IF NOT EXISTS place TEXT,
+  ADD COLUMN IF NOT EXISTS address TEXT,
+  ADD COLUMN IF NOT EXISTS emergency_contact_name TEXT,
+  ADD COLUMN IF NOT EXISTS emergency_contact_phone TEXT,
+  ADD COLUMN IF NOT EXISTS father_name TEXT,
+  ADD COLUMN IF NOT EXISTS marital_status TEXT,
+  ADD COLUMN IF NOT EXISTS gender TEXT,
+  ADD COLUMN IF NOT EXISTS bank_account_number TEXT,
+  ADD COLUMN IF NOT EXISTS bank_name TEXT,
+  ADD COLUMN IF NOT EXISTS ifsc_code TEXT,
+  ADD COLUMN IF NOT EXISTS pan_number TEXT;
