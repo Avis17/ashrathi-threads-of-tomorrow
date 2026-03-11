@@ -585,7 +585,7 @@ export default function BillsManagement() {
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8"
-                          onClick={() => setSelectedBill(bill)}
+                          onClick={() => navigate(`/admin/bills/${bill.id}`)}
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
