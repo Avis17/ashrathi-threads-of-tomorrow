@@ -125,6 +125,7 @@ async function syncBillToExpense(bill: CashRequest) {
 }
 
 export default function BillsManagement() {
+  const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -132,7 +133,6 @@ export default function BillsManagement() {
   const [batchFilter, setBatchFilter] = useState('all');
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
-  const [selectedBill, setSelectedBill] = useState<CashRequest | null>(null);
   const [actionBill, setActionBill] = useState<{ bill: CashRequest; action: 'Approved' | 'Rejected' } | null>(null);
   const [adminNote, setAdminNote] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
