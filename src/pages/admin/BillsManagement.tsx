@@ -600,74 +600,118 @@ export default function BillsManagement() {
 
       {/* Detail Dialog */}
       <Dialog open={!!selectedBill} onOpenChange={() => setSelectedBill(null)}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Bill Details</DialogTitle>
+            <DialogTitle className="flex items-center justify-between">
+              <span>Bill Details</span>
+              {selectedBill && (
+                <Badge variant={statusConfig[selectedBill.status]?.variant || 'outline'} className="gap-1 ml-2">
+                  {(() => { const Ic = statusConfig[selectedBill.status]?.icon || Clock; return <Ic className="h-3 w-3" />; })()}
+                  {selectedBill.status}
+                </Badge>
+              )}
+            </DialogTitle>
           </DialogHeader>
           {selectedBill && (
-            <div className="space-y-4">
+            <div className="space-y-5">
+              {/* Amount highlight */}
+              <div className="bg-primary/5 border border-primary/10 rounded-lg p-4 text-center">
+                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Requested Amount</p>
+                <p className="text-3xl font-bold text-primary">{formatCurrency(selectedBill.amount)}</p>
+              </div>
+
+              {/* Employee & Code */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-xs text-muted-foreground">Employee</p>
+                  <p className="text-xs text-muted-foreground mb-0.5">Employee</p>
                   <p className="font-medium">{getEmployeeName(selectedBill.staff_id)}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Employee Code</p>
+                  <p className="text-xs text-muted-foreground mb-0.5">Employee Code</p>
                   <p className="font-mono text-sm">{selectedBill.employee_code}</p>
                 </div>
+              </div>
+
+              {/* Category & Batch */}
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-xs text-muted-foreground">Category</p>
+                  <p className="text-xs text-muted-foreground mb-1">Category</p>
                   <Badge variant="secondary">{selectedBill.category}</Badge>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Batch</p>
-                  <Badge variant="outline">{selectedBill.batch_number || '-'}</Badge>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Status</p>
-                  <Badge variant={statusConfig[selectedBill.status]?.variant || 'outline'}>
-                    {selectedBill.status}
-                  </Badge>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Amount</p>
-                  <p className="text-xl font-bold">{formatCurrency(selectedBill.amount)}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Request Date</p>
-                  <p className="text-sm">{selectedBill.request_date ? format(parseISO(selectedBill.request_date), 'dd MMM yyyy') : format(new Date(selectedBill.created_at), 'dd MMM yyyy')}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Submitted</p>
-                  <p className="text-sm">{format(new Date(selectedBill.created_at), 'dd MMM yyyy, hh:mm a')}</p>
+                  <p className="text-xs text-muted-foreground mb-1">Batch</p>
+                  <Badge variant="outline">{selectedBill.batch_number || 'No batch'}</Badge>
                 </div>
               </div>
+
+              {/* Dates */}
+              <div className="bg-muted/50 rounded-lg p-3 space-y-2">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Timeline</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Request Date</p>
+                    <p className="text-sm font-medium">
+                      {selectedBill.request_date 
+                        ? format(parseISO(selectedBill.request_date), 'dd MMM yyyy') 
+                        : '-'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Submitted At</p>
+                    <p className="text-sm font-medium">
+                      {format(new Date(selectedBill.created_at), 'dd MMM yyyy, hh:mm a')}
+                    </p>
+                  </div>
+                  {selectedBill.updated_at && selectedBill.updated_at !== selectedBill.created_at && (
+                    <div className="col-span-2">
+                      <p className="text-xs text-muted-foreground">Last Updated</p>
+                      <p className="text-sm font-medium">
+                        {format(new Date(selectedBill.updated_at), 'dd MMM yyyy, hh:mm a')}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Reason */}
               <div>
-                <p className="text-xs text-muted-foreground">Reason</p>
-                <p className="text-sm mt-1">{selectedBill.reason}</p>
+                <p className="text-xs text-muted-foreground mb-1">Reason / Description</p>
+                <p className="text-sm bg-muted/50 p-3 rounded-lg whitespace-pre-wrap">{selectedBill.reason || '-'}</p>
               </div>
+
+              {/* Admin Note */}
               {selectedBill.admin_note && (
                 <div>
-                  <p className="text-xs text-muted-foreground">Admin Note</p>
-                  <p className="text-sm mt-1 bg-muted p-2 rounded">{selectedBill.admin_note}</p>
+                  <p className="text-xs text-muted-foreground mb-1">Admin Note</p>
+                  <p className="text-sm bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 p-3 rounded-lg whitespace-pre-wrap">
+                    {selectedBill.admin_note}
+                  </p>
                 </div>
               )}
+
+              {/* Attachments */}
               {selectedBill.image_urls && selectedBill.image_urls.length > 0 && selectedBill.image_urls[0] !== '' && (
                 <div>
-                  <p className="text-xs text-muted-foreground mb-2">Attachments</p>
-                  <div className="flex gap-2 flex-wrap">
-                    {selectedBill.image_urls.map((url, i) => (
-                      <a key={i} href={url} target="_blank" rel="noopener noreferrer">
-                        <img src={url} alt="Bill attachment" className="h-20 w-20 rounded border object-cover" />
+                  <p className="text-xs text-muted-foreground mb-2">
+                    Attachments ({selectedBill.image_urls.filter(u => u).length})
+                  </p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {selectedBill.image_urls.filter(u => u).map((url, i) => (
+                      <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="group/img">
+                        <img 
+                          src={url} 
+                          alt={`Attachment ${i + 1}`} 
+                          className="h-24 w-full rounded-lg border object-cover transition-opacity group-hover/img:opacity-80" 
+                        />
                       </a>
                     ))}
                   </div>
                 </div>
               )}
 
-              {/* Action buttons - show for Pending bills */}
+              {/* Action buttons for Pending */}
               {selectedBill.status === 'Pending' && (
-                <div className="flex gap-2 pt-2 border-t">
+                <div className="flex gap-2 pt-3 border-t">
                   <Button
                     className="flex-1 gap-1"
                     variant="default"
@@ -707,11 +751,50 @@ export default function BillsManagement() {
           </DialogHeader>
           {actionBill && (
             <div className="space-y-4">
-              <div className="bg-muted p-3 rounded-lg space-y-1">
-                <p className="text-sm"><span className="text-muted-foreground">Employee:</span> {getEmployeeName(actionBill.bill.staff_id)}</p>
-                <p className="text-sm"><span className="text-muted-foreground">Amount:</span> <span className="font-semibold">{formatCurrency(actionBill.bill.amount)}</span></p>
-                <p className="text-sm"><span className="text-muted-foreground">Batch:</span> {actionBill.bill.batch_number || 'N/A'}</p>
-                <p className="text-sm"><span className="text-muted-foreground">Reason:</span> {actionBill.bill.reason}</p>
+              <div className="bg-muted rounded-lg p-4 space-y-2">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="font-medium">{getEmployeeName(actionBill.bill.staff_id)}</p>
+                    <p className="text-xs text-muted-foreground font-mono">{actionBill.bill.employee_code}</p>
+                  </div>
+                  <p className="text-lg font-bold">{formatCurrency(actionBill.bill.amount)}</p>
+                </div>
+                <div className="border-t pt-2 mt-2 grid grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <span className="text-muted-foreground text-xs">Category:</span>
+                    <p>{actionBill.bill.category}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground text-xs">Batch:</span>
+                    <p>{actionBill.bill.batch_number || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground text-xs">Request Date:</span>
+                    <p>{actionBill.bill.request_date ? format(parseISO(actionBill.bill.request_date), 'dd MMM yyyy') : '-'}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground text-xs">Submitted:</span>
+                    <p>{format(new Date(actionBill.bill.created_at), 'dd MMM, hh:mm a')}</p>
+                  </div>
+                </div>
+                {actionBill.bill.reason && (
+                  <div className="border-t pt-2 mt-1">
+                    <span className="text-muted-foreground text-xs">Reason:</span>
+                    <p className="text-sm whitespace-pre-wrap">{actionBill.bill.reason}</p>
+                  </div>
+                )}
+                {actionBill.bill.image_urls && actionBill.bill.image_urls.length > 0 && actionBill.bill.image_urls[0] !== '' && (
+                  <div className="border-t pt-2 mt-1">
+                    <span className="text-muted-foreground text-xs">Attachments:</span>
+                    <div className="flex gap-2 mt-1">
+                      {actionBill.bill.image_urls.filter(u => u).map((url, i) => (
+                        <a key={i} href={url} target="_blank" rel="noopener noreferrer">
+                          <img src={url} alt={`Attachment ${i + 1}`} className="h-14 w-14 rounded border object-cover" />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
               <div>
                 <label className="text-sm font-medium">
