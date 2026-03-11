@@ -55,15 +55,21 @@ const directionColors: Record<'given' | 'taken', string> = {
 
 export default function DeliveryChallanList() {
   const navigate = useNavigate();
-  const { data: challans = [], isLoading } = useDeliveryChallans();
+  const { data: adminChallans = [], isLoading: adminLoading } = useDeliveryChallans('admin');
+  const { data: staffChallans = [], isLoading: staffLoading } = useDeliveryChallans('staff');
   const deleteDC = useDeleteDeliveryChallan();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [directionFilter, setDirectionFilter] = useState<string>('all');
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState('our-dcs');
 
-  const filteredChallans = challans.filter((dc) => {
+  const currentChallans = activeTab === 'our-dcs' ? adminChallans : staffChallans;
+  const isLoading = activeTab === 'our-dcs' ? adminLoading : staffLoading;
+  const isStaffTab = activeTab === 'staff-dcs';
+
+  const filteredChallans = currentChallans.filter((dc) => {
     const matchesSearch =
       dc.dc_number.toLowerCase().includes(search.toLowerCase()) ||
       dc.job_worker_name.toLowerCase().includes(search.toLowerCase()) ||
@@ -77,12 +83,12 @@ export default function DeliveryChallanList() {
   });
 
   const stats = {
-    total: challans.length,
-    given: challans.filter(d => (d.job_work_direction || 'given') === 'given').length,
-    taken: challans.filter(d => d.job_work_direction === 'taken').length,
-    created: challans.filter(d => d.status === 'created').length,
-    dispatched: challans.filter(d => d.status === 'dispatched').length,
-    closed: challans.filter(d => d.status === 'closed').length,
+    total: currentChallans.length,
+    given: currentChallans.filter(d => (d.job_work_direction || 'given') === 'given').length,
+    taken: currentChallans.filter(d => d.job_work_direction === 'taken').length,
+    created: currentChallans.filter(d => d.status === 'created').length,
+    dispatched: currentChallans.filter(d => d.status === 'dispatched').length,
+    closed: currentChallans.filter(d => d.status === 'closed').length,
   };
 
   const getDisplayPurposes = (dc: DeliveryChallan) => {
