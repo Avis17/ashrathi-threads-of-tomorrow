@@ -57,6 +57,7 @@ const StaffDetailsPage = () => {
   const [showAbsenceForm, setShowAbsenceForm] = useState(false);
   const [showAdvanceForm, setShowAdvanceForm] = useState(false);
   const [showPayoutForm, setShowPayoutForm] = useState(false);
+  const [showProfileEdit, setShowProfileEdit] = useState(false);
   const [deletingPayout, setDeletingPayout] = useState<string | null>(null);
 
   // Salary form state
