@@ -74,12 +74,16 @@ export const DC_TYPE_LABELS: Record<DeliveryChallan['dc_type'], string> = {
 
 export const PURPOSE_LABELS: Record<DeliveryChallan['purpose'], string> = {
   cutting: 'Cutting',
-  checking : 'Checking',
+  checking: 'Checking',
   stitching: 'Stitching',
+  stitching_singer: 'Stitching (Singer)',
+  stitching_powertable: 'Stitching (Powertable)',
   ironing: 'Ironing',
+  washing: 'Washing',
   packing: 'Packing',
   embroidery: 'Embroidery',
   printing: 'Printing',
+  other: 'Other',
 };
 
 export const STATUS_LABELS: Record<DeliveryChallan['status'], string> = {
