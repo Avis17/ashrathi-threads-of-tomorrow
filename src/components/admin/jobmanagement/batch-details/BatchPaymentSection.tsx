@@ -80,20 +80,38 @@ export const BatchPaymentSection = ({ batchId, rollsData }: BatchPaymentSectionP
     payment_date: new Date().toISOString().split('T')[0],
     style_id: '',
     payment_mode: 'cash',
-    amount: '',
+    quantity: '',
+    rate_per_piece: '',
+    gst_percent: '0',
     notes: '',
   });
+
+  const subtotal = (Number(formData.quantity) || 0) * (Number(formData.rate_per_piece) || 0);
+  const gstAmount = subtotal * (Number(formData.gst_percent) || 0) / 100;
+  const totalAmount = subtotal + gstAmount;
 
   const totalPayments = payments?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const qty = Number(formData.quantity) || 0;
+    const rate = Number(formData.rate_per_piece) || 0;
+    const gstPct = Number(formData.gst_percent) || 0;
+    const sub = qty * rate;
+    const gst = sub * gstPct / 100;
+    const total = sub + gst;
+
     await createMutation.mutateAsync({
       batch_id: batchId,
       style_id: formData.style_id || null,
       payment_date: formData.payment_date,
       payment_mode: formData.payment_mode,
-      amount: Number(formData.amount),
+      quantity: qty,
+      rate_per_piece: rate,
+      gst_percent: gstPct,
+      gst_amount: gst,
+      subtotal: sub,
+      amount: total,
       notes: formData.notes || null,
     });
     setFormOpen(false);
@@ -101,7 +119,9 @@ export const BatchPaymentSection = ({ batchId, rollsData }: BatchPaymentSectionP
       payment_date: new Date().toISOString().split('T')[0],
       style_id: '',
       payment_mode: 'cash',
-      amount: '',
+      quantity: '',
+      rate_per_piece: '',
+      gst_percent: '0',
       notes: '',
     });
   };
