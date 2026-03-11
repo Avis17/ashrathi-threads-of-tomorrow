@@ -80,20 +80,38 @@ export const BatchPaymentSection = ({ batchId, rollsData }: BatchPaymentSectionP
     payment_date: new Date().toISOString().split('T')[0],
     style_id: '',
     payment_mode: 'cash',
-    amount: '',
+    quantity: '',
+    rate_per_piece: '',
+    gst_percent: '0',
     notes: '',
   });
+
+  const subtotal = (Number(formData.quantity) || 0) * (Number(formData.rate_per_piece) || 0);
+  const gstAmount = subtotal * (Number(formData.gst_percent) || 0) / 100;
+  const totalAmount = subtotal + gstAmount;
 
   const totalPayments = payments?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const qty = Number(formData.quantity) || 0;
+    const rate = Number(formData.rate_per_piece) || 0;
+    const gstPct = Number(formData.gst_percent) || 0;
+    const sub = qty * rate;
+    const gst = sub * gstPct / 100;
+    const total = sub + gst;
+
     await createMutation.mutateAsync({
       batch_id: batchId,
       style_id: formData.style_id || null,
       payment_date: formData.payment_date,
       payment_mode: formData.payment_mode,
-      amount: Number(formData.amount),
+      quantity: qty,
+      rate_per_piece: rate,
+      gst_percent: gstPct,
+      gst_amount: gst,
+      subtotal: sub,
+      amount: total,
       notes: formData.notes || null,
     });
     setFormOpen(false);
@@ -101,7 +119,9 @@ export const BatchPaymentSection = ({ batchId, rollsData }: BatchPaymentSectionP
       payment_date: new Date().toISOString().split('T')[0],
       style_id: '',
       payment_mode: 'cash',
-      amount: '',
+      quantity: '',
+      rate_per_piece: '',
+      gst_percent: '0',
       notes: '',
     });
   };
@@ -122,7 +142,7 @@ export const BatchPaymentSection = ({ batchId, rollsData }: BatchPaymentSectionP
         <div className="flex items-center gap-4">
           <Card className="px-4 py-2">
             <div className="text-xs text-muted-foreground">Total Payments</div>
-            <div className="text-lg font-bold text-emerald-600">₹{totalPayments.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+            <div className="text-lg font-bold text-primary">₹{totalPayments.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
           </Card>
           <Card className="px-4 py-2">
             <div className="text-xs text-muted-foreground">Transactions</div>
@@ -147,9 +167,12 @@ export const BatchPaymentSection = ({ batchId, rollsData }: BatchPaymentSectionP
               <tr>
                 <th className="px-4 py-3 text-left text-sm font-semibold">Date</th>
                 <th className="px-4 py-3 text-left text-sm font-semibold">Style</th>
+                <th className="px-4 py-3 text-right text-sm font-semibold">Qty</th>
+                <th className="px-4 py-3 text-right text-sm font-semibold">Rate</th>
+                <th className="px-4 py-3 text-right text-sm font-semibold">Subtotal</th>
+                <th className="px-4 py-3 text-right text-sm font-semibold">GST</th>
+                <th className="px-4 py-3 text-right text-sm font-semibold">Total</th>
                 <th className="px-4 py-3 text-left text-sm font-semibold">Mode</th>
-                <th className="px-4 py-3 text-right text-sm font-semibold">Amount</th>
-                <th className="px-4 py-3 text-left text-sm font-semibold">Notes</th>
                 <th className="px-4 py-3 text-center text-sm font-semibold">Actions</th>
               </tr>
             </thead>
@@ -164,16 +187,21 @@ export const BatchPaymentSection = ({ batchId, rollsData }: BatchPaymentSectionP
                       <span className="text-muted-foreground">—</span>
                     )}
                   </td>
+                  <td className="px-4 py-3 text-sm text-right">{payment.quantity || '—'}</td>
+                  <td className="px-4 py-3 text-sm text-right">{payment.rate_per_piece ? `₹${Number(payment.rate_per_piece).toFixed(2)}` : '—'}</td>
+                  <td className="px-4 py-3 text-sm text-right">{payment.subtotal ? `₹${Number(payment.subtotal).toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '—'}</td>
+                  <td className="px-4 py-3 text-sm text-right">
+                    {payment.gst_percent > 0 ? (
+                      <span>{payment.gst_percent}% <span className="text-muted-foreground">(₹{Number(payment.gst_amount).toFixed(2)})</span></span>
+                    ) : '—'}
+                  </td>
+                  <td className="px-4 py-3 text-sm font-semibold text-right text-primary">
+                    ₹{Number(payment.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                  </td>
                   <td className="px-4 py-3">
                     <Badge variant="outline" className="text-xs">
                       {getModeLabel(payment.payment_mode)}
                     </Badge>
-                  </td>
-                  <td className="px-4 py-3 text-sm font-semibold text-right text-emerald-600">
-                    ₹{Number(payment.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-muted-foreground max-w-[200px] truncate">
-                    {payment.notes || '—'}
                   </td>
                   <td className="px-4 py-3 text-center">
                     <Button size="sm" variant="destructive" onClick={() => setDeleteId(payment.id)}>
@@ -213,45 +241,93 @@ export const BatchPaymentSection = ({ batchId, rollsData }: BatchPaymentSectionP
                 />
               </div>
               <div className="space-y-2">
-                <Label>Amount (₹) *</Label>
+                <Label>Style</Label>
+                <Select value={formData.style_id || 'none'} onValueChange={v => setFormData(p => ({ ...p, style_id: v === 'none' ? '' : v }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select style..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">All / General</SelectItem>
+                    {(styles || []).map((s: any) => (
+                      <SelectItem key={s.id} value={s.id}>{s.style_name} ({s.style_code})</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Quantity (Pieces) *</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  value={formData.quantity}
+                  onChange={e => setFormData(p => ({ ...p, quantity: e.target.value }))}
+                  required
+                  placeholder="0"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Rate per Piece (₹) *</Label>
                 <Input
                   type="number"
                   step="0.01"
-                  value={formData.amount}
-                  onChange={e => setFormData(p => ({ ...p, amount: e.target.value }))}
+                  value={formData.rate_per_piece}
+                  onChange={e => setFormData(p => ({ ...p, rate_per_piece: e.target.value }))}
                   required
                   placeholder="0.00"
                 />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label>Style</Label>
-              <Select value={formData.style_id || 'none'} onValueChange={v => setFormData(p => ({ ...p, style_id: v === 'none' ? '' : v }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select style..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">All / General</SelectItem>
-                  {(styles || []).map((s: any) => (
-                    <SelectItem key={s.id} value={s.id}>{s.style_name} ({s.style_code})</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>GST %</Label>
+                <Select value={formData.gst_percent} onValueChange={v => setFormData(p => ({ ...p, gst_percent: v }))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">No GST (0%)</SelectItem>
+                    <SelectItem value="5">5%</SelectItem>
+                    <SelectItem value="12">12%</SelectItem>
+                    <SelectItem value="18">18%</SelectItem>
+                    <SelectItem value="28">28%</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Payment Mode *</Label>
+                <Select value={formData.payment_mode} onValueChange={v => setFormData(p => ({ ...p, payment_mode: v }))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PAYMENT_MODES.map(m => (
+                      <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label>Payment Mode *</Label>
-              <Select value={formData.payment_mode} onValueChange={v => setFormData(p => ({ ...p, payment_mode: v }))}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {PAYMENT_MODES.map(m => (
-                    <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            {/* Calculation Summary */}
+            <div className="bg-muted/50 rounded-lg p-4 space-y-2 border">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Subtotal ({formData.quantity || 0} × ₹{formData.rate_per_piece || 0})</span>
+                <span className="font-medium">₹{subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+              </div>
+              {Number(formData.gst_percent) > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">GST ({formData.gst_percent}%)</span>
+                  <span className="font-medium">₹{gstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-base font-bold border-t pt-2">
+                <span>Total Amount</span>
+                <span className="text-primary">₹{totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -268,8 +344,8 @@ export const BatchPaymentSection = ({ batchId, rollsData }: BatchPaymentSectionP
               <Button type="button" variant="outline" onClick={() => setFormOpen(false)} className="flex-1">
                 Cancel
               </Button>
-              <Button type="submit" className="flex-1" disabled={createMutation.isPending}>
-                {createMutation.isPending ? 'Saving...' : 'Record Payment'}
+              <Button type="submit" className="flex-1" disabled={createMutation.isPending || totalAmount <= 0}>
+                {createMutation.isPending ? 'Saving...' : `Record ₹${totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`}
               </Button>
             </div>
           </form>

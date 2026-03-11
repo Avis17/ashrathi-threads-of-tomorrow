@@ -472,33 +472,48 @@ export type Database = {
           amount: number
           batch_id: string
           created_at: string
+          gst_amount: number | null
+          gst_percent: number | null
           id: string
           notes: string | null
           payment_date: string
           payment_mode: string
+          quantity: number | null
+          rate_per_piece: number | null
           style_id: string | null
+          subtotal: number | null
           updated_at: string
         }
         Insert: {
           amount?: number
           batch_id: string
           created_at?: string
+          gst_amount?: number | null
+          gst_percent?: number | null
           id?: string
           notes?: string | null
           payment_date?: string
           payment_mode?: string
+          quantity?: number | null
+          rate_per_piece?: number | null
           style_id?: string | null
+          subtotal?: number | null
           updated_at?: string
         }
         Update: {
           amount?: number
           batch_id?: string
           created_at?: string
+          gst_amount?: number | null
+          gst_percent?: number | null
           id?: string
           notes?: string | null
           payment_date?: string
           payment_mode?: string
+          quantity?: number | null
+          rate_per_piece?: number | null
           style_id?: string | null
+          subtotal?: number | null
           updated_at?: string
         }
         Relationships: [
