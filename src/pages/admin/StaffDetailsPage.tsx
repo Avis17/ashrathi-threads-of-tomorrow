@@ -235,6 +235,9 @@ const StaffDetailsPage = () => {
           </p>
         </div>
         <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" size="sm" onClick={() => setShowProfileEdit(true)} className="gap-1">
+            <Edit className="h-4 w-4" /> Edit Profile
+          </Button>
           <Button variant="outline" size="sm" onClick={() => setShowAdvanceForm(true)} className="gap-1">
             <Wallet className="h-4 w-4" /> Record Advance
           </Button>
