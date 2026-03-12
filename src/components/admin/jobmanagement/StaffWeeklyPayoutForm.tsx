@@ -56,6 +56,7 @@ const StaffWeeklyPayoutForm = ({
   const [paymentMode, setPaymentMode] = useState('cash');
   const [notes, setNotes] = useState('');
   const [advanceDeductions, setAdvanceDeductions] = useState<Record<string, number>>({});
+  const [effortBonus, setEffortBonus] = useState<number>(0);
 
   // Pending advances
   const pendingAdvances = advances.filter(a => a.remaining_amount > 0);
@@ -95,8 +96,10 @@ const StaffWeeklyPayoutForm = ({
   }, [selectedWeek, absences]);
 
   const grossSalary = weekCalc.workingDays * dailyRate;
+  const absenceDeduction = weekCalc.absentDays * dailyRate;
+  const fullWeekSalary = weekCalc.totalDays * dailyRate;
   const totalAdvanceDeduction = Object.values(advanceDeductions).reduce((s, v) => s + (v || 0), 0);
-  const netPaid = grossSalary - totalAdvanceDeduction;
+  const netPaid = grossSalary - totalAdvanceDeduction + effortBonus;
 
   const handleAdvanceToggle = (advanceId: string, checked: boolean) => {
     if (checked) {
@@ -153,7 +156,7 @@ const StaffWeeklyPayoutForm = ({
         net_paid: netPaid,
         payment_date: format(new Date(), 'yyyy-MM-dd'),
         payment_mode: paymentMode,
-        notes: notes || null,
+        notes: [notes, effortBonus > 0 ? `Effort Bonus: ₹${effortBonus}` : ''].filter(Boolean).join(' | ') || null,
       },
       deductions,
       salaryEntries,
@@ -223,12 +226,18 @@ const StaffWeeklyPayoutForm = ({
         <h4 className="font-semibold mb-3">Calculation</h4>
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
+            <span className="text-muted-foreground">Full Week Salary ({weekCalc.totalDays} × ₹{dailyRate})</span>
+            <span className="font-medium">₹{fullWeekSalary.toLocaleString()}</span>
+          </div>
+          {weekCalc.absentDays > 0 && (
+            <div className="flex justify-between text-destructive">
+              <span>Absence Deduction ({weekCalc.absentDays} day{weekCalc.absentDays !== 1 ? 's' : ''} × ₹{dailyRate})</span>
+              <span className="font-semibold">-₹{absenceDeduction.toLocaleString()}</span>
+            </div>
+          )}
+          <div className="flex justify-between">
             <span className="text-muted-foreground">Working Days</span>
             <span className="font-medium">{weekCalc.workingDays} / {weekCalc.totalDays} days</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Absent Days</span>
-            <span className="font-medium text-destructive">{weekCalc.absentDays} days</span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Gross Salary ({weekCalc.workingDays} × ₹{dailyRate})</span>
@@ -238,6 +247,12 @@ const StaffWeeklyPayoutForm = ({
             <div className="flex justify-between text-destructive">
               <span>Advance Deduction</span>
               <span className="font-semibold">-₹{totalAdvanceDeduction.toLocaleString()}</span>
+            </div>
+          )}
+          {effortBonus > 0 && (
+            <div className="flex justify-between text-green-600">
+              <span>Effort Bonus</span>
+              <span className="font-semibold">+₹{effortBonus.toLocaleString()}</span>
             </div>
           )}
           <Separator />
@@ -289,6 +304,20 @@ const StaffWeeklyPayoutForm = ({
           </div>
         </Card>
       )}
+
+      {/* Effort Bonus */}
+      <Card className="p-4">
+        <h4 className="font-semibold mb-3">Effort Bonus</h4>
+        <p className="text-xs text-muted-foreground mb-2">A reward for hard work — added to net payable</p>
+        <Input
+          type="number"
+          placeholder="₹0"
+          value={effortBonus || ''}
+          onChange={(e) => setEffortBonus(parseFloat(e.target.value) || 0)}
+          min={0}
+          className="w-40"
+        />
+      </Card>
 
       {/* Payment details */}
       <div className="grid grid-cols-2 gap-4">
