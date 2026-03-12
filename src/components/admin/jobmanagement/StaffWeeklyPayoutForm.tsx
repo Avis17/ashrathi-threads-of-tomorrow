@@ -96,8 +96,10 @@ const StaffWeeklyPayoutForm = ({
   }, [selectedWeek, absences]);
 
   const grossSalary = weekCalc.workingDays * dailyRate;
+  const absenceDeduction = weekCalc.absentDays * dailyRate;
+  const fullWeekSalary = weekCalc.totalDays * dailyRate;
   const totalAdvanceDeduction = Object.values(advanceDeductions).reduce((s, v) => s + (v || 0), 0);
-  const netPaid = grossSalary - totalAdvanceDeduction;
+  const netPaid = grossSalary - totalAdvanceDeduction + effortBonus;
 
   const handleAdvanceToggle = (advanceId: string, checked: boolean) => {
     if (checked) {
