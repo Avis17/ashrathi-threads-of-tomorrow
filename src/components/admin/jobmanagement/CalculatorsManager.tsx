@@ -379,10 +379,82 @@ const WastageByWeight = () => {
   );
 };
 
+// ─── Twill Tape Roll Calculator ───
+const TwillTapeCalculator = () => {
+  const [pieces, setPieces] = useState('');
+  const [perPieceInch, setPerPieceInch] = useState('');
+  const [rollSizeMeter, setRollSizeMeter] = useState('');
+  const saveMutation = useSaveEntry('twill-tape-rolls');
+
+  const numPieces = parseFloat(pieces) || 0;
+  const inchPerPiece = parseFloat(perPieceInch) || 0;
+  const meterPerRoll = parseFloat(rollSizeMeter) || 0;
+
+  const totalInches = numPieces * inchPerPiece;
+  const totalMeters = totalInches * 0.0254;
+  const exactRolls = meterPerRoll > 0 ? totalMeters / meterPerRoll : 0;
+  const rollsRequired = Math.ceil(exactRolls);
+
+  const hasResult = numPieces > 0 && inchPerPiece > 0 && meterPerRoll > 0;
+
+  const handleLastInputBlur = () => {
+    if (hasResult) {
+      saveMutation.mutate({
+        inputs: { Pieces: numPieces, 'Per Piece (inch)': inchPerPiece, 'Roll Size (m)': meterPerRoll },
+        results: {
+          'Total Required': `${totalInches.toLocaleString()} inch (${totalMeters.toFixed(2)} m)`,
+          'Exact Rolls': exactRolls.toFixed(3),
+          'Rolls Required': rollsRequired,
+        },
+      });
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="space-y-2">
+          <Label>Number of Pieces</Label>
+          <Input type="number" placeholder="e.g. 300" value={pieces} onChange={e => setPieces(e.target.value)} />
+        </div>
+        <div className="space-y-2">
+          <Label>Per Piece Required (inches)</Label>
+          <Input type="number" placeholder="e.g. 55" value={perPieceInch} onChange={e => setPerPieceInch(e.target.value)} />
+        </div>
+        <div className="space-y-2">
+          <Label>Per Roll Size (meters)</Label>
+          <Input type="number" placeholder="e.g. 50" value={rollSizeMeter} onChange={e => setRollSizeMeter(e.target.value)} onBlur={handleLastInputBlur} />
+        </div>
+      </div>
+
+      {hasResult && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
+          <Card className="p-4 bg-gradient-to-br from-blue-500/10 to-blue-500/5 border-blue-500/20">
+            <p className="text-xs text-muted-foreground">Total Required</p>
+            <p className="text-lg font-bold text-blue-600">{totalInches.toLocaleString()} inches</p>
+            <p className="text-sm text-muted-foreground">{totalMeters.toFixed(2)} meters</p>
+          </Card>
+          <Card className="p-4 bg-gradient-to-br from-orange-500/10 to-orange-500/5 border-orange-500/20">
+            <p className="text-xs text-muted-foreground">Exact Rolls</p>
+            <p className="text-2xl font-bold text-orange-600">{exactRolls.toFixed(3)}</p>
+          </Card>
+          <Card className="p-4 bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20">
+            <p className="text-xs text-muted-foreground">Rolls Required</p>
+            <p className="text-2xl font-bold text-green-600">{rollsRequired}</p>
+          </Card>
+        </div>
+      )}
+
+      <SavedEntries calculatorType="twill-tape-rolls" />
+    </div>
+  );
+};
+
 // ─── Main ───
 const calculators = [
   { id: 'wastage', title: 'Wastage Checker (by Pieces)', description: 'Calculate fabric wastage per piece across styles', icon: Percent, component: WastageChecker },
   { id: 'wastage-weight', title: 'Wastage Checker (by Fabric Weight)', description: 'Calculate wastage from total fabric input vs garment output', icon: Scale, component: WastageByWeight },
+  { id: 'twill-tape', title: 'Twill Tape Roll Calculator', description: 'Calculate number of twill tape rolls required for production', icon: Calculator, component: TwillTapeCalculator },
   { id: 'converter', title: 'Unit Converter', description: 'Convert between weight and length units', icon: ArrowRightLeft, component: UnitConverter },
 ];
 
