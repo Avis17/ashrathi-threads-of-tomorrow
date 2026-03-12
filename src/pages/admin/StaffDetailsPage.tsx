@@ -34,6 +34,7 @@ import {
 } from '@/hooks/useStaffAdvances';
 import StaffWeeklyPayoutForm from '@/components/admin/jobmanagement/StaffWeeklyPayoutForm';
 import StaffProfileEditForm from '@/components/admin/jobmanagement/StaffProfileEditForm';
+import { generatePayslipPDF } from '@/components/admin/jobmanagement/StaffPayslipPDF';
 
 const StaffDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
