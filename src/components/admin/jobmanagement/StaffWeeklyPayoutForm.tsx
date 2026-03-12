@@ -156,7 +156,7 @@ const StaffWeeklyPayoutForm = ({
         net_paid: netPaid,
         payment_date: format(new Date(), 'yyyy-MM-dd'),
         payment_mode: paymentMode,
-        notes: notes || null,
+        notes: [notes, effortBonus > 0 ? `Effort Bonus: ₹${effortBonus}` : ''].filter(Boolean).join(' | ') || null,
       },
       deductions,
       salaryEntries,
