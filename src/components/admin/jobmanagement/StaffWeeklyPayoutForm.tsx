@@ -226,12 +226,18 @@ const StaffWeeklyPayoutForm = ({
         <h4 className="font-semibold mb-3">Calculation</h4>
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
+            <span className="text-muted-foreground">Full Week Salary ({weekCalc.totalDays} × ₹{dailyRate})</span>
+            <span className="font-medium">₹{fullWeekSalary.toLocaleString()}</span>
+          </div>
+          {weekCalc.absentDays > 0 && (
+            <div className="flex justify-between text-destructive">
+              <span>Absence Deduction ({weekCalc.absentDays} day{weekCalc.absentDays !== 1 ? 's' : ''} × ₹{dailyRate})</span>
+              <span className="font-semibold">-₹{absenceDeduction.toLocaleString()}</span>
+            </div>
+          )}
+          <div className="flex justify-between">
             <span className="text-muted-foreground">Working Days</span>
             <span className="font-medium">{weekCalc.workingDays} / {weekCalc.totalDays} days</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Absent Days</span>
-            <span className="font-medium text-destructive">{weekCalc.absentDays} days</span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Gross Salary ({weekCalc.workingDays} × ₹{dailyRate})</span>
@@ -241,6 +247,12 @@ const StaffWeeklyPayoutForm = ({
             <div className="flex justify-between text-destructive">
               <span>Advance Deduction</span>
               <span className="font-semibold">-₹{totalAdvanceDeduction.toLocaleString()}</span>
+            </div>
+          )}
+          {effortBonus > 0 && (
+            <div className="flex justify-between text-green-600">
+              <span>Effort Bonus</span>
+              <span className="font-semibold">+₹{effortBonus.toLocaleString()}</span>
             </div>
           )}
           <Separator />
