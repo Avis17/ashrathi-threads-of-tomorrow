@@ -509,9 +509,26 @@ const StaffDetailsPage = () => {
                     {p.notes && ` · ${p.notes}`}
                   </p>
                 </div>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => setDeletingPayout(p.id)}>
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-primary"
+                    title="Download Payslip"
+                    onClick={() => generatePayslipPDF({
+                      payout: p,
+                      staffName: staff.employee?.name || 'Staff',
+                      employeeCode: staff.employee?.employee_code,
+                      advances,
+                      absences,
+                    })}
+                  >
+                    <Download className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => setDeletingPayout(p.id)}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
