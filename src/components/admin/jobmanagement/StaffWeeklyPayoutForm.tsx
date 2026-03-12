@@ -305,6 +305,20 @@ const StaffWeeklyPayoutForm = ({
         </Card>
       )}
 
+      {/* Effort Bonus */}
+      <Card className="p-4">
+        <h4 className="font-semibold mb-3">Effort Bonus</h4>
+        <p className="text-xs text-muted-foreground mb-2">A reward for hard work — added to net payable</p>
+        <Input
+          type="number"
+          placeholder="₹0"
+          value={effortBonus || ''}
+          onChange={(e) => setEffortBonus(parseFloat(e.target.value) || 0)}
+          min={0}
+          className="w-40"
+        />
+      </Card>
+
       {/* Payment details */}
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
