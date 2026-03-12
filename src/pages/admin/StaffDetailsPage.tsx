@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, IndianRupee, Calendar as CalendarIcon, UserX, Trash2, TrendingUp, TrendingDown, DollarSign, CalendarDays, Banknote, Wallet, Edit, User } from 'lucide-react';
+import { ArrowLeft, Plus, IndianRupee, Calendar as CalendarIcon, UserX, Trash2, TrendingUp, TrendingDown, DollarSign, CalendarDays, Banknote, Wallet, Edit, User, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -34,6 +34,7 @@ import {
 } from '@/hooks/useStaffAdvances';
 import StaffWeeklyPayoutForm from '@/components/admin/jobmanagement/StaffWeeklyPayoutForm';
 import StaffProfileEditForm from '@/components/admin/jobmanagement/StaffProfileEditForm';
+import { generatePayslipPDF } from '@/components/admin/jobmanagement/StaffPayslipPDF';
 
 const StaffDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -508,9 +509,26 @@ const StaffDetailsPage = () => {
                     {p.notes && ` · ${p.notes}`}
                   </p>
                 </div>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => setDeletingPayout(p.id)}>
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-primary"
+                    title="Download Payslip"
+                    onClick={() => generatePayslipPDF({
+                      payout: p,
+                      staffName: staff.employee?.name || 'Staff',
+                      employeeCode: staff.employee?.employee_code,
+                      advances,
+                      absences,
+                    })}
+                  >
+                    <Download className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => setDeletingPayout(p.id)}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
