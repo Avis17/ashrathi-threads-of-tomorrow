@@ -56,6 +56,7 @@ const StaffWeeklyPayoutForm = ({
   const [paymentMode, setPaymentMode] = useState('cash');
   const [notes, setNotes] = useState('');
   const [advanceDeductions, setAdvanceDeductions] = useState<Record<string, number>>({});
+  const [effortBonus, setEffortBonus] = useState<number>(0);
 
   // Pending advances
   const pendingAdvances = advances.filter(a => a.remaining_amount > 0);
