@@ -295,10 +295,19 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
                       <span className="text-muted-foreground">Rolls × Weight</span>
                       <span className="font-medium">{type.number_of_rolls} × {type.weight}kg = <strong>{colorTotalWeight.toFixed(2)} kg</strong></span>
                     </div>
-                    <div className="flex justify-between">
+                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Pieces Cut</span>
                       <Badge variant={cutPieces > 0 ? 'default' : 'secondary'}>{cutPieces} pcs</Badge>
                     </div>
+                    {typeSizes && Object.keys(typeSizes).length > 0 && (
+                      <div className="flex flex-wrap gap-1 pt-1">
+                        {Object.entries(typeSizes).filter(([, v]) => v > 0).map(([size, count]) => (
+                          <Badge key={size} variant="outline" className="text-xs font-normal">
+                            {size}: <span className="font-semibold ml-0.5">{count}</span>
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
                     {perPieceWeight !== null && (
                       <div className="flex justify-between">
                         <span className="text-muted-foreground flex items-center gap-1">
