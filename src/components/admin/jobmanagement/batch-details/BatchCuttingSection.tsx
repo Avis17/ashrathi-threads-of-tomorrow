@@ -48,21 +48,67 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
   const updateLogMutation = useUpdateCuttingLog();
   const { data: wastageEntries } = useBatchCuttingWastage(batch.id);
 
+  const COMMON_SIZES = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL'];
+
+  // Collect all sizes used across existing logs for this batch
+  const existingSizes = useMemo(() => {
+    const sizes = new Set<string>();
+    cuttingLogs.forEach(log => {
+      if (log.size_pieces && typeof log.size_pieces === 'object') {
+        Object.keys(log.size_pieces).forEach(s => sizes.add(s));
+      }
+    });
+    return [...sizes];
+  }, [cuttingLogs]);
+
+  const activeSizes = useMemo(() => {
+    const all = new Set([...COMMON_SIZES, ...existingSizes, ...Object.keys(sizePieces)]);
+    return [...all];
+  }, [existingSizes, sizePieces]);
+
+  const sizePiecesTotal = Object.values(sizePieces).reduce((sum, val) => sum + (val || 0), 0);
+
+  const handleSizePieceChange = (size: string, value: string) => {
+    const num = parseInt(value) || 0;
+    setSizePieces(prev => {
+      const updated = { ...prev };
+      if (num > 0) {
+        updated[size] = num;
+      } else {
+        delete updated[size];
+      }
+      return updated;
+    });
+  };
+
+  const handleAddCustomSize = () => {
+    const trimmed = customSize.trim().toUpperCase();
+    if (trimmed && !activeSizes.includes(trimmed)) {
+      setSizePieces(prev => ({ ...prev, [trimmed]: 0 }));
+    }
+    setCustomSize('');
+  };
+
   const handleAddLog = async () => {
     const typeIndex = parseInt(selectedTypeIndex);
-    if (isNaN(typeIndex) || !piecesCut) return;
+    if (isNaN(typeIndex)) return;
+    const totalPieces = sizePiecesTotal > 0 ? sizePiecesTotal : parseInt(piecesCut);
+    if (!totalPieces || totalPieces <= 0) return;
     const selectedType = rollsData[typeIndex];
+    const cleanSizePieces = Object.keys(sizePieces).length > 0 ? sizePieces : null;
     await addLogMutation.mutateAsync({
       batch_id: batch.id,
       log_date: logDate,
       type_index: typeIndex,
       color: selectedType?.color || '',
       style_id: selectedType?.style_id || null,
-      pieces_cut: parseInt(piecesCut),
+      pieces_cut: totalPieces,
+      size_pieces: cleanSizePieces,
       notes: notes || undefined,
     });
     setSelectedTypeIndex('');
     setPiecesCut('');
+    setSizePieces({});
     setNotes('');
     setShowAddForm(false);
   };
