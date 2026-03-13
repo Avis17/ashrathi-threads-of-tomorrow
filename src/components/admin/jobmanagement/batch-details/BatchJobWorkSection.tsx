@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Briefcase, Plus, Trash2, Eye, ChevronDown, ChevronRight } from 'lucide-react';
+import { Briefcase, Plus, Trash2, Eye, ChevronDown, ChevronRight, Pencil } from 'lucide-react';
 import { useBatchJobWorks, useDeleteJobWork, useJobWorkOperations } from '@/hooks/useJobWorks';
 import { JobWorkCreateForm } from './JobWorkCreateForm';
 import { format } from 'date-fns';
