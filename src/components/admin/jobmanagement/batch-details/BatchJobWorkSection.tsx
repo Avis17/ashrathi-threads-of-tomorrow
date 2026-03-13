@@ -169,9 +169,7 @@ const JobWorkRow = ({
   onView: () => void;
   onEdit: (jw: any, ops: any[]) => void;
 }) => {
-  const { data: operations = [] } = useJobWorkOperations(isExpanded ? jobWork.id : undefined);
-  // Also fetch operations for edit (need them even when not expanded)
-  const { data: allOps = [] } = useJobWorkOperations(jobWork.id);
+  const { data: operations = [] } = useJobWorkOperations(jobWork.id);
 
   return (
     <Collapsible open={isExpanded} onOpenChange={onToggle}>
