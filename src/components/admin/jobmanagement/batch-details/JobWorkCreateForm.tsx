@@ -323,30 +323,40 @@ export const JobWorkCreateForm = ({ batchId, rollsData, cuttingSummary, open, on
           notes: op.notes || undefined,
         }));
 
-    await createMutation.mutateAsync({
-      jobWork: {
-        batch_id: batchId,
-        style_id: firstVariation.styleId,
-        type_index: firstVariation.index,
-        color: firstVariation.color,
-        pieces: totalPieces,
-        company_id: finalCompanyId,
-        company_name: finalCompanyName,
-        notes: notes || null,
-        paid_amount: parseFloat(paidAmount) || 0,
-        payment_status: 'pending',
-        work_status: 'pending',
-        company_profit: profitPerPiece,
-        variations: selectedVariations.map(v => ({
-          type_index: v.index,
-          style_id: v.styleId,
-          color: v.color,
-          pieces: v.pieces,
-          sizes: v.sizes,
-        })),
-      },
-      operations: finalOperations,
-    });
+    const jobWorkData = {
+      batch_id: batchId,
+      style_id: firstVariation.styleId,
+      type_index: firstVariation.index,
+      color: firstVariation.color,
+      pieces: totalPieces,
+      company_id: finalCompanyId,
+      company_name: finalCompanyName,
+      notes: notes || null,
+      paid_amount: parseFloat(paidAmount) || 0,
+      payment_status: isEditing ? editEntry.payment_status : 'pending',
+      work_status: isEditing ? editEntry.work_status : 'pending',
+      company_profit: profitPerPiece,
+      variations: selectedVariations.map(v => ({
+        type_index: v.index,
+        style_id: v.styleId,
+        color: v.color,
+        pieces: v.pieces,
+        sizes: v.sizes,
+      })),
+    };
+
+    if (isEditing) {
+      await updateMutation.mutateAsync({
+        id: editEntry.id,
+        jobWork: jobWorkData,
+        operations: finalOperations,
+      });
+    } else {
+      await createMutation.mutateAsync({
+        jobWork: jobWorkData,
+        operations: finalOperations,
+      });
+    }
 
     resetForm();
     onOpenChange(false);
