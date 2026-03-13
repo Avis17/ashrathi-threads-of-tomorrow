@@ -453,12 +453,15 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
                           <TableHead>Type</TableHead>
                           <TableHead>Color</TableHead>
                           <TableHead>Pieces</TableHead>
+                          <TableHead>Size Breakdown</TableHead>
                           <TableHead>Notes</TableHead>
                           <TableHead className="w-20">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {logs.map((log) => (
+                        {logs.map((log) => {
+                          const sp = log.size_pieces as SizePieces | null;
+                          return (
                           <TableRow key={log.id}>
                             <TableCell><Badge variant="outline">{log.type_index + 1}</Badge></TableCell>
                             <TableCell className="font-medium">{log.color}</TableCell>
@@ -502,6 +505,19 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
                                 </Badge>
                               )}
                             </TableCell>
+                            <TableCell>
+                              {sp && Object.keys(sp).length > 0 ? (
+                                <div className="flex flex-wrap gap-1">
+                                  {Object.entries(sp).filter(([, v]) => v > 0).map(([size, count]) => (
+                                    <Badge key={size} variant="outline" className="text-xs font-normal">
+                                      {size}: <span className="font-semibold ml-0.5">{count}</span>
+                                    </Badge>
+                                  ))}
+                                </div>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">—</span>
+                              )}
+                            </TableCell>
                             <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">{log.notes || '-'}</TableCell>
                             <TableCell>
                               <div className="flex items-center gap-1">
@@ -514,7 +530,8 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
                               </div>
                             </TableCell>
                           </TableRow>
-                        ))}
+                        );
+                        })}
                       </TableBody>
                     </Table>
                   </div>
