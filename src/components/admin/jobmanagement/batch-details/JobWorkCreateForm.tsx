@@ -381,7 +381,7 @@ export const JobWorkCreateForm = ({ batchId, rollsData, cuttingSummary, open, on
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Create Job Work</DialogTitle>
+            <DialogTitle>{isEditing ? 'Edit Job Work' : 'Create Job Work'}</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
