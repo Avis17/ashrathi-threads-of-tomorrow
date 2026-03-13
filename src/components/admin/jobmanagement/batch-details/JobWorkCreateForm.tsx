@@ -532,8 +532,7 @@ export const JobWorkCreateForm = ({ batchId, rollsData, cuttingSummary, open, on
             <div className="bg-muted/50 rounded-lg p-4 space-y-3">
               <p className="text-sm font-semibold text-foreground">Cost Breakdown</p>
 
-              {/* Per-item operation rates */}
-              {operations.filter(op => op.operation).length > 0 && (
+              {pricingMode === 'operation-wise' && operations.filter(op => op.operation).length > 0 && (
                 <div className="space-y-1">
                   {operations.filter(op => op.operation).map((op, idx) => (
                     <div key={idx} className="flex justify-between text-sm">
@@ -544,14 +543,27 @@ export const JobWorkCreateForm = ({ batchId, rollsData, cuttingSummary, open, on
                 </div>
               )}
 
+              {pricingMode === 'overall-amount' && isSetItem && (
+                <div className="space-y-1">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Top</span>
+                    <span>₹{(parseFloat(topAmount) || 0).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Pant</span>
+                    <span>₹{(parseFloat(pantAmount) || 0).toFixed(2)}</span>
+                  </div>
+                </div>
+              )}
+
               <div className="border-t pt-2 space-y-1">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Operations Total</span>
+                  <span className="text-muted-foreground">{pricingMode === 'operation-wise' ? 'Operations Total' : 'Overall Total'}</span>
                   <span className="font-semibold">₹{totalAmount.toFixed(2)}</span>
                 </div>
-                {totalPieces > 0 && (
+                {totalPieces > 0 && totalAmount > 0 && (
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Operations Cost / Item</span>
+                    <span className="text-muted-foreground">Cost / Item</span>
                     <span className="font-medium">₹{(totalAmount / totalPieces).toFixed(2)}</span>
                   </div>
                 )}
@@ -565,7 +577,7 @@ export const JobWorkCreateForm = ({ batchId, rollsData, cuttingSummary, open, on
                 {totalPieces > 0 && (
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Profit / Item</span>
-                    <span className="font-medium text-emerald-600">₹{profitPerPiece.toFixed(2)}</span>
+                    <span className="font-medium text-primary">₹{profitPerPiece.toFixed(2)}</span>
                   </div>
                 )}
               </div>
