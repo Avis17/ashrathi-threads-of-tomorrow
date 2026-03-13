@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Package, Scissors, FileText, DollarSign, Users, Settings, Edit, IndianRupee, Briefcase, BarChart3, Receipt, CreditCard, UserPlus, Save, Truck, CalendarIcon } from 'lucide-react';
+import { ArrowLeft, Package, Scissors, FileText, DollarSign, Users, Settings, Edit, IndianRupee, Briefcase, BarChart3, Receipt, CreditCard, UserPlus, Save, Truck, CalendarIcon, Calculator } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -41,6 +41,7 @@ import EditBatchDialog from '@/components/admin/jobmanagement/EditBatchDialog';
 import { GenerateInvoiceDialog } from '@/components/admin/jobmanagement/batch-details/GenerateInvoiceDialog';
 import { BatchPaymentSection } from '@/components/admin/jobmanagement/batch-details/BatchPaymentSection';
 import { BatchWeightAnalysisCard } from '@/components/admin/jobmanagement/batch-details/BatchWeightAnalysisCard';
+import { BatchCostingSection } from '@/components/admin/jobmanagement/batch-details/BatchCostingSection';
 import { useBatchWeightAnalysis } from '@/hooks/useBatchWeightAnalysis';
 import { AddWorkerDialog } from '@/components/admin/jobmanagement/batch-details/AddWorkerDialog';
 import { CreateDCFromBatchDialog } from '@/components/admin/jobmanagement/batch-details/CreateDCFromBatchDialog';
@@ -324,7 +325,7 @@ const BatchDetailsPage = () => {
 
       {/* Main Tabs */}
       <Tabs defaultValue="cutting" className="w-full">
-        <TabsList className="grid w-full grid-cols-8">
+        <TabsList className="grid w-full grid-cols-9">
           <TabsTrigger value="cutting" className="flex items-center gap-2">
             <Scissors className="h-4 w-4" />
             Cutting
@@ -348,6 +349,10 @@ const BatchDetailsPage = () => {
           <TabsTrigger value="jobwork" className="flex items-center gap-2">
             <Briefcase className="h-4 w-4" />
             Job Work
+          </TabsTrigger>
+          <TabsTrigger value="costing" className="flex items-center gap-2">
+            <Calculator className="h-4 w-4" />
+            Costing
           </TabsTrigger>
           <TabsTrigger value="payments" className="flex items-center gap-2">
             <CreditCard className="h-4 w-4" />
@@ -392,6 +397,10 @@ const BatchDetailsPage = () => {
 
         <TabsContent value="jobwork" className="mt-6">
           <BatchJobWorkSection batchId={id || ''} rollsData={rollsData} cuttingSummary={cuttingSummary} />
+        </TabsContent>
+
+        <TabsContent value="costing" className="mt-6">
+          <BatchCostingSection batchId={id || ''} totalCutPieces={totalCutPieces} />
         </TabsContent>
 
         <TabsContent value="payments" className="mt-6">
