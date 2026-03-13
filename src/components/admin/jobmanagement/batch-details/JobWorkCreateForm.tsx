@@ -451,61 +451,61 @@ export const JobWorkCreateForm = ({ batchId, rollsData, cuttingSummary, open, on
                 {isSetItem ? (
                   <div className="space-y-3">
                     <div>
-                      <Label>Top Amount (₹)</Label>
+                      <Label>Top Amount (₹/piece)</Label>
                       <Input
                         type="number"
                         step="0.01"
                         value={topAmount}
                         onChange={e => setTopAmount(e.target.value)}
-                        placeholder="Enter total amount for Top"
+                        placeholder="Enter per piece amount for Top"
                       />
-                      {totalPieces > 0 && parseFloat(topAmount) > 0 && (
+                      {totalPieces > 0 && topPerPiece > 0 && (
                         <p className="text-xs text-muted-foreground mt-1">
-                          ₹{(parseFloat(topAmount) / totalPieces).toFixed(2)} per piece
+                          ₹{topPerPiece.toFixed(2)} × {totalPieces} pcs = ₹{(topPerPiece * totalPieces).toFixed(2)}
                         </p>
                       )}
                     </div>
                     <div>
-                      <Label>Pant Amount (₹)</Label>
+                      <Label>Pant Amount (₹/piece)</Label>
                       <Input
                         type="number"
                         step="0.01"
                         value={pantAmount}
                         onChange={e => setPantAmount(e.target.value)}
-                        placeholder="Enter total amount for Pant"
+                        placeholder="Enter per piece amount for Pant"
                       />
-                      {totalPieces > 0 && parseFloat(pantAmount) > 0 && (
+                      {totalPieces > 0 && pantPerPiece > 0 && (
                         <p className="text-xs text-muted-foreground mt-1">
-                          ₹{(parseFloat(pantAmount) / totalPieces).toFixed(2)} per piece
+                          ₹{pantPerPiece.toFixed(2)} × {totalPieces} pcs = ₹{(pantPerPiece * totalPieces).toFixed(2)}
                         </p>
                       )}
                     </div>
                     <div className="bg-muted/50 rounded-md p-3">
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Combined Total</span>
-                        <span className="font-semibold">₹{computedOverallAmount.toFixed(2)}</span>
+                        <span className="text-muted-foreground">Per Set (Top + Pant)</span>
+                        <span className="font-semibold">₹{(topPerPiece + pantPerPiece).toFixed(2)}/pc</span>
                       </div>
                       {totalPieces > 0 && computedOverallAmount > 0 && (
                         <div className="flex justify-between text-sm mt-1">
-                          <span className="text-muted-foreground">Per Set</span>
-                          <span className="font-medium">₹{(computedOverallAmount / totalPieces).toFixed(2)}</span>
+                          <span className="text-muted-foreground">Total ({totalPieces} pcs)</span>
+                          <span className="font-medium">₹{computedOverallAmount.toFixed(2)}</span>
                         </div>
                       )}
                     </div>
                   </div>
                 ) : (
                   <div>
-                    <Label>Overall Amount (₹)</Label>
+                    <Label>Overall Amount (₹/piece)</Label>
                     <Input
                       type="number"
                       step="0.01"
                       value={overallAmount}
                       onChange={e => setOverallAmount(e.target.value)}
-                      placeholder="Enter total amount for entire operation"
+                      placeholder="Enter per piece amount"
                     />
-                    {totalPieces > 0 && parseFloat(overallAmount) > 0 && (
+                    {totalPieces > 0 && overallPerPiece > 0 && (
                       <p className="text-xs text-muted-foreground mt-1">
-                        ₹{(parseFloat(overallAmount) / totalPieces).toFixed(2)} per piece
+                        ₹{overallPerPiece.toFixed(2)} × {totalPieces} pcs = ₹{(overallPerPiece * totalPieces).toFixed(2)}
                       </p>
                     )}
                   </div>
