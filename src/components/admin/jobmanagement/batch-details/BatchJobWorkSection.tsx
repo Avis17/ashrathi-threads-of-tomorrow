@@ -195,7 +195,7 @@ const JobWorkRow = ({
                   Paid: ₹{jobWork.paid_amount.toFixed(2)}
                 </p>
               </div>
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); onEdit(jobWork, allOps); }}>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); onEdit(jobWork, operations); }}>
                 <Pencil className="h-4 w-4" />
               </Button>
               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); onView(); }}>
