@@ -122,6 +122,20 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
 
   const totalCutPieces = Object.values(cuttingSummary).reduce((sum, val) => sum + val, 0);
 
+  // Aggregate size breakdown per type index
+  const sizeSummaryByType = useMemo(() => {
+    const map: Record<number, SizePieces> = {};
+    cuttingLogs.forEach(log => {
+      if (log.size_pieces && typeof log.size_pieces === 'object') {
+        if (!map[log.type_index]) map[log.type_index] = {};
+        Object.entries(log.size_pieces as SizePieces).forEach(([size, count]) => {
+          map[log.type_index][size] = (map[log.type_index][size] || 0) + (count || 0);
+        });
+      }
+    });
+    return map;
+  }, [cuttingLogs]);
+
   // Wastage summaries per type
   const wastageSummary: Record<number, { pieces: number; actualWeight: number }> = {};
   let totalWastagePieces = 0;
