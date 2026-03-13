@@ -205,9 +205,13 @@ export const JobWorkCreateForm = ({ batchId, rollsData, cuttingSummary, open, on
   };
 
   const operationsTotal = operations.reduce((sum, op) => sum + (op.rate_per_piece * op.quantity), 0);
+  // Overall amounts are per-piece rates, multiply by totalPieces for actual totals
+  const overallPerPiece = parseFloat(overallAmount) || 0;
+  const topPerPiece = parseFloat(topAmount) || 0;
+  const pantPerPiece = parseFloat(pantAmount) || 0;
   const computedOverallAmount = isSetItem
-    ? (parseFloat(topAmount) || 0) + (parseFloat(pantAmount) || 0)
-    : (parseFloat(overallAmount) || 0);
+    ? (topPerPiece + pantPerPiece) * totalPieces
+    : overallPerPiece * totalPieces;
   const totalAmount = pricingMode === 'operation-wise' ? operationsTotal : computedOverallAmount;
   const profitPercent = parseFloat(companyProfitPercent) || 0;
   const profitPerPiece = totalPieces > 0 ? (totalAmount / totalPieces) * (profitPercent / 100) : 0;
