@@ -227,15 +227,15 @@ export const JobWorkCreateForm = ({ batchId, rollsData, cuttingSummary, open, on
 
     const firstVariation = selectedVariations[0];
 
-    // Build operations for overall-amount mode
+    // Build operations for overall-amount mode (amounts are already per-piece)
     const finalOperations = pricingMode === 'overall-amount'
       ? isSetItem
         ? [
-            { operation: 'Overall - Top', rate_per_piece: totalPieces > 0 ? (parseFloat(topAmount) || 0) / totalPieces : 0, quantity: totalPieces, notes: 'Set item - Top amount' },
-            { operation: 'Overall - Pant', rate_per_piece: totalPieces > 0 ? (parseFloat(pantAmount) || 0) / totalPieces : 0, quantity: totalPieces, notes: 'Set item - Pant amount' },
+            { operation: 'Overall - Top', rate_per_piece: topPerPiece, quantity: totalPieces, notes: 'Set item - Top amount' },
+            { operation: 'Overall - Pant', rate_per_piece: pantPerPiece, quantity: totalPieces, notes: 'Set item - Pant amount' },
           ]
         : [
-            { operation: 'Overall', rate_per_piece: totalPieces > 0 ? computedOverallAmount / totalPieces : 0, quantity: totalPieces, notes: 'Overall amount entry' },
+            { operation: 'Overall', rate_per_piece: overallPerPiece, quantity: totalPieces, notes: 'Overall amount entry' },
           ]
       : operations.map(op => ({
           operation: op.operation,
