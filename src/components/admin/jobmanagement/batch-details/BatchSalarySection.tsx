@@ -32,6 +32,7 @@ export const BatchSalarySection = ({ batchId, rollsData, cuttingSummary, totalCu
   const navigate = useNavigate();
   const [showSalaryDialog, setShowSalaryDialog] = useState(false);
   const [showAdvanceDialog, setShowAdvanceDialog] = useState(false);
+  const [editingEntry, setEditingEntry] = useState<BatchSalaryEntry | null>(null);
 
   const { data: existingEntries = [], isLoading: loadingEntries } = useBatchSalaryEntries(batchId);
   const { data: allAdvances = [], isLoading: loadingAdvances } = useBatchSalaryAdvances(batchId);
