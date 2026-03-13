@@ -265,6 +265,7 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {rollsData.map((type, index) => {
               const cutPieces = cuttingSummary[index] || 0;
+              const typeSizes = sizeSummaryByType[index];
               const colorTotalWeight = (type.number_of_rolls || 0) * (type.weight || 0);
               const perPieceWeight = cutPieces > 0 ? (colorTotalWeight / cutPieces) : null;
               const colorWastage = wastageSummary[index];
