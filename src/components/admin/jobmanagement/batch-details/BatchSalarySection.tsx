@@ -1,57 +1,24 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { IndianRupee, Save, Loader2, Trash2, ChevronDown, ChevronRight, ExternalLink, Plus, Banknote } from 'lucide-react';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { useBatchSalaryEntries, useUpsertBatchSalary, useDeleteBatchSalary, BatchSalaryEntry } from '@/hooks/useBatchSalary';
-import { useBatchJobWorks } from '@/hooks/useJobWorks';
+import {
+  IndianRupee, Plus, Banknote, Trash2, Loader2, TrendingUp, Wallet, Receipt, PiggyBank, ExternalLink,
+} from 'lucide-react';
+import { useBatchSalaryEntries, useDeleteBatchSalary, BatchSalaryEntry } from '@/hooks/useBatchSalary';
+import { useBatchSalaryAdvances } from '@/hooks/useBatchSalaryAdvances';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { useBatchSalaryAdvances } from '@/hooks/useBatchSalaryAdvances';
-import { RecordAdvanceDialog } from './RecordAdvanceDialog';
+import { RecordSalaryDialog } from './RecordSalaryDialog';
+import { GiveAdvanceDialog } from './GiveAdvanceDialog';
 
 interface StyleInfo {
   id: string;
   style_code: string;
   style_name: string;
-  linked_cmt_quotation_id: string | null;
-}
-
-interface CMTApprovedRates {
-  operations: Array<{ category: string; rate: number }>;
-  finishingPackingCost: number;
-  overheadsCost: number;
-  companyProfitPercent: number;
-  finalCMTPerPiece: number;
-}
-
-interface CMTOperation {
-  id: string;
-  category: string;
-  description: string;
-  machineType: string;
-  ratePerPiece: number;
-  amount: number;
-}
-
-interface LocalEntry {
-  id?: string;
-  operation: string;
-  description: string;
-  rate_per_piece: number;
-  quantity: number;
-  payment_status: string;
-  paid_amount: number;
-  notes: string;
-  updated_at?: string;
-  is_custom?: boolean;
 }
 
 interface Props {
@@ -63,30 +30,34 @@ interface Props {
 
 export const BatchSalarySection = ({ batchId, rollsData, cuttingSummary, totalCutPieces = 0 }: Props) => {
   const navigate = useNavigate();
-  const { data: jobWorks = [] } = useBatchJobWorks(batchId);
+  const [showSalaryDialog, setShowSalaryDialog] = useState(false);
+  const [showAdvanceDialog, setShowAdvanceDialog] = useState(false);
+
+  const { data: existingEntries = [], isLoading: loadingEntries } = useBatchSalaryEntries(batchId);
+  const { data: allAdvances = [], isLoading: loadingAdvances } = useBatchSalaryAdvances(batchId);
+  const deleteMutation = useDeleteBatchSalary();
+
+  // Build style groups from rolls
   const styleGroups = useMemo(() => {
-    const groups: Record<string, { styleId: string; typeIndices: number[]; colors: string[] }> = {};
+    const groups: Record<string, { styleId: string; typeIndices: number[] }> = {};
     rollsData.forEach((type, idx) => {
       const sid = type.style_id;
       if (!sid) return;
-      if (!groups[sid]) {
-        groups[sid] = { styleId: sid, typeIndices: [], colors: [] };
-      }
+      if (!groups[sid]) groups[sid] = { styleId: sid, typeIndices: [] };
       groups[sid].typeIndices.push(idx);
-      groups[sid].colors.push(type.color || `Type ${idx + 1}`);
     });
     return Object.values(groups);
   }, [rollsData]);
 
   const styleIds = styleGroups.map(g => g.styleId);
 
-  const { data: styles } = useQuery({
+  const { data: styles = [] } = useQuery({
     queryKey: ['styles-for-salary', styleIds],
     queryFn: async () => {
       if (styleIds.length === 0) return [];
       const { data, error } = await supabase
         .from('job_styles')
-        .select('id, style_code, style_name, linked_cmt_quotation_id')
+        .select('id, style_code, style_name')
         .in('id', styleIds);
       if (error) throw error;
       return data as StyleInfo[];
@@ -94,544 +65,180 @@ export const BatchSalarySection = ({ batchId, rollsData, cuttingSummary, totalCu
     enabled: styleIds.length > 0,
   });
 
-  const cmtIds = (styles || []).map(s => s.linked_cmt_quotation_id).filter(Boolean) as string[];
-  const { data: cmtQuotations } = useQuery({
-    queryKey: ['cmt-for-salary', cmtIds],
-    queryFn: async () => {
-      if (cmtIds.length === 0) return [];
-      const { data, error } = await supabase
-        .from('cmt_quotations')
-        .select('id, approved_rates, operations, status')
-        .in('id', cmtIds);
-      if (error) throw error;
-      return data;
-    },
-    enabled: cmtIds.length > 0,
-  });
+  // Style options with cut pieces
+  const styleOptions = useMemo(() => {
+    return styleGroups.map(g => {
+      const style = styles.find(s => s.id === g.styleId);
+      const totalPieces = g.typeIndices.reduce((sum, idx) => sum + (cuttingSummary[idx] || 0), 0);
+      return {
+        id: g.styleId,
+        style_code: style?.style_code || 'Unknown',
+        style_name: style?.style_name || 'Unknown',
+        totalCutPieces: totalPieces,
+      };
+    });
+  }, [styleGroups, styles, cuttingSummary]);
 
-  const { data: existingEntries } = useBatchSalaryEntries(batchId);
+  // Stats calculations
+  const totalSalary = existingEntries.reduce((sum, e) => sum + (e.rate_per_piece * e.quantity), 0);
+  const totalPaidAmount = existingEntries.reduce((sum, e) => sum + e.paid_amount, 0);
+  const totalAdvances = allAdvances.reduce((sum, a) => sum + Number(a.amount), 0);
+  const totalPaid = totalPaidAmount + totalAdvances;
+  const totalBalance = totalSalary - totalAdvances;
+  const perPieceCost = totalCutPieces > 0 ? totalSalary / totalCutPieces : 0;
+  const entryCount = existingEntries.length;
+  const advanceCount = allAdvances.length;
 
-  const { data: allBatchAdvances = [] } = useBatchSalaryAdvances(batchId);
-  const grandTotalSalary = (existingEntries || []).reduce((sum, e) => sum + (e.rate_per_piece * e.quantity), 0);
-  const grandTotalAdvances = allBatchAdvances.reduce((sum, a) => sum + Number(a.amount), 0);
-  const grandTotalPaid = (existingEntries || []).reduce((sum, e) => sum + e.paid_amount, 0) + grandTotalAdvances;
-  const grandTotalBalance = grandTotalSalary - grandTotalAdvances;
+  const getStyleName = (styleId: string) => {
+    const s = styles.find(st => st.id === styleId);
+    return s ? s.style_code : 'Unknown';
+  };
+
+  const handleDelete = async (id: string) => {
+    await deleteMutation.mutateAsync({ id, batchId });
+  };
 
   return (
     <div className="space-y-6">
-      {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-indigo-500/10 to-indigo-600/5 border-indigo-200">
-          <CardContent className="p-4">
-            <div className="text-sm text-muted-foreground">Total Salary</div>
-            <div className="text-2xl font-bold text-indigo-600">₹{grandTotalSalary.toFixed(2)}</div>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        <Card>
+          <CardContent className="p-4 text-center">
+            <IndianRupee className="h-5 w-5 mx-auto mb-1 text-primary" />
+            <div className="text-xs text-muted-foreground">Total Salary</div>
+            <div className="text-lg font-bold">₹{totalSalary.toFixed(0)}</div>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-amber-500/10 to-amber-600/5 border-amber-200">
-          <CardContent className="p-4">
-            <div className="text-sm text-muted-foreground">Per Piece Cost</div>
-            <div className="text-2xl font-bold text-amber-600">
-              ₹{totalCutPieces > 0 ? (grandTotalSalary / totalCutPieces).toFixed(2) : '0.00'}
-            </div>
-            <div className="text-xs text-muted-foreground mt-0.5">
-              {totalCutPieces > 0 ? `${totalCutPieces} pcs` : 'No cut pieces'}
-            </div>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <Banknote className="h-5 w-5 mx-auto mb-1 text-amber-500" />
+            <div className="text-xs text-muted-foreground">Total Advances</div>
+            <div className="text-lg font-bold text-amber-600">₹{totalAdvances.toFixed(0)}</div>
+            <div className="text-[10px] text-muted-foreground">{advanceCount} txn{advanceCount !== 1 ? 's' : ''}</div>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border-emerald-200">
-          <CardContent className="p-4">
-            <div className="text-sm text-muted-foreground">Total Paid (incl. Advances)</div>
-            <div className="text-2xl font-bold text-emerald-600">₹{grandTotalPaid.toFixed(2)}</div>
-            <div className="text-xs text-muted-foreground mt-0.5">
-              Balance: ₹{grandTotalBalance.toFixed(2)}
-            </div>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <Wallet className="h-5 w-5 mx-auto mb-1 text-emerald-500" />
+            <div className="text-xs text-muted-foreground">Total Paid</div>
+            <div className="text-lg font-bold text-emerald-600">₹{totalPaid.toFixed(0)}</div>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-violet-500/10 to-violet-600/5 border-violet-200">
-          <CardContent className="p-4">
-            <div className="text-sm text-muted-foreground">Total Advances</div>
-            <div className="text-2xl font-bold text-violet-600">₹{grandTotalAdvances.toFixed(2)}</div>
-            <div className="text-xs text-muted-foreground mt-0.5">
-              {allBatchAdvances.length} transaction{allBatchAdvances.length !== 1 ? 's' : ''}
-            </div>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <Receipt className="h-5 w-5 mx-auto mb-1 text-destructive" />
+            <div className="text-xs text-muted-foreground">Balance</div>
+            <div className="text-lg font-bold text-destructive">₹{totalBalance.toFixed(0)}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <TrendingUp className="h-5 w-5 mx-auto mb-1 text-blue-500" />
+            <div className="text-xs text-muted-foreground">Per Piece Cost</div>
+            <div className="text-lg font-bold text-blue-600">₹{perPieceCost.toFixed(2)}</div>
+            <div className="text-[10px] text-muted-foreground">{totalCutPieces} pcs</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <PiggyBank className="h-5 w-5 mx-auto mb-1 text-violet-500" />
+            <div className="text-xs text-muted-foreground">Entries</div>
+            <div className="text-lg font-bold text-violet-600">{entryCount}</div>
+            <div className="text-[10px] text-muted-foreground">salary records</div>
           </CardContent>
         </Card>
       </div>
 
+      {/* Header + Actions */}
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold flex items-center gap-2">
           <IndianRupee className="h-5 w-5 text-primary" />
           Salary Management
         </h3>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => navigate(`/admin/job-management/batch/${batchId}/advances`)}
-        >
-          <Banknote className="h-4 w-4 mr-1" />
-          Advances
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate(`/admin/job-management/batch/${batchId}/advances`)}
+          >
+            <ExternalLink className="h-4 w-4 mr-1" />
+            Advance History
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setShowAdvanceDialog(true)}>
+            <Banknote className="h-4 w-4 mr-1" />
+            Give Advance
+          </Button>
+          <Button size="sm" onClick={() => setShowSalaryDialog(true)}>
+            <Plus className="h-4 w-4 mr-1" />
+            Record Salary
+          </Button>
+        </div>
       </div>
 
-      {styleGroups.map(group => {
-        const style = styles?.find(s => s.id === group.styleId);
-        const cmt = cmtQuotations?.find(c => c.id === style?.linked_cmt_quotation_id);
-        const totalPieces = group.typeIndices.reduce((sum, idx) => sum + (cuttingSummary[idx] || 0), 0);
-        const operations = Array.from(new Set(
-          group.typeIndices.flatMap(idx => rollsData[idx]?.operations || [])
-        ));
-
-        // Calculate job work pieces per operation for this style's type indices
-        const jobWorkPiecesPerOp: Record<string, number> = {};
-        jobWorks.forEach(jw => {
-          const variations = (jw.variations || []) as Array<{ type_index: number; style_id: string; pieces: number }>;
-          const relevantVariations = variations.filter(v => group.typeIndices.includes(v.type_index));
-          if (relevantVariations.length === 0) return;
-          const jwPieces = relevantVariations.reduce((sum, v) => sum + (v.pieces || 0), 0);
-          // Get operations from job work operations (query separately) - use the job work's operations from batch_job_work_operations
-          // Since we don't have individual operations here, we check the operations table via the hook
-          // For now, we'll pass the full job work data and let StyleSalaryCard handle it
-        });
-
-        return (
-          <StyleSalaryCard
-            key={group.styleId}
-            batchId={batchId}
-            styleId={group.styleId}
-            style={style}
-            cmt={cmt}
-            cmtId={style?.linked_cmt_quotation_id || null}
-            totalPieces={totalPieces}
-            operations={operations}
-            existingEntries={(existingEntries || []).filter(e => e.style_id === group.styleId)}
-            colors={group.colors}
-            typeIndices={group.typeIndices}
-            jobWorks={jobWorks}
-          />
-        );
-      })}
-    </div>
-  );
-};
-
-/** Build the default rows from batch operations + CMT approved rates */
-function buildDefaultEntries(
-  operations: string[],
-  cmtOps: CMTOperation[],
-  cmtApproved: CMTApprovedRates | null,
-  totalPieces: number,
-  jobWorkPiecesPerOp: Record<string, number> = {},
-): LocalEntry[] {
-  const entries: LocalEntry[] = [];
-
-  operations.forEach(operation => {
-    const rates = getApprovedRatesForOp(operation, cmtOps, cmtApproved);
-    const jwPieces = jobWorkPiecesPerOp[operation] || 0;
-    const effectivePieces = Math.max(0, totalPieces - jwPieces);
-    rates.forEach(r => {
-      entries.push({
-        operation,
-        description: r.description,
-        rate_per_piece: r.rate,
-        quantity: effectivePieces,
-        payment_status: 'pending',
-        paid_amount: 0,
-        notes: jwPieces > 0 ? `${jwPieces} pcs in Job Work` : '',
-      });
-    });
-  });
-
-  return entries;
-}
-
-function getApprovedRatesForOp(
-  operation: string,
-  cmtOps: CMTOperation[],
-  cmtApproved: CMTApprovedRates | null,
-): { rate: number; description: string }[] {
-  if (!cmtApproved || !cmtOps.length) return [{ rate: 0, description: '' }];
-
-  const machineMap: Record<string, string> = {
-    'Stitching(Singer)': 'Singer',
-    'Stitching(Powertable)': 'Power Table',
-  };
-  const categoryMap: Record<string, string> = {
-    'Cutting': 'Cutting',
-    'Stitching(Singer)': 'Stitching',
-    'Stitching(Powertable)': 'Stitching',
-    'Checking': 'Checking',
-    'Ironing': 'Finishing',
-    'Packing': 'Packing',
-    'Maintenance': 'Special',
-  };
-
-  const category = categoryMap[operation];
-  if (!category) return [{ rate: 0, description: '' }];
-
-  const machine = machineMap[operation] || null;
-
-  const matchingCmtOps = cmtOps.filter(op => {
-    if (op.category !== category) return false;
-    if (machine && op.machineType !== machine) return false;
-    if (!machine && (operation === 'Stitching(Singer)' || operation === 'Stitching(Powertable)')) return false;
-    return true;
-  });
-
-  if (matchingCmtOps.length === 0) {
-    const approvedMatch = cmtApproved.operations.find(op => op.category === category);
-    return [{ rate: approvedMatch?.rate || 0, description: '' }];
-  }
-
-  const allCategoryOps = cmtOps.filter(op => op.category === category);
-  
-  return matchingCmtOps.map(match => {
-    const posInCategory = allCategoryOps.indexOf(match);
-    const approvedCategoryOps = cmtApproved.operations.filter(op => op.category === category);
-    const rate = approvedCategoryOps[posInCategory]?.rate ?? match.ratePerPiece;
-    return { rate, description: match.description || '' };
-  });
-}
-
-/** Merge existing DB entries with expected operations */
-function mergeEntries(
-  existingEntries: BatchSalaryEntry[],
-  defaultEntries: LocalEntry[],
-): LocalEntry[] {
-  const result: LocalEntry[] = [];
-
-  existingEntries.forEach(e => {
-    result.push({
-      id: e.id,
-      operation: e.operation,
-      description: e.description,
-      rate_per_piece: e.rate_per_piece,
-      quantity: e.quantity,
-      payment_status: e.payment_status,
-      paid_amount: e.paid_amount,
-      notes: e.notes || '',
-      updated_at: e.updated_at,
-    });
-  });
-
-  defaultEntries.forEach(def => {
-    const exists = existingEntries.some(
-      e => e.operation === def.operation && e.description === def.description
-    );
-    if (!exists) {
-      result.push(def);
-    }
-  });
-
-  return result;
-}
-
-const StyleSalaryCard = ({
-  batchId, styleId, style, cmt, cmtId, totalPieces, operations, existingEntries, colors, typeIndices, jobWorks,
-}: {
-  batchId: string;
-  styleId: string;
-  style?: StyleInfo;
-  cmt?: any;
-  cmtId: string | null;
-  totalPieces: number;
-  operations: string[];
-  existingEntries: BatchSalaryEntry[];
-  colors: string[];
-  typeIndices?: number[];
-  jobWorks?: import('@/hooks/useJobWorks').BatchJobWork[];
-}) => {
-  const navigate = useNavigate();
-  const [isOpen, setIsOpen] = useState(true);
-  const [localEntries, setLocalEntries] = useState<LocalEntry[]>([]);
-  const [savingIdx, setSavingIdx] = useState<number | null>(null);
-  const [advanceDialog, setAdvanceDialog] = useState<{ open: boolean; idx: number } | null>(null);
-  const upsertMutation = useUpsertBatchSalary();
-  const deleteMutation = useDeleteBatchSalary();
-  const { data: allAdvances = [] } = useBatchSalaryAdvances(batchId);
-
-  const cmtApproved = cmt?.approved_rates as CMTApprovedRates | null;
-  const cmtOps = (cmt?.operations || []) as CMTOperation[];
-
-  // Calculate job work pieces per operation for relevant type indices
-  const { data: allJwOps = [] } = useQuery({
-    queryKey: ['jw-ops-for-salary', typeIndices, jobWorks?.map(jw => jw.id)],
-    queryFn: async () => {
-      if (!jobWorks || jobWorks.length === 0 || !typeIndices) return [];
-      // Filter job works that include our type indices
-      const relevantJwIds: string[] = [];
-      const jwPiecesMap: Record<string, number> = {}; // jwId -> pieces for our types
-      jobWorks.forEach(jw => {
-        const variations = (jw.variations || []) as Array<{ type_index: number; pieces: number }>;
-        const relevant = variations.filter(v => typeIndices.includes(v.type_index));
-        if (relevant.length > 0) {
-          relevantJwIds.push(jw.id);
-          jwPiecesMap[jw.id] = relevant.reduce((s, v) => s + (v.pieces || 0), 0);
-        }
-      });
-      if (relevantJwIds.length === 0) return [];
-      const { data, error } = await supabase
-        .from('batch_job_work_operations')
-        .select('job_work_id, operation, quantity')
-        .in('job_work_id', relevantJwIds);
-      if (error) throw error;
-      return (data || []).map(op => ({ ...op, relevantPieces: jwPiecesMap[op.job_work_id] || 0 }));
-    },
-    enabled: !!jobWorks && jobWorks.length > 0 && !!typeIndices,
-  });
-
-  // Build map: operation -> total pieces sent to job work
-  // Deduplicate by (job_work_id, operation) to avoid double-counting when
-  // multiple operation rows exist for the same operation name within one job work
-  const jobWorkPiecesPerOp: Record<string, number> = {};
-  const seenJwOps = new Set<string>();
-  allJwOps.forEach(op => {
-    const key = `${op.job_work_id}::${op.operation}`;
-    if (seenJwOps.has(key)) return;
-    seenJwOps.add(key);
-    const opName = op.operation;
-    jobWorkPiecesPerOp[opName] = (jobWorkPiecesPerOp[opName] || 0) + (op.relevantPieces || 0);
-  });
-
-  useEffect(() => {
-    const defaults = buildDefaultEntries(operations, cmtOps, cmtApproved, totalPieces, jobWorkPiecesPerOp);
-    const merged = mergeEntries(existingEntries, defaults);
-    setLocalEntries(merged);
-  }, [existingEntries, operations.length, cmtOps.length, totalPieces, JSON.stringify(jobWorkPiecesPerOp)]);
-
-  const updateEntry = (idx: number, field: keyof LocalEntry, value: any) => {
-    setLocalEntries(prev => prev.map((e, i) => i === idx ? { ...e, [field]: value } : e));
-  };
-
-  const handleSave = async (idx: number) => {
-    const entry = localEntries[idx];
-    setSavingIdx(idx);
-    try {
-      await upsertMutation.mutateAsync({
-        id: entry.id,
-        batch_id: batchId,
-        style_id: styleId,
-        operation: entry.operation,
-        description: entry.description,
-        rate_per_piece: entry.rate_per_piece,
-        quantity: entry.quantity,
-        payment_status: entry.payment_status,
-        paid_amount: entry.paid_amount,
-        notes: entry.notes,
-      });
-    } finally {
-      setSavingIdx(null);
-    }
-  };
-
-  const handleDelete = async (idx: number) => {
-    const entry = localEntries[idx];
-    if (entry.id) {
-      await deleteMutation.mutateAsync({ id: entry.id, batchId });
-    }
-    setLocalEntries(prev => prev.filter((_, i) => i !== idx));
-  };
-
-  const handleAddCustomEntry = () => {
-    setLocalEntries(prev => [...prev, {
-      operation: 'Custom',
-      description: '',
-      rate_per_piece: 0,
-      quantity: totalPieces,
-      payment_status: 'pending',
-      paid_amount: 0,
-      notes: '',
-      is_custom: true,
-    }]);
-  };
-
-  // Helper: get advance total for an entry
-  const getAdvanceTotal = (entry: LocalEntry) => {
-    return allAdvances
-      .filter(a => a.style_id === styleId && a.operation === entry.operation && a.description === (entry.description || ''))
-      .reduce((sum, a) => sum + Number(a.amount), 0);
-  };
-
-  const totalAmount = localEntries.reduce((sum, e) => sum + (e.rate_per_piece * e.quantity), 0);
-  const totalAdvanceGiven = localEntries.reduce((sum, e) => sum + getAdvanceTotal(e), 0);
-  const totalBalance = totalAmount - totalAdvanceGiven;
-
-  return (
-    <Card>
-      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        <CollapsibleTrigger asChild>
-          <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                <div>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    {style?.style_code || 'Unknown'} — {style?.style_name || 'Loading...'}
-                    {cmtId && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 px-2 text-xs text-primary"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/admin/cmt-quotation/view/${cmtId}`);
-                        }}
-                      >
-                        <ExternalLink className="h-3 w-3 mr-1" />
-                        View CMT
-                      </Button>
-                    )}
-                  </CardTitle>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Colors: {colors.join(', ')} | Total Cut Pieces: {totalPieces}
-                    {cmtApproved && (
-                      <span className="text-primary ml-2 font-medium">
-                        | Approved CMT: ₹{cmtApproved.finalCMTPerPiece}
-                      </span>
-                    )}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-4 text-sm">
-                <div className="text-right">
-                  <p className="font-semibold">₹{totalAmount.toFixed(2)}</p>
-                  <p className="text-xs text-muted-foreground">
-                    Adv: ₹{totalAdvanceGiven.toFixed(2)} | Bal: ₹{totalBalance.toFixed(2)}
-                  </p>
-                </div>
-              </div>
+      {/* Recorded Entries List */}
+      <Card>
+        <CardContent className="p-0">
+          {loadingEntries ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
-          </CardHeader>
-        </CollapsibleTrigger>
-
-        <CollapsibleContent>
-          <CardContent className="pt-0">
+          ) : existingEntries.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <IndianRupee className="h-10 w-10 mx-auto mb-3 opacity-30" />
+              <p className="text-sm font-medium">No salary entries recorded yet</p>
+              <p className="text-xs mt-1">Click "Record Salary" to add the first entry</p>
+            </div>
+          ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[160px]">Operation</TableHead>
-                    <TableHead className="w-[140px]">Description</TableHead>
-                    <TableHead className="w-[100px] text-right">Rate/Pc (₹)</TableHead>
-                    <TableHead className="w-[100px] text-right">Quantity</TableHead>
-                    <TableHead className="w-[110px] text-right">Amount (₹)</TableHead>
-                    <TableHead className="w-[100px] text-right">Advance (₹)</TableHead>
-                    <TableHead className="w-[90px] text-right">Balance (₹)</TableHead>
-                    <TableHead className="w-[180px]">Notes</TableHead>
-                    <TableHead className="w-[130px]">Last Saved</TableHead>
-                    <TableHead className="w-[110px]">Actions</TableHead>
+                    <TableHead>Style</TableHead>
+                    <TableHead>Operation</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead className="text-right">Pieces</TableHead>
+                    <TableHead className="text-right">Rate (₹)</TableHead>
+                    <TableHead className="text-right">Amount (₹)</TableHead>
+                    <TableHead className="text-right">Paid (₹)</TableHead>
+                    <TableHead>Notes</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead className="w-10"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {localEntries.map((entry, idx) => {
+                  {existingEntries.map(entry => {
                     const amount = entry.rate_per_piece * entry.quantity;
-                    const advanceGiven = getAdvanceTotal(entry);
-                    const balance = amount - advanceGiven;
                     return (
-                      <TableRow key={`${entry.operation}-${entry.description}-${idx}`}>
-                        <TableCell className="font-medium text-sm">
-                          {entry.is_custom ? (
-                            <Input
-                              value={entry.operation}
-                              onChange={e => updateEntry(idx, 'operation', e.target.value)}
-                              className="h-8 text-sm"
-                              placeholder="Operation name"
-                            />
-                          ) : (
-                            <>
-                              {entry.operation}
-                              {!entry.id && (
-                                <Badge variant="outline" className="ml-2 text-[10px] px-1 py-0">New</Badge>
-                              )}
-                            </>
-                          )}
-                        </TableCell>
+                      <TableRow key={entry.id}>
                         <TableCell>
-                          {entry.is_custom ? (
-                            <Input
-                              value={entry.description}
-                              onChange={e => updateEntry(idx, 'description', e.target.value)}
-                              className="h-8 text-sm"
-                              placeholder="Description"
-                            />
-                          ) : (
-                            <span className="text-sm text-muted-foreground">{entry.description || '—'}</span>
-                          )}
+                          <Badge variant="secondary" className="text-xs">
+                            {getStyleName(entry.style_id)}
+                          </Badge>
                         </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            value={entry.rate_per_piece}
-                            onChange={e => updateEntry(idx, 'rate_per_piece', parseFloat(e.target.value) || 0)}
-                            className="h-8 w-20 text-right text-sm"
-                            step="0.5"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            value={entry.quantity}
-                            onChange={e => updateEntry(idx, 'quantity', parseInt(e.target.value) || 0)}
-                            className="h-8 w-20 text-right text-sm"
-                          />
-                        </TableCell>
+                        <TableCell className="font-medium text-sm">{entry.operation}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{entry.description || '—'}</TableCell>
+                        <TableCell className="text-right text-sm">{entry.quantity}</TableCell>
+                        <TableCell className="text-right text-sm">₹{entry.rate_per_piece.toFixed(2)}</TableCell>
                         <TableCell className="text-right font-medium text-sm">₹{amount.toFixed(2)}</TableCell>
                         <TableCell className="text-right text-sm">
-                          <span className={advanceGiven > 0 ? 'text-primary font-medium' : 'text-muted-foreground'}>
-                            ₹{advanceGiven.toFixed(2)}
-                          </span>
+                          <span className="text-emerald-600 font-medium">₹{entry.paid_amount.toFixed(2)}</span>
                         </TableCell>
-                        <TableCell className="text-right text-sm">
-                          <span className={balance > 0 ? 'text-destructive font-medium' : 'text-primary'}>
-                            ₹{balance.toFixed(2)}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <Textarea
-                            value={entry.notes}
-                            onChange={e => updateEntry(idx, 'notes', e.target.value)}
-                            className="min-h-[32px] text-xs resize-y"
-                            placeholder="Notes..."
-                            rows={1}
-                          />
+                        <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate">
+                          {entry.notes || '—'}
                         </TableCell>
                         <TableCell className="text-xs text-muted-foreground">
-                          {entry.updated_at
-                            ? format(new Date(entry.updated_at), 'dd/MM/yy HH:mm')
-                            : '—'}
+                          {format(new Date(entry.updated_at), 'dd/MM/yy')}
                         </TableCell>
                         <TableCell>
-                          <div className="flex gap-1">
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="h-7 w-7 text-primary"
-                              title="Record Advance"
-                              onClick={() => setAdvanceDialog({ open: true, idx })}
-                            >
-                              <Banknote className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="h-7 w-7"
-                              onClick={() => handleSave(idx)}
-                              disabled={savingIdx === idx}
-                            >
-                              {savingIdx === idx ? (
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                              ) : (
-                                <Save className="h-3.5 w-3.5" />
-                              )}
-                            </Button>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="h-7 w-7 text-destructive"
-                              onClick={() => handleDelete(idx)}
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
-                          </div>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7 text-destructive"
+                            onClick={() => handleDelete(entry.id)}
+                            disabled={deleteMutation.isPending}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
                         </TableCell>
                       </TableRow>
                     );
@@ -639,37 +246,78 @@ const StyleSalaryCard = ({
                 </TableBody>
               </Table>
             </div>
+          )}
+        </CardContent>
+      </Card>
 
-            <div className="mt-4 flex items-center justify-between border-t pt-3">
-              <Button variant="outline" size="sm" onClick={handleAddCustomEntry}>
-                <Plus className="h-4 w-4 mr-1" />
-                Add Custom Entry
-              </Button>
-              <div className="flex gap-6 text-sm">
-                <div>Total: <span className="font-bold">₹{totalAmount.toFixed(2)}</span></div>
-                <div>Advanced: <span className="font-bold text-primary">₹{totalAdvanceGiven.toFixed(2)}</span></div>
-                <div>Balance: <span className="font-bold text-destructive">₹{totalBalance.toFixed(2)}</span></div>
-              </div>
+      {/* Advance Entries Summary */}
+      {allAdvances.length > 0 && (
+        <Card>
+          <CardContent className="p-4">
+            <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+              <Banknote className="h-4 w-4 text-amber-500" />
+              Recent Advances ({allAdvances.length})
+            </h4>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Style</TableHead>
+                    <TableHead>Operation</TableHead>
+                    <TableHead className="text-right">Amount (₹)</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Notes</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {allAdvances.slice(0, 10).map(adv => (
+                    <TableRow key={adv.id}>
+                      <TableCell>
+                        <Badge variant="outline" className="text-xs">
+                          {getStyleName(adv.style_id)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm">{adv.operation}</TableCell>
+                      <TableCell className="text-right font-medium text-sm text-amber-600">
+                        ₹{Number(adv.amount).toFixed(2)}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {format(new Date(adv.advance_date), 'dd/MM/yy')}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{adv.notes || '—'}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              {allAdvances.length > 10 && (
+                <div className="text-center py-2">
+                  <Button
+                    variant="link"
+                    size="sm"
+                    onClick={() => navigate(`/admin/job-management/batch/${batchId}/advances`)}
+                  >
+                    View all {allAdvances.length} advances →
+                  </Button>
+                </div>
+              )}
             </div>
           </CardContent>
-        </CollapsibleContent>
-      </Collapsible>
-
-      {/* Advance Dialog */}
-      {advanceDialog && (
-        <RecordAdvanceDialog
-          open={advanceDialog.open}
-          onOpenChange={(open) => !open && setAdvanceDialog(null)}
-          batchId={batchId}
-          styleId={styleId}
-          operation={localEntries[advanceDialog.idx]?.operation || ''}
-          description={localEntries[advanceDialog.idx]?.description || ''}
-          maxAmount={
-            (localEntries[advanceDialog.idx]?.rate_per_piece || 0) *
-            (localEntries[advanceDialog.idx]?.quantity || 0)
-          }
-        />
+        </Card>
       )}
-    </Card>
+
+      {/* Dialogs */}
+      <RecordSalaryDialog
+        open={showSalaryDialog}
+        onOpenChange={setShowSalaryDialog}
+        batchId={batchId}
+        styles={styleOptions}
+      />
+      <GiveAdvanceDialog
+        open={showAdvanceDialog}
+        onOpenChange={setShowAdvanceDialog}
+        batchId={batchId}
+        styles={styleOptions}
+      />
+    </div>
   );
 };
