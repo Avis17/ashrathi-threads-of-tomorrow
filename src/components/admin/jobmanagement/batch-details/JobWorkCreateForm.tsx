@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Plus, Trash2 } from 'lucide-react';
-import { useCreateJobWork } from '@/hooks/useJobWorks';
+import { useCreateJobWork, useUpdateJobWorkWithOperations, BatchJobWork } from '@/hooks/useJobWorks';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { AddWorkerDialog } from './AddWorkerDialog';
@@ -31,6 +31,8 @@ interface Props {
   cuttingSummary: Record<number, number>;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  editEntry?: BatchJobWork | null;
+  editOperations?: Array<{ operation: string; rate_per_piece: number; quantity: number; notes: string | null }>;
 }
 
 interface SelectedVariation {
@@ -49,7 +51,7 @@ interface OperationRow {
   notes: string;
 }
 
-export const JobWorkCreateForm = ({ batchId, rollsData, cuttingSummary, open, onOpenChange }: Props) => {
+export const JobWorkCreateForm = ({ batchId, rollsData, cuttingSummary, open, onOpenChange, editEntry, editOperations }: Props) => {
   const [selectedVariations, setSelectedVariations] = useState<SelectedVariation[]>([]);
   const [companyId, setCompanyId] = useState<string>('');
   const [showAddWorker, setShowAddWorker] = useState(false);
@@ -65,7 +67,9 @@ export const JobWorkCreateForm = ({ batchId, rollsData, cuttingSummary, open, on
     { operation: '', rate_per_piece: 0, quantity: 0, notes: '' },
   ]);
 
+  const isEditing = !!editEntry;
   const createMutation = useCreateJobWork();
+  const updateMutation = useUpdateJobWorkWithOperations();
 
   // Fetch external_job_companies
   const { data: externalCompanies = [] } = useQuery({
@@ -155,15 +159,90 @@ export const JobWorkCreateForm = ({ batchId, rollsData, cuttingSummary, open, on
     return selectedVariations.reduce((sum, v) => sum + v.pieces, 0);
   }, [selectedVariations]);
 
-  // Auto-update operation quantities when total pieces changes
+  // Auto-update operation quantities when total pieces changes (only in create mode)
   useEffect(() => {
-    if (totalPieces > 0) {
+    if (totalPieces > 0 && !isEditing) {
       setOperations(prev => prev.map(op => ({
         ...op,
         quantity: totalPieces,
       })));
     }
-  }, [totalPieces]);
+  }, [totalPieces, isEditing]);
+
+  // Pre-populate form when editing
+  useEffect(() => {
+    if (editEntry && open && typeOptions.length > 0 && allCompanies.length > 0) {
+      // Set variations from editEntry
+      const variations = editEntry.variations as Array<{ type_index: number; style_id: string; color: string; pieces: number; sizes?: string }> | null;
+      if (variations && variations.length > 0) {
+        const selectedVars: SelectedVariation[] = variations.map(v => {
+          const opt = typeOptions.find(t => t.index === v.type_index);
+          return {
+            index: v.type_index,
+            styleId: v.style_id,
+            color: v.color,
+            pieces: v.pieces,
+            label: opt?.label || `Type ${v.type_index + 1}`,
+            sizes: v.sizes || '',
+          };
+        });
+        setSelectedVariations(selectedVars);
+      } else {
+        const opt = typeOptions.find(t => t.index === editEntry.type_index);
+        setSelectedVariations([{
+          index: editEntry.type_index,
+          styleId: editEntry.style_id,
+          color: editEntry.color,
+          pieces: editEntry.pieces,
+          label: opt?.label || editEntry.color,
+          sizes: '',
+        }]);
+      }
+
+      // Set company
+      const comp = allCompanies.find(c => c.name === editEntry.company_name);
+      if (comp) setCompanyId(comp.id);
+
+      setNotes(editEntry.notes || '');
+      setPaidAmount(String(editEntry.paid_amount || 0));
+
+      // Determine pricing mode from operations
+      if (editOperations && editOperations.length > 0) {
+        const isOverall = editOperations.some(op => op.operation.startsWith('Overall'));
+        if (isOverall) {
+          setPricingMode('overall-amount');
+          const isSet = editOperations.some(op => op.operation.includes('Top'));
+          setIsSetItem(isSet);
+          if (isSet) {
+            const topOp = editOperations.find(op => op.operation.includes('Top'));
+            const pantOp = editOperations.find(op => op.operation.includes('Pant'));
+            setTopAmount(String(topOp?.rate_per_piece || 0));
+            setPantAmount(String(pantOp?.rate_per_piece || 0));
+          } else {
+            setOverallAmount(String(editOperations[0].rate_per_piece || 0));
+          }
+        } else {
+          setPricingMode('operation-wise');
+          setOperations(editOperations.map(op => ({
+            operation: op.operation,
+            rate_per_piece: op.rate_per_piece,
+            quantity: op.quantity,
+            notes: op.notes || '',
+          })));
+        }
+      }
+
+      // Calculate profit percent from stored per-piece profit
+      const editPieces = editEntry.pieces || 1;
+      const opsTotal = editOperations?.reduce((sum, op) => sum + (op.rate_per_piece * op.quantity), 0) || 0;
+      const costPerPiece = editPieces > 0 ? opsTotal / editPieces : 0;
+      if (costPerPiece > 0 && editEntry.company_profit > 0) {
+        setCompanyProfitPercent(String(((editEntry.company_profit / costPerPiece) * 100).toFixed(1)));
+      } else {
+        setCompanyProfitPercent('0');
+      }
+    }
+  }, [editEntry, open, typeOptions, allCompanies, editOperations]);
 
   const addVariation = (indexStr: string) => {
     const opt = typeOptions.find(t => t.index.toString() === indexStr);
@@ -205,9 +284,13 @@ export const JobWorkCreateForm = ({ batchId, rollsData, cuttingSummary, open, on
   };
 
   const operationsTotal = operations.reduce((sum, op) => sum + (op.rate_per_piece * op.quantity), 0);
+  // Overall amounts are per-piece rates, multiply by totalPieces for actual totals
+  const overallPerPiece = parseFloat(overallAmount) || 0;
+  const topPerPiece = parseFloat(topAmount) || 0;
+  const pantPerPiece = parseFloat(pantAmount) || 0;
   const computedOverallAmount = isSetItem
-    ? (parseFloat(topAmount) || 0) + (parseFloat(pantAmount) || 0)
-    : (parseFloat(overallAmount) || 0);
+    ? (topPerPiece + pantPerPiece) * totalPieces
+    : overallPerPiece * totalPieces;
   const totalAmount = pricingMode === 'operation-wise' ? operationsTotal : computedOverallAmount;
   const profitPercent = parseFloat(companyProfitPercent) || 0;
   const profitPerPiece = totalPieces > 0 ? (totalAmount / totalPieces) * (profitPercent / 100) : 0;
@@ -223,15 +306,15 @@ export const JobWorkCreateForm = ({ batchId, rollsData, cuttingSummary, open, on
 
     const firstVariation = selectedVariations[0];
 
-    // Build operations for overall-amount mode
+    // Build operations for overall-amount mode (amounts are already per-piece)
     const finalOperations = pricingMode === 'overall-amount'
       ? isSetItem
         ? [
-            { operation: 'Overall - Top', rate_per_piece: totalPieces > 0 ? (parseFloat(topAmount) || 0) / totalPieces : 0, quantity: totalPieces, notes: 'Set item - Top amount' },
-            { operation: 'Overall - Pant', rate_per_piece: totalPieces > 0 ? (parseFloat(pantAmount) || 0) / totalPieces : 0, quantity: totalPieces, notes: 'Set item - Pant amount' },
+            { operation: 'Overall - Top', rate_per_piece: topPerPiece, quantity: totalPieces, notes: 'Set item - Top amount' },
+            { operation: 'Overall - Pant', rate_per_piece: pantPerPiece, quantity: totalPieces, notes: 'Set item - Pant amount' },
           ]
         : [
-            { operation: 'Overall', rate_per_piece: totalPieces > 0 ? computedOverallAmount / totalPieces : 0, quantity: totalPieces, notes: 'Overall amount entry' },
+            { operation: 'Overall', rate_per_piece: overallPerPiece, quantity: totalPieces, notes: 'Overall amount entry' },
           ]
       : operations.map(op => ({
           operation: op.operation,
@@ -240,30 +323,40 @@ export const JobWorkCreateForm = ({ batchId, rollsData, cuttingSummary, open, on
           notes: op.notes || undefined,
         }));
 
-    await createMutation.mutateAsync({
-      jobWork: {
-        batch_id: batchId,
-        style_id: firstVariation.styleId,
-        type_index: firstVariation.index,
-        color: firstVariation.color,
-        pieces: totalPieces,
-        company_id: finalCompanyId,
-        company_name: finalCompanyName,
-        notes: notes || null,
-        paid_amount: parseFloat(paidAmount) || 0,
-        payment_status: 'pending',
-        work_status: 'pending',
-        company_profit: profitPerPiece,
-        variations: selectedVariations.map(v => ({
-          type_index: v.index,
-          style_id: v.styleId,
-          color: v.color,
-          pieces: v.pieces,
-          sizes: v.sizes,
-        })),
-      },
-      operations: finalOperations,
-    });
+    const jobWorkData = {
+      batch_id: batchId,
+      style_id: firstVariation.styleId,
+      type_index: firstVariation.index,
+      color: firstVariation.color,
+      pieces: totalPieces,
+      company_id: finalCompanyId,
+      company_name: finalCompanyName,
+      notes: notes || null,
+      paid_amount: parseFloat(paidAmount) || 0,
+      payment_status: isEditing ? editEntry.payment_status : 'pending',
+      work_status: isEditing ? editEntry.work_status : 'pending',
+      company_profit: profitPerPiece,
+      variations: selectedVariations.map(v => ({
+        type_index: v.index,
+        style_id: v.styleId,
+        color: v.color,
+        pieces: v.pieces,
+        sizes: v.sizes,
+      })),
+    };
+
+    if (isEditing) {
+      await updateMutation.mutateAsync({
+        id: editEntry.id,
+        jobWork: jobWorkData,
+        operations: finalOperations,
+      });
+    } else {
+      await createMutation.mutateAsync({
+        jobWork: jobWorkData,
+        operations: finalOperations,
+      });
+    }
 
     resetForm();
     onOpenChange(false);
@@ -288,7 +381,7 @@ export const JobWorkCreateForm = ({ batchId, rollsData, cuttingSummary, open, on
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Create Job Work</DialogTitle>
+            <DialogTitle>{isEditing ? 'Edit Job Work' : 'Create Job Work'}</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
@@ -447,61 +540,61 @@ export const JobWorkCreateForm = ({ batchId, rollsData, cuttingSummary, open, on
                 {isSetItem ? (
                   <div className="space-y-3">
                     <div>
-                      <Label>Top Amount (₹)</Label>
+                      <Label>Top Amount (₹/piece)</Label>
                       <Input
                         type="number"
                         step="0.01"
                         value={topAmount}
                         onChange={e => setTopAmount(e.target.value)}
-                        placeholder="Enter total amount for Top"
+                        placeholder="Enter per piece amount for Top"
                       />
-                      {totalPieces > 0 && parseFloat(topAmount) > 0 && (
+                      {totalPieces > 0 && topPerPiece > 0 && (
                         <p className="text-xs text-muted-foreground mt-1">
-                          ₹{(parseFloat(topAmount) / totalPieces).toFixed(2)} per piece
+                          ₹{topPerPiece.toFixed(2)} × {totalPieces} pcs = ₹{(topPerPiece * totalPieces).toFixed(2)}
                         </p>
                       )}
                     </div>
                     <div>
-                      <Label>Pant Amount (₹)</Label>
+                      <Label>Pant Amount (₹/piece)</Label>
                       <Input
                         type="number"
                         step="0.01"
                         value={pantAmount}
                         onChange={e => setPantAmount(e.target.value)}
-                        placeholder="Enter total amount for Pant"
+                        placeholder="Enter per piece amount for Pant"
                       />
-                      {totalPieces > 0 && parseFloat(pantAmount) > 0 && (
+                      {totalPieces > 0 && pantPerPiece > 0 && (
                         <p className="text-xs text-muted-foreground mt-1">
-                          ₹{(parseFloat(pantAmount) / totalPieces).toFixed(2)} per piece
+                          ₹{pantPerPiece.toFixed(2)} × {totalPieces} pcs = ₹{(pantPerPiece * totalPieces).toFixed(2)}
                         </p>
                       )}
                     </div>
                     <div className="bg-muted/50 rounded-md p-3">
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Combined Total</span>
-                        <span className="font-semibold">₹{computedOverallAmount.toFixed(2)}</span>
+                        <span className="text-muted-foreground">Per Set (Top + Pant)</span>
+                        <span className="font-semibold">₹{(topPerPiece + pantPerPiece).toFixed(2)}/pc</span>
                       </div>
                       {totalPieces > 0 && computedOverallAmount > 0 && (
                         <div className="flex justify-between text-sm mt-1">
-                          <span className="text-muted-foreground">Per Set</span>
-                          <span className="font-medium">₹{(computedOverallAmount / totalPieces).toFixed(2)}</span>
+                          <span className="text-muted-foreground">Total ({totalPieces} pcs)</span>
+                          <span className="font-medium">₹{computedOverallAmount.toFixed(2)}</span>
                         </div>
                       )}
                     </div>
                   </div>
                 ) : (
                   <div>
-                    <Label>Overall Amount (₹)</Label>
+                    <Label>Overall Amount (₹/piece)</Label>
                     <Input
                       type="number"
                       step="0.01"
                       value={overallAmount}
                       onChange={e => setOverallAmount(e.target.value)}
-                      placeholder="Enter total amount for entire operation"
+                      placeholder="Enter per piece amount"
                     />
-                    {totalPieces > 0 && parseFloat(overallAmount) > 0 && (
+                    {totalPieces > 0 && overallPerPiece > 0 && (
                       <p className="text-xs text-muted-foreground mt-1">
-                        ₹{(parseFloat(overallAmount) / totalPieces).toFixed(2)} per piece
+                        ₹{overallPerPiece.toFixed(2)} × {totalPieces} pcs = ₹{(overallPerPiece * totalPieces).toFixed(2)}
                       </p>
                     )}
                   </div>
@@ -546,12 +639,21 @@ export const JobWorkCreateForm = ({ batchId, rollsData, cuttingSummary, open, on
               {pricingMode === 'overall-amount' && isSetItem && (
                 <div className="space-y-1">
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Top</span>
-                    <span>₹{(parseFloat(topAmount) || 0).toFixed(2)}</span>
+                    <span className="text-muted-foreground">Top (₹{topPerPiece.toFixed(2)}/pc × {totalPieces})</span>
+                    <span>₹{(topPerPiece * totalPieces).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Pant</span>
-                    <span>₹{(parseFloat(pantAmount) || 0).toFixed(2)}</span>
+                    <span className="text-muted-foreground">Pant (₹{pantPerPiece.toFixed(2)}/pc × {totalPieces})</span>
+                    <span>₹{(pantPerPiece * totalPieces).toFixed(2)}</span>
+                  </div>
+                </div>
+              )}
+
+              {pricingMode === 'overall-amount' && !isSetItem && overallPerPiece > 0 && (
+                <div className="space-y-1">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Overall (₹{overallPerPiece.toFixed(2)}/pc × {totalPieces})</span>
+                    <span>₹{(overallPerPiece * totalPieces).toFixed(2)}</span>
                   </div>
                 </div>
               )}
@@ -608,12 +710,12 @@ export const JobWorkCreateForm = ({ batchId, rollsData, cuttingSummary, open, on
             <Button
               onClick={handleSubmit}
               disabled={
-                selectedVariations.length === 0 || !companyId || createMutation.isPending ||
+                selectedVariations.length === 0 || !companyId || createMutation.isPending || updateMutation.isPending ||
                 (pricingMode === 'operation-wise' && operations.some(op => !op.operation)) ||
                 (pricingMode === 'overall-amount' && totalAmount <= 0)
               }
             >
-              {createMutation.isPending ? 'Creating...' : 'Create Job Work'}
+              {(createMutation.isPending || updateMutation.isPending) ? (isEditing ? 'Updating...' : 'Creating...') : (isEditing ? 'Update Job Work' : 'Create Job Work')}
             </Button>
           </DialogFooter>
         </DialogContent>

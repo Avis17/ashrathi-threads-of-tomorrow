@@ -4,8 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Briefcase, Plus, Trash2, Eye, ChevronDown, ChevronRight } from 'lucide-react';
-import { useBatchJobWorks, useDeleteJobWork, useJobWorkOperations } from '@/hooks/useJobWorks';
+import { Briefcase, Plus, Trash2, Eye, ChevronDown, ChevronRight, Pencil } from 'lucide-react';
+import { useBatchJobWorks, useDeleteJobWork, useJobWorkOperations, BatchJobWork, BatchJobWorkOperation } from '@/hooks/useJobWorks';
 import { JobWorkCreateForm } from './JobWorkCreateForm';
 import { format } from 'date-fns';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -31,6 +31,8 @@ export const BatchJobWorkSection = ({ batchId, rollsData, cuttingSummary }: Prop
   const [showForm, setShowForm] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [editingEntry, setEditingEntry] = useState<BatchJobWork | null>(null);
+  const [editOperations, setEditOperations] = useState<BatchJobWorkOperation[]>([]);
 
   const { data: jobWorks = [] } = useBatchJobWorks(batchId);
   const deleteMutation = useDeleteJobWork();
@@ -98,6 +100,11 @@ export const BatchJobWorkSection = ({ batchId, rollsData, cuttingSummary }: Prop
                   onToggle={() => setExpandedId(expandedId === jw.id ? null : jw.id)}
                   onDelete={() => setDeleteId(jw.id)}
                   onView={() => navigate(`/admin/job-management/batch/${batchId}/job-work/${jw.id}`)}
+                  onEdit={async (jw, ops) => {
+                    setEditingEntry(jw);
+                    setEditOperations(ops);
+                    setShowForm(true);
+                  }}
                 />
               ))}
             </div>
@@ -115,7 +122,15 @@ export const BatchJobWorkSection = ({ batchId, rollsData, cuttingSummary }: Prop
         rollsData={rollsData}
         cuttingSummary={cuttingSummary}
         open={showForm}
-        onOpenChange={setShowForm}
+        onOpenChange={(open) => {
+          setShowForm(open);
+          if (!open) {
+            setEditingEntry(null);
+            setEditOperations([]);
+          }
+        }}
+        editEntry={editingEntry}
+        editOperations={editOperations}
       />
 
       {/* Delete Confirmation */}
@@ -145,14 +160,16 @@ const JobWorkRow = ({
   onToggle,
   onDelete,
   onView,
+  onEdit,
 }: {
   jobWork: any;
   isExpanded: boolean;
   onToggle: () => void;
   onDelete: () => void;
   onView: () => void;
+  onEdit: (jw: any, ops: any[]) => void;
 }) => {
-  const { data: operations = [] } = useJobWorkOperations(isExpanded ? jobWork.id : undefined);
+  const { data: operations = [] } = useJobWorkOperations(jobWork.id);
 
   return (
     <Collapsible open={isExpanded} onOpenChange={onToggle}>
@@ -178,6 +195,9 @@ const JobWorkRow = ({
                   Paid: ₹{jobWork.paid_amount.toFixed(2)}
                 </p>
               </div>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); onEdit(jobWork, operations); }}>
+                <Pencil className="h-4 w-4" />
+              </Button>
               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); onView(); }}>
                 <Eye className="h-4 w-4" />
               </Button>
