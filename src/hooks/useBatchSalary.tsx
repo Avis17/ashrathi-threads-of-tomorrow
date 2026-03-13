@@ -53,6 +53,9 @@ export const useUpsertBatchSalary = () => {
         const { data, error } = await supabase
           .from('batch_salary_entries')
           .update({
+            style_id: entry.style_id,
+            operation: entry.operation,
+            description: entry.description,
             rate_per_piece: entry.rate_per_piece,
             quantity: entry.quantity,
             payment_status: entry.payment_status,

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
-  IndianRupee, Plus, Banknote, Trash2, Loader2, TrendingUp, Wallet, Receipt, PiggyBank, ExternalLink,
+  IndianRupee, Plus, Banknote, Trash2, Loader2, TrendingUp, Wallet, Receipt, PiggyBank, ExternalLink, Pencil,
 } from 'lucide-react';
 import { useBatchSalaryEntries, useDeleteBatchSalary, BatchSalaryEntry } from '@/hooks/useBatchSalary';
 import { useBatchSalaryAdvances } from '@/hooks/useBatchSalaryAdvances';
