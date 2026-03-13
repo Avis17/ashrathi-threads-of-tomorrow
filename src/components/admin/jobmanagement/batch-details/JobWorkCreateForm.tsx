@@ -710,12 +710,12 @@ export const JobWorkCreateForm = ({ batchId, rollsData, cuttingSummary, open, on
             <Button
               onClick={handleSubmit}
               disabled={
-                selectedVariations.length === 0 || !companyId || createMutation.isPending ||
+                selectedVariations.length === 0 || !companyId || createMutation.isPending || updateMutation.isPending ||
                 (pricingMode === 'operation-wise' && operations.some(op => !op.operation)) ||
                 (pricingMode === 'overall-amount' && totalAmount <= 0)
               }
             >
-              {createMutation.isPending ? 'Creating...' : 'Create Job Work'}
+              {(createMutation.isPending || updateMutation.isPending) ? (isEditing ? 'Updating...' : 'Creating...') : (isEditing ? 'Update Job Work' : 'Create Job Work')}
             </Button>
           </DialogFooter>
         </DialogContent>
