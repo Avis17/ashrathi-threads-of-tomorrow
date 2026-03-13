@@ -2,6 +2,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+export interface SizePieces {
+  [size: string]: number;
+}
+
 export interface CuttingLog {
   id: string;
   batch_id: string;
@@ -10,6 +14,7 @@ export interface CuttingLog {
   color: string;
   style_id: string | null;
   pieces_cut: number;
+  size_pieces: SizePieces | null;
   notes: string | null;
   created_at: string;
   updated_at: string;
