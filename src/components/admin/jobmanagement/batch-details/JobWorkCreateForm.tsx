@@ -215,13 +215,30 @@ export const JobWorkCreateForm = ({ batchId, rollsData, cuttingSummary, open, on
 
   const handleSubmit = async () => {
     if (selectedVariations.length === 0 || !companyId) return;
-    if (operations.some(op => !op.operation)) return;
+    if (pricingMode === 'operation-wise' && operations.some(op => !op.operation)) return;
 
     const comp = allCompanies.find(c => c.id === companyId);
     const finalCompanyName = comp?.name || '';
     const finalCompanyId = comp?.source === 'external' ? comp.id : null;
 
     const firstVariation = selectedVariations[0];
+
+    // Build operations for overall-amount mode
+    const finalOperations = pricingMode === 'overall-amount'
+      ? isSetItem
+        ? [
+            { operation: 'Overall - Top', rate_per_piece: totalPieces > 0 ? (parseFloat(topAmount) || 0) / totalPieces : 0, quantity: totalPieces, notes: 'Set item - Top amount' },
+            { operation: 'Overall - Pant', rate_per_piece: totalPieces > 0 ? (parseFloat(pantAmount) || 0) / totalPieces : 0, quantity: totalPieces, notes: 'Set item - Pant amount' },
+          ]
+        : [
+            { operation: 'Overall', rate_per_piece: totalPieces > 0 ? computedOverallAmount / totalPieces : 0, quantity: totalPieces, notes: 'Overall amount entry' },
+          ]
+      : operations.map(op => ({
+          operation: op.operation,
+          rate_per_piece: op.rate_per_piece,
+          quantity: op.quantity,
+          notes: op.notes || undefined,
+        }));
 
     await createMutation.mutateAsync({
       jobWork: {
@@ -245,12 +262,7 @@ export const JobWorkCreateForm = ({ batchId, rollsData, cuttingSummary, open, on
           sizes: v.sizes,
         })),
       },
-      operations: operations.map(op => ({
-        operation: op.operation,
-        rate_per_piece: op.rate_per_piece,
-        quantity: op.quantity,
-        notes: op.notes || undefined,
-      })),
+      operations: finalOperations,
     });
 
     resetForm();
@@ -263,6 +275,11 @@ export const JobWorkCreateForm = ({ batchId, rollsData, cuttingSummary, open, on
     setNotes('');
     setPaidAmount('0');
     setCompanyProfitPercent('0');
+    setPricingMode('operation-wise');
+    setIsSetItem(false);
+    setOverallAmount('0');
+    setTopAmount('0');
+    setPantAmount('0');
     setOperations([{ operation: '', rate_per_piece: 0, quantity: 0, notes: '' }]);
   };
 
