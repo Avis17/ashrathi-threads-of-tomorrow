@@ -155,6 +155,7 @@ export type Database = {
           log_date: string
           notes: string | null
           pieces_cut: number
+          size_pieces: Json | null
           style_id: string | null
           type_index: number
           updated_at: string
@@ -168,6 +169,7 @@ export type Database = {
           log_date?: string
           notes?: string | null
           pieces_cut?: number
+          size_pieces?: Json | null
           style_id?: string | null
           type_index: number
           updated_at?: string
@@ -181,6 +183,7 @@ export type Database = {
           log_date?: string
           notes?: string | null
           pieces_cut?: number
+          size_pieces?: Json | null
           style_id?: string | null
           type_index?: number
           updated_at?: string

@@ -2,6 +2,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+export interface SizePieces {
+  [size: string]: number;
+}
+
 export interface CuttingLog {
   id: string;
   batch_id: string;
@@ -10,6 +14,7 @@ export interface CuttingLog {
   color: string;
   style_id: string | null;
   pieces_cut: number;
+  size_pieces: SizePieces | null;
   notes: string | null;
   created_at: string;
   updated_at: string;
@@ -41,6 +46,7 @@ export const useAddCuttingLog = () => {
       color: string;
       style_id?: string | null;
       pieces_cut: number;
+      size_pieces?: SizePieces | null;
       notes?: string;
     }) => {
       const { data: log, error } = await supabase
@@ -66,10 +72,12 @@ export const useAddCuttingLog = () => {
 export const useUpdateCuttingLog = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, batchId, pieces_cut }: { id: string; batchId: string; pieces_cut: number }) => {
+    mutationFn: async ({ id, batchId, pieces_cut, size_pieces }: { id: string; batchId: string; pieces_cut: number; size_pieces?: SizePieces | null }) => {
+      const updateData: any = { pieces_cut };
+      if (size_pieces !== undefined) updateData.size_pieces = size_pieces;
       const { error } = await supabase
         .from('batch_cutting_logs')
-        .update({ pieces_cut })
+        .update(updateData)
         .eq('id', id);
       if (error) throw error;
       return batchId;

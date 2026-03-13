@@ -1,0 +1,1 @@
+ALTER TABLE public.batch_cutting_logs ADD COLUMN size_pieces jsonb DEFAULT NULL;

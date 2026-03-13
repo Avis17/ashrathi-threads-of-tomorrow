@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Scissors, Plus, Trash2, Calendar, CheckCircle, AlertTriangle, Scale, Pencil, Check, X } from 'lucide-react';
-import { useAddCuttingLog, useDeleteCuttingLog, useUpdateCuttingLog, CuttingLog } from '@/hooks/useBatchCuttingLogs';
+import { useAddCuttingLog, useDeleteCuttingLog, useUpdateCuttingLog, CuttingLog, SizePieces } from '@/hooks/useBatchCuttingLogs';
 import { useBatchCuttingWastage } from '@/hooks/useBatchCuttingWastage';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -40,27 +40,75 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
   const [deleteLogId, setDeleteLogId] = useState<string | null>(null);
   const [editingLogId, setEditingLogId] = useState<string | null>(null);
   const [editPiecesCut, setEditPiecesCut] = useState('');
+  const [sizePieces, setSizePieces] = useState<SizePieces>({});
+  const [customSize, setCustomSize] = useState('');
 
   const addLogMutation = useAddCuttingLog();
   const deleteLogMutation = useDeleteCuttingLog();
   const updateLogMutation = useUpdateCuttingLog();
   const { data: wastageEntries } = useBatchCuttingWastage(batch.id);
 
+  const COMMON_SIZES = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL'];
+
+  // Collect all sizes used across existing logs for this batch
+  const existingSizes = useMemo(() => {
+    const sizes = new Set<string>();
+    cuttingLogs.forEach(log => {
+      if (log.size_pieces && typeof log.size_pieces === 'object') {
+        Object.keys(log.size_pieces).forEach(s => sizes.add(s));
+      }
+    });
+    return [...sizes];
+  }, [cuttingLogs]);
+
+  const activeSizes = useMemo(() => {
+    const all = new Set([...COMMON_SIZES, ...existingSizes, ...Object.keys(sizePieces)]);
+    return [...all];
+  }, [existingSizes, sizePieces]);
+
+  const sizePiecesTotal = Object.values(sizePieces).reduce((sum, val) => sum + (val || 0), 0);
+
+  const handleSizePieceChange = (size: string, value: string) => {
+    const num = parseInt(value) || 0;
+    setSizePieces(prev => {
+      const updated = { ...prev };
+      if (num > 0) {
+        updated[size] = num;
+      } else {
+        delete updated[size];
+      }
+      return updated;
+    });
+  };
+
+  const handleAddCustomSize = () => {
+    const trimmed = customSize.trim().toUpperCase();
+    if (trimmed && !activeSizes.includes(trimmed)) {
+      setSizePieces(prev => ({ ...prev, [trimmed]: 0 }));
+    }
+    setCustomSize('');
+  };
+
   const handleAddLog = async () => {
     const typeIndex = parseInt(selectedTypeIndex);
-    if (isNaN(typeIndex) || !piecesCut) return;
+    if (isNaN(typeIndex)) return;
+    const totalPieces = sizePiecesTotal > 0 ? sizePiecesTotal : parseInt(piecesCut);
+    if (!totalPieces || totalPieces <= 0) return;
     const selectedType = rollsData[typeIndex];
+    const cleanSizePieces = Object.keys(sizePieces).length > 0 ? sizePieces : null;
     await addLogMutation.mutateAsync({
       batch_id: batch.id,
       log_date: logDate,
       type_index: typeIndex,
       color: selectedType?.color || '',
       style_id: selectedType?.style_id || null,
-      pieces_cut: parseInt(piecesCut),
+      pieces_cut: totalPieces,
+      size_pieces: cleanSizePieces,
       notes: notes || undefined,
     });
     setSelectedTypeIndex('');
     setPiecesCut('');
+    setSizePieces({});
     setNotes('');
     setShowAddForm(false);
   };
@@ -73,6 +121,20 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
   };
 
   const totalCutPieces = Object.values(cuttingSummary).reduce((sum, val) => sum + val, 0);
+
+  // Aggregate size breakdown per type index
+  const sizeSummaryByType = useMemo(() => {
+    const map: Record<number, SizePieces> = {};
+    cuttingLogs.forEach(log => {
+      if (log.size_pieces && typeof log.size_pieces === 'object') {
+        if (!map[log.type_index]) map[log.type_index] = {};
+        Object.entries(log.size_pieces as SizePieces).forEach(([size, count]) => {
+          map[log.type_index][size] = (map[log.type_index][size] || 0) + (count || 0);
+        });
+      }
+    });
+    return map;
+  }, [cuttingLogs]);
 
   // Wastage summaries per type
   const wastageSummary: Record<number, { pieces: number; actualWeight: number }> = {};
@@ -203,6 +265,7 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {rollsData.map((type, index) => {
               const cutPieces = cuttingSummary[index] || 0;
+              const typeSizes = sizeSummaryByType[index];
               const colorTotalWeight = (type.number_of_rolls || 0) * (type.weight || 0);
               const perPieceWeight = cutPieces > 0 ? (colorTotalWeight / cutPieces) : null;
               const colorWastage = wastageSummary[index];
@@ -232,10 +295,19 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
                       <span className="text-muted-foreground">Rolls × Weight</span>
                       <span className="font-medium">{type.number_of_rolls} × {type.weight}kg = <strong>{colorTotalWeight.toFixed(2)} kg</strong></span>
                     </div>
-                    <div className="flex justify-between">
+                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Pieces Cut</span>
                       <Badge variant={cutPieces > 0 ? 'default' : 'secondary'}>{cutPieces} pcs</Badge>
                     </div>
+                    {typeSizes && Object.keys(typeSizes).length > 0 && (
+                      <div className="flex flex-wrap gap-1 pt-1">
+                        {Object.entries(typeSizes).filter(([, v]) => v > 0).map(([size, count]) => (
+                          <Badge key={size} variant="outline" className="text-xs font-normal">
+                            {size}: <span className="font-semibold ml-0.5">{count}</span>
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
                     {perPieceWeight !== null && (
                       <div className="flex justify-between">
                         <span className="text-muted-foreground flex items-center gap-1">
@@ -292,7 +364,7 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
             <CardTitle className="text-lg">Add Cutting Entry</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="log-date">Date</Label>
                 <Input id="log-date" type="date" value={logDate} onChange={(e) => setLogDate(e.target.value)} />
@@ -310,18 +382,62 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                <Label htmlFor="pieces-cut">Pieces Cut</Label>
-                <Input id="pieces-cut" type="number" placeholder="Enter quantity" value={piecesCut} onChange={(e) => setPiecesCut(e.target.value)} />
-              </div>
             </div>
+
+            {/* Size-wise pieces entry */}
+            <div>
+              <Label className="text-base font-semibold">Size-wise Pieces</Label>
+              <p className="text-xs text-muted-foreground mb-3">Enter pieces per size. Total will be calculated automatically.</p>
+              <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-9 gap-2">
+                {activeSizes.map(size => (
+                  <div key={size} className="space-y-1">
+                    <Label className="text-xs text-center block">{size}</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      placeholder="0"
+                      value={sizePieces[size] || ''}
+                      onChange={(e) => handleSizePieceChange(size, e.target.value)}
+                      className="text-center h-9 text-sm"
+                    />
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-center gap-2 mt-2">
+                <Input
+                  placeholder="Custom size..."
+                  value={customSize}
+                  onChange={(e) => setCustomSize(e.target.value)}
+                  className="w-32 h-8 text-sm"
+                  onKeyDown={(e) => e.key === 'Enter' && handleAddCustomSize()}
+                />
+                <Button type="button" variant="outline" size="sm" onClick={handleAddCustomSize} disabled={!customSize.trim()}>
+                  <Plus className="h-3 w-3 mr-1" /> Add Size
+                </Button>
+              </div>
+              {sizePiecesTotal > 0 && (
+                <div className="mt-3 p-3 rounded-lg bg-primary/10 flex items-center justify-between">
+                  <span className="font-semibold">Total Pieces</span>
+                  <Badge className="text-lg px-3 py-1 bg-primary">{sizePiecesTotal}</Badge>
+                </div>
+              )}
+            </div>
+
+            {/* Fallback: manual total if no sizes entered */}
+            {sizePiecesTotal === 0 && (
+              <div>
+                <Label htmlFor="pieces-cut">Or Enter Total Pieces Directly</Label>
+                <Input id="pieces-cut" type="number" placeholder="Enter total quantity" value={piecesCut} onChange={(e) => setPiecesCut(e.target.value)} className="max-w-xs" />
+              </div>
+            )}
+
             <div>
               <Label htmlFor="notes">Notes (Optional)</Label>
               <Textarea id="notes" placeholder="Any remarks..." value={notes} onChange={(e) => setNotes(e.target.value)} />
             </div>
             <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => setShowAddForm(false)}>Cancel</Button>
-              <Button onClick={handleAddLog} disabled={!selectedTypeIndex || !piecesCut || addLogMutation.isPending}>
+              <Button variant="outline" onClick={() => { setShowAddForm(false); setSizePieces({}); }}>Cancel</Button>
+              <Button onClick={handleAddLog} disabled={!selectedTypeIndex || (sizePiecesTotal === 0 && !piecesCut) || addLogMutation.isPending}>
                 {addLogMutation.isPending ? 'Saving...' : 'Add Entry'}
               </Button>
             </div>
@@ -361,12 +477,15 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
                           <TableHead>Type</TableHead>
                           <TableHead>Color</TableHead>
                           <TableHead>Pieces</TableHead>
+                          <TableHead>Size Breakdown</TableHead>
                           <TableHead>Notes</TableHead>
                           <TableHead className="w-20">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {logs.map((log) => (
+                        {logs.map((log) => {
+                          const sp = log.size_pieces as SizePieces | null;
+                          return (
                           <TableRow key={log.id}>
                             <TableCell><Badge variant="outline">{log.type_index + 1}</Badge></TableCell>
                             <TableCell className="font-medium">{log.color}</TableCell>
@@ -410,6 +529,19 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
                                 </Badge>
                               )}
                             </TableCell>
+                            <TableCell>
+                              {sp && Object.keys(sp).length > 0 ? (
+                                <div className="flex flex-wrap gap-1">
+                                  {Object.entries(sp).filter(([, v]) => v > 0).map(([size, count]) => (
+                                    <Badge key={size} variant="outline" className="text-xs font-normal">
+                                      {size}: <span className="font-semibold ml-0.5">{count}</span>
+                                    </Badge>
+                                  ))}
+                                </div>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">—</span>
+                              )}
+                            </TableCell>
                             <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">{log.notes || '-'}</TableCell>
                             <TableCell>
                               <div className="flex items-center gap-1">
@@ -422,7 +554,8 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
                               </div>
                             </TableCell>
                           </TableRow>
-                        ))}
+                        );
+                        })}
                       </TableBody>
                     </Table>
                   </div>
