@@ -31,6 +31,8 @@ interface Props {
   cuttingSummary: Record<number, number>;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  editEntry?: BatchJobWork | null;
+  editOperations?: Array<{ operation: string; rate_per_piece: number; quantity: number; notes: string | null }>;
 }
 
 interface SelectedVariation {
