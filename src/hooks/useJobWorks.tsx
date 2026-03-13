@@ -111,6 +111,57 @@ export const useCreateJobWork = () => {
   });
 };
 
+export const useUpdateJobWorkWithOperations = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      jobWork,
+      operations,
+    }: {
+      id: string;
+      jobWork: Partial<BatchJobWork>;
+      operations: Array<{ operation: string; rate_per_piece: number; quantity: number; notes?: string }>;
+    }) => {
+      // Update job work record
+      const { error: jwError } = await supabase
+        .from('batch_job_works')
+        .update(jobWork)
+        .eq('id', id);
+      if (jwError) throw jwError;
+
+      // Delete old operations and insert new ones
+      const { error: delError } = await supabase
+        .from('batch_job_work_operations')
+        .delete()
+        .eq('job_work_id', id);
+      if (delError) throw delError;
+
+      if (operations.length > 0) {
+        const opsData = operations.map(op => ({
+          job_work_id: id,
+          operation: op.operation,
+          rate_per_piece: op.rate_per_piece,
+          quantity: op.quantity,
+          notes: op.notes || null,
+        }));
+        const { error: opError } = await supabase
+          .from('batch_job_work_operations')
+          .insert(opsData);
+        if (opError) throw opError;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['batch-job-works'] });
+      queryClient.invalidateQueries({ queryKey: ['job-work-operations'] });
+      toast.success('Job Work updated successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to update job work');
+    },
+  });
+};
+
 export const useUpdateJobWork = () => {
   const queryClient = useQueryClient();
   return useMutation({
