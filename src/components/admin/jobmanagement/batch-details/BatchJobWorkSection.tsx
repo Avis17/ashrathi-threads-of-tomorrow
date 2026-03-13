@@ -100,6 +100,11 @@ export const BatchJobWorkSection = ({ batchId, rollsData, cuttingSummary }: Prop
                   onToggle={() => setExpandedId(expandedId === jw.id ? null : jw.id)}
                   onDelete={() => setDeleteId(jw.id)}
                   onView={() => navigate(`/admin/job-management/batch/${batchId}/job-work/${jw.id}`)}
+                  onEdit={async (jw, ops) => {
+                    setEditingEntry(jw);
+                    setEditOperations(ops);
+                    setShowForm(true);
+                  }}
                 />
               ))}
             </div>
