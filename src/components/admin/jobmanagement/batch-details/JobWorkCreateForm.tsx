@@ -56,6 +56,11 @@ export const JobWorkCreateForm = ({ batchId, rollsData, cuttingSummary, open, on
   const [notes, setNotes] = useState('');
   const [paidAmount, setPaidAmount] = useState('0');
   const [companyProfitPercent, setCompanyProfitPercent] = useState('0');
+  const [pricingMode, setPricingMode] = useState<PricingMode>('operation-wise');
+  const [isSetItem, setIsSetItem] = useState(false);
+  const [overallAmount, setOverallAmount] = useState('0');
+  const [topAmount, setTopAmount] = useState('0');
+  const [pantAmount, setPantAmount] = useState('0');
   const [operations, setOperations] = useState<OperationRow[]>([
     { operation: '', rate_per_piece: 0, quantity: 0, notes: '' },
   ]);
