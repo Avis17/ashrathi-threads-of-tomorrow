@@ -51,7 +51,7 @@ interface OperationRow {
   notes: string;
 }
 
-export const JobWorkCreateForm = ({ batchId, rollsData, cuttingSummary, open, onOpenChange }: Props) => {
+export const JobWorkCreateForm = ({ batchId, rollsData, cuttingSummary, open, onOpenChange, editEntry, editOperations }: Props) => {
   const [selectedVariations, setSelectedVariations] = useState<SelectedVariation[]>([]);
   const [companyId, setCompanyId] = useState<string>('');
   const [showAddWorker, setShowAddWorker] = useState(false);
@@ -67,7 +67,9 @@ export const JobWorkCreateForm = ({ batchId, rollsData, cuttingSummary, open, on
     { operation: '', rate_per_piece: 0, quantity: 0, notes: '' },
   ]);
 
+  const isEditing = !!editEntry;
   const createMutation = useCreateJobWork();
+  const updateMutation = useUpdateJobWorkWithOperations();
 
   // Fetch external_job_companies
   const { data: externalCompanies = [] } = useQuery({
