@@ -550,12 +550,21 @@ export const JobWorkCreateForm = ({ batchId, rollsData, cuttingSummary, open, on
               {pricingMode === 'overall-amount' && isSetItem && (
                 <div className="space-y-1">
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Top</span>
-                    <span>₹{(parseFloat(topAmount) || 0).toFixed(2)}</span>
+                    <span className="text-muted-foreground">Top (₹{topPerPiece.toFixed(2)}/pc × {totalPieces})</span>
+                    <span>₹{(topPerPiece * totalPieces).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Pant</span>
-                    <span>₹{(parseFloat(pantAmount) || 0).toFixed(2)}</span>
+                    <span className="text-muted-foreground">Pant (₹{pantPerPiece.toFixed(2)}/pc × {totalPieces})</span>
+                    <span>₹{(pantPerPiece * totalPieces).toFixed(2)}</span>
+                  </div>
+                </div>
+              )}
+
+              {pricingMode === 'overall-amount' && !isSetItem && overallPerPiece > 0 && (
+                <div className="space-y-1">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Overall (₹{overallPerPiece.toFixed(2)}/pc × {totalPieces})</span>
+                    <span>₹{(overallPerPiece * totalPieces).toFixed(2)}</span>
                   </div>
                 </div>
               )}
