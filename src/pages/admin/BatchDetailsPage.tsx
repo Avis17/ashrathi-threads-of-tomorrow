@@ -41,6 +41,7 @@ import EditBatchDialog from '@/components/admin/jobmanagement/EditBatchDialog';
 import { GenerateInvoiceDialog } from '@/components/admin/jobmanagement/batch-details/GenerateInvoiceDialog';
 import { BatchPaymentSection } from '@/components/admin/jobmanagement/batch-details/BatchPaymentSection';
 import { BatchWeightAnalysisCard } from '@/components/admin/jobmanagement/batch-details/BatchWeightAnalysisCard';
+import { BatchCostingSection } from '@/components/admin/jobmanagement/batch-details/BatchCostingSection';
 import { useBatchWeightAnalysis } from '@/hooks/useBatchWeightAnalysis';
 import { AddWorkerDialog } from '@/components/admin/jobmanagement/batch-details/AddWorkerDialog';
 import { CreateDCFromBatchDialog } from '@/components/admin/jobmanagement/batch-details/CreateDCFromBatchDialog';
