@@ -230,7 +230,18 @@ export const BatchSalarySection = ({ batchId, rollsData, cuttingSummary, totalCu
                         <TableCell className="text-xs text-muted-foreground">
                           {format(new Date(entry.updated_at), 'dd/MM/yy')}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="flex gap-1">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7"
+                            onClick={() => {
+                              setEditingEntry(entry);
+                              setShowSalaryDialog(true);
+                            }}
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
                           <Button
                             size="icon"
                             variant="ghost"
