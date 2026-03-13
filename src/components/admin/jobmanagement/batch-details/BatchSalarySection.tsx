@@ -320,9 +320,13 @@ export const BatchSalarySection = ({ batchId, rollsData, cuttingSummary, totalCu
       {/* Dialogs */}
       <RecordSalaryDialog
         open={showSalaryDialog}
-        onOpenChange={setShowSalaryDialog}
+        onOpenChange={(open) => {
+          setShowSalaryDialog(open);
+          if (!open) setEditingEntry(null);
+        }}
         batchId={batchId}
         styles={styleOptions}
+        editEntry={editingEntry}
       />
       <GiveAdvanceDialog
         open={showAdvanceDialog}
