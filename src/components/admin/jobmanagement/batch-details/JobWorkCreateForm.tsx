@@ -159,15 +159,90 @@ export const JobWorkCreateForm = ({ batchId, rollsData, cuttingSummary, open, on
     return selectedVariations.reduce((sum, v) => sum + v.pieces, 0);
   }, [selectedVariations]);
 
-  // Auto-update operation quantities when total pieces changes
+  // Auto-update operation quantities when total pieces changes (only in create mode)
   useEffect(() => {
-    if (totalPieces > 0) {
+    if (totalPieces > 0 && !isEditing) {
       setOperations(prev => prev.map(op => ({
         ...op,
         quantity: totalPieces,
       })));
     }
-  }, [totalPieces]);
+  }, [totalPieces, isEditing]);
+
+  // Pre-populate form when editing
+  useEffect(() => {
+    if (editEntry && open && typeOptions.length > 0 && allCompanies.length > 0) {
+      // Set variations from editEntry
+      const variations = editEntry.variations as Array<{ type_index: number; style_id: string; color: string; pieces: number; sizes?: string }> | null;
+      if (variations && variations.length > 0) {
+        const selectedVars: SelectedVariation[] = variations.map(v => {
+          const opt = typeOptions.find(t => t.index === v.type_index);
+          return {
+            index: v.type_index,
+            styleId: v.style_id,
+            color: v.color,
+            pieces: v.pieces,
+            label: opt?.label || `Type ${v.type_index + 1}`,
+            sizes: v.sizes || '',
+          };
+        });
+        setSelectedVariations(selectedVars);
+      } else {
+        const opt = typeOptions.find(t => t.index === editEntry.type_index);
+        setSelectedVariations([{
+          index: editEntry.type_index,
+          styleId: editEntry.style_id,
+          color: editEntry.color,
+          pieces: editEntry.pieces,
+          label: opt?.label || editEntry.color,
+          sizes: '',
+        }]);
+      }
+
+      // Set company
+      const comp = allCompanies.find(c => c.name === editEntry.company_name);
+      if (comp) setCompanyId(comp.id);
+
+      setNotes(editEntry.notes || '');
+      setPaidAmount(String(editEntry.paid_amount || 0));
+
+      // Determine pricing mode from operations
+      if (editOperations && editOperations.length > 0) {
+        const isOverall = editOperations.some(op => op.operation.startsWith('Overall'));
+        if (isOverall) {
+          setPricingMode('overall-amount');
+          const isSet = editOperations.some(op => op.operation.includes('Top'));
+          setIsSetItem(isSet);
+          if (isSet) {
+            const topOp = editOperations.find(op => op.operation.includes('Top'));
+            const pantOp = editOperations.find(op => op.operation.includes('Pant'));
+            setTopAmount(String(topOp?.rate_per_piece || 0));
+            setPantAmount(String(pantOp?.rate_per_piece || 0));
+          } else {
+            setOverallAmount(String(editOperations[0].rate_per_piece || 0));
+          }
+        } else {
+          setPricingMode('operation-wise');
+          setOperations(editOperations.map(op => ({
+            operation: op.operation,
+            rate_per_piece: op.rate_per_piece,
+            quantity: op.quantity,
+            notes: op.notes || '',
+          })));
+        }
+      }
+
+      // Calculate profit percent from stored per-piece profit
+      const editPieces = editEntry.pieces || 1;
+      const opsTotal = editOperations?.reduce((sum, op) => sum + (op.rate_per_piece * op.quantity), 0) || 0;
+      const costPerPiece = editPieces > 0 ? opsTotal / editPieces : 0;
+      if (costPerPiece > 0 && editEntry.company_profit > 0) {
+        setCompanyProfitPercent(String(((editEntry.company_profit / costPerPiece) * 100).toFixed(1)));
+      } else {
+        setCompanyProfitPercent('0');
+      }
+    }
+  }, [editEntry, open, typeOptions, allCompanies, editOperations]);
 
   const addVariation = (indexStr: string) => {
     const opt = typeOptions.find(t => t.index.toString() === indexStr);
