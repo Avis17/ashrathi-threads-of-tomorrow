@@ -324,7 +324,7 @@ const BatchDetailsPage = () => {
 
       {/* Main Tabs */}
       <Tabs defaultValue="cutting" className="w-full">
-        <TabsList className="grid w-full grid-cols-8">
+        <TabsList className="grid w-full grid-cols-9">
           <TabsTrigger value="cutting" className="flex items-center gap-2">
             <Scissors className="h-4 w-4" />
             Cutting
@@ -348,6 +348,10 @@ const BatchDetailsPage = () => {
           <TabsTrigger value="jobwork" className="flex items-center gap-2">
             <Briefcase className="h-4 w-4" />
             Job Work
+          </TabsTrigger>
+          <TabsTrigger value="costing" className="flex items-center gap-2">
+            <Calculator className="h-4 w-4" />
+            Costing
           </TabsTrigger>
           <TabsTrigger value="payments" className="flex items-center gap-2">
             <CreditCard className="h-4 w-4" />
