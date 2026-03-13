@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Loader2, Calculator, IndianRupee, Minus, Check } from 'lucide-react';
-import { useUpsertBatchSalary } from '@/hooks/useBatchSalary';
+import { useUpsertBatchSalary, BatchSalaryEntry } from '@/hooks/useBatchSalary';
 import { useBatchSalaryAdvances } from '@/hooks/useBatchSalaryAdvances';
 
 const OPERATIONS = [
@@ -32,9 +32,10 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   batchId: string;
   styles: StyleOption[];
+  editEntry?: BatchSalaryEntry | null;
 }
 
-export const RecordSalaryDialog = ({ open, onOpenChange, batchId, styles }: Props) => {
+export const RecordSalaryDialog = ({ open, onOpenChange, batchId, styles, editEntry }: Props) => {
   const [styleId, setStyleId] = useState('');
   const [operation, setOperation] = useState('');
   const [description, setDescription] = useState('');
@@ -45,6 +46,27 @@ export const RecordSalaryDialog = ({ open, onOpenChange, batchId, styles }: Prop
 
   const upsertMutation = useUpsertBatchSalary();
   const { data: allAdvances = [] } = useBatchSalaryAdvances(batchId);
+
+  // Populate form when editing
+  useEffect(() => {
+    if (editEntry && open) {
+      setStyleId(editEntry.style_id);
+      setOperation(editEntry.operation);
+      setDescription(editEntry.description || '');
+      setPieces(String(editEntry.quantity));
+      setRatePerPiece(String(editEntry.rate_per_piece));
+      setNotes(editEntry.notes || '');
+      setDeductAdvance(false);
+    } else if (!open) {
+      setStyleId('');
+      setOperation('');
+      setDescription('');
+      setPieces('');
+      setRatePerPiece('');
+      setNotes('');
+      setDeductAdvance(true);
+    }
+  }, [editEntry, open]);
 
   const selectedStyle = styles.find(s => s.id === styleId);
 
@@ -66,6 +88,7 @@ export const RecordSalaryDialog = ({ open, onOpenChange, batchId, styles }: Prop
     if (!styleId || !operation || piecesNum <= 0 || rateNum <= 0) return;
 
     await upsertMutation.mutateAsync({
+      ...(editEntry ? { id: editEntry.id } : {}),
       batch_id: batchId,
       style_id: styleId,
       operation,
@@ -80,14 +103,6 @@ export const RecordSalaryDialog = ({ open, onOpenChange, batchId, styles }: Prop
       ].filter(Boolean).join(' | '),
     });
 
-    // Reset form
-    setStyleId('');
-    setOperation('');
-    setDescription('');
-    setPieces('');
-    setRatePerPiece('');
-    setNotes('');
-    setDeductAdvance(true);
     onOpenChange(false);
   };
 
