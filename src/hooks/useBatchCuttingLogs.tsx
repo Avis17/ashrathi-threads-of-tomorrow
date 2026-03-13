@@ -46,6 +46,7 @@ export const useAddCuttingLog = () => {
       color: string;
       style_id?: string | null;
       pieces_cut: number;
+      size_pieces?: SizePieces | null;
       notes?: string;
     }) => {
       const { data: log, error } = await supabase
