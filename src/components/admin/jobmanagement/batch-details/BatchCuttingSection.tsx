@@ -340,7 +340,7 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
             <CardTitle className="text-lg">Add Cutting Entry</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="log-date">Date</Label>
                 <Input id="log-date" type="date" value={logDate} onChange={(e) => setLogDate(e.target.value)} />
@@ -358,18 +358,62 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                <Label htmlFor="pieces-cut">Pieces Cut</Label>
-                <Input id="pieces-cut" type="number" placeholder="Enter quantity" value={piecesCut} onChange={(e) => setPiecesCut(e.target.value)} />
-              </div>
             </div>
+
+            {/* Size-wise pieces entry */}
+            <div>
+              <Label className="text-base font-semibold">Size-wise Pieces</Label>
+              <p className="text-xs text-muted-foreground mb-3">Enter pieces per size. Total will be calculated automatically.</p>
+              <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-9 gap-2">
+                {activeSizes.map(size => (
+                  <div key={size} className="space-y-1">
+                    <Label className="text-xs text-center block">{size}</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      placeholder="0"
+                      value={sizePieces[size] || ''}
+                      onChange={(e) => handleSizePieceChange(size, e.target.value)}
+                      className="text-center h-9 text-sm"
+                    />
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-center gap-2 mt-2">
+                <Input
+                  placeholder="Custom size..."
+                  value={customSize}
+                  onChange={(e) => setCustomSize(e.target.value)}
+                  className="w-32 h-8 text-sm"
+                  onKeyDown={(e) => e.key === 'Enter' && handleAddCustomSize()}
+                />
+                <Button type="button" variant="outline" size="sm" onClick={handleAddCustomSize} disabled={!customSize.trim()}>
+                  <Plus className="h-3 w-3 mr-1" /> Add Size
+                </Button>
+              </div>
+              {sizePiecesTotal > 0 && (
+                <div className="mt-3 p-3 rounded-lg bg-primary/10 flex items-center justify-between">
+                  <span className="font-semibold">Total Pieces</span>
+                  <Badge className="text-lg px-3 py-1 bg-primary">{sizePiecesTotal}</Badge>
+                </div>
+              )}
+            </div>
+
+            {/* Fallback: manual total if no sizes entered */}
+            {sizePiecesTotal === 0 && (
+              <div>
+                <Label htmlFor="pieces-cut">Or Enter Total Pieces Directly</Label>
+                <Input id="pieces-cut" type="number" placeholder="Enter total quantity" value={piecesCut} onChange={(e) => setPiecesCut(e.target.value)} className="max-w-xs" />
+              </div>
+            )}
+
             <div>
               <Label htmlFor="notes">Notes (Optional)</Label>
               <Textarea id="notes" placeholder="Any remarks..." value={notes} onChange={(e) => setNotes(e.target.value)} />
             </div>
             <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => setShowAddForm(false)}>Cancel</Button>
-              <Button onClick={handleAddLog} disabled={!selectedTypeIndex || !piecesCut || addLogMutation.isPending}>
+              <Button variant="outline" onClick={() => { setShowAddForm(false); setSizePieces({}); }}>Cancel</Button>
+              <Button onClick={handleAddLog} disabled={!selectedTypeIndex || (sizePiecesTotal === 0 && !piecesCut) || addLogMutation.isPending}>
                 {addLogMutation.isPending ? 'Saving...' : 'Add Entry'}
               </Button>
             </div>
