@@ -252,7 +252,7 @@ export const RecordSalaryDialog = ({ open, onOpenChange, batchId, styles, editEn
           >
             {upsertMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
             <Check className="h-4 w-4 mr-2" />
-            Record Salary — ₹{netPayable.toFixed(2)}
+            {editEntry ? 'Update' : 'Record'} Salary — ₹{netPayable.toFixed(2)}
           </Button>
         </div>
       </DialogContent>
