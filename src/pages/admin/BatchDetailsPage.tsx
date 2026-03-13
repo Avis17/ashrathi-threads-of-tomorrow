@@ -399,6 +399,10 @@ const BatchDetailsPage = () => {
           <BatchJobWorkSection batchId={id || ''} rollsData={rollsData} cuttingSummary={cuttingSummary} />
         </TabsContent>
 
+        <TabsContent value="costing" className="mt-6">
+          <BatchCostingSection batchId={id || ''} totalCutPieces={totalCutPieces} />
+        </TabsContent>
+
         <TabsContent value="payments" className="mt-6">
           <BatchPaymentSection batchId={id || ''} rollsData={rollsData} />
         </TabsContent>
