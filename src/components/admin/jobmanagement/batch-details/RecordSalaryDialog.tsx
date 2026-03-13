@@ -72,7 +72,7 @@ export const RecordSalaryDialog = ({ open, onOpenChange, batchId, styles }: Prop
       description: description || operation,
       rate_per_piece: rateNum,
       quantity: piecesNum,
-      payment_status: 'recorded',
+      payment_status: 'paid',
       paid_amount: netPayable,
       notes: [
         notes,
