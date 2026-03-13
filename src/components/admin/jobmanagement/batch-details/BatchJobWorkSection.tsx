@@ -122,7 +122,15 @@ export const BatchJobWorkSection = ({ batchId, rollsData, cuttingSummary }: Prop
         rollsData={rollsData}
         cuttingSummary={cuttingSummary}
         open={showForm}
-        onOpenChange={setShowForm}
+        onOpenChange={(open) => {
+          setShowForm(open);
+          if (!open) {
+            setEditingEntry(null);
+            setEditOperations([]);
+          }
+        }}
+        editEntry={editingEntry}
+        editOperations={editOperations}
       />
 
       {/* Delete Confirmation */}
