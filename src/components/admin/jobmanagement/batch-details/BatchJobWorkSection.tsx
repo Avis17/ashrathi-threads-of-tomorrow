@@ -31,6 +31,8 @@ export const BatchJobWorkSection = ({ batchId, rollsData, cuttingSummary }: Prop
   const [showForm, setShowForm] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [editingEntry, setEditingEntry] = useState<BatchJobWork | null>(null);
+  const [editOperations, setEditOperations] = useState<BatchJobWorkOperation[]>([]);
 
   const { data: jobWorks = [] } = useBatchJobWorks(batchId);
   const deleteMutation = useDeleteJobWork();
