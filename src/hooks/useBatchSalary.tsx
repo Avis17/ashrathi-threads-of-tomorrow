@@ -61,6 +61,7 @@ export const useUpsertBatchSalary = () => {
             quantity: entry.quantity,
             payment_status: entry.payment_status,
             paid_amount: entry.paid_amount,
+            payment_mode: entry.payment_mode || 'cash',
             notes: entry.notes,
           })
           .eq('id', entry.id)
