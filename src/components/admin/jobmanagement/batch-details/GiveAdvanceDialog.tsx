@@ -35,6 +35,7 @@ export const GiveAdvanceDialog = ({ open, onOpenChange, batchId, styles }: Props
   const [styleId, setStyleId] = useState('');
   const [operation, setOperation] = useState('');
   const [amount, setAmount] = useState('');
+  const [paymentMode, setPaymentMode] = useState('cash');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [notes, setNotes] = useState('');
 
