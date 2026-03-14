@@ -445,7 +445,16 @@ const JobWorkDetailPage = () => {
                   const data = isSetItem
                     ? { top: returnTopPieces, pant: returnPantPieces }
                     : { total: returnPieces };
-                  await updateMutation.mutateAsync({ id: jobWork.id, data: { confirmed_return_pieces: data } as any });
+                  const recalculatedTotal = computeBillableAmount(data);
+
+                  await updateMutation.mutateAsync({
+                    id: jobWork.id,
+                    data: {
+                      confirmed_return_pieces: data,
+                      total_amount: recalculatedTotal,
+                      balance_amount: recalculatedTotal - jobWork.paid_amount,
+                    } as any,
+                  });
                   queryClient.invalidateQueries({ queryKey: ['job-work-detail', jwId] });
                   setEditingReturn(false);
                   toast.success('Confirmed return pieces saved');
