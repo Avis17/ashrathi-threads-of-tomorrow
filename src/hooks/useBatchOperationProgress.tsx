@@ -9,6 +9,7 @@ export interface OperationProgress {
   completed_pieces: number;
   mistake_pieces: number;
   type_index: number;
+  size: string;
   notes: string | null;
   updated_at: string;
   created_at: string;
