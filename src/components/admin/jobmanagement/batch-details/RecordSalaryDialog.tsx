@@ -98,6 +98,7 @@ export const RecordSalaryDialog = ({ open, onOpenChange, batchId, styles, editEn
       rate_per_piece: rateNum,
       quantity: piecesNum,
       payment_status: 'paid',
+      payment_mode: paymentMode,
       paid_amount: netPayable,
       notes: [
         notes,
