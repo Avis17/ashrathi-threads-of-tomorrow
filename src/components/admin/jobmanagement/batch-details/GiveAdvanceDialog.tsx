@@ -52,6 +52,7 @@ export const GiveAdvanceDialog = ({ open, onOpenChange, batchId, styles }: Props
       description: operation,
       amount: val,
       advance_date: date,
+      payment_mode: paymentMode,
       notes: notes || undefined,
     });
 
