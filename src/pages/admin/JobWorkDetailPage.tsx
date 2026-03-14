@@ -129,6 +129,29 @@ const JobWorkDetailPage = () => {
   const pricePerPiece = jobWork.pieces > 0 ? totalOperationAmount / jobWork.pieces : 0;
   const profitPerPiece = jobWork.company_profit || 0;
   const profitPercent = pricePerPiece > 0 ? (profitPerPiece / pricePerPiece) * 100 : 0;
+  const topRate = operations.find(op => op.operation.includes('Top'))?.rate_per_piece ?? 0;
+  const pantRate = operations.find(op => op.operation.includes('Pant'))?.rate_per_piece ?? 0;
+
+  const computeBillableAmount = (confirmed: { top?: number; pant?: number; total?: number } | null) => {
+    if (!confirmed) return jobWork.total_amount;
+
+    if (isSetItem) {
+      const topCount = confirmed.top ?? 0;
+      const pantCount = confirmed.pant ?? 0;
+      return (topRate * topCount) + (pantRate * pantCount) + (profitPerPiece * Math.max(topCount, pantCount));
+    }
+
+    const returnedPieces = confirmed.total ?? jobWork.pieces;
+    return returnedPieces * (pricePerPiece + profitPerPiece);
+  };
+
+  const effectiveTotalAmount = hasConfirmed ? computeBillableAmount(confirmedData) : jobWork.total_amount;
+  const effectiveBalanceAmount = effectiveTotalAmount - jobWork.paid_amount;
+  const effectiveJobWork: BatchJobWork = {
+    ...jobWork,
+    total_amount: effectiveTotalAmount,
+    balance_amount: effectiveBalanceAmount,
+  };
 
   const handleStatusChange = async (status: string) => {
     await updateMutation.mutateAsync({ id: jobWork.id, data: { payment_status: status } });
@@ -311,7 +334,7 @@ const JobWorkDetailPage = () => {
               try {
                 const paymentsRes = await supabase.from('job_work_payments').select('*').eq('job_work_id', jwId!).order('created_at', { ascending: false });
                 await generateJobWorkPdf({
-                  jobWork,
+                  jobWork: effectiveJobWork,
                   operations,
                   styles,
                   payments: (paymentsRes.data || []) as any,
@@ -342,7 +365,7 @@ const JobWorkDetailPage = () => {
         <Card className="bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-200">
           <CardContent className="p-4">
             <div className="text-sm text-muted-foreground">Total Amount</div>
-            <div className="text-2xl font-bold text-green-600">₹{jobWork.total_amount.toFixed(2)}</div>
+            <div className="text-2xl font-bold text-green-600">₹{effectiveTotalAmount.toFixed(2)}</div>
           </CardContent>
         </Card>
         <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-200">
@@ -361,7 +384,7 @@ const JobWorkDetailPage = () => {
         <Card className="bg-gradient-to-br from-orange-500/10 to-orange-600/5 border-orange-200">
           <CardContent className="p-4">
             <div className="text-sm text-muted-foreground">Balance</div>
-            <div className="text-2xl font-bold text-orange-600">₹{jobWork.balance_amount.toFixed(2)}</div>
+            <div className="text-2xl font-bold text-orange-600">₹{effectiveBalanceAmount.toFixed(2)}</div>
             <div className="text-xs text-muted-foreground">Paid: ₹{jobWork.paid_amount.toFixed(2)}</div>
           </CardContent>
         </Card>
@@ -422,7 +445,16 @@ const JobWorkDetailPage = () => {
                   const data = isSetItem
                     ? { top: returnTopPieces, pant: returnPantPieces }
                     : { total: returnPieces };
-                  await updateMutation.mutateAsync({ id: jobWork.id, data: { confirmed_return_pieces: data } as any });
+                  const recalculatedTotal = computeBillableAmount(data);
+
+                  await updateMutation.mutateAsync({
+                    id: jobWork.id,
+                    data: {
+                      confirmed_return_pieces: data,
+                      total_amount: recalculatedTotal,
+                      balance_amount: recalculatedTotal - jobWork.paid_amount,
+                    } as any,
+                  });
                   queryClient.invalidateQueries({ queryKey: ['job-work-detail', jwId] });
                   setEditingReturn(false);
                   toast.success('Confirmed return pieces saved');
@@ -481,10 +513,6 @@ const JobWorkDetailPage = () => {
                     <div className="col-span-2 border-t pt-3 mt-1">
                       <div className="flex items-center gap-6">
                         {(() => {
-                          const topOp = operations.find(op => op.operation.includes('Top'));
-                          const pantOp = operations.find(op => op.operation.includes('Pant'));
-                          const topRate = topOp?.rate_per_piece ?? 0;
-                          const pantRate = pantOp?.rate_per_piece ?? 0;
                           const topCount = confirmedData?.top ?? 0;
                           const pantCount = confirmedData?.pant ?? 0;
                           const billable = (topRate * topCount) + (pantRate * pantCount) + (profitPerPiece * Math.max(topCount, pantCount));
@@ -713,7 +741,7 @@ const JobWorkDetailPage = () => {
       </Card>
 
       {/* Record Payment */}
-      <PaymentSection jobWork={jobWork} jwId={jwId!} queryClient={queryClient} />
+      <PaymentSection jobWork={effectiveJobWork} jwId={jwId!} queryClient={queryClient} />
 
       {/* Notes */}
       {jobWork.notes && (
