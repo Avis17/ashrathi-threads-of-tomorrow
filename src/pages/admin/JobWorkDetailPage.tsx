@@ -741,7 +741,7 @@ const JobWorkDetailPage = () => {
       </Card>
 
       {/* Record Payment */}
-      <PaymentSection jobWork={jobWork} jwId={jwId!} queryClient={queryClient} />
+      <PaymentSection jobWork={effectiveJobWork} jwId={jwId!} queryClient={queryClient} />
 
       {/* Notes */}
       {jobWork.notes && (
