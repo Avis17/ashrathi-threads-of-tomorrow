@@ -133,14 +133,14 @@ export const BatchSalarySection = ({ batchId, rollsData, cuttingSummary, totalCu
               {(() => {
                 const opMap: Record<string, number> = {};
                 existingEntries.forEach(e => {
-                  opMap[e.operation] = (opMap[e.operation] || 0) + (e.rate_per_piece * e.quantity);
+                  opMap[e.operation] = (opMap[e.operation] || 0) + e.rate_per_piece;
                 });
                 const ops = Object.entries(opMap);
                 if (ops.length === 0) return <div className="text-xs text-muted-foreground text-center">No data</div>;
                 return ops.map(([op, amt]) => (
                   <div key={op} className="flex justify-between text-[11px]">
                     <span className="text-muted-foreground truncate mr-1">{op}</span>
-                    <span className="font-semibold text-orange-600 whitespace-nowrap">₹{totalCutPieces > 0 ? (amt / totalCutPieces).toFixed(2) : '0.00'}</span>
+                    <span className="font-semibold text-orange-600 whitespace-nowrap">₹{amt.toFixed(2)}</span>
                   </div>
                 ));
               })()}
