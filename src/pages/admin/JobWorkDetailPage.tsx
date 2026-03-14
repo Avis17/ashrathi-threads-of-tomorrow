@@ -145,6 +145,18 @@ const JobWorkDetailPage = () => {
     return returnedPieces * (pricePerPiece + profitPerPiece);
   };
 
+  const billablePieces = isSetItem
+    ? (hasConfirmed ? Math.max(confirmedData?.top ?? 0, confirmedData?.pant ?? 0) : jobWork.pieces)
+    : (hasConfirmed ? (confirmedData?.total ?? jobWork.pieces) : jobWork.pieces);
+
+  const effectiveOperationAmount = hasConfirmed
+    ? (isSetItem
+      ? ((topRate * (confirmedData?.top ?? 0)) + (pantRate * (confirmedData?.pant ?? 0)))
+      : (pricePerPiece * billablePieces))
+    : totalOperationAmount;
+
+  const effectiveProfitAmount = profitPerPiece * billablePieces;
+
   const effectiveTotalAmount = hasConfirmed ? computeBillableAmount(confirmedData) : jobWork.total_amount;
   const effectiveBalanceAmount = effectiveTotalAmount - jobWork.paid_amount;
   const effectiveJobWork: BatchJobWork = {
