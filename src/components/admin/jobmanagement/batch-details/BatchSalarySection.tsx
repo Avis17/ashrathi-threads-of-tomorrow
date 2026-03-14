@@ -140,7 +140,7 @@ export const BatchSalarySection = ({ batchId, rollsData, cuttingSummary, totalCu
                 return ops.map(([op, amt]) => (
                   <div key={op} className="flex justify-between text-[11px]">
                     <span className="text-muted-foreground truncate mr-1">{op}</span>
-                    <span className="font-semibold text-orange-600 whitespace-nowrap">₹{totalCutPieces > 0 ? (amt / totalCutPieces).toFixed(2) : '0.00'}</span>
+                    <span className="font-semibold text-orange-600 whitespace-nowrap">₹{amt.toFixed(2)}</span>
                   </div>
                 ));
               })()}
