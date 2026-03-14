@@ -334,7 +334,7 @@ const JobWorkDetailPage = () => {
               try {
                 const paymentsRes = await supabase.from('job_work_payments').select('*').eq('job_work_id', jwId!).order('created_at', { ascending: false });
                 await generateJobWorkPdf({
-                  jobWork,
+                  jobWork: effectiveJobWork,
                   operations,
                   styles,
                   payments: (paymentsRes.data || []) as any,
