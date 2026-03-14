@@ -513,10 +513,6 @@ const JobWorkDetailPage = () => {
                     <div className="col-span-2 border-t pt-3 mt-1">
                       <div className="flex items-center gap-6">
                         {(() => {
-                          const topOp = operations.find(op => op.operation.includes('Top'));
-                          const pantOp = operations.find(op => op.operation.includes('Pant'));
-                          const topRate = topOp?.rate_per_piece ?? 0;
-                          const pantRate = pantOp?.rate_per_piece ?? 0;
                           const topCount = confirmedData?.top ?? 0;
                           const pantCount = confirmedData?.pant ?? 0;
                           const billable = (topRate * topCount) + (pantRate * pantCount) + (profitPerPiece * Math.max(topCount, pantCount));
