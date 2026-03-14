@@ -349,37 +349,61 @@ const JobWorkDetailPage = () => {
       <Card className="border-primary/30 bg-primary/5">
         <CardHeader className="flex flex-row items-center justify-between pb-3">
           <CardTitle className="text-base flex items-center gap-2">
-            📦 Confirmed Return Pieces
+            📦 Confirmed Return Pieces {isSetItem && <Badge variant="outline">Set Item</Badge>}
           </CardTitle>
           {!editingReturn && (
-            <Button variant="outline" size="sm" onClick={() => { setEditingReturn(true); setReturnPieces(confirmedPieces ?? jobWork.pieces); }}>
-              <Pencil className="h-4 w-4 mr-1" /> {confirmedPieces !== null ? 'Edit' : 'Confirm Returns'}
+            <Button variant="outline" size="sm" onClick={() => {
+              setEditingReturn(true);
+              if (isSetItem) {
+                setReturnTopPieces(confirmedData?.top ?? jobWork.pieces);
+                setReturnPantPieces(confirmedData?.pant ?? jobWork.pieces);
+              } else {
+                setReturnPieces(confirmedData?.total ?? jobWork.pieces);
+              }
+            }}>
+              <Pencil className="h-4 w-4 mr-1" /> {hasConfirmed ? 'Edit' : 'Confirm Returns'}
             </Button>
           )}
         </CardHeader>
         <CardContent>
           {editingReturn ? (
-            <div className="flex items-end gap-4">
-              <div className="flex-1">
-                <Label className="text-xs">Returned Pieces (out of {jobWork.pieces} sent)</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  max={jobWork.pieces}
-                  value={returnPieces}
-                  onChange={e => setReturnPieces(parseInt(e.target.value) || 0)}
-                  className="mt-1"
-                />
-              </div>
-              <div className="text-sm text-muted-foreground">
-                Short: <span className="font-bold text-destructive">{jobWork.pieces - returnPieces}</span> pcs
-              </div>
-              <div className="flex gap-2">
+            <div className="space-y-3">
+              {isSetItem ? (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-xs">👕 Top Returned (out of {jobWork.pieces} sent)</Label>
+                    <Input type="number" min={0} max={jobWork.pieces} value={returnTopPieces}
+                      onChange={e => setReturnTopPieces(parseInt(e.target.value) || 0)} className="mt-1" />
+                    <p className="text-xs text-muted-foreground mt-1">Short: <span className="font-semibold text-destructive">{jobWork.pieces - returnTopPieces}</span> pcs</p>
+                  </div>
+                  <div>
+                    <Label className="text-xs">👖 Pant Returned (out of {jobWork.pieces} sent)</Label>
+                    <Input type="number" min={0} max={jobWork.pieces} value={returnPantPieces}
+                      onChange={e => setReturnPantPieces(parseInt(e.target.value) || 0)} className="mt-1" />
+                    <p className="text-xs text-muted-foreground mt-1">Short: <span className="font-semibold text-destructive">{jobWork.pieces - returnPantPieces}</span> pcs</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-end gap-4">
+                  <div className="flex-1">
+                    <Label className="text-xs">Returned Pieces (out of {jobWork.pieces} sent)</Label>
+                    <Input type="number" min={0} max={jobWork.pieces} value={returnPieces}
+                      onChange={e => setReturnPieces(parseInt(e.target.value) || 0)} className="mt-1" />
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    Short: <span className="font-bold text-destructive">{jobWork.pieces - returnPieces}</span> pcs
+                  </div>
+                </div>
+              )}
+              <div className="flex justify-end gap-2 pt-2">
                 <Button size="sm" onClick={async () => {
-                  await updateMutation.mutateAsync({ id: jobWork.id, data: { confirmed_return_pieces: returnPieces } as any });
+                  const data = isSetItem
+                    ? { top: returnTopPieces, pant: returnPantPieces }
+                    : { total: returnPieces };
+                  await updateMutation.mutateAsync({ id: jobWork.id, data: { confirmed_return_pieces: data } as any });
                   queryClient.invalidateQueries({ queryKey: ['job-work-detail', jwId] });
                   setEditingReturn(false);
-                  toast.success(`Confirmed ${returnPieces} returned pieces`);
+                  toast.success('Confirmed return pieces saved');
                 }}>
                   <Save className="h-4 w-4 mr-1" /> Save
                 </Button>
@@ -387,36 +411,124 @@ const JobWorkDetailPage = () => {
               </div>
             </div>
           ) : (
-            <div className="flex items-center gap-6">
-              <div>
-                <p className="text-xs text-muted-foreground">Sent</p>
-                <p className="text-xl font-bold">{jobWork.pieces}</p>
-              </div>
-              <div className="text-2xl text-muted-foreground">→</div>
-              <div>
-                <p className="text-xs text-muted-foreground">Returned</p>
-                <p className={`text-xl font-bold ${confirmedPieces !== null ? (confirmedPieces < jobWork.pieces ? 'text-amber-600' : 'text-green-600') : 'text-muted-foreground'}`}>
-                  {confirmedPieces !== null ? confirmedPieces : 'Not confirmed'}
-                </p>
-              </div>
-              {confirmedPieces !== null && confirmedPieces < jobWork.pieces && (
-                <>
-                  <div className="text-2xl text-muted-foreground">|</div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Short</p>
-                    <p className="text-xl font-bold text-destructive">{jobWork.pieces - confirmedPieces}</p>
+            <div>
+              {isSetItem ? (
+                <div className="grid grid-cols-2 gap-6">
+                  {/* Top */}
+                  <div className="flex items-center gap-4">
+                    <div>
+                      <p className="text-xs text-muted-foreground">👕 Top Sent</p>
+                      <p className="text-lg font-bold">{jobWork.pieces}</p>
+                    </div>
+                    <div className="text-xl text-muted-foreground">→</div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Returned</p>
+                      <p className={`text-lg font-bold ${hasConfirmed ? ((confirmedData?.top ?? 0) < jobWork.pieces ? 'text-amber-600' : 'text-green-600') : 'text-muted-foreground'}`}>
+                        {hasConfirmed ? confirmedData?.top ?? '-' : 'Not confirmed'}
+                      </p>
+                    </div>
+                    {hasConfirmed && (confirmedData?.top ?? 0) < jobWork.pieces && (
+                      <div>
+                        <p className="text-xs text-muted-foreground">Short</p>
+                        <p className="text-lg font-bold text-destructive">{jobWork.pieces - (confirmedData?.top ?? 0)}</p>
+                      </div>
+                    )}
                   </div>
-                </>
-              )}
-              {confirmedPieces !== null && (
-                <>
-                  <div className="text-2xl text-muted-foreground">|</div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Billable Amount</p>
-                    <p className="text-xl font-bold text-primary">₹{(billablePieces * pricePerPiece + billablePieces * profitPerPiece).toFixed(2)}</p>
-                    <p className="text-xs text-muted-foreground">({billablePieces} pcs × ₹{(pricePerPiece + profitPerPiece).toFixed(2)})</p>
+                  {/* Pant */}
+                  <div className="flex items-center gap-4">
+                    <div>
+                      <p className="text-xs text-muted-foreground">👖 Pant Sent</p>
+                      <p className="text-lg font-bold">{jobWork.pieces}</p>
+                    </div>
+                    <div className="text-xl text-muted-foreground">→</div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Returned</p>
+                      <p className={`text-lg font-bold ${hasConfirmed ? ((confirmedData?.pant ?? 0) < jobWork.pieces ? 'text-amber-600' : 'text-green-600') : 'text-muted-foreground'}`}>
+                        {hasConfirmed ? confirmedData?.pant ?? '-' : 'Not confirmed'}
+                      </p>
+                    </div>
+                    {hasConfirmed && (confirmedData?.pant ?? 0) < jobWork.pieces && (
+                      <div>
+                        <p className="text-xs text-muted-foreground">Short</p>
+                        <p className="text-lg font-bold text-destructive">{jobWork.pieces - (confirmedData?.pant ?? 0)}</p>
+                      </div>
+                    )}
                   </div>
-                </>
+                  {/* Billable summary for set item */}
+                  {hasConfirmed && (
+                    <div className="col-span-2 border-t pt-3 mt-1">
+                      <div className="flex items-center gap-6">
+                        {(() => {
+                          const topOp = operations.find(op => op.operation.includes('Top'));
+                          const pantOp = operations.find(op => op.operation.includes('Pant'));
+                          const topRate = topOp?.rate_per_piece ?? 0;
+                          const pantRate = pantOp?.rate_per_piece ?? 0;
+                          const topCount = confirmedData?.top ?? 0;
+                          const pantCount = confirmedData?.pant ?? 0;
+                          const billable = (topRate * topCount) + (pantRate * pantCount) + (profitPerPiece * Math.max(topCount, pantCount));
+                          return (
+                            <>
+                              <div>
+                                <p className="text-xs text-muted-foreground">Top Billable</p>
+                                <p className="text-base font-semibold">₹{(topRate * topCount).toFixed(2)}</p>
+                                <p className="text-xs text-muted-foreground">{topCount} × ₹{topRate.toFixed(2)}</p>
+                              </div>
+                              <div className="text-lg text-muted-foreground">+</div>
+                              <div>
+                                <p className="text-xs text-muted-foreground">Pant Billable</p>
+                                <p className="text-base font-semibold">₹{(pantRate * pantCount).toFixed(2)}</p>
+                                <p className="text-xs text-muted-foreground">{pantCount} × ₹{pantRate.toFixed(2)}</p>
+                              </div>
+                              <div className="text-lg text-muted-foreground">+</div>
+                              <div>
+                                <p className="text-xs text-muted-foreground">Profit</p>
+                                <p className="text-base font-semibold">₹{(profitPerPiece * Math.max(topCount, pantCount)).toFixed(2)}</p>
+                              </div>
+                              <div className="text-lg text-muted-foreground">=</div>
+                              <div>
+                                <p className="text-xs text-muted-foreground">Total Billable</p>
+                                <p className="text-xl font-bold text-primary">₹{billable.toFixed(2)}</p>
+                              </div>
+                            </>
+                          );
+                        })()}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center gap-6">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Sent</p>
+                    <p className="text-xl font-bold">{jobWork.pieces}</p>
+                  </div>
+                  <div className="text-2xl text-muted-foreground">→</div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Returned</p>
+                    <p className={`text-xl font-bold ${hasConfirmed ? ((confirmedData?.total ?? 0) < jobWork.pieces ? 'text-amber-600' : 'text-green-600') : 'text-muted-foreground'}`}>
+                      {hasConfirmed ? confirmedData?.total ?? '-' : 'Not confirmed'}
+                    </p>
+                  </div>
+                  {hasConfirmed && (confirmedData?.total ?? 0) < jobWork.pieces && (
+                    <>
+                      <div className="text-2xl text-muted-foreground">|</div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Short</p>
+                        <p className="text-xl font-bold text-destructive">{jobWork.pieces - (confirmedData?.total ?? 0)}</p>
+                      </div>
+                    </>
+                  )}
+                  {hasConfirmed && (
+                    <>
+                      <div className="text-2xl text-muted-foreground">|</div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Billable Amount</p>
+                        <p className="text-xl font-bold text-primary">₹{((confirmedData?.total ?? 0) * (pricePerPiece + profitPerPiece)).toFixed(2)}</p>
+                        <p className="text-xs text-muted-foreground">({confirmedData?.total ?? 0} pcs × ₹{(pricePerPiece + profitPerPiece).toFixed(2)})</p>
+                      </div>
+                    </>
+                  )}
+                </div>
               )}
             </div>
           )}
