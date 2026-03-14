@@ -384,7 +384,7 @@ const JobWorkDetailPage = () => {
         <Card className="bg-gradient-to-br from-orange-500/10 to-orange-600/5 border-orange-200">
           <CardContent className="p-4">
             <div className="text-sm text-muted-foreground">Balance</div>
-            <div className="text-2xl font-bold text-orange-600">₹{jobWork.balance_amount.toFixed(2)}</div>
+            <div className="text-2xl font-bold text-orange-600">₹{effectiveBalanceAmount.toFixed(2)}</div>
             <div className="text-xs text-muted-foreground">Paid: ₹{jobWork.paid_amount.toFixed(2)}</div>
           </CardContent>
         </Card>
