@@ -81,6 +81,7 @@ export const useUpsertBatchSalary = () => {
             quantity: entry.quantity,
             payment_status: entry.payment_status,
             paid_amount: entry.paid_amount,
+            payment_mode: entry.payment_mode || 'cash',
             notes: entry.notes,
           }, { onConflict: 'batch_id,style_id,operation,description' })
           .select()
