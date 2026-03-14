@@ -731,21 +731,52 @@ const JobWorkDetailPage = () => {
                   <TableRow key={op.id}>
                     <TableCell className="font-medium">{op.operation}</TableCell>
                     <TableCell className="text-right">₹{op.rate_per_piece.toFixed(2)}</TableCell>
-                    <TableCell className="text-right">{op.quantity}</TableCell>
+                    <TableCell className="text-right">
+                      <div>{op.quantity}</div>
+                      {hasConfirmed && !isSetItem && (operations.length === 1 || op.operation.toLowerCase().includes('overall')) && (
+                        <div className="text-xs text-muted-foreground">billable: {billablePieces}</div>
+                      )}
+                    </TableCell>
                     <TableCell className="text-right font-semibold">₹{(op.rate_per_piece * op.quantity).toFixed(2)}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">{op.notes || '-'}</TableCell>
                   </TableRow>
                 ))}
                 <TableRow className="bg-muted/30">
-                  <TableCell colSpan={3} className="font-semibold">Operations Total</TableCell>
-                  <TableCell className="text-right font-bold">₹{totalOperationAmount.toFixed(2)}</TableCell>
+                  <TableCell colSpan={3} className="font-semibold">
+                    {hasConfirmed ? 'Operations Billable' : 'Operations Total'}
+                    {!isSetItem && hasConfirmed && (
+                      <span className="text-xs font-normal text-muted-foreground ml-2">
+                        ({billablePieces} pcs × ₹{pricePerPiece.toFixed(2)})
+                      </span>
+                    )}
+                    {isSetItem && hasConfirmed && (
+                      <span className="text-xs font-normal text-muted-foreground ml-2">
+                        (Top {confirmedData?.top ?? 0} × ₹{topRate.toFixed(2)} + Pant {confirmedData?.pant ?? 0} × ₹{pantRate.toFixed(2)})
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right font-bold">₹{effectiveOperationAmount.toFixed(2)}</TableCell>
                   <TableCell />
                 </TableRow>
                 <TableRow className="bg-muted/30">
-                  <TableCell colSpan={3} className="font-semibold">Company Profit ({profitPercent.toFixed(1)}%)</TableCell>
-                  <TableCell className="text-right font-bold">₹{(profitPerPiece * jobWork.pieces).toFixed(2)}</TableCell>
+                  <TableCell colSpan={3} className="font-semibold">
+                    Company Profit ({profitPercent.toFixed(1)}%)
+                    {hasConfirmed && (
+                      <span className="text-xs font-normal text-muted-foreground ml-2">
+                        ({billablePieces} pcs × ₹{profitPerPiece.toFixed(2)})
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right font-bold">₹{effectiveProfitAmount.toFixed(2)}</TableCell>
                   <TableCell />
                 </TableRow>
+                {hasConfirmed && (
+                  <TableRow className="bg-primary/10">
+                    <TableCell colSpan={3} className="font-semibold">Final Billable Total</TableCell>
+                    <TableCell className="text-right font-bold text-primary">₹{effectiveTotalAmount.toFixed(2)}</TableCell>
+                    <TableCell />
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           )}
