@@ -17,6 +17,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import type { BatchJobWork } from '@/hooks/useJobWorks';
+import { generateJobWorkPdf } from '@/lib/jobWorkPdf';
 
 const PAYMENT_STATUSES = [
   { value: 'pending', label: 'Pending', color: 'bg-yellow-500/10 text-yellow-700 border-yellow-300' },
