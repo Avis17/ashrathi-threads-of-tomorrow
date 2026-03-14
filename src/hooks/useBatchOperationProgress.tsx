@@ -34,12 +34,12 @@ export const useBatchOperationProgress = (batchId: string) => {
 export const useUpsertOperationProgress = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ batchId, operation, completedPieces, mistakePieces, typeIndex }: { batchId: string; operation: string; completedPieces: number; mistakePieces: number; typeIndex: number }) => {
+    mutationFn: async ({ batchId, operation, completedPieces, mistakePieces, typeIndex, size }: { batchId: string; operation: string; completedPieces: number; mistakePieces: number; typeIndex: number; size: string }) => {
       const { data, error } = await supabase
         .from('batch_operation_progress' as any)
         .upsert(
-          { batch_id: batchId, operation, completed_pieces: completedPieces, mistake_pieces: mistakePieces, type_index: typeIndex },
-          { onConflict: 'batch_id,operation,type_index' }
+          { batch_id: batchId, operation, completed_pieces: completedPieces, mistake_pieces: mistakePieces, type_index: typeIndex, size },
+          { onConflict: 'batch_id,operation,type_index,size' }
         )
         .select()
         .single();
