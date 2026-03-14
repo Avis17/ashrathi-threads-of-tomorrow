@@ -41,6 +41,7 @@ export const RecordSalaryDialog = ({ open, onOpenChange, batchId, styles, editEn
   const [description, setDescription] = useState('');
   const [pieces, setPieces] = useState('');
   const [ratePerPiece, setRatePerPiece] = useState('');
+  const [paymentMode, setPaymentMode] = useState('cash');
   const [deductAdvance, setDeductAdvance] = useState(true);
   const [notes, setNotes] = useState('');
 
