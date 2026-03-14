@@ -133,7 +133,7 @@ export const BatchSalarySection = ({ batchId, rollsData, cuttingSummary, totalCu
               {(() => {
                 const opMap: Record<string, number> = {};
                 existingEntries.forEach(e => {
-                  opMap[e.operation] = (opMap[e.operation] || 0) + (e.rate_per_piece * e.quantity);
+                  opMap[e.operation] = (opMap[e.operation] || 0) + e.rate_per_piece;
                 });
                 const ops = Object.entries(opMap);
                 if (ops.length === 0) return <div className="text-xs text-muted-foreground text-center">No data</div>;
