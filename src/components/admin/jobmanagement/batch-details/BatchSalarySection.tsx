@@ -126,10 +126,25 @@ export const BatchSalarySection = ({ batchId, rollsData, cuttingSummary, totalCu
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4 text-center">
-            <Receipt className="h-5 w-5 mx-auto mb-1 text-destructive" />
-            <div className="text-xs text-muted-foreground">Balance</div>
-            <div className="text-lg font-bold text-destructive">₹{totalBalance.toFixed(0)}</div>
+          <CardContent className="p-4">
+            <Receipt className="h-5 w-5 mx-auto mb-1 text-orange-500" />
+            <div className="text-xs text-muted-foreground text-center mb-2">Cost/Piece by Op</div>
+            <div className="space-y-1 max-h-[80px] overflow-y-auto">
+              {(() => {
+                const opMap: Record<string, number> = {};
+                existingEntries.forEach(e => {
+                  opMap[e.operation] = (opMap[e.operation] || 0) + (e.rate_per_piece * e.quantity);
+                });
+                const ops = Object.entries(opMap);
+                if (ops.length === 0) return <div className="text-xs text-muted-foreground text-center">No data</div>;
+                return ops.map(([op, amt]) => (
+                  <div key={op} className="flex justify-between text-[11px]">
+                    <span className="text-muted-foreground truncate mr-1">{op}</span>
+                    <span className="font-semibold text-orange-600 whitespace-nowrap">₹{totalCutPieces > 0 ? (amt / totalCutPieces).toFixed(2) : '0.00'}</span>
+                  </div>
+                ));
+              })()}
+            </div>
           </CardContent>
         </Card>
         <Card>
