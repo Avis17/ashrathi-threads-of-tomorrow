@@ -185,6 +185,21 @@ export const RecordSalaryDialog = ({ open, onOpenChange, batchId, styles, editEn
             </div>
           </div>
 
+          {/* Payment Mode */}
+          <div className="space-y-1.5">
+            <Label>Payment Mode *</Label>
+            <Select value={paymentMode} onValueChange={setPaymentMode}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select payment mode..." />
+              </SelectTrigger>
+              <SelectContent>
+                {['Cash', 'UPI', 'Bank Transfer', 'Cheque'].map(mode => (
+                  <SelectItem key={mode} value={mode.toLowerCase()}>{mode}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* Notes */}
           <div className="space-y-1.5">
             <Label>Notes</Label>
