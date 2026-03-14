@@ -52,6 +52,8 @@ const JobWorkDetailPage = () => {
   const [editingOps, setEditingOps] = useState<EditableOp[] | null>(null);
   const [editProfitPercent, setEditProfitPercent] = useState(0);
   const [savingOps, setSavingOps] = useState(false);
+  const [editingReturn, setEditingReturn] = useState(false);
+  const [returnPieces, setReturnPieces] = useState<number>(0);
 
   const { data: jobWork, isLoading } = useQuery({
     queryKey: ['job-work-detail', jwId],
