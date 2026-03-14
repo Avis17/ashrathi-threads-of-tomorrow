@@ -121,8 +121,9 @@ const JobWorkDetailPage = () => {
   }
 
   const variations = (jobWork.variations || []) as Array<{ type_index: number; style_id: string; color: string; pieces: number; sizes?: string }>;
-  const confirmedPieces = jobWork.confirmed_return_pieces;
-  const billablePieces = confirmedPieces ?? jobWork.pieces;
+  const isSetItem = operations.some(op => op.operation.includes('Top')) && operations.some(op => op.operation.includes('Pant'));
+  const confirmedData = jobWork.confirmed_return_pieces as { top?: number; pant?: number; total?: number } | null;
+  const hasConfirmed = confirmedData !== null;
   const totalOperationAmount = operations.reduce((s, op) => s + (op.rate_per_piece * op.quantity), 0);
   const pricePerPiece = jobWork.pieces > 0 ? totalOperationAmount / jobWork.pieces : 0;
   const profitPerPiece = jobWork.company_profit || 0;
