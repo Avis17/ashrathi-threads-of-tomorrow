@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Briefcase, Truck, Plus, Trash2, Save, CreditCard, Pencil, CalendarIcon } from 'lucide-react';
+import { ArrowLeft, Briefcase, Truck, Plus, Trash2, Save, CreditCard, Pencil, CalendarIcon, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -17,6 +17,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import type { BatchJobWork } from '@/hooks/useJobWorks';
+import { generateJobWorkPdf } from '@/lib/jobWorkPdf';
 
 const PAYMENT_STATUSES = [
   { value: 'pending', label: 'Pending', color: 'bg-yellow-500/10 text-yellow-700 border-yellow-300' },
@@ -300,10 +301,31 @@ const JobWorkDetailPage = () => {
               </SelectContent>
             </Select>
           </div>
-          <div className="pt-4">
+          <div className="pt-4 flex gap-2">
             <Button variant="outline" onClick={handleCreateDC}>
               <Truck className="h-4 w-4 mr-2" />
               Create DC
+            </Button>
+            <Button variant="outline" onClick={async () => {
+              toast.loading('Generating PDF...');
+              try {
+                const paymentsRes = await supabase.from('job_work_payments').select('*').eq('job_work_id', jwId!).order('created_at', { ascending: false });
+                await generateJobWorkPdf({
+                  jobWork,
+                  operations,
+                  styles,
+                  payments: (paymentsRes.data || []) as any,
+                  workerInfo: matchedWorker,
+                });
+                toast.dismiss();
+                toast.success('PDF downloaded');
+              } catch (e: any) {
+                toast.dismiss();
+                toast.error(e.message || 'Failed to generate PDF');
+              }
+            }}>
+              <Download className="h-4 w-4 mr-2" />
+              Download Bill
             </Button>
           </div>
         </div>
