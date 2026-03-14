@@ -129,6 +129,29 @@ const JobWorkDetailPage = () => {
   const pricePerPiece = jobWork.pieces > 0 ? totalOperationAmount / jobWork.pieces : 0;
   const profitPerPiece = jobWork.company_profit || 0;
   const profitPercent = pricePerPiece > 0 ? (profitPerPiece / pricePerPiece) * 100 : 0;
+  const topRate = operations.find(op => op.operation.includes('Top'))?.rate_per_piece ?? 0;
+  const pantRate = operations.find(op => op.operation.includes('Pant'))?.rate_per_piece ?? 0;
+
+  const computeBillableAmount = (confirmed: { top?: number; pant?: number; total?: number } | null) => {
+    if (!confirmed) return jobWork.total_amount;
+
+    if (isSetItem) {
+      const topCount = confirmed.top ?? 0;
+      const pantCount = confirmed.pant ?? 0;
+      return (topRate * topCount) + (pantRate * pantCount) + (profitPerPiece * Math.max(topCount, pantCount));
+    }
+
+    const returnedPieces = confirmed.total ?? jobWork.pieces;
+    return returnedPieces * (pricePerPiece + profitPerPiece);
+  };
+
+  const effectiveTotalAmount = hasConfirmed ? computeBillableAmount(confirmedData) : jobWork.total_amount;
+  const effectiveBalanceAmount = effectiveTotalAmount - jobWork.paid_amount;
+  const effectiveJobWork: BatchJobWork = {
+    ...jobWork,
+    total_amount: effectiveTotalAmount,
+    balance_amount: effectiveBalanceAmount,
+  };
 
   const handleStatusChange = async (status: string) => {
     await updateMutation.mutateAsync({ id: jobWork.id, data: { payment_status: status } });
