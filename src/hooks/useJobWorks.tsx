@@ -19,7 +19,7 @@ export interface BatchJobWork {
   company_profit: number;
   work_status: string;
   variations: any;
-  confirmed_return_pieces: number | null;
+  confirmed_return_pieces: any;
   created_at: string;
   updated_at: string;
 }

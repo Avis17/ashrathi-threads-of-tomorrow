@@ -301,7 +301,7 @@ export type Database = {
           company_id: string | null
           company_name: string
           company_profit: number | null
-          confirmed_return_pieces: number | null
+          confirmed_return_pieces: Json | null
           created_at: string
           id: string
           notes: string | null
@@ -322,7 +322,7 @@ export type Database = {
           company_id?: string | null
           company_name: string
           company_profit?: number | null
-          confirmed_return_pieces?: number | null
+          confirmed_return_pieces?: Json | null
           created_at?: string
           id?: string
           notes?: string | null
@@ -343,7 +343,7 @@ export type Database = {
           company_id?: string | null
           company_name?: string
           company_profit?: number | null
-          confirmed_return_pieces?: number | null
+          confirmed_return_pieces?: Json | null
           created_at?: string
           id?: string
           notes?: string | null
