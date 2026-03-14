@@ -19,6 +19,7 @@ export interface BatchJobWork {
   company_profit: number;
   work_status: string;
   variations: any;
+  confirmed_return_pieces: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -75,7 +76,7 @@ export const useCreateJobWork = () => {
       jobWork,
       operations,
     }: {
-      jobWork: Omit<BatchJobWork, 'id' | 'total_amount' | 'balance_amount' | 'created_at' | 'updated_at'>;
+      jobWork: Omit<BatchJobWork, 'id' | 'total_amount' | 'balance_amount' | 'created_at' | 'updated_at' | 'confirmed_return_pieces'>;
       operations: Array<{ operation: string; rate_per_piece: number; quantity: number; notes?: string }>;
     }) => {
       const { data: jw, error: jwError } = await supabase

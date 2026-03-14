@@ -52,6 +52,8 @@ const JobWorkDetailPage = () => {
   const [editingOps, setEditingOps] = useState<EditableOp[] | null>(null);
   const [editProfitPercent, setEditProfitPercent] = useState(0);
   const [savingOps, setSavingOps] = useState(false);
+  const [editingReturn, setEditingReturn] = useState(false);
+  const [returnPieces, setReturnPieces] = useState<number>(0);
 
   const { data: jobWork, isLoading } = useQuery({
     queryKey: ['job-work-detail', jwId],
@@ -117,6 +119,8 @@ const JobWorkDetailPage = () => {
   }
 
   const variations = (jobWork.variations || []) as Array<{ type_index: number; style_id: string; color: string; pieces: number; sizes?: string }>;
+  const confirmedPieces = jobWork.confirmed_return_pieces;
+  const billablePieces = confirmedPieces ?? jobWork.pieces;
   const totalOperationAmount = operations.reduce((s, op) => s + (op.rate_per_piece * op.quantity), 0);
   const pricePerPiece = jobWork.pieces > 0 ? totalOperationAmount / jobWork.pieces : 0;
   const profitPerPiece = jobWork.company_profit || 0;
@@ -337,6 +341,84 @@ const JobWorkDetailPage = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Confirmed Return Pieces */}
+      <Card className="border-primary/30 bg-primary/5">
+        <CardHeader className="flex flex-row items-center justify-between pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            📦 Confirmed Return Pieces
+          </CardTitle>
+          {!editingReturn && (
+            <Button variant="outline" size="sm" onClick={() => { setEditingReturn(true); setReturnPieces(confirmedPieces ?? jobWork.pieces); }}>
+              <Pencil className="h-4 w-4 mr-1" /> {confirmedPieces !== null ? 'Edit' : 'Confirm Returns'}
+            </Button>
+          )}
+        </CardHeader>
+        <CardContent>
+          {editingReturn ? (
+            <div className="flex items-end gap-4">
+              <div className="flex-1">
+                <Label className="text-xs">Returned Pieces (out of {jobWork.pieces} sent)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={jobWork.pieces}
+                  value={returnPieces}
+                  onChange={e => setReturnPieces(parseInt(e.target.value) || 0)}
+                  className="mt-1"
+                />
+              </div>
+              <div className="text-sm text-muted-foreground">
+                Short: <span className="font-bold text-destructive">{jobWork.pieces - returnPieces}</span> pcs
+              </div>
+              <div className="flex gap-2">
+                <Button size="sm" onClick={async () => {
+                  await updateMutation.mutateAsync({ id: jobWork.id, data: { confirmed_return_pieces: returnPieces } as any });
+                  queryClient.invalidateQueries({ queryKey: ['job-work-detail', jwId] });
+                  setEditingReturn(false);
+                  toast.success(`Confirmed ${returnPieces} returned pieces`);
+                }}>
+                  <Save className="h-4 w-4 mr-1" /> Save
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => setEditingReturn(false)}>Cancel</Button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-6">
+              <div>
+                <p className="text-xs text-muted-foreground">Sent</p>
+                <p className="text-xl font-bold">{jobWork.pieces}</p>
+              </div>
+              <div className="text-2xl text-muted-foreground">→</div>
+              <div>
+                <p className="text-xs text-muted-foreground">Returned</p>
+                <p className={`text-xl font-bold ${confirmedPieces !== null ? (confirmedPieces < jobWork.pieces ? 'text-amber-600' : 'text-green-600') : 'text-muted-foreground'}`}>
+                  {confirmedPieces !== null ? confirmedPieces : 'Not confirmed'}
+                </p>
+              </div>
+              {confirmedPieces !== null && confirmedPieces < jobWork.pieces && (
+                <>
+                  <div className="text-2xl text-muted-foreground">|</div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Short</p>
+                    <p className="text-xl font-bold text-destructive">{jobWork.pieces - confirmedPieces}</p>
+                  </div>
+                </>
+              )}
+              {confirmedPieces !== null && (
+                <>
+                  <div className="text-2xl text-muted-foreground">|</div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Billable Amount</p>
+                    <p className="text-xl font-bold text-primary">₹{(billablePieces * pricePerPiece + billablePieces * profitPerPiece).toFixed(2)}</p>
+                    <p className="text-xs text-muted-foreground">({billablePieces} pcs × ₹{(pricePerPiece + profitPerPiece).toFixed(2)})</p>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Variations */}
       <Card>
