@@ -67,6 +67,7 @@ export const GiveAdvanceDialog = ({ open, onOpenChange, batchId, styles }: Props
       setStyleId('');
       setOperation('');
       setAmount('');
+      setPaymentMode('cash');
       setNotes('');
     }
     onOpenChange(openState);
