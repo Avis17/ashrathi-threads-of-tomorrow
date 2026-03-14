@@ -197,7 +197,7 @@ export const BatchProductionSection = ({
     const completed = parseInt(editCompleted) || 0;
     const mistakes = parseInt(editMistakes) || 0;
     if (completed > maxPieces) return;
-    await upsertMutation.mutateAsync({ batchId, operation, completedPieces: completed, mistakePieces: mistakes, typeIndex });
+    await upsertMutation.mutateAsync({ batchId, operation, completedPieces: completed, mistakePieces: mistakes, typeIndex, size: '' });
     setEditingKey(null);
     setEditCompleted('');
     setEditMistakes('');

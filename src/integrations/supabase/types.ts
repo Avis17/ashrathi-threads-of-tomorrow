@@ -435,6 +435,7 @@ export type Database = {
           mistake_pieces: number
           notes: string | null
           operation: string
+          size: string
           type_index: number
           updated_at: string
         }
@@ -446,6 +447,7 @@ export type Database = {
           mistake_pieces?: number
           notes?: string | null
           operation: string
+          size?: string
           type_index?: number
           updated_at?: string
         }
@@ -457,6 +459,7 @@ export type Database = {
           mistake_pieces?: number
           notes?: string | null
           operation?: string
+          size?: string
           type_index?: number
           updated_at?: string
         }
