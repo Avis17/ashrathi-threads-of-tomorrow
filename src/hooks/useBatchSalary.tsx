@@ -47,6 +47,7 @@ export const useUpsertBatchSalary = () => {
       quantity: number;
       payment_status: string;
       paid_amount: number;
+      payment_mode?: string;
       notes: string;
     }) => {
       if (entry.id) {
@@ -60,6 +61,7 @@ export const useUpsertBatchSalary = () => {
             quantity: entry.quantity,
             payment_status: entry.payment_status,
             paid_amount: entry.paid_amount,
+            payment_mode: entry.payment_mode || 'cash',
             notes: entry.notes,
           })
           .eq('id', entry.id)
@@ -79,6 +81,7 @@ export const useUpsertBatchSalary = () => {
             quantity: entry.quantity,
             payment_status: entry.payment_status,
             paid_amount: entry.paid_amount,
+            payment_mode: entry.payment_mode || 'cash',
             notes: entry.notes,
           }, { onConflict: 'batch_id,style_id,operation,description' })
           .select()

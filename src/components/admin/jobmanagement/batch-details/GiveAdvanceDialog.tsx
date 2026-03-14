@@ -35,6 +35,7 @@ export const GiveAdvanceDialog = ({ open, onOpenChange, batchId, styles }: Props
   const [styleId, setStyleId] = useState('');
   const [operation, setOperation] = useState('');
   const [amount, setAmount] = useState('');
+  const [paymentMode, setPaymentMode] = useState('cash');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [notes, setNotes] = useState('');
 
@@ -51,6 +52,7 @@ export const GiveAdvanceDialog = ({ open, onOpenChange, batchId, styles }: Props
       description: operation,
       amount: val,
       advance_date: date,
+      payment_mode: paymentMode,
       notes: notes || undefined,
     });
 
@@ -65,6 +67,7 @@ export const GiveAdvanceDialog = ({ open, onOpenChange, batchId, styles }: Props
       setStyleId('');
       setOperation('');
       setAmount('');
+      setPaymentMode('cash');
       setNotes('');
     }
     onOpenChange(openState);
@@ -130,6 +133,21 @@ export const GiveAdvanceDialog = ({ open, onOpenChange, batchId, styles }: Props
               <Label>Date *</Label>
               <Input type="date" value={date} onChange={e => setDate(e.target.value)} />
             </div>
+          </div>
+
+          {/* Payment Mode */}
+          <div className="space-y-1.5">
+            <Label>Payment Mode *</Label>
+            <Select value={paymentMode} onValueChange={setPaymentMode}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select payment mode..." />
+              </SelectTrigger>
+              <SelectContent>
+                {['Cash', 'UPI', 'Bank Transfer', 'Cheque'].map(mode => (
+                  <SelectItem key={mode} value={mode.toLowerCase()}>{mode}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Notes */}

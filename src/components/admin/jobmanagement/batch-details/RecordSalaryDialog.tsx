@@ -41,6 +41,7 @@ export const RecordSalaryDialog = ({ open, onOpenChange, batchId, styles, editEn
   const [description, setDescription] = useState('');
   const [pieces, setPieces] = useState('');
   const [ratePerPiece, setRatePerPiece] = useState('');
+  const [paymentMode, setPaymentMode] = useState('cash');
   const [deductAdvance, setDeductAdvance] = useState(true);
   const [notes, setNotes] = useState('');
 
@@ -63,6 +64,7 @@ export const RecordSalaryDialog = ({ open, onOpenChange, batchId, styles, editEn
       setDescription('');
       setPieces('');
       setRatePerPiece('');
+      setPaymentMode('cash');
       setNotes('');
       setDeductAdvance(true);
     }
@@ -96,6 +98,7 @@ export const RecordSalaryDialog = ({ open, onOpenChange, batchId, styles, editEn
       rate_per_piece: rateNum,
       quantity: piecesNum,
       payment_status: 'paid',
+      payment_mode: paymentMode,
       paid_amount: netPayable,
       notes: [
         notes,
@@ -181,6 +184,21 @@ export const RecordSalaryDialog = ({ open, onOpenChange, batchId, styles, editEn
                 step="0.5"
               />
             </div>
+          </div>
+
+          {/* Payment Mode */}
+          <div className="space-y-1.5">
+            <Label>Payment Mode *</Label>
+            <Select value={paymentMode} onValueChange={setPaymentMode}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select payment mode..." />
+              </SelectTrigger>
+              <SelectContent>
+                {['Cash', 'UPI', 'Bank Transfer', 'Cheque'].map(mode => (
+                  <SelectItem key={mode} value={mode.toLowerCase()}>{mode}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Notes */}

@@ -546,6 +546,7 @@ export type Database = {
           id: string
           notes: string | null
           operation: string
+          payment_mode: string
           style_id: string
           updated_at: string
         }
@@ -558,6 +559,7 @@ export type Database = {
           id?: string
           notes?: string | null
           operation: string
+          payment_mode?: string
           style_id: string
           updated_at?: string
         }
@@ -570,6 +572,7 @@ export type Database = {
           id?: string
           notes?: string | null
           operation?: string
+          payment_mode?: string
           style_id?: string
           updated_at?: string
         }
@@ -584,6 +587,7 @@ export type Database = {
           notes: string | null
           operation: string
           paid_amount: number
+          payment_mode: string
           payment_status: string
           quantity: number
           rate_per_piece: number
@@ -599,6 +603,7 @@ export type Database = {
           notes?: string | null
           operation: string
           paid_amount?: number
+          payment_mode?: string
           payment_status?: string
           quantity?: number
           rate_per_piece?: number
@@ -614,6 +619,7 @@ export type Database = {
           notes?: string | null
           operation?: string
           paid_amount?: number
+          payment_mode?: string
           payment_status?: string
           quantity?: number
           rate_per_piece?: number

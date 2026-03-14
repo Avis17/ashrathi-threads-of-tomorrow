@@ -60,6 +60,7 @@ export const useCreateBatchSalaryAdvance = () => {
       description: string;
       amount: number;
       advance_date: string;
+      payment_mode?: string;
       notes?: string;
     }) => {
       const { data, error } = await supabase
