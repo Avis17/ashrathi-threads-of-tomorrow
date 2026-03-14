@@ -301,10 +301,31 @@ const JobWorkDetailPage = () => {
               </SelectContent>
             </Select>
           </div>
-          <div className="pt-4">
+          <div className="pt-4 flex gap-2">
             <Button variant="outline" onClick={handleCreateDC}>
               <Truck className="h-4 w-4 mr-2" />
               Create DC
+            </Button>
+            <Button variant="outline" onClick={async () => {
+              toast.loading('Generating PDF...');
+              try {
+                const paymentsRes = await supabase.from('job_work_payments').select('*').eq('job_work_id', jwId!).order('created_at', { ascending: false });
+                await generateJobWorkPdf({
+                  jobWork,
+                  operations,
+                  styles,
+                  payments: (paymentsRes.data || []) as any,
+                  workerInfo: matchedWorker,
+                });
+                toast.dismiss();
+                toast.success('PDF downloaded');
+              } catch (e: any) {
+                toast.dismiss();
+                toast.error(e.message || 'Failed to generate PDF');
+              }
+            }}>
+              <Download className="h-4 w-4 mr-2" />
+              Download Bill
             </Button>
           </div>
         </div>
