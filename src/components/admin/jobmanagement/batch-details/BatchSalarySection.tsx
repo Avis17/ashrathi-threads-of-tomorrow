@@ -86,7 +86,7 @@ export const BatchSalarySection = ({ batchId, rollsData, cuttingSummary, totalCu
   const totalAdvances = allAdvances.reduce((sum, a) => sum + Number(a.amount), 0);
   const totalPaid = totalPaidAmount + totalAdvances;
   const totalBalance = totalSalary - totalAdvances;
-  const perPieceCost = totalCutPieces > 0 ? totalSalary / totalCutPieces : 0;
+  const perPieceCost = existingEntries.reduce((sum, e) => sum + e.rate_per_piece, 0);
   const entryCount = existingEntries.length;
   const advanceCount = allAdvances.length;
 
