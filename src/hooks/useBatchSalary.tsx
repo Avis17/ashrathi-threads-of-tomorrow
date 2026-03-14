@@ -47,6 +47,7 @@ export const useUpsertBatchSalary = () => {
       quantity: number;
       payment_status: string;
       paid_amount: number;
+      payment_mode?: string;
       notes: string;
     }) => {
       if (entry.id) {
