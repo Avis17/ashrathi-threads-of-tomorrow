@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Briefcase, Truck, Plus, Trash2, Save, CreditCard, Pencil, CalendarIcon } from 'lucide-react';
+import { ArrowLeft, Briefcase, Truck, Plus, Trash2, Save, CreditCard, Pencil, CalendarIcon, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
