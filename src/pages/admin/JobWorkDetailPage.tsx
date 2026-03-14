@@ -365,7 +365,7 @@ const JobWorkDetailPage = () => {
         <Card className="bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-200">
           <CardContent className="p-4">
             <div className="text-sm text-muted-foreground">Total Amount</div>
-            <div className="text-2xl font-bold text-green-600">₹{jobWork.total_amount.toFixed(2)}</div>
+            <div className="text-2xl font-bold text-green-600">₹{effectiveTotalAmount.toFixed(2)}</div>
           </CardContent>
         </Card>
         <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-200">
