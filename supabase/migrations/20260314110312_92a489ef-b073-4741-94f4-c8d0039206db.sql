@@ -1,0 +1,4 @@
+ALTER TABLE public.batch_operation_progress DROP CONSTRAINT IF EXISTS batch_operation_progress_batch_id_operation_type_key;
+ALTER TABLE public.batch_operation_progress DROP CONSTRAINT IF EXISTS batch_operation_progress_batch_id_operation_type_index_key;
+ALTER TABLE public.batch_operation_progress DROP CONSTRAINT IF EXISTS batch_operation_progress_batch_id_operation_type_index_size_key;
+ALTER TABLE public.batch_operation_progress ADD CONSTRAINT batch_operation_progress_batch_op_type_size_key UNIQUE (batch_id, operation, type_index, size);
