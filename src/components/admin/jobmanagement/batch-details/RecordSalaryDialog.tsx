@@ -64,6 +64,7 @@ export const RecordSalaryDialog = ({ open, onOpenChange, batchId, styles, editEn
       setDescription('');
       setPieces('');
       setRatePerPiece('');
+      setPaymentMode('cash');
       setNotes('');
       setDeductAdvance(true);
     }
