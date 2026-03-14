@@ -400,7 +400,7 @@ const BatchDetailsPage = () => {
         </TabsContent>
 
         <TabsContent value="costing" className="mt-6">
-          <BatchCostingSection batchId={id || ''} totalCutPieces={totalCutPieces} />
+          <BatchCostingSection batchId={id || ''} totalCutPieces={totalCutPieces} totalConfirmedPieces={Object.values(confirmedMap).reduce((sum, val) => sum + val, 0)} />
         </TabsContent>
 
         <TabsContent value="payments" className="mt-6">
