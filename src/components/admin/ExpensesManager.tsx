@@ -16,6 +16,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Plus, Pencil, Trash2, CheckCircle, Eye, TrendingUp, DollarSign, Clock, CheckCircle2, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { ExpenseForm } from './expenses/ExpenseForm';
