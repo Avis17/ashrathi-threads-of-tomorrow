@@ -53,6 +53,7 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
   const [piecesCut, setPiecesCut] = useState('');
   const [notes, setNotes] = useState('');
   const [deleteLogId, setDeleteLogId] = useState<string | null>(null);
+  const [deleteStaffEntryId, setDeleteStaffEntryId] = useState<string | null>(null);
   const [editingLogId, setEditingLogId] = useState<string | null>(null);
   const [editPiecesCut, setEditPiecesCut] = useState('');
   const [sizePieces, setSizePieces] = useState<SizePieces>({});
