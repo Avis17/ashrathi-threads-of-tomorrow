@@ -17,7 +17,7 @@ import { Upload, Link as LinkIcon, X, Plus, Trash2, FileText, Images } from 'luc
 import { toast } from 'sonner';
 import { Switch } from '@/components/ui/switch';
 
-const CATEGORIES = ['Men', 'Women', 'Kids', 'Unisex'];
+const CATEGORIES = ['Men', 'Women', 'Boys', 'Girls', 'Kids', 'Unisex'];
 const STYLE_NAMES = [
   'T-Shirt',
   'Polo T-Shirt',
