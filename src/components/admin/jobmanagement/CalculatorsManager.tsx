@@ -68,7 +68,7 @@ const SavedEntries = ({ calculatorType }: { calculatorType: string }) => {
           <p className="text-xs text-muted-foreground mt-1">{format(new Date(entry.created_at), 'dd MMM yyyy, hh:mm a')}</p>
         </div>
         <button
-          onClick={() => deleteMutation.mutate(entry.id)}
+          onClick={() => setDeleteId(entry.id)}
           className="p-2 rounded-md hover:bg-destructive/10 text-destructive/60 hover:text-destructive transition-colors shrink-0"
         >
           <Trash2 className="h-4 w-4" />
