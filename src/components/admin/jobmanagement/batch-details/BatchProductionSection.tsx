@@ -88,6 +88,7 @@ export const BatchProductionSection = ({
   const { data: progressData = [] } = useBatchOperationProgress(batchId);
   const { data: jobWorks = [] } = useBatchJobWorks(batchId);
   const { data: typeData } = useBatchTypeConfirmed(batchId);
+  const confirmedMap = typeData?.confirmedMap ?? {};
   const statusMap = typeData?.statusMap ?? {};
   const actualDeliveryDateMap = typeData?.actualDeliveryDateMap ?? {};
   const deliveryNotesMap = typeData?.deliveryNotesMap ?? {};
