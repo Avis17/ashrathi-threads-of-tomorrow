@@ -116,7 +116,7 @@ const BatchForm = ({ onClose }: BatchFormProps) => {
 
   const addVariation = (typeIndex: number) => {
     const currentTypes = [...types];
-    currentTypes[typeIndex].variations.push({ color: '', fabric_width: '', weight: 0, number_of_rolls: 1 });
+    currentTypes[typeIndex].variations.push({ color: '', fabric_width: '', weight: 0, number_of_rolls: 1, total_weight: 0 });
     setValue('types', currentTypes);
   };
 
