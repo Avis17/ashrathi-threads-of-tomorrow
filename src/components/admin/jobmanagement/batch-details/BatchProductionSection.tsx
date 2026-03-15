@@ -122,13 +122,15 @@ export const BatchProductionSection = ({
   const aggProgressMap: Record<string, { completed: number; mistakes: number }> = {};
   
   progressData.forEach(p => {
-    const sizeKey = `${p.type_index}-${p.operation}-${p.size || ''}`;
-    sizeProgressMap[sizeKey] = {
-      completed: p.completed_pieces,
-      mistakes: p.mistake_pieces || 0,
-    };
+    const normalizedOp = normalizeOperation(p.operation);
+    const sizeKey = `${p.type_index}-${normalizedOp}-${p.size || ''}`;
+    if (!sizeProgressMap[sizeKey]) {
+      sizeProgressMap[sizeKey] = { completed: 0, mistakes: 0 };
+    }
+    sizeProgressMap[sizeKey].completed += p.completed_pieces;
+    sizeProgressMap[sizeKey].mistakes += (p.mistake_pieces || 0);
     // Aggregate
-    const aggKey = `${p.type_index}-${p.operation}`;
+    const aggKey = `${p.type_index}-${normalizedOp}`;
     if (!aggProgressMap[aggKey]) aggProgressMap[aggKey] = { completed: 0, mistakes: 0 };
     aggProgressMap[aggKey].completed += p.completed_pieces;
     aggProgressMap[aggKey].mistakes += (p.mistake_pieces || 0);
