@@ -395,7 +395,7 @@ const BatchDetailsPage = () => {
         </TabsContent>
 
         <TabsContent value="production" className="mt-6">
-          <BatchProductionSection batchId={id || ''} operations={batchOperations} rollsData={rollsData} cuttingSummary={cuttingSummary} styleLookup={styleLookup} />
+          <BatchProductionSection batchId={id || ''} operations={batchOperations} rollsData={rollsData} cuttingSummary={cuttingSummary} cuttingSizeSummary={cuttingSizeSummary} styleLookup={styleLookup} />
         </TabsContent>
 
         <TabsContent value="salary" className="mt-6">
