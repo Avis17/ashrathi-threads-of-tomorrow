@@ -21,6 +21,19 @@ import { CuttingStatsCards } from './CuttingStatsCards';
 import { WastageEntryForm } from './WastageEntryForm';
 import { WastageLogTable } from './WastageLogTable';
 
+interface OperationProgressEntry {
+  id: string;
+  batch_id: string;
+  operation: string;
+  completed_pieces: number;
+  mistake_pieces: number;
+  type_index: number;
+  size: string;
+  notes: string | null;
+  updated_at: string;
+  created_at: string;
+}
+
 interface BatchCuttingSectionProps {
   batch: any;
   rollsData: any[];
@@ -28,9 +41,10 @@ interface BatchCuttingSectionProps {
   cuttingSummary: Record<number, number>;
   overallActualCutWastage?: number | null;
   overallActualConfirmedWastage?: number | null;
+  operationProgress?: OperationProgressEntry[];
 }
 
-export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSummary, overallActualCutWastage, overallActualConfirmedWastage }: BatchCuttingSectionProps) => {
+export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSummary, overallActualCutWastage, overallActualConfirmedWastage, operationProgress = [] }: BatchCuttingSectionProps) => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [showWastageForm, setShowWastageForm] = useState(false);
   const [selectedTypeIndex, setSelectedTypeIndex] = useState<string>('');
@@ -136,7 +150,29 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
     return map;
   }, [cuttingLogs]);
 
-  // Wastage summaries per type
+  // Staff cutting progress from batch_operation_progress table
+  const staffCuttingProgress = useMemo(() => {
+    const cuttingOps = operationProgress.filter(p => p.operation.toLowerCase() === 'cutting');
+    // Group by type_index, then by size
+    const byType: Record<number, { sizes: Record<string, { completed: number; mistakes: number; updatedAt: string }>; totalCompleted: number; totalMistakes: number }> = {};
+    cuttingOps.forEach(op => {
+      if (!byType[op.type_index]) {
+        byType[op.type_index] = { sizes: {}, totalCompleted: 0, totalMistakes: 0 };
+      }
+      const sizeKey = op.size || 'Total';
+      byType[op.type_index].sizes[sizeKey] = {
+        completed: op.completed_pieces,
+        mistakes: op.mistake_pieces,
+        updatedAt: op.updated_at,
+      };
+      byType[op.type_index].totalCompleted += op.completed_pieces;
+      byType[op.type_index].totalMistakes += op.mistake_pieces;
+    });
+    return byType;
+  }, [operationProgress]);
+
+  const hasStaffCuttingData = Object.keys(staffCuttingProgress).length > 0;
+
   const wastageSummary: Record<number, { pieces: number; actualWeight: number }> = {};
   let totalWastagePieces = 0;
   let totalActualWeight = 0;
@@ -440,6 +476,108 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
               <Button onClick={handleAddLog} disabled={!selectedTypeIndex || (sizePiecesTotal === 0 && !piecesCut) || addLogMutation.isPending}>
                 {addLogMutation.isPending ? 'Saving...' : 'Add Entry'}
               </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Staff Production Updates (from batch_operation_progress) */}
+      {hasStaffCuttingData && (
+        <Card className="border-l-4 border-l-blue-500">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <CheckCircle className="h-5 w-5 text-blue-500" />
+              Staff Cutting Updates
+              <Badge variant="outline" className="ml-2 text-xs">From Production Tracker</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {rollsData.map((type, index) => {
+                const staffData = staffCuttingProgress[index];
+                if (!staffData) return null;
+                const cutFromLogs = cuttingSummary[index] || 0;
+
+                return (
+                  <div key={index} className="p-4 rounded-lg border border-blue-200 bg-blue-50/50 dark:bg-blue-950/20 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline">{index + 1}</Badge>
+                          <h4 className="font-semibold">{type.color}</h4>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">{type.fabric_type}</p>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-lg font-bold text-blue-600 dark:text-blue-400">{staffData.totalCompleted}</div>
+                        <div className="text-xs text-muted-foreground">completed</div>
+                      </div>
+                    </div>
+
+                    {/* Comparison with cutting logs */}
+                    {cutFromLogs > 0 && (
+                      <div className="text-xs flex items-center justify-between p-2 rounded bg-muted/50">
+                        <span className="text-muted-foreground">Cutting Log Total</span>
+                        <span className="font-medium">{cutFromLogs} pcs</span>
+                      </div>
+                    )}
+
+                    {staffData.totalMistakes > 0 && (
+                      <div className="text-xs flex items-center justify-between p-2 rounded bg-destructive/10">
+                        <span className="text-destructive flex items-center gap-1">
+                          <AlertTriangle className="h-3 w-3" /> Mistakes
+                        </span>
+                        <span className="font-medium text-destructive">{staffData.totalMistakes} pcs</span>
+                      </div>
+                    )}
+
+                    {/* Size-wise breakdown */}
+                    <div className="space-y-1">
+                      <p className="text-xs font-medium text-muted-foreground">Size-wise Breakdown</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {Object.entries(staffData.sizes)
+                          .filter(([, v]) => v.completed > 0 || v.mistakes > 0)
+                          .sort(([a], [b]) => {
+                            const order = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL'];
+                            return (order.indexOf(a) === -1 ? 99 : order.indexOf(a)) - (order.indexOf(b) === -1 ? 99 : order.indexOf(b));
+                          })
+                          .map(([size, data]) => (
+                            <Badge
+                              key={size}
+                              variant="outline"
+                              className={`text-xs ${data.mistakes > 0 ? 'border-destructive/50 text-destructive' : 'border-blue-300 text-blue-700 dark:text-blue-300'}`}
+                            >
+                              {size === '' || size === 'Total' ? 'All' : size}: {data.completed}
+                              {data.mistakes > 0 && <span className="ml-1 text-destructive">({data.mistakes} err)</span>}
+                            </Badge>
+                          ))}
+                      </div>
+                    </div>
+
+                    {/* Last updated */}
+                    {Object.values(staffData.sizes).length > 0 && (
+                      <p className="text-[10px] text-muted-foreground">
+                        Last updated: {format(new Date(Object.values(staffData.sizes).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())[0].updatedAt), 'dd MMM yyyy, hh:mm a')}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Grand totals */}
+            <div className="mt-4 p-3 bg-blue-100/50 dark:bg-blue-950/30 rounded-lg flex items-center justify-between">
+              <span className="font-semibold">Staff Total Completed</span>
+              <div className="flex items-center gap-2">
+                {Object.values(staffCuttingProgress).reduce((s, d) => s + d.totalMistakes, 0) > 0 && (
+                  <Badge variant="destructive" className="text-xs">
+                    {Object.values(staffCuttingProgress).reduce((s, d) => s + d.totalMistakes, 0)} mistakes
+                  </Badge>
+                )}
+                <Badge className="text-lg px-4 py-1.5 bg-blue-600">
+                  {Object.values(staffCuttingProgress).reduce((s, d) => s + d.totalCompleted, 0)}
+                </Badge>
+              </div>
             </div>
           </CardContent>
         </Card>
