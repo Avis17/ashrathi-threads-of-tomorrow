@@ -7,9 +7,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Scissors, Plus, Trash2, Calendar, CheckCircle, AlertTriangle, Scale, Pencil, Check, X } from 'lucide-react';
+import { Scissors, Plus, Trash2, Calendar, CheckCircle, AlertTriangle, Scale, Pencil, Check, X, Users } from 'lucide-react';
 import { useAddCuttingLog, useDeleteCuttingLog, useUpdateCuttingLog, CuttingLog, SizePieces } from '@/hooks/useBatchCuttingLogs';
-import { useDeleteOperationProgress } from '@/hooks/useBatchOperationProgress';
+import { useDeleteOperationProgress, useUpsertOperationProgress } from '@/hooks/useBatchOperationProgress';
 import { useBatchCuttingWastage } from '@/hooks/useBatchCuttingWastage';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -58,12 +58,15 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
   const [editPiecesCut, setEditPiecesCut] = useState('');
   const [sizePieces, setSizePieces] = useState<SizePieces>({});
   const [customSize, setCustomSize] = useState('');
+  const [editingStaffEntryId, setEditingStaffEntryId] = useState<string | null>(null);
+  const [editStaffPieces, setEditStaffPieces] = useState('');
 
   const addLogMutation = useAddCuttingLog();
   const deleteLogMutation = useDeleteCuttingLog();
   const updateLogMutation = useUpdateCuttingLog();
   const { data: wastageEntries } = useBatchCuttingWastage(batch.id);
   const deleteOperationMutation = useDeleteOperationProgress();
+  const upsertProgressMutation = useUpsertOperationProgress();
 
   const COMMON_SIZES = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL'];
 
@@ -139,7 +142,7 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
 
   const totalCutPieces = Object.values(cuttingSummary).reduce((sum, val) => sum + val, 0);
 
-  // Aggregate size breakdown per type index
+  // Aggregate size breakdown per type index (from cutting logs)
   const sizeSummaryByType = useMemo(() => {
     const map: Record<number, SizePieces> = {};
     cuttingLogs.forEach(log => {
@@ -150,8 +153,22 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
         });
       }
     });
+    // Merge staff cutting data for types without cutting logs
+    operationProgress
+      .filter(p => p.operation.toLowerCase() === 'cutting')
+      .forEach(op => {
+        const ti = op.type_index;
+        const hasLogs = cuttingLogs.some(l => l.type_index === ti);
+        if (!hasLogs && op.completed_pieces > 0) {
+          if (!map[ti]) map[ti] = {};
+          const size = op.size || '';
+          if (size) {
+            map[ti][size] = (map[ti][size] || 0) + op.completed_pieces;
+          }
+        }
+      });
     return map;
-  }, [cuttingLogs]);
+  }, [cuttingLogs, operationProgress]);
 
   // Staff cutting progress from batch_operation_progress table
   const staffCuttingProgress = useMemo(() => {
@@ -200,12 +217,78 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
   // Count how many colors have actual weight logged
   const colorsWithActualWeight = Object.values(wastageSummary).filter(w => w.actualWeight > 0).length;
 
-  // Group logs by date
-  const logsByDate: Record<string, CuttingLog[]> = {};
-  cuttingLogs.forEach(log => {
-    if (!logsByDate[log.log_date]) logsByDate[log.log_date] = [];
-    logsByDate[log.log_date].push(log);
-  });
+  // Group logs by date, including staff entries for types without cutting logs
+  interface UnifiedCuttingEntry {
+    id: string;
+    type_index: number;
+    color: string;
+    pieces_cut: number;
+    size_pieces: SizePieces | null;
+    notes: string | null;
+    log_date: string;
+    isStaffEntry: boolean;
+    // For staff entries: keep original progress data for editing
+    staffSize?: string;
+    staffBatchId?: string;
+  }
+
+  const logsByDate = useMemo(() => {
+    const map: Record<string, UnifiedCuttingEntry[]> = {};
+    
+    // Add regular cutting logs
+    cuttingLogs.forEach(log => {
+      if (!map[log.log_date]) map[log.log_date] = [];
+      map[log.log_date].push({
+        id: log.id,
+        type_index: log.type_index,
+        color: log.color,
+        pieces_cut: log.pieces_cut,
+        size_pieces: log.size_pieces as SizePieces | null,
+        notes: log.notes,
+        log_date: log.log_date,
+        isStaffEntry: false,
+      });
+    });
+
+    // Add staff cutting entries for types that have NO cutting logs
+    const typesWithLogs = new Set(cuttingLogs.map(l => l.type_index));
+    const staffCuttingOps = operationProgress.filter(p => p.operation.toLowerCase() === 'cutting');
+    
+    // Group staff entries by type_index
+    const staffByType: Record<number, typeof staffCuttingOps> = {};
+    staffCuttingOps.forEach(op => {
+      if (!typesWithLogs.has(op.type_index)) {
+        if (!staffByType[op.type_index]) staffByType[op.type_index] = [];
+        staffByType[op.type_index].push(op);
+      }
+    });
+
+    Object.entries(staffByType).forEach(([tiStr, ops]) => {
+      const ti = parseInt(tiStr);
+      const type = rollsData[ti];
+      // Combine all size entries for this type into one unified entry
+      const totalPieces = ops.reduce((s, o) => s + o.completed_pieces, 0);
+      const sp: SizePieces = {};
+      ops.forEach(o => {
+        if (o.size && o.completed_pieces > 0) sp[o.size] = o.completed_pieces;
+      });
+      const date = ops[0]?.updated_at ? format(new Date(ops[0].updated_at), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd');
+      if (!map[date]) map[date] = [];
+      map[date].push({
+        id: `staff-${ti}`,
+        type_index: ti,
+        color: type?.color || `Type ${ti + 1}`,
+        pieces_cut: totalPieces,
+        size_pieces: Object.keys(sp).length > 0 ? sp : null,
+        notes: 'From Staff Production Tracker',
+        log_date: date,
+        isStaffEntry: true,
+        staffBatchId: batch.id,
+      });
+    });
+
+    return map;
+  }, [cuttingLogs, operationProgress, rollsData, batch.id]);
 
   // Style-wise piece counts
   const styleIds = useMemo(() => [...new Set(rollsData.map(r => r.style_id).filter(Boolean))], [rollsData]);
@@ -625,6 +708,7 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
                     <Table>
                       <TableHeader>
                         <TableRow>
+                          <TableHead>Source</TableHead>
                           <TableHead>Type</TableHead>
                           <TableHead>Color</TableHead>
                           <TableHead>Pieces</TableHead>
@@ -635,13 +719,23 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
                       </TableHeader>
                       <TableBody>
                         {logs.map((log) => {
-                          const sp = log.size_pieces as SizePieces | null;
+                          const sp = log.size_pieces;
+                          const isStaff = log.isStaffEntry;
                           return (
-                          <TableRow key={log.id}>
+                          <TableRow key={log.id} className={isStaff ? 'bg-blue-50/50 dark:bg-blue-950/10' : ''}>
+                            <TableCell>
+                              {isStaff ? (
+                                <Badge variant="outline" className="text-xs border-blue-300 text-blue-700 dark:text-blue-300">
+                                  <Users className="h-3 w-3 mr-1" /> Staff
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-xs">Admin</Badge>
+                              )}
+                            </TableCell>
                             <TableCell><Badge variant="outline">{log.type_index + 1}</Badge></TableCell>
                             <TableCell className="font-medium">{log.color}</TableCell>
                             <TableCell>
-                              {editingLogId === log.id ? (
+                              {!isStaff && editingLogId === log.id ? (
                                 <div className="flex items-center gap-1">
                                   <Input
                                     type="number"
@@ -675,7 +769,15 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
                                   </Button>
                                 </div>
                               ) : (
-                                <Badge className="cursor-pointer" onClick={() => { setEditingLogId(log.id); setEditPiecesCut(log.pieces_cut.toString()); }}>
+                                <Badge
+                                  className={`cursor-pointer ${isStaff ? 'bg-blue-600' : ''}`}
+                                  onClick={() => {
+                                    if (!isStaff) {
+                                      setEditingLogId(log.id);
+                                      setEditPiecesCut(log.pieces_cut.toString());
+                                    }
+                                  }}
+                                >
                                   {log.pieces_cut} pcs
                                 </Badge>
                               )}
@@ -696,12 +798,33 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
                             <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">{log.notes || '-'}</TableCell>
                             <TableCell>
                               <div className="flex items-center gap-1">
-                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingLogId(log.id); setEditPiecesCut(log.pieces_cut.toString()); }}>
-                                  <Pencil className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteLogId(log.id)}>
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
+                                {isStaff ? (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-destructive hover:text-destructive"
+                                    onClick={() => {
+                                      const staffOps = operationProgress.filter(
+                                        p => p.operation.toLowerCase() === 'cutting' && p.type_index === log.type_index
+                                      );
+                                      // Delete all staff cutting entries for this type
+                                      staffOps.forEach(op => {
+                                        deleteOperationMutation.mutate(op.id);
+                                      });
+                                    }}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                ) : (
+                                  <>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingLogId(log.id); setEditPiecesCut(log.pieces_cut.toString()); }}>
+                                      <Pencil className="h-4 w-4" />
+                                    </Button>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteLogId(log.id)}>
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </>
+                                )}
                               </div>
                             </TableCell>
                           </TableRow>
