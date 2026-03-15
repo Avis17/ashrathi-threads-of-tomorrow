@@ -912,8 +912,8 @@ export const BatchProductionSection = ({
                             <div className="text-sm font-bold">{(fabricWtGrams / 1000).toFixed(2)} kg</div>
                           </div>
                           <div className="bg-background rounded-lg p-3 text-center border">
-                            <div className="text-xs text-muted-foreground">Product Weight</div>
-                            <div className="text-sm font-bold">{totalProductWtGrams.toFixed(1)} g</div>
+                            <div className="text-xs text-muted-foreground">Product Weight ({totalPcs} pcs)</div>
+                            <div className="text-sm font-bold">{(totalProductWtAllPieces / 1000).toFixed(2)} kg</div>
                           </div>
                           <div className="bg-background rounded-lg p-3 text-center border">
                             <div className="text-xs text-muted-foreground">Wastage</div>
