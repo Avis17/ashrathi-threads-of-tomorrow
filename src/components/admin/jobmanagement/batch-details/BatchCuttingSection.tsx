@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Scissors, Plus, Trash2, Calendar, CheckCircle, AlertTriangle, Scale, Pencil, Check, X } from 'lucide-react';
 import { useAddCuttingLog, useDeleteCuttingLog, useUpdateCuttingLog, CuttingLog, SizePieces } from '@/hooks/useBatchCuttingLogs';
+import { useDeleteOperationProgress } from '@/hooks/useBatchOperationProgress';
 import { useBatchCuttingWastage } from '@/hooks/useBatchCuttingWastage';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
