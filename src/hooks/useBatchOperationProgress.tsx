@@ -31,6 +31,26 @@ export const useBatchOperationProgress = (batchId: string) => {
   });
 };
 
+export const useDeleteOperationProgress = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('batch_operation_progress' as any)
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['batch-operation-progress'] });
+      toast.success('Entry deleted');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to delete entry');
+    },
+  });
+};
+
 export const useUpsertOperationProgress = () => {
   const queryClient = useQueryClient();
   return useMutation({

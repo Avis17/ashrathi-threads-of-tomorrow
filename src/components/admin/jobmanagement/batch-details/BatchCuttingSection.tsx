@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Scissors, Plus, Trash2, Calendar, CheckCircle, AlertTriangle, Scale, Pencil, Check, X } from 'lucide-react';
 import { useAddCuttingLog, useDeleteCuttingLog, useUpdateCuttingLog, CuttingLog, SizePieces } from '@/hooks/useBatchCuttingLogs';
+import { useDeleteOperationProgress } from '@/hooks/useBatchOperationProgress';
 import { useBatchCuttingWastage } from '@/hooks/useBatchCuttingWastage';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -52,6 +53,7 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
   const [piecesCut, setPiecesCut] = useState('');
   const [notes, setNotes] = useState('');
   const [deleteLogId, setDeleteLogId] = useState<string | null>(null);
+  const [deleteStaffEntryId, setDeleteStaffEntryId] = useState<string | null>(null);
   const [editingLogId, setEditingLogId] = useState<string | null>(null);
   const [editPiecesCut, setEditPiecesCut] = useState('');
   const [sizePieces, setSizePieces] = useState<SizePieces>({});
@@ -61,6 +63,7 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
   const deleteLogMutation = useDeleteCuttingLog();
   const updateLogMutation = useUpdateCuttingLog();
   const { data: wastageEntries } = useBatchCuttingWastage(batch.id);
+  const deleteOperationMutation = useDeleteOperationProgress();
 
   const COMMON_SIZES = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL'];
 
@@ -154,13 +157,14 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
   const staffCuttingProgress = useMemo(() => {
     const cuttingOps = operationProgress.filter(p => p.operation.toLowerCase() === 'cutting');
     // Group by type_index, then by size
-    const byType: Record<number, { sizes: Record<string, { completed: number; mistakes: number; updatedAt: string }>; totalCompleted: number; totalMistakes: number }> = {};
+    const byType: Record<number, { sizes: Record<string, { id: string; completed: number; mistakes: number; updatedAt: string }>; totalCompleted: number; totalMistakes: number }> = {};
     cuttingOps.forEach(op => {
       if (!byType[op.type_index]) {
         byType[op.type_index] = { sizes: {}, totalCompleted: 0, totalMistakes: 0 };
       }
       const sizeKey = op.size || 'Total';
       byType[op.type_index].sizes[sizeKey] = {
+        id: op.id,
         completed: op.completed_pieces,
         mistakes: op.mistake_pieces,
         updatedAt: op.updated_at,
@@ -542,14 +546,23 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
                             return (order.indexOf(a) === -1 ? 99 : order.indexOf(a)) - (order.indexOf(b) === -1 ? 99 : order.indexOf(b));
                           })
                           .map(([size, data]) => (
-                            <Badge
-                              key={size}
-                              variant="outline"
-                              className={`text-xs ${data.mistakes > 0 ? 'border-destructive/50 text-destructive' : 'border-blue-300 text-blue-700 dark:text-blue-300'}`}
-                            >
-                              {size === '' || size === 'Total' ? 'All' : size}: {data.completed}
-                              {data.mistakes > 0 && <span className="ml-1 text-destructive">({data.mistakes} err)</span>}
-                            </Badge>
+                            <div key={size} className="flex items-center gap-0.5">
+                              <Badge
+                                variant="outline"
+                                className={`text-xs ${data.mistakes > 0 ? 'border-destructive/50 text-destructive' : 'border-blue-300 text-blue-700 dark:text-blue-300'}`}
+                              >
+                                {size === '' || size === 'Total' ? 'All' : size}: {data.completed}
+                                {data.mistakes > 0 && <span className="ml-1 text-destructive">({data.mistakes} err)</span>}
+                              </Badge>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-5 w-5 text-destructive/60 hover:text-destructive"
+                                onClick={() => setDeleteStaffEntryId(data.id)}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
                           ))}
                       </div>
                     </div>
@@ -717,6 +730,30 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteLog} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Staff Entry Confirmation */}
+      <AlertDialog open={!!deleteStaffEntryId} onOpenChange={() => setDeleteStaffEntryId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Staff Cutting Entry?</AlertDialogTitle>
+            <AlertDialogDescription>This will permanently delete this staff production update entry.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deleteStaffEntryId) {
+                  deleteOperationMutation.mutate(deleteStaffEntryId);
+                  setDeleteStaffEntryId(null);
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
