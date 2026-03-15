@@ -217,12 +217,78 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
   // Count how many colors have actual weight logged
   const colorsWithActualWeight = Object.values(wastageSummary).filter(w => w.actualWeight > 0).length;
 
-  // Group logs by date
-  const logsByDate: Record<string, CuttingLog[]> = {};
-  cuttingLogs.forEach(log => {
-    if (!logsByDate[log.log_date]) logsByDate[log.log_date] = [];
-    logsByDate[log.log_date].push(log);
-  });
+  // Group logs by date, including staff entries for types without cutting logs
+  interface UnifiedCuttingEntry {
+    id: string;
+    type_index: number;
+    color: string;
+    pieces_cut: number;
+    size_pieces: SizePieces | null;
+    notes: string | null;
+    log_date: string;
+    isStaffEntry: boolean;
+    // For staff entries: keep original progress data for editing
+    staffSize?: string;
+    staffBatchId?: string;
+  }
+
+  const logsByDate = useMemo(() => {
+    const map: Record<string, UnifiedCuttingEntry[]> = {};
+    
+    // Add regular cutting logs
+    cuttingLogs.forEach(log => {
+      if (!map[log.log_date]) map[log.log_date] = [];
+      map[log.log_date].push({
+        id: log.id,
+        type_index: log.type_index,
+        color: log.color,
+        pieces_cut: log.pieces_cut,
+        size_pieces: log.size_pieces as SizePieces | null,
+        notes: log.notes,
+        log_date: log.log_date,
+        isStaffEntry: false,
+      });
+    });
+
+    // Add staff cutting entries for types that have NO cutting logs
+    const typesWithLogs = new Set(cuttingLogs.map(l => l.type_index));
+    const staffCuttingOps = operationProgress.filter(p => p.operation.toLowerCase() === 'cutting');
+    
+    // Group staff entries by type_index
+    const staffByType: Record<number, typeof staffCuttingOps> = {};
+    staffCuttingOps.forEach(op => {
+      if (!typesWithLogs.has(op.type_index)) {
+        if (!staffByType[op.type_index]) staffByType[op.type_index] = [];
+        staffByType[op.type_index].push(op);
+      }
+    });
+
+    Object.entries(staffByType).forEach(([tiStr, ops]) => {
+      const ti = parseInt(tiStr);
+      const type = rollsData[ti];
+      // Combine all size entries for this type into one unified entry
+      const totalPieces = ops.reduce((s, o) => s + o.completed_pieces, 0);
+      const sp: SizePieces = {};
+      ops.forEach(o => {
+        if (o.size && o.completed_pieces > 0) sp[o.size] = o.completed_pieces;
+      });
+      const date = ops[0]?.updated_at ? format(new Date(ops[0].updated_at), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd');
+      if (!map[date]) map[date] = [];
+      map[date].push({
+        id: `staff-${ti}`,
+        type_index: ti,
+        color: type?.color || `Type ${ti + 1}`,
+        pieces_cut: totalPieces,
+        size_pieces: Object.keys(sp).length > 0 ? sp : null,
+        notes: 'From Staff Production Tracker',
+        log_date: date,
+        isStaffEntry: true,
+        staffBatchId: batch.id,
+      });
+    });
+
+    return map;
+  }, [cuttingLogs, operationProgress, rollsData, batch.id]);
 
   // Style-wise piece counts
   const styleIds = useMemo(() => [...new Set(rollsData.map(r => r.style_id).filter(Boolean))], [rollsData]);
