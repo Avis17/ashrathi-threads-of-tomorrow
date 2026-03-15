@@ -20,6 +20,78 @@ export interface CuttingLog {
   updated_at: string;
 }
 
+// Sync cutting log totals to batch_operation_progress for Cutting operation
+const syncCuttingToProgress = async (batchId: string) => {
+  // Fetch all cutting logs for this batch
+  const { data: logs, error: fetchError } = await supabase
+    .from('batch_cutting_logs')
+    .select('type_index, size_pieces, pieces_cut')
+    .eq('batch_id', batchId);
+  if (fetchError) {
+    console.error('Failed to fetch cutting logs for sync:', fetchError);
+    return;
+  }
+
+  // Aggregate per type_index and size
+  const totals: Record<string, { typeIndex: number; size: string; completed: number }> = {};
+  (logs || []).forEach((log: any) => {
+    const ti = log.type_index;
+    if (log.size_pieces && typeof log.size_pieces === 'object' && Object.keys(log.size_pieces).length > 0) {
+      const sp = log.size_pieces as Record<string, number>;
+      Object.entries(sp).forEach(([size, count]) => {
+        if (count > 0) {
+          const key = `${ti}-${size}`;
+          if (!totals[key]) totals[key] = { typeIndex: ti, size, completed: 0 };
+          totals[key].completed += count;
+        }
+      });
+    } else {
+      // No size_pieces, use aggregate with empty size
+      const key = `${ti}-`;
+      if (!totals[key]) totals[key] = { typeIndex: ti, size: '', completed: 0 };
+      totals[key].completed += log.pieces_cut || 0;
+    }
+  });
+
+  // Upsert each entry into batch_operation_progress
+  const upserts = Object.values(totals).map(({ typeIndex, size, completed }) => ({
+    batch_id: batchId,
+    operation: 'Cutting',
+    type_index: typeIndex,
+    size,
+    completed_pieces: completed,
+    mistake_pieces: 0,
+  }));
+
+  if (upserts.length > 0) {
+    const { error } = await supabase
+      .from('batch_operation_progress' as any)
+      .upsert(upserts, { onConflict: 'batch_id,operation,type_index,size' });
+    if (error) console.error('Failed to sync cutting to progress:', error);
+  }
+
+  // Delete Cutting progress entries for type_index/size combos that no longer exist
+  const { data: existingProgress } = await supabase
+    .from('batch_operation_progress' as any)
+    .select('id, type_index, size')
+    .eq('batch_id', batchId)
+    .eq('operation', 'Cutting');
+
+  if (existingProgress) {
+    const validKeys = new Set(Object.keys(totals));
+    const toDelete = (existingProgress as any[]).filter(p => {
+      const key = `${p.type_index}-${p.size || ''}`;
+      return !validKeys.has(key);
+    });
+    if (toDelete.length > 0) {
+      await supabase
+        .from('batch_operation_progress' as any)
+        .delete()
+        .in('id', toDelete.map((d: any) => d.id));
+    }
+  }
+};
+
 export const useBatchCuttingLogs = (batchId: string) => {
   return useQuery({
     queryKey: ['batch-cutting-logs', batchId],
@@ -57,8 +129,10 @@ export const useAddCuttingLog = () => {
       if (error) throw error;
       return log;
     },
-    onSuccess: (_, variables) => {
+    onSuccess: async (_, variables) => {
+      await syncCuttingToProgress(variables.batch_id);
       queryClient.invalidateQueries({ queryKey: ['batch-cutting-logs', variables.batch_id] });
+      queryClient.invalidateQueries({ queryKey: ['batch-operation-progress', variables.batch_id] });
       queryClient.invalidateQueries({ queryKey: ['job-batch', variables.batch_id] });
       queryClient.invalidateQueries({ queryKey: ['job-batches'] });
       toast.success('Cutting log added successfully');
@@ -82,8 +156,10 @@ export const useUpdateCuttingLog = () => {
       if (error) throw error;
       return batchId;
     },
-    onSuccess: (batchId) => {
+    onSuccess: async (batchId) => {
+      await syncCuttingToProgress(batchId);
       queryClient.invalidateQueries({ queryKey: ['batch-cutting-logs', batchId] });
+      queryClient.invalidateQueries({ queryKey: ['batch-operation-progress', batchId] });
       queryClient.invalidateQueries({ queryKey: ['job-batch', batchId] });
       queryClient.invalidateQueries({ queryKey: ['job-batches'] });
       toast.success('Cutting log updated');
@@ -105,8 +181,10 @@ export const useDeleteCuttingLog = () => {
       if (error) throw error;
       return batchId;
     },
-    onSuccess: (batchId) => {
+    onSuccess: async (batchId) => {
+      await syncCuttingToProgress(batchId);
       queryClient.invalidateQueries({ queryKey: ['batch-cutting-logs', batchId] });
+      queryClient.invalidateQueries({ queryKey: ['batch-operation-progress', batchId] });
       queryClient.invalidateQueries({ queryKey: ['job-batch', batchId] });
       queryClient.invalidateQueries({ queryKey: ['job-batches'] });
       toast.success('Cutting log deleted');
