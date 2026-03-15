@@ -15,6 +15,7 @@ import { WeightEntry, BatchDeliveryInfo, useUpsertBatchDeliveryInfo } from '@/ho
 import { toast } from 'sonner';
 
 const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL'];
+const DEFAULT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
 interface StyleGroup {
   styleId: string;
@@ -107,12 +108,14 @@ export function DeliveryDetailsDialog({
     return Math.max(0, wastage);
   }, [styleFabricWeightGrams, totalEstimatedProductWeight]);
 
+  const effectiveSizes = availableSizes.length > 0 ? availableSizes : DEFAULT_SIZES;
+
   const addWeightEntry = () => {
     setWeightEntries(prev => [
       ...prev,
       {
         id: crypto.randomUUID(),
-        size: availableSizes[0] || 'M',
+        size: effectiveSizes[0] || 'M',
         part: isSetItem ? 'top' : 'single',
         weight_grams: 0,
       },
@@ -253,7 +256,7 @@ export function DeliveryDetailsDialog({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="z-[300]">
-                      {availableSizes.map(s => (
+                      {effectiveSizes.map(s => (
                         <SelectItem key={s} value={s}>{s}</SelectItem>
                       ))}
                     </SelectContent>
