@@ -702,6 +702,125 @@ const BatchDetailsPage = () => {
                     </div>
                   )}
 
+                  {/* Individual Fabric Variations List */}
+                  <div className="space-y-3">
+                    <Label className="text-sm font-semibold">Fabric Variations ({rollsData.length})</Label>
+                    <div className="space-y-2">
+                      {rollsData.map((fabric: any, idx: number) => {
+                        const fabricWeight = (Number(fabric.number_of_rolls) || 0) * (Number(fabric.weight) || 0);
+                        const isEditing = editingFabricIndex === idx;
+                        return (
+                          <div key={idx} className="border rounded-lg p-4 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <Badge variant="outline" className="text-xs">{idx + 1}</Badge>
+                                <span className="font-semibold">{fabric.color}</span>
+                                <span className="text-sm text-muted-foreground">• {fabric.fabric_type} • {fabric.gsm} GSM</span>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  if (isEditing) {
+                                    setEditingFabricIndex(null);
+                                    setEditingFabricForm(null);
+                                  } else {
+                                    setEditingFabricIndex(idx);
+                                    setEditingFabricForm({ ...fabric });
+                                  }
+                                }}
+                              >
+                                {isEditing ? <Save className="h-4 w-4 mr-1" /> : <Edit className="h-4 w-4 mr-1" />}
+                                {isEditing ? 'Cancel' : 'Edit'}
+                              </Button>
+                            </div>
+
+                            {isEditing && editingFabricForm ? (
+                              <div className="space-y-3 pt-2 border-t">
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                  <div className="space-y-1">
+                                    <Label className="text-xs">Color</Label>
+                                    <Input className="h-8" value={editingFabricForm.color || ''} onChange={(e) => setEditingFabricForm({ ...editingFabricForm, color: e.target.value })} />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label className="text-xs">Fabric Type</Label>
+                                    <Input className="h-8" value={editingFabricForm.fabric_type || ''} onChange={(e) => setEditingFabricForm({ ...editingFabricForm, fabric_type: e.target.value })} />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label className="text-xs">GSM</Label>
+                                    <Input className="h-8" value={editingFabricForm.gsm || ''} onChange={(e) => setEditingFabricForm({ ...editingFabricForm, gsm: e.target.value })} />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label className="text-xs">Fabric Width</Label>
+                                    <Input className="h-8" value={editingFabricForm.fabric_width || ''} onChange={(e) => setEditingFabricForm({ ...editingFabricForm, fabric_width: e.target.value })} />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label className="text-xs">Number of Rolls</Label>
+                                    <Input className="h-8" type="number" min="1" value={editingFabricForm.number_of_rolls || ''} onChange={(e) => setEditingFabricForm({ ...editingFabricForm, number_of_rolls: parseInt(e.target.value) || 0 })} />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label className="text-xs">Weight per Roll (kg)</Label>
+                                    <Input className="h-8" type="number" min="0" step="0.1" value={editingFabricForm.weight || ''} onChange={(e) => setEditingFabricForm({ ...editingFabricForm, weight: parseFloat(e.target.value) || 0 })} />
+                                  </div>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm text-muted-foreground">
+                                    Total: {((editingFabricForm.number_of_rolls || 0) * (editingFabricForm.weight || 0)).toFixed(2)} kg
+                                  </span>
+                                  <Button
+                                    size="sm"
+                                    onClick={async () => {
+                                      const updatedRolls = [...rollsData];
+                                      updatedRolls[idx] = editingFabricForm;
+                                      const totalWeight = updatedRolls.reduce((s: number, r: any) => s + (Number(r.number_of_rolls) || 0) * (Number(r.weight) || 0), 0);
+                                      const totalRolls = updatedRolls.reduce((s: number, r: any) => s + (Number(r.number_of_rolls) || 0), 0);
+                                      await updateBatchMutation.mutateAsync({
+                                        id: id!,
+                                        data: {
+                                          rolls_data: updatedRolls as any,
+                                          total_fabric_received_kg: totalWeight,
+                                          number_of_rolls: totalRolls,
+                                          fabric_type: updatedRolls[0]?.fabric_type || batch.fabric_type,
+                                          gsm: updatedRolls[0]?.gsm || batch.gsm,
+                                          color: updatedRolls[0]?.color || batch.color,
+                                        },
+                                      });
+                                      setEditingFabricIndex(null);
+                                      setEditingFabricForm(null);
+                                    }}
+                                    disabled={updateBatchMutation.isPending}
+                                  >
+                                    <Save className="h-3.5 w-3.5 mr-1" />
+                                    Save Fabric
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">Width:</span>
+                                  <span className="font-medium">{fabric.fabric_width || 'N/A'}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">Rolls:</span>
+                                  <span className="font-medium">{fabric.number_of_rolls}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">Wt/Roll:</span>
+                                  <span className="font-medium">{fabric.weight} kg</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">Total:</span>
+                                  <span className="font-semibold">{fabricWeight.toFixed(2)} kg</span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
                   {/* Editable fields */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
