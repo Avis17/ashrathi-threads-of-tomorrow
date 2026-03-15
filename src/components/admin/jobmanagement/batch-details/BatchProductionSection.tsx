@@ -93,6 +93,7 @@ export const BatchProductionSection = ({
   const deliveryNotesMap = typeData?.deliveryNotesMap ?? {};
   const upsertMutation = useUpsertOperationProgress();
   const upsertStatusMutation = useUpsertDeliveryStatus();
+  const updateBatchMutation = useUpdateJobBatch();
 
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [editValues, setEditValues] = useState<Record<string, { completed: string; mistakes: string }>>({});
@@ -100,6 +101,10 @@ export const BatchProductionSection = ({
   const [openStyles, setOpenStyles] = useState<Record<string, boolean>>({});
   const [openColors, setOpenColors] = useState<Record<number, boolean>>({});
   const [openOps, setOpenOps] = useState<Record<string, boolean>>({});
+
+  // Operations editing state
+  const [opsEditingTypeIndex, setOpsEditingTypeIndex] = useState<number | null>(null);
+  const [opsEditingValues, setOpsEditingValues] = useState<string[]>([]);
 
   // Delivery dialog state
   const [deliveryDialogStyle, setDeliveryDialogStyle] = useState<StyleGroup | null>(null);
