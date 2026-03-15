@@ -37,6 +37,8 @@ import { useBatchJobWorks } from '@/hooks/useJobWorks';
 import { useUpdateJobBatch } from '@/hooks/useJobBatches';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useBatchTypeConfirmed, useUpsertDeliveryStatus, DELIVERY_STATUSES, DeliveryStatus } from '@/hooks/useBatchTypeConfirmed';
+import { useBatchDeliveryInfo, BatchDeliveryInfo } from '@/hooks/useBatchDeliveryInfo';
+import { DeliveryDetailsDialog } from './DeliveryDetailsDialog';
 import { differenceInDays, format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -133,6 +135,7 @@ export const BatchProductionSection = ({
   const { data: progressData = [] } = useBatchOperationProgress(batchId);
   const { data: jobWorks = [] } = useBatchJobWorks(batchId);
   const { data: typeData } = useBatchTypeConfirmed(batchId);
+  const { data: deliveryInfoList = [] } = useBatchDeliveryInfo(batchId);
   const confirmedMap = typeData?.confirmedMap ?? {};
   const statusMap = typeData?.statusMap ?? {};
   const actualDeliveryDateMap = typeData?.actualDeliveryDateMap ?? {};
@@ -140,6 +143,10 @@ export const BatchProductionSection = ({
   const upsertMutation = useUpsertOperationProgress();
   const upsertStatusMutation = useUpsertDeliveryStatus();
   const updateBatchMutation = useUpdateJobBatch();
+
+  // Build delivery info lookup by style_id
+  const deliveryInfoMap: Record<string, BatchDeliveryInfo> = {};
+  deliveryInfoList.forEach(info => { deliveryInfoMap[info.style_id] = info; });
 
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [editValues, setEditValues] = useState<Record<string, { completed: string; mistakes: string }>>({});
@@ -159,9 +166,6 @@ export const BatchProductionSection = ({
 
   // Delivery dialog state
   const [deliveryDialogStyle, setDeliveryDialogStyle] = useState<StyleGroup | null>(null);
-  const [deliveryDialogDate, setDeliveryDialogDate] = useState<Date | undefined>(undefined);
-  const [deliveryDialogNotes, setDeliveryDialogNotes] = useState('');
-  const [calendarOpen, setCalendarOpen] = useState(false);
 
   // --- Build job work lookup ---
   const jobWorkByType: Record<number, string[]> = {};
@@ -315,34 +319,33 @@ export const BatchProductionSection = ({
     deliveryNotesMap[sg.typeIndices[0]] || null;
 
   const openDeliveryDialog = (sg: StyleGroup) => {
-    const existingDate = getStyleActualDeliveryDate(sg);
-    const existingNotes = getStyleDeliveryNotes(sg);
     setDeliveryDialogStyle(sg);
-    setDeliveryDialogDate(existingDate ? parseISO(existingDate) : undefined);
-    setDeliveryDialogNotes(existingNotes || '');
-    setCalendarOpen(false);
   };
 
   const closeDeliveryDialog = () => {
     setDeliveryDialogStyle(null);
-    setDeliveryDialogDate(undefined);
-    setDeliveryDialogNotes('');
-    setCalendarOpen(false);
   };
 
-  const handleConfirmDelivery = () => {
+  const handleConfirmDeliveryFromDialog = (dateStr: string | null, notes: string | null) => {
     if (!deliveryDialogStyle) return;
-    const dateStr = deliveryDialogDate ? format(deliveryDialogDate, 'yyyy-MM-dd') : null;
     deliveryDialogStyle.typeIndices.forEach(idx => {
       upsertStatusMutation.mutate({
         batchId,
         typeIndex: idx,
         deliveryStatus: 'delivered',
         actualDeliveryDate: dateStr,
-        deliveryNotes: deliveryDialogNotes || null,
+        deliveryNotes: notes,
       });
     });
     closeDeliveryDialog();
+  };
+
+  const getStyleAvailableSizes = (sg: StyleGroup): string[] => {
+    const allSizes = new Set<string>();
+    sg.typeIndices.forEach(idx => {
+      getTypeSizes(idx).forEach(s => allSizes.add(s));
+    });
+    return SIZE_ORDER.filter(s => allSizes.has(s));
   };
 
   const handleSetStyleStatus = (sg: StyleGroup, status: DeliveryStatus) => {
@@ -850,6 +853,80 @@ export const BatchProductionSection = ({
                       </div>
                     </div>
                   )}
+
+                  {/* Delivery Info Card */}
+                  {(() => {
+                    const dInfo = deliveryInfoMap[sg.styleId];
+                    if (!dInfo || (dInfo.pieces_given === 0 && dInfo.sample_pieces_given === 0 && dInfo.weight_entries.length === 0)) return null;
+                    const totalPcs = dInfo.pieces_given + dInfo.sample_pieces_given;
+                    const totalProductWt = dInfo.total_product_weight_grams * totalPcs;
+                    const fabricWtGrams = dInfo.total_fabric_weight_grams;
+                    const wastageWt = fabricWtGrams - totalProductWt;
+                    return (
+                      <div className="border rounded-lg p-4 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Truck className="h-4 w-4 text-blue-600" />
+                          <span className="text-sm font-semibold">Delivery & Wastage Summary</span>
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                          <div className="bg-background rounded-lg p-3 text-center border">
+                            <div className="text-xs text-muted-foreground">Pieces Given</div>
+                            <div className="text-lg font-bold">{dInfo.pieces_given}</div>
+                          </div>
+                          <div className="bg-background rounded-lg p-3 text-center border">
+                            <div className="text-xs text-muted-foreground">Sample Pieces</div>
+                            <div className="text-lg font-bold">{dInfo.sample_pieces_given}</div>
+                          </div>
+                          <div className="bg-background rounded-lg p-3 text-center border">
+                            <div className="text-xs text-muted-foreground">Total Pieces</div>
+                            <div className="text-lg font-bold text-primary">{totalPcs}</div>
+                          </div>
+                          <div className="bg-background rounded-lg p-3 text-center border">
+                            <div className="text-xs text-muted-foreground">Wt / Piece</div>
+                            <div className="text-lg font-bold">{dInfo.total_product_weight_grams.toFixed(1)}g</div>
+                          </div>
+                        </div>
+                        {dInfo.weight_entries.length > 0 && (
+                          <div className="space-y-2">
+                            <div className="text-xs font-medium text-muted-foreground">Size-wise Weight Breakdown</div>
+                            <div className="flex flex-wrap gap-2">
+                              {dInfo.weight_entries.map((w, i) => (
+                                <Badge key={i} variant="secondary" className="text-xs gap-1">
+                                  {w.size}{w.part !== 'single' ? ` (${w.part})` : ''}: {w.weight_grams}g
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 border-t">
+                          <div className="bg-background rounded-lg p-3 text-center border">
+                            <div className="text-xs text-muted-foreground">Fabric Issued</div>
+                            <div className="text-sm font-bold">{(fabricWtGrams / 1000).toFixed(2)} kg</div>
+                          </div>
+                          <div className="bg-background rounded-lg p-3 text-center border">
+                            <div className="text-xs text-muted-foreground">Product Weight</div>
+                            <div className="text-sm font-bold">{(totalProductWt / 1000).toFixed(2)} kg</div>
+                          </div>
+                          <div className="bg-background rounded-lg p-3 text-center border">
+                            <div className="text-xs text-muted-foreground">Wastage</div>
+                            <div className="text-sm font-bold">{(wastageWt / 1000).toFixed(2)} kg</div>
+                          </div>
+                          <div className={cn(
+                            "bg-background rounded-lg p-3 text-center border",
+                            dInfo.fabric_wastage_percent > 20 ? 'border-destructive/50' : dInfo.fabric_wastage_percent > 10 ? 'border-amber-400' : 'border-green-400'
+                          )}>
+                            <div className="text-xs text-muted-foreground">Wastage %</div>
+                            <div className={cn(
+                              "text-lg font-bold",
+                              dInfo.fabric_wastage_percent > 20 ? 'text-destructive' : dInfo.fabric_wastage_percent > 10 ? 'text-amber-600' : 'text-green-600'
+                            )}>
+                              {dInfo.fabric_wastage_percent.toFixed(2)}%
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   {/* Color/Variant Cards */}
                   <div className="grid gap-4">
@@ -1394,74 +1471,20 @@ export const BatchProductionSection = ({
       })}
 
       {/* Delivery Details Dialog */}
-      <Dialog open={!!deliveryDialogStyle} onOpenChange={(open) => { if (!open) closeDeliveryDialog(); }}>
-        <DialogContent className="sm:max-w-md" onClick={(e) => e.stopPropagation()}>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Truck className="h-5 w-5 text-blue-600" />
-              Delivery Details
-            </DialogTitle>
-            {deliveryDialogStyle && (
-              <p className="text-sm text-muted-foreground">{deliveryDialogStyle.styleName}</p>
-            )}
-          </DialogHeader>
-
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Delivery Date</Label>
-              <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn('w-full justify-start text-left font-normal', !deliveryDialogDate && 'text-muted-foreground')}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {deliveryDialogDate ? format(deliveryDialogDate, 'dd MMM yyyy') : 'Pick a date'}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent
-                  className="w-auto p-0 z-[300]"
-                  align="start"
-                  onInteractOutside={(e) => e.preventDefault()}
-                >
-                  <Calendar
-                    mode="single"
-                    selected={deliveryDialogDate}
-                    onSelect={(date) => {
-                      setDeliveryDialogDate(date);
-                      setCalendarOpen(false);
-                    }}
-                    initialFocus
-                    className="p-3 pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-sm font-medium flex items-center gap-1.5">
-                <StickyNote className="h-3.5 w-3.5" />
-                Delivery Notes
-              </Label>
-              <Textarea
-                placeholder="Add any delivery notes, remarks or observations..."
-                value={deliveryDialogNotes}
-                onChange={(e) => setDeliveryDialogNotes(e.target.value)}
-                rows={3}
-                className="resize-none"
-              />
-            </div>
-          </div>
-
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={closeDeliveryDialog}>Cancel</Button>
-            <Button onClick={handleConfirmDelivery} className="gap-2">
-              <Truck className="h-4 w-4" />
-              Confirm Delivery
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <DeliveryDetailsDialog
+        open={!!deliveryDialogStyle}
+        onOpenChange={(open) => { if (!open) closeDeliveryDialog(); }}
+        styleGroup={deliveryDialogStyle}
+        batchId={batchId}
+        existingDate={deliveryDialogStyle ? getStyleActualDeliveryDate(deliveryDialogStyle) : null}
+        existingNotes={deliveryDialogStyle ? getStyleDeliveryNotes(deliveryDialogStyle) : null}
+        existingDeliveryInfo={deliveryDialogStyle ? (deliveryInfoMap[deliveryDialogStyle.styleId] || null) : null}
+        rollsData={rollsData}
+        totalFabricWeightKg={0}
+        isSetItem={deliveryDialogStyle ? (rollsData[deliveryDialogStyle.typeIndices[0]]?.is_set_item || false) : false}
+        availableSizes={deliveryDialogStyle ? getStyleAvailableSizes(deliveryDialogStyle) : []}
+        onConfirmDelivery={handleConfirmDeliveryFromDialog}
+      />
     </div>
   );
 };
