@@ -740,48 +740,27 @@ export const BatchProductionSection = ({
                   {opsEditingStyleId === sg.styleId && (
                     <div className="border rounded-lg p-3 bg-muted/30 space-y-3 mx-1">
                       <div className="text-sm font-medium">Configure Operations for {sg.styleName}</div>
-                      {/* Standard operations */}
-                      <div className="grid grid-cols-3 gap-2">
-                        {STANDARD_OPERATIONS.map(op => (
-                          <label key={op} className="flex items-center gap-2 cursor-pointer">
-                            <Checkbox
-                              checked={opsEditingValues.includes(op)}
-                              onCheckedChange={(checked) => {
-                                if (checked) {
-                                  // Insert in standard order position, then append customs after
-                                  const standardInList = STANDARD_OPERATIONS.filter(
-                                    o => opsEditingValues.includes(o) || o === op
-                                  );
-                                  const customs = opsEditingValues.filter(o => !STANDARD_OPERATIONS.includes(o));
-                                  setOpsEditingValues([...standardInList, ...customs]);
-                                } else {
-                                  setOpsEditingValues(prev => prev.filter(o => o !== op));
-                                }
-                              }}
-                            />
-                            <span className="text-sm">{op}</span>
-                          </label>
-                        ))}
-                      </div>
-                      {/* Custom operations already added */}
-                      {opsEditingValues.filter(o => !STANDARD_OPERATIONS.includes(o)).length > 0 && (
-                        <div className="space-y-1">
-                          <span className="text-xs text-muted-foreground font-medium">Custom Operations</span>
-                          <div className="flex flex-wrap gap-2">
-                            {opsEditingValues.filter(o => !STANDARD_OPERATIONS.includes(o)).map(op => (
-                              <Badge key={op} variant="secondary" className="text-xs gap-1.5 pr-1">
-                                {op}
-                                <button
-                                  className="ml-1 hover:text-red-500 text-muted-foreground"
-                                  onClick={() => setOpsEditingValues(prev => prev.filter(o => o !== op))}
-                                >
-                                  ×
-                                </button>
-                              </Badge>
-                            ))}
-                          </div>
+                      {/* Add operations: standard checkboxes */}
+                      <div className="space-y-1.5">
+                        <span className="text-xs text-muted-foreground font-medium">Add Operations</span>
+                        <div className="grid grid-cols-3 gap-2">
+                          {STANDARD_OPERATIONS.map(op => (
+                            <label key={op} className="flex items-center gap-2 cursor-pointer">
+                              <Checkbox
+                                checked={opsEditingValues.includes(op)}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    setOpsEditingValues(prev => [...prev, op]);
+                                  } else {
+                                    setOpsEditingValues(prev => prev.filter(o => o !== op));
+                                  }
+                                }}
+                              />
+                              <span className="text-sm">{op}</span>
+                            </label>
+                          ))}
                         </div>
-                      )}
+                      </div>
                       {/* Add custom operation input */}
                       <div className="flex items-center gap-2">
                         <Input
@@ -817,6 +796,39 @@ export const BatchProductionSection = ({
                           + Add
                         </Button>
                       </div>
+                      {/* Sortable selected operations list */}
+                      {opsEditingValues.length > 0 && (
+                        <div className="space-y-1.5">
+                          <span className="text-xs text-muted-foreground font-medium">Operation Order (drag to reorder)</span>
+                          <DndContext
+                            sensors={useSensors(
+                              useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+                              useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+                            )}
+                            collisionDetection={closestCenter}
+                            onDragEnd={(event: DragEndEvent) => {
+                              const { active, over } = event;
+                              if (over && active.id !== over.id) {
+                                const oldIdx = opsEditingValues.indexOf(String(active.id));
+                                const newIdx = opsEditingValues.indexOf(String(over.id));
+                                setOpsEditingValues(arrayMove(opsEditingValues, oldIdx, newIdx));
+                              }
+                            }}
+                          >
+                            <SortableContext items={opsEditingValues} strategy={verticalListSortingStrategy}>
+                              <div className="space-y-1">
+                                {opsEditingValues.map((op) => (
+                                  <SortableOperationItem
+                                    key={op}
+                                    id={op}
+                                    onRemove={(id) => setOpsEditingValues(prev => prev.filter(o => o !== id))}
+                                  />
+                                ))}
+                              </div>
+                            </SortableContext>
+                          </DndContext>
+                        </div>
+                      )}
                       <div className="flex items-center gap-2">
                         <Button
                           size="sm"
