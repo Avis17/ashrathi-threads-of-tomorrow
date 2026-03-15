@@ -735,6 +735,30 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Delete Staff Entry Confirmation */}
+      <AlertDialog open={!!deleteStaffEntryId} onOpenChange={() => setDeleteStaffEntryId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Staff Cutting Entry?</AlertDialogTitle>
+            <AlertDialogDescription>This will permanently delete this staff production update entry.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deleteStaffEntryId) {
+                  deleteOperationMutation.mutate(deleteStaffEntryId);
+                  setDeleteStaffEntryId(null);
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
