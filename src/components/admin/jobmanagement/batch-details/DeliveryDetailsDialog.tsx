@@ -15,6 +15,7 @@ import { WeightEntry, BatchDeliveryInfo, useUpsertBatchDeliveryInfo } from '@/ho
 import { toast } from 'sonner';
 
 const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL'];
+const DEFAULT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
 interface StyleGroup {
   styleId: string;
