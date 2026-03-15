@@ -61,15 +61,15 @@ export function DeliveryDetailsDialog({
 
   const upsertMutation = useUpsertBatchDeliveryInfo();
 
-  // Calculate total fabric weight for this style's types (sum of weight_per_roll * rolls for each type)
+  // Calculate total fabric weight for this style's types (sum of weight_per_roll * number_of_rolls for each type)
   const styleFabricWeightGrams = useMemo(() => {
     if (!styleGroup) return 0;
     let totalGrams = 0;
     styleGroup.typeIndices.forEach(idx => {
       const type = rollsData[idx];
       if (type) {
-        const weightPerRollKg = parseFloat(type.weight_per_roll) || 0;
-        const rolls = parseInt(type.rolls) || 0;
+        const weightPerRollKg = parseFloat(type.weight) || 0;
+        const rolls = parseInt(type.number_of_rolls) || 0;
         totalGrams += weightPerRollKg * rolls * 1000;
       }
     });
