@@ -219,9 +219,16 @@ export default function ExpensesManager() {
     setIsDialogOpen(true);
   };
 
+  const [deleteExpenseId, setDeleteExpenseId] = useState<string | null>(null);
+
   const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this expense?')) {
-      deleteMutation.mutate(id);
+    setDeleteExpenseId(id);
+  };
+
+  const confirmDelete = () => {
+    if (deleteExpenseId) {
+      deleteMutation.mutate(deleteExpenseId);
+      setDeleteExpenseId(null);
     }
   };
 
