@@ -154,7 +154,7 @@ const BatchDetailsPage = () => {
     }
   });
 
-  // Merge staff cutting progress (from batch_operation_progress) for types without cutting logs
+  // Merge staff cutting progress (from batch_operation_progress) for sizes not already in cutting logs
   if (operationProgress) {
     const staffCutting = operationProgress.filter(p => {
       const op = p.operation?.toLowerCase().replace(/\s+/g, '');
@@ -162,13 +162,17 @@ const BatchDetailsPage = () => {
     });
     staffCutting.forEach(p => {
       const ti = p.type_index;
-      // Only use staff data if no cutting log exists for this type_index
-      if (!cuttingSummary[ti] || cuttingSummary[ti] === 0) {
-        if (!cuttingSizeSummary[ti]) cuttingSizeSummary[ti] = {};
-        const size = p.size || '';
-        if (size && p.completed_pieces > 0) {
+      const size = p.size || '';
+      if (size && p.completed_pieces > 0) {
+        // Only add staff data for sizes NOT already tracked by cutting logs
+        const existingFromLogs = cuttingSizeSummary[ti]?.[size] || 0;
+        if (existingFromLogs === 0) {
+          if (!cuttingSizeSummary[ti]) cuttingSizeSummary[ti] = {};
           cuttingSizeSummary[ti][size] = (cuttingSizeSummary[ti][size] || 0) + p.completed_pieces;
+          cuttingSummary[ti] = (cuttingSummary[ti] || 0) + p.completed_pieces;
         }
+      } else if (!size && p.completed_pieces > 0 && (!cuttingSummary[ti] || cuttingSummary[ti] === 0)) {
+        // No size specified, only use if no cutting logs at all for this type
         cuttingSummary[ti] = (cuttingSummary[ti] || 0) + p.completed_pieces;
       }
     });
