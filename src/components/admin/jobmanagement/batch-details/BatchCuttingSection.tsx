@@ -44,7 +44,7 @@ interface BatchCuttingSectionProps {
   operationProgress?: OperationProgressEntry[];
 }
 
-export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSummary, overallActualCutWastage, overallActualConfirmedWastage }: BatchCuttingSectionProps) => {
+export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSummary, overallActualCutWastage, overallActualConfirmedWastage, operationProgress = [] }: BatchCuttingSectionProps) => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [showWastageForm, setShowWastageForm] = useState(false);
   const [selectedTypeIndex, setSelectedTypeIndex] = useState<string>('');
