@@ -108,12 +108,14 @@ export function DeliveryDetailsDialog({
     return Math.max(0, wastage);
   }, [styleFabricWeightGrams, totalEstimatedProductWeight]);
 
+  const effectiveSizes = availableSizes.length > 0 ? availableSizes : DEFAULT_SIZES;
+
   const addWeightEntry = () => {
     setWeightEntries(prev => [
       ...prev,
       {
         id: crypto.randomUUID(),
-        size: availableSizes[0] || 'M',
+        size: effectiveSizes[0] || 'M',
         part: isSetItem ? 'top' : 'single',
         weight_grams: 0,
       },
