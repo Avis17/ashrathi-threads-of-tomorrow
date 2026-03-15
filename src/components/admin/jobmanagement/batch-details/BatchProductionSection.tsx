@@ -166,9 +166,6 @@ export const BatchProductionSection = ({
 
   // Delivery dialog state
   const [deliveryDialogStyle, setDeliveryDialogStyle] = useState<StyleGroup | null>(null);
-  const [deliveryDialogDate, setDeliveryDialogDate] = useState<Date | undefined>(undefined);
-  const [deliveryDialogNotes, setDeliveryDialogNotes] = useState('');
-  const [calendarOpen, setCalendarOpen] = useState(false);
 
   // --- Build job work lookup ---
   const jobWorkByType: Record<number, string[]> = {};
