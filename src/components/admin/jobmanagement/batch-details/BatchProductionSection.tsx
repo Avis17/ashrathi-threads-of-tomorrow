@@ -322,34 +322,33 @@ export const BatchProductionSection = ({
     deliveryNotesMap[sg.typeIndices[0]] || null;
 
   const openDeliveryDialog = (sg: StyleGroup) => {
-    const existingDate = getStyleActualDeliveryDate(sg);
-    const existingNotes = getStyleDeliveryNotes(sg);
     setDeliveryDialogStyle(sg);
-    setDeliveryDialogDate(existingDate ? parseISO(existingDate) : undefined);
-    setDeliveryDialogNotes(existingNotes || '');
-    setCalendarOpen(false);
   };
 
   const closeDeliveryDialog = () => {
     setDeliveryDialogStyle(null);
-    setDeliveryDialogDate(undefined);
-    setDeliveryDialogNotes('');
-    setCalendarOpen(false);
   };
 
-  const handleConfirmDelivery = () => {
+  const handleConfirmDeliveryFromDialog = (dateStr: string | null, notes: string | null) => {
     if (!deliveryDialogStyle) return;
-    const dateStr = deliveryDialogDate ? format(deliveryDialogDate, 'yyyy-MM-dd') : null;
     deliveryDialogStyle.typeIndices.forEach(idx => {
       upsertStatusMutation.mutate({
         batchId,
         typeIndex: idx,
         deliveryStatus: 'delivered',
         actualDeliveryDate: dateStr,
-        deliveryNotes: deliveryDialogNotes || null,
+        deliveryNotes: notes,
       });
     });
     closeDeliveryDialog();
+  };
+
+  const getStyleAvailableSizes = (sg: StyleGroup): string[] => {
+    const allSizes = new Set<string>();
+    sg.typeIndices.forEach(idx => {
+      getTypeSizes(idx).forEach(s => allSizes.add(s));
+    });
+    return SIZE_ORDER.filter(s => allSizes.has(s));
   };
 
   const handleSetStyleStatus = (sg: StyleGroup, status: DeliveryStatus) => {
