@@ -772,7 +772,7 @@ export const BatchProductionSection = ({
                                                             )}
                                                           </div>
 
-                                                          {isEditingThis ? (
+                                                          {op !== 'Cutting' && (isEditingThis ? (
                                                             <div className="space-y-2 pt-1">
                                                               <div className="flex items-center gap-2">
                                                                 <div className="flex-1">
@@ -841,7 +841,7 @@ export const BatchProductionSection = ({
                                                             >
                                                               Update
                                                             </Button>
-                                                          )}
+                                                          ))}
                                                         </div>
                                                       );
                                                     })}
