@@ -102,8 +102,8 @@ export const BatchProductionSection = ({
   const [openColors, setOpenColors] = useState<Record<number, boolean>>({});
   const [openOps, setOpenOps] = useState<Record<string, boolean>>({});
 
-  // Operations editing state
-  const [opsEditingTypeIndex, setOpsEditingTypeIndex] = useState<number | null>(null);
+  // Operations editing state (per style)
+  const [opsEditingStyleId, setOpsEditingStyleId] = useState<string | null>(null);
   const [opsEditingValues, setOpsEditingValues] = useState<string[]>([]);
 
   // Delivery dialog state
