@@ -16,6 +16,7 @@ import {
 // ─── Saved Entries List ───
 const SavedEntries = ({ calculatorType }: { calculatorType: string }) => {
   const queryClient = useQueryClient();
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const { data: entries } = useQuery({
     queryKey: ['calculator-entries', calculatorType],
