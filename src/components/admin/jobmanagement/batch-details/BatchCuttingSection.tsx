@@ -882,6 +882,35 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Delete All Staff Cutting Entries for a Type */}
+      <AlertDialog open={deleteStaffTypeIndex !== null} onOpenChange={() => setDeleteStaffTypeIndex(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Staff Cutting Entries?</AlertDialogTitle>
+            <AlertDialogDescription>All staff cutting entries for this color will be removed. This action cannot be undone.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deleteStaffTypeIndex !== null) {
+                  const staffOps = operationProgress.filter(
+                    p => p.operation.toLowerCase() === 'cutting' && p.type_index === deleteStaffTypeIndex
+                  );
+                  staffOps.forEach(op => {
+                    deleteOperationMutation.mutate(op.id);
+                  });
+                  setDeleteStaffTypeIndex(null);
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
