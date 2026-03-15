@@ -152,6 +152,10 @@ export const BatchProductionSection = ({
   const [opsEditingStyleId, setOpsEditingStyleId] = useState<string | null>(null);
   const [opsEditingValues, setOpsEditingValues] = useState<string[]>([]);
   const [customOpInput, setCustomOpInput] = useState('');
+  const opsDndSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
   // Delivery dialog state
   const [deliveryDialogStyle, setDeliveryDialogStyle] = useState<StyleGroup | null>(null);
