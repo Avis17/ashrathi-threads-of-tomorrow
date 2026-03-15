@@ -102,8 +102,8 @@ export const BatchProductionSection = ({
   const [openColors, setOpenColors] = useState<Record<number, boolean>>({});
   const [openOps, setOpenOps] = useState<Record<string, boolean>>({});
 
-  // Operations editing state
-  const [opsEditingTypeIndex, setOpsEditingTypeIndex] = useState<number | null>(null);
+  // Operations editing state (per style)
+  const [opsEditingStyleId, setOpsEditingStyleId] = useState<string | null>(null);
   const [opsEditingValues, setOpsEditingValues] = useState<string[]>([]);
 
   // Delivery dialog state
@@ -180,14 +180,16 @@ export const BatchProductionSection = ({
     return STANDARD_OPERATIONS;
   };
 
-  const handleSaveTypeOperations = async (typeIndex: number, newOps: string[]) => {
+  const handleSaveStyleOperations = async (sg: StyleGroup, newOps: string[]) => {
     const updatedRollsData = [...rollsData];
-    updatedRollsData[typeIndex] = { ...updatedRollsData[typeIndex], operations: newOps };
+    sg.typeIndices.forEach(idx => {
+      updatedRollsData[idx] = { ...updatedRollsData[idx], operations: newOps };
+    });
     await updateBatchMutation.mutateAsync({
       id: batchId,
       data: { rolls_data: updatedRollsData as any },
     });
-    setOpsEditingTypeIndex(null);
+    setOpsEditingStyleId(null);
     setOpsEditingValues([]);
   };
 
@@ -639,6 +641,70 @@ export const BatchProductionSection = ({
                     </div>
                   )}
 
+                  {/* Operations config at style level */}
+                  <div className="flex items-center justify-between px-1">
+                    <span className="text-xs text-muted-foreground font-medium">
+                      {getTypeOperations(sg.typeIndices[0]).length} operation{getTypeOperations(sg.typeIndices[0]).length !== 1 ? 's' : ''} tracked
+                    </span>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 text-xs gap-1"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOpsEditingStyleId(sg.styleId);
+                        setOpsEditingValues([...getTypeOperations(sg.typeIndices[0])]);
+                      }}
+                    >
+                      <Settings className="h-3.5 w-3.5" />
+                      Edit Operations
+                    </Button>
+                  </div>
+
+                  {opsEditingStyleId === sg.styleId && (
+                    <div className="border rounded-lg p-3 bg-muted/30 space-y-3 mx-1">
+                      <div className="text-sm font-medium">Configure Operations for {sg.styleName}</div>
+                      <div className="grid grid-cols-3 gap-2">
+                        {STANDARD_OPERATIONS.map(op => (
+                          <label key={op} className="flex items-center gap-2 cursor-pointer">
+                            <Checkbox
+                              checked={opsEditingValues.includes(op)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  const newOps = STANDARD_OPERATIONS.filter(
+                                    o => opsEditingValues.includes(o) || o === op
+                                  );
+                                  setOpsEditingValues(newOps);
+                                } else {
+                                  setOpsEditingValues(prev => prev.filter(o => o !== op));
+                                }
+                              }}
+                            />
+                            <span className="text-sm">{op}</span>
+                          </label>
+                        ))}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          className="h-7 text-xs"
+                          disabled={opsEditingValues.length === 0 || updateBatchMutation.isPending}
+                          onClick={() => handleSaveStyleOperations(sg, opsEditingValues)}
+                        >
+                          {updateBatchMutation.isPending ? 'Saving...' : 'Save'}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 text-xs"
+                          onClick={() => { setOpsEditingStyleId(null); setOpsEditingValues([]); }}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Color/Variant Cards */}
                   <div className="grid gap-4">
                     {sg.typeIndices.map((typeIndex, colorIdx) => {
@@ -711,72 +777,6 @@ export const BatchProductionSection = ({
 
                             <CollapsibleContent>
                               <div className="px-4 pb-4 space-y-3">
-                                {/* Operations config button */}
-                                <div className="flex items-center justify-between border-b pb-2">
-                                  <span className="text-xs text-muted-foreground font-medium">
-                                    {typeOps.length} operation{typeOps.length !== 1 ? 's' : ''} tracked
-                                  </span>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="h-7 text-xs gap-1"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setOpsEditingTypeIndex(typeIndex);
-                                      setOpsEditingValues([...typeOps]);
-                                    }}
-                                  >
-                                    <Settings className="h-3.5 w-3.5" />
-                                    Edit Operations
-                                  </Button>
-                                </div>
-
-                                {/* Operations edit dialog */}
-                                {opsEditingTypeIndex === typeIndex && (
-                                  <div className="border rounded-lg p-3 bg-muted/30 space-y-3">
-                                    <div className="text-sm font-medium">Configure Operations for {colorLabel}</div>
-                                    <div className="grid grid-cols-2 gap-2">
-                                      {STANDARD_OPERATIONS.map(op => (
-                                        <label key={op} className="flex items-center gap-2 cursor-pointer">
-                                          <Checkbox
-                                            checked={opsEditingValues.includes(op)}
-                                            onCheckedChange={(checked) => {
-                                              if (checked) {
-                                                // Add in standard order
-                                                const newOps = STANDARD_OPERATIONS.filter(
-                                                  o => opsEditingValues.includes(o) || o === op
-                                                );
-                                                setOpsEditingValues(newOps);
-                                              } else {
-                                                setOpsEditingValues(prev => prev.filter(o => o !== op));
-                                              }
-                                            }}
-                                          />
-                                          <span className="text-sm">{op}</span>
-                                        </label>
-                                      ))}
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                      <Button
-                                        size="sm"
-                                        className="h-7 text-xs"
-                                        disabled={opsEditingValues.length === 0 || updateBatchMutation.isPending}
-                                        onClick={() => handleSaveTypeOperations(typeIndex, opsEditingValues)}
-                                      >
-                                        {updateBatchMutation.isPending ? 'Saving...' : 'Save'}
-                                      </Button>
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        className="h-7 text-xs"
-                                        onClick={() => { setOpsEditingTypeIndex(null); setOpsEditingValues([]); }}
-                                      >
-                                        Cancel
-                                      </Button>
-                                    </div>
-                                  </div>
-                                )}
-
                                 {typeCutPieces === 0 ? (
                                   <p className="text-sm text-muted-foreground py-3 text-center">No pieces cut yet. Add cutting entries first.</p>
                                 ) : (
