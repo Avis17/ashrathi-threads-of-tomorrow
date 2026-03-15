@@ -546,14 +546,23 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
                             return (order.indexOf(a) === -1 ? 99 : order.indexOf(a)) - (order.indexOf(b) === -1 ? 99 : order.indexOf(b));
                           })
                           .map(([size, data]) => (
-                            <Badge
-                              key={size}
-                              variant="outline"
-                              className={`text-xs ${data.mistakes > 0 ? 'border-destructive/50 text-destructive' : 'border-blue-300 text-blue-700 dark:text-blue-300'}`}
-                            >
-                              {size === '' || size === 'Total' ? 'All' : size}: {data.completed}
-                              {data.mistakes > 0 && <span className="ml-1 text-destructive">({data.mistakes} err)</span>}
-                            </Badge>
+                            <div key={size} className="flex items-center gap-0.5">
+                              <Badge
+                                variant="outline"
+                                className={`text-xs ${data.mistakes > 0 ? 'border-destructive/50 text-destructive' : 'border-blue-300 text-blue-700 dark:text-blue-300'}`}
+                              >
+                                {size === '' || size === 'Total' ? 'All' : size}: {data.completed}
+                                {data.mistakes > 0 && <span className="ml-1 text-destructive">({data.mistakes} err)</span>}
+                              </Badge>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-5 w-5 text-destructive/60 hover:text-destructive"
+                                onClick={() => setDeleteStaffEntryId(data.id)}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
                           ))}
                       </div>
                     </div>
