@@ -859,7 +859,7 @@ export const BatchProductionSection = ({
                     const dInfo = deliveryInfoMap[sg.styleId];
                     if (!dInfo || (dInfo.pieces_given === 0 && dInfo.sample_pieces_given === 0 && dInfo.weight_entries.length === 0)) return null;
                     const totalPcs = dInfo.pieces_given + dInfo.sample_pieces_given;
-                    const totalProductWt = dInfo.total_product_weight_grams * totalPcs;
+                    const totalProductWtGrams = dInfo.total_product_weight_grams;
                     // Calculate fabric weight live from rollsData instead of stored value
                     const fabricWtGrams = sg.typeIndices.reduce((sum, idx) => {
                       const type = rollsData[idx];
@@ -868,7 +868,7 @@ export const BatchProductionSection = ({
                       const rolls = parseInt(type.number_of_rolls) || 0;
                       return sum + weightPerRoll * rolls * 1000;
                     }, 0);
-                    const wastageWt = fabricWtGrams - totalProductWt;
+                    const wastageWt = fabricWtGrams - totalProductWtGrams;
                     return (
                       <div className="border rounded-lg p-4 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 space-y-3">
                         <div className="flex items-center gap-2">
@@ -912,7 +912,7 @@ export const BatchProductionSection = ({
                           </div>
                           <div className="bg-background rounded-lg p-3 text-center border">
                             <div className="text-xs text-muted-foreground">Product Weight</div>
-                            <div className="text-sm font-bold">{(totalProductWt / 1000).toFixed(2)} kg</div>
+                            <div className="text-sm font-bold">{totalProductWtGrams.toFixed(1)} g</div>
                           </div>
                           <div className="bg-background rounded-lg p-3 text-center border">
                             <div className="text-xs text-muted-foreground">Wastage</div>
