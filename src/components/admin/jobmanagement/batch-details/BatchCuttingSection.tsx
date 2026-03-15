@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -57,6 +58,7 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
   const [deleteStaffTypeIndex, setDeleteStaffTypeIndex] = useState<number | null>(null);
   const [editingLogId, setEditingLogId] = useState<string | null>(null);
   const [editPiecesCut, setEditPiecesCut] = useState('');
+  const [editSizePieces, setEditSizePieces] = useState<SizePieces>({});
   const [sizePieces, setSizePieces] = useState<SizePieces>({});
   const [customSize, setCustomSize] = useState('');
   const [editingStaffEntryId, setEditingStaffEntryId] = useState<string | null>(null);
@@ -742,38 +744,7 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
                             <TableCell className="font-medium">{log.color}</TableCell>
                             <TableCell>
                               {!isStaff && editingLogId === log.id ? (
-                                <div className="flex items-center gap-1">
-                                  <Input
-                                    type="number"
-                                    value={editPiecesCut}
-                                    onChange={(e) => setEditPiecesCut(e.target.value)}
-                                    className="h-8 w-20"
-                                    autoFocus
-                                    onKeyDown={(e) => {
-                                      if (e.key === 'Enter') {
-                                        const val = parseInt(editPiecesCut);
-                                        if (!isNaN(val) && val > 0) {
-                                          updateLogMutation.mutate({ id: log.id, batchId: batch.id, pieces_cut: val });
-                                          setEditingLogId(null);
-                                        }
-                                      } else if (e.key === 'Escape') {
-                                        setEditingLogId(null);
-                                      }
-                                    }}
-                                  />
-                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-green-600" onClick={() => {
-                                    const val = parseInt(editPiecesCut);
-                                    if (!isNaN(val) && val > 0) {
-                                      updateLogMutation.mutate({ id: log.id, batchId: batch.id, pieces_cut: val });
-                                      setEditingLogId(null);
-                                    }
-                                  }}>
-                                    <Check className="h-3.5 w-3.5" />
-                                  </Button>
-                                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditingLogId(null)}>
-                                    <X className="h-3.5 w-3.5" />
-                                  </Button>
-                                </div>
+                                <Badge className="bg-amber-500">{Object.values(editSizePieces).reduce((s, v) => s + (v || 0), 0) || editPiecesCut} pcs (editing…)</Badge>
                               ) : (
                                 <Badge
                                   className={`cursor-pointer ${isStaff ? 'bg-blue-600' : ''}`}
@@ -781,6 +752,7 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
                                     if (!isStaff) {
                                       setEditingLogId(log.id);
                                       setEditPiecesCut(log.pieces_cut.toString());
+                                      setEditSizePieces(sp && typeof sp === 'object' ? { ...(sp as SizePieces) } : {});
                                     }
                                   }}
                                 >
@@ -817,7 +789,7 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
                                   </Button>
                                 ) : (
                                   <>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingLogId(log.id); setEditPiecesCut(log.pieces_cut.toString()); }}>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingLogId(log.id); setEditPiecesCut(log.pieces_cut.toString()); setEditSizePieces(sp && typeof sp === 'object' ? { ...(sp as SizePieces) } : {}); }}>
                                       <Pencil className="h-4 w-4" />
                                     </Button>
                                     <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteLogId(log.id)}>
@@ -842,6 +814,92 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
           )}
         </CardContent>
       </Card>
+
+      {/* Edit Cutting Log Dialog */}
+      <Dialog open={!!editingLogId} onOpenChange={(open) => { if (!open) setEditingLogId(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Cutting Entry</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label className="text-sm font-medium mb-2 block">Pieces by Size</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {COMMON_SIZES.map(size => (
+                  <div key={size} className="flex items-center gap-1">
+                    <Label className="text-xs w-10 text-muted-foreground">{size}</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      className="h-8"
+                      value={editSizePieces[size] || ''}
+                      onChange={(e) => {
+                        const num = parseInt(e.target.value) || 0;
+                        setEditSizePieces(prev => {
+                          const updated = { ...prev };
+                          if (num > 0) updated[size] = num;
+                          else delete updated[size];
+                          return updated;
+                        });
+                      }}
+                      placeholder="0"
+                    />
+                  </div>
+                ))}
+              </div>
+              {/* Show any custom sizes that exist in this log */}
+              {Object.keys(editSizePieces).filter(s => !COMMON_SIZES.includes(s)).map(size => (
+                <div key={size} className="flex items-center gap-1 mt-2">
+                  <Label className="text-xs w-10 text-muted-foreground">{size}</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    className="h-8"
+                    value={editSizePieces[size] || ''}
+                    onChange={(e) => {
+                      const num = parseInt(e.target.value) || 0;
+                      setEditSizePieces(prev => {
+                        const updated = { ...prev };
+                        if (num > 0) updated[size] = num;
+                        else delete updated[size];
+                        return updated;
+                      });
+                    }}
+                    placeholder="0"
+                  />
+                </div>
+              ))}
+            </div>
+            <div className="p-3 rounded-lg bg-muted/50 flex items-center justify-between">
+              <span className="text-sm font-medium">Total Pieces</span>
+              <Badge className="text-lg px-3 py-1">
+                {Object.values(editSizePieces).reduce((s, v) => s + (v || 0), 0)}
+              </Badge>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingLogId(null)}>Cancel</Button>
+            <Button
+              onClick={() => {
+                const totalFromSizes = Object.values(editSizePieces).reduce((s, v) => s + (v || 0), 0);
+                const total = totalFromSizes > 0 ? totalFromSizes : parseInt(editPiecesCut);
+                if (editingLogId && total > 0) {
+                  updateLogMutation.mutate({
+                    id: editingLogId,
+                    batchId: batch.id,
+                    pieces_cut: total,
+                    size_pieces: Object.keys(editSizePieces).length > 0 ? editSizePieces : null,
+                  });
+                  setEditingLogId(null);
+                }
+              }}
+              disabled={Object.values(editSizePieces).reduce((s, v) => s + (v || 0), 0) === 0}
+            >
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteLogId} onOpenChange={() => setDeleteLogId(null)}>
