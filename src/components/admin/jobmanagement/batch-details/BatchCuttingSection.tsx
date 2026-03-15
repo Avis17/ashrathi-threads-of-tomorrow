@@ -21,6 +21,19 @@ import { CuttingStatsCards } from './CuttingStatsCards';
 import { WastageEntryForm } from './WastageEntryForm';
 import { WastageLogTable } from './WastageLogTable';
 
+interface OperationProgressEntry {
+  id: string;
+  batch_id: string;
+  operation: string;
+  completed_pieces: number;
+  mistake_pieces: number;
+  type_index: number;
+  size: string;
+  notes: string | null;
+  updated_at: string;
+  created_at: string;
+}
+
 interface BatchCuttingSectionProps {
   batch: any;
   rollsData: any[];
@@ -28,6 +41,7 @@ interface BatchCuttingSectionProps {
   cuttingSummary: Record<number, number>;
   overallActualCutWastage?: number | null;
   overallActualConfirmedWastage?: number | null;
+  operationProgress?: OperationProgressEntry[];
 }
 
 export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSummary, overallActualCutWastage, overallActualConfirmedWastage }: BatchCuttingSectionProps) => {

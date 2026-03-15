@@ -383,6 +383,7 @@ const BatchDetailsPage = () => {
             cuttingSummary={cuttingSummary}
             overallActualCutWastage={overallActualCutWastage}
             overallActualConfirmedWastage={overallActualConfirmedWastage}
+            operationProgress={operationProgress || []}
           />
         </TabsContent>
 
