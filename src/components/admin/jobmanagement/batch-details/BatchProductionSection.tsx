@@ -643,24 +643,45 @@ export const BatchProductionSection = ({
                     </div>
                   )}
 
-                  {/* Operations config at style level */}
+                  {/* Operations config and Set Item toggle at style level */}
                   <div className="flex items-center justify-between px-1">
                     <span className="text-xs text-muted-foreground font-medium">
                       {getTypeOperations(sg.typeIndices[0]).length} operation{getTypeOperations(sg.typeIndices[0]).length !== 1 ? 's' : ''} tracked
                     </span>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-7 text-xs gap-1"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setOpsEditingStyleId(sg.styleId);
-                        setOpsEditingValues([...getTypeOperations(sg.typeIndices[0])]);
-                      }}
-                    >
-                      <Settings className="h-3.5 w-3.5" />
-                      Edit Operations
-                    </Button>
+                    <div className="flex items-center gap-3">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <Switch
+                          checked={rollsData[sg.typeIndices[0]]?.is_set_item || false}
+                          onCheckedChange={async (checked) => {
+                            const updatedRollsData = [...rollsData];
+                            sg.typeIndices.forEach(idx => {
+                              updatedRollsData[idx] = { ...updatedRollsData[idx], is_set_item: checked };
+                            });
+                            await updateBatchMutation.mutateAsync({
+                              id: batchId,
+                              data: { rolls_data: updatedRollsData as any },
+                            });
+                          }}
+                        />
+                        <span className="text-xs font-medium flex items-center gap-1">
+                          <Layers className="h-3.5 w-3.5" />
+                          Set Item
+                        </span>
+                      </label>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 text-xs gap-1"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpsEditingStyleId(sg.styleId);
+                          setOpsEditingValues([...getTypeOperations(sg.typeIndices[0])]);
+                        }}
+                      >
+                        <Settings className="h-3.5 w-3.5" />
+                        Edit Operations
+                      </Button>
+                    </div>
                   </div>
 
                   {opsEditingStyleId === sg.styleId && (
