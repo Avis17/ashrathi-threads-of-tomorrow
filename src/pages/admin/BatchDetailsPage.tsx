@@ -137,7 +137,7 @@ const BatchDetailsPage = () => {
   const totalJobWorkPaid = jobWorks?.reduce((sum, jw) => sum + jw.paid_amount, 0) || 0;
   const totalCost = totalSalary + totalExpenses + totalJobWorkPaid;
 
-  // Calculate cutting summary per type
+  // Calculate cutting summary per type from cutting logs
   const cuttingSummary: Record<number, number> = {};
   const cuttingSizeSummary: Record<number, Record<string, number>> = {};
   cuttingLogs?.forEach(log => {
@@ -153,6 +153,26 @@ const BatchDetailsPage = () => {
       });
     }
   });
+
+  // Merge staff cutting progress (from batch_operation_progress) for types without cutting logs
+  if (operationProgress) {
+    const staffCutting = operationProgress.filter(p => {
+      const op = p.operation?.toLowerCase().replace(/\s+/g, '');
+      return op === 'cutting';
+    });
+    staffCutting.forEach(p => {
+      const ti = p.type_index;
+      // Only use staff data if no cutting log exists for this type_index
+      if (!cuttingSummary[ti] || cuttingSummary[ti] === 0) {
+        if (!cuttingSizeSummary[ti]) cuttingSizeSummary[ti] = {};
+        const size = p.size || '';
+        if (size && p.completed_pieces > 0) {
+          cuttingSizeSummary[ti][size] = (cuttingSizeSummary[ti][size] || 0) + p.completed_pieces;
+        }
+        cuttingSummary[ti] = (cuttingSummary[ti] || 0) + p.completed_pieces;
+      }
+    });
+  }
   const totalCutPieces = Object.values(cuttingSummary).reduce((sum, val) => sum + val, 0);
 
   // Build style-wise fabric info for weight analysis
