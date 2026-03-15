@@ -105,6 +105,7 @@ export const BatchProductionSection = ({
   // Operations editing state (per style)
   const [opsEditingStyleId, setOpsEditingStyleId] = useState<string | null>(null);
   const [opsEditingValues, setOpsEditingValues] = useState<string[]>([]);
+  const [customOpInput, setCustomOpInput] = useState('');
 
   // Delivery dialog state
   const [deliveryDialogStyle, setDeliveryDialogStyle] = useState<StyleGroup | null>(null);
