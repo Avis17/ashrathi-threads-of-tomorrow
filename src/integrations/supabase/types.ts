@@ -252,6 +252,56 @@ export type Database = {
           },
         ]
       }
+      batch_delivery_info: {
+        Row: {
+          batch_id: string
+          created_at: string
+          fabric_wastage_percent: number
+          id: string
+          pieces_given: number
+          sample_pieces_given: number
+          style_id: string
+          total_fabric_weight_grams: number
+          total_product_weight_grams: number
+          updated_at: string
+          weight_entries: Json
+        }
+        Insert: {
+          batch_id: string
+          created_at?: string
+          fabric_wastage_percent?: number
+          id?: string
+          pieces_given?: number
+          sample_pieces_given?: number
+          style_id: string
+          total_fabric_weight_grams?: number
+          total_product_weight_grams?: number
+          updated_at?: string
+          weight_entries?: Json
+        }
+        Update: {
+          batch_id?: string
+          created_at?: string
+          fabric_wastage_percent?: number
+          id?: string
+          pieces_given?: number
+          sample_pieces_given?: number
+          style_id?: string
+          total_fabric_weight_grams?: number
+          total_product_weight_grams?: number
+          updated_at?: string
+          weight_entries?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "batch_delivery_info_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "job_batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       batch_job_work_operations: {
         Row: {
           amount: number | null
