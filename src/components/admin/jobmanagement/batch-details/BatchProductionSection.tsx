@@ -918,18 +918,23 @@ export const BatchProductionSection = ({
                             <div className="text-xs text-muted-foreground">Wastage</div>
                             <div className="text-sm font-bold">{(wastageWt / 1000).toFixed(2)} kg</div>
                           </div>
-                          <div className={cn(
-                            "bg-background rounded-lg p-3 text-center border",
-                            dInfo.fabric_wastage_percent > 20 ? 'border-destructive/50' : dInfo.fabric_wastage_percent > 10 ? 'border-amber-400' : 'border-green-400'
-                          )}>
-                            <div className="text-xs text-muted-foreground">Wastage %</div>
-                            <div className={cn(
-                              "text-lg font-bold",
-                              dInfo.fabric_wastage_percent > 20 ? 'text-destructive' : dInfo.fabric_wastage_percent > 10 ? 'text-amber-600' : 'text-green-600'
-                            )}>
-                              {dInfo.fabric_wastage_percent.toFixed(2)}%
-                            </div>
-                          </div>
+                          {(() => {
+                            const wastagePercent = fabricWtGrams > 0 ? Math.max(0, (wastageWt / fabricWtGrams) * 100) : 0;
+                            return (
+                              <div className={cn(
+                                "bg-background rounded-lg p-3 text-center border",
+                                wastagePercent > 20 ? 'border-destructive/50' : wastagePercent > 10 ? 'border-amber-400' : 'border-green-400'
+                              )}>
+                                <div className="text-xs text-muted-foreground">Wastage %</div>
+                                <div className={cn(
+                                  "text-lg font-bold",
+                                  wastagePercent > 20 ? 'text-destructive' : wastagePercent > 10 ? 'text-amber-600' : 'text-green-600'
+                                )}>
+                                  {wastagePercent.toFixed(2)}%
+                                </div>
+                              </div>
+                            );
+                          })()}
                         </div>
                       </div>
                     );
