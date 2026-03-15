@@ -816,6 +816,7 @@ export const BatchProductionSection = ({
                                                   {(aggProgressMap[`${typeIndex}-${op}`]?.notes?.length || 0) > 0 && (
                                                     <StickyNote className="h-3 w-3 text-amber-500" />
                                                   )}
+                                                </div>
                                                 <Badge variant={percent >= 100 ? 'default' : 'outline'} className="text-xs">
                                                   {percent}%
                                                 </Badge>
