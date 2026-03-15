@@ -312,7 +312,9 @@ export default function CreateDeliveryChallan() {
     ));
   };
 
-  const totalQuantity = items.reduce((sum, item) => sum + (item.quantity || 0), 0);
+  const totalPcs = items.filter(i => i.uom === 'pcs').reduce((sum, item) => sum + (item.quantity || 0), 0);
+  const totalKg = items.filter(i => i.uom === 'kg').reduce((sum, item) => sum + (item.quantity || 0), 0);
+  const totalQuantity = totalPcs + totalKg;
 
   const handleAddJobWorker = async () => {
     if (!newWorker.name) return;
