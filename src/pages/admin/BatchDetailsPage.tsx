@@ -139,8 +139,19 @@ const BatchDetailsPage = () => {
 
   // Calculate cutting summary per type
   const cuttingSummary: Record<number, number> = {};
+  const cuttingSizeSummary: Record<number, Record<string, number>> = {};
   cuttingLogs?.forEach(log => {
     cuttingSummary[log.type_index] = (cuttingSummary[log.type_index] || 0) + log.pieces_cut;
+    // Build size-wise summary from size_pieces JSONB
+    if (log.size_pieces && typeof log.size_pieces === 'object') {
+      if (!cuttingSizeSummary[log.type_index]) cuttingSizeSummary[log.type_index] = {};
+      const sp = log.size_pieces as Record<string, number>;
+      Object.entries(sp).forEach(([size, count]) => {
+        if (count > 0) {
+          cuttingSizeSummary[log.type_index][size] = (cuttingSizeSummary[log.type_index][size] || 0) + count;
+        }
+      });
+    }
   });
   const totalCutPieces = Object.values(cuttingSummary).reduce((sum, val) => sum + val, 0);
 
@@ -384,7 +395,7 @@ const BatchDetailsPage = () => {
         </TabsContent>
 
         <TabsContent value="production" className="mt-6">
-          <BatchProductionSection batchId={id || ''} operations={batchOperations} rollsData={rollsData} cuttingSummary={cuttingSummary} styleLookup={styleLookup} />
+          <BatchProductionSection batchId={id || ''} operations={batchOperations} rollsData={rollsData} cuttingSummary={cuttingSummary} cuttingSizeSummary={cuttingSizeSummary} styleLookup={styleLookup} />
         </TabsContent>
 
         <TabsContent value="salary" className="mt-6">
