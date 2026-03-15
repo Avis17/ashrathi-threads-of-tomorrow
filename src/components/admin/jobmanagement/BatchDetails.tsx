@@ -12,6 +12,7 @@ import { StitchingCompletion } from './StitchingCompletion';
 import { IroningCompletion } from './IroningCompletion';
 import { CheckingCompletion } from './CheckingCompletion';
 import { PackingCompletion } from './PackingCompletion';
+import { BatchInfoTab } from './batch-details/BatchInfoTab';
 
 interface BatchDetailsProps {
   batchId: string;
