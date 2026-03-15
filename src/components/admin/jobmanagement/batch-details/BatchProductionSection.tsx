@@ -40,6 +40,18 @@ interface StyleGroup {
 
 const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL'];
 
+const STANDARD_OPERATIONS = ['Cutting', 'Stitching', 'Checking', 'Ironing', 'Packing'];
+
+const normalizeOperation = (op: string): string => {
+  const lower = op.toLowerCase();
+  if (lower.includes('stitching') || lower.includes('singer') || lower.includes('power table') || lower.includes('powertable')) return 'Stitching';
+  if (lower.includes('cutting')) return 'Cutting';
+  if (lower.includes('checking')) return 'Checking';
+  if (lower.includes('ironing')) return 'Ironing';
+  if (lower.includes('packing')) return 'Packing';
+  return op; // fallback
+};
+
 const sortSizes = (sizes: string[]) => {
   return sizes.sort((a, b) => {
     const ai = SIZE_ORDER.indexOf(a.toUpperCase());
@@ -110,13 +122,15 @@ export const BatchProductionSection = ({
   const aggProgressMap: Record<string, { completed: number; mistakes: number }> = {};
   
   progressData.forEach(p => {
-    const sizeKey = `${p.type_index}-${p.operation}-${p.size || ''}`;
-    sizeProgressMap[sizeKey] = {
-      completed: p.completed_pieces,
-      mistakes: p.mistake_pieces || 0,
-    };
+    const normalizedOp = normalizeOperation(p.operation);
+    const sizeKey = `${p.type_index}-${normalizedOp}-${p.size || ''}`;
+    if (!sizeProgressMap[sizeKey]) {
+      sizeProgressMap[sizeKey] = { completed: 0, mistakes: 0 };
+    }
+    sizeProgressMap[sizeKey].completed += p.completed_pieces;
+    sizeProgressMap[sizeKey].mistakes += (p.mistake_pieces || 0);
     // Aggregate
-    const aggKey = `${p.type_index}-${p.operation}`;
+    const aggKey = `${p.type_index}-${normalizedOp}`;
     if (!aggProgressMap[aggKey]) aggProgressMap[aggKey] = { completed: 0, mistakes: 0 };
     aggProgressMap[aggKey].completed += p.completed_pieces;
     aggProgressMap[aggKey].mistakes += (p.mistake_pieces || 0);
@@ -142,10 +156,8 @@ export const BatchProductionSection = ({
   });
 
   // --- Helpers ---
-  const getTypeOperations = (typeIndex: number): string[] => {
-    const typeOps = rollsData[typeIndex]?.operations;
-    if (Array.isArray(typeOps) && typeOps.length > 0) return typeOps;
-    return operations;
+  const getTypeOperations = (_typeIndex: number): string[] => {
+    return STANDARD_OPERATIONS;
   };
 
   const getTypeSizes = (typeIndex: number): string[] => {
@@ -356,13 +368,13 @@ export const BatchProductionSection = ({
     );
   };
 
-  if (operations.length === 0) {
+  if (rollsData.length === 0) {
     return (
       <Card>
         <CardContent className="py-12 text-center">
           <AlertCircle className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-          <p className="text-muted-foreground">No operations configured for this batch.</p>
-          <p className="text-sm text-muted-foreground mt-1">Edit batch details to add operations.</p>
+          <p className="text-muted-foreground">No production data available for this batch.</p>
+          <p className="text-sm text-muted-foreground mt-1">Add fabric types to start tracking production.</p>
         </CardContent>
       </Card>
     );

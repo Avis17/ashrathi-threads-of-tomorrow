@@ -195,16 +195,31 @@ const BatchDetailsPage = () => {
   const { cutWastage: overallActualCutWastage, confirmedWastage: overallActualConfirmedWastage } = computeOverallWastage();
 
   // Calculate production progress from batch_operation_progress (non-cutting operations)
+  const normalizeOp = (op: string): string => {
+    const lower = op.toLowerCase();
+    if (lower.includes('stitching') || lower.includes('singer') || lower.includes('power table') || lower.includes('powertable')) return 'Stitching';
+    if (lower.includes('cutting')) return 'Cutting';
+    if (lower.includes('checking')) return 'Checking';
+    if (lower.includes('ironing')) return 'Ironing';
+    if (lower.includes('packing')) return 'Packing';
+    return op;
+  };
+  
   const totalProductionPieces = (() => {
     if (!operationProgress || operationProgress.length === 0) return 0;
-    // Get unique type indices
-    const typeIndices = new Set(operationProgress.map(p => p.type_index));
+    // Normalize and aggregate progress
+    const normalized: Record<string, Record<string, number>> = {}; // typeIndex -> normalizedOp -> completedPieces
+    operationProgress.forEach(p => {
+      const normOp = normalizeOp(p.operation);
+      const ti = String(p.type_index);
+      if (!normalized[ti]) normalized[ti] = {};
+      normalized[ti][normOp] = (normalized[ti][normOp] || 0) + p.completed_pieces;
+    });
     let total = 0;
-    typeIndices.forEach(ti => {
-      const nonCuttingOps = operationProgress.filter(p => p.type_index === ti && p.operation !== 'Cutting');
+    Object.values(normalized).forEach(ops => {
+      const nonCuttingOps = Object.entries(ops).filter(([op]) => op !== 'Cutting');
       if (nonCuttingOps.length > 0) {
-        // Use minimum across non-cutting ops (bottleneck) for this type
-        total += Math.min(...nonCuttingOps.map(o => o.completed_pieces));
+        total += Math.min(...nonCuttingOps.map(([, v]) => v));
       }
     });
     return total;
