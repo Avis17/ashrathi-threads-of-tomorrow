@@ -8,10 +8,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { Calculator, Scale, ArrowRightLeft, Percent, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 // ─── Saved Entries List ───
 const SavedEntries = ({ calculatorType }: { calculatorType: string }) => {
   const queryClient = useQueryClient();
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const { data: entries } = useQuery({
     queryKey: ['calculator-entries', calculatorType],
@@ -63,7 +68,7 @@ const SavedEntries = ({ calculatorType }: { calculatorType: string }) => {
           <p className="text-xs text-muted-foreground mt-1">{format(new Date(entry.created_at), 'dd MMM yyyy, hh:mm a')}</p>
         </div>
         <button
-          onClick={() => deleteMutation.mutate(entry.id)}
+          onClick={() => setDeleteId(entry.id)}
           className="p-2 rounded-md hover:bg-destructive/10 text-destructive/60 hover:text-destructive transition-colors shrink-0"
         >
           <Trash2 className="h-4 w-4" />
@@ -78,6 +83,24 @@ const SavedEntries = ({ calculatorType }: { calculatorType: string }) => {
       <div className="space-y-2 max-h-[400px] overflow-y-auto">
         {entries.map(renderEntry)}
       </div>
+
+      <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Calculation Entry?</AlertDialogTitle>
+            <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => { if (deleteId) { deleteMutation.mutate(deleteId); setDeleteId(null); } }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

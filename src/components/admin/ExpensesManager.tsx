@@ -16,6 +16,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Plus, Pencil, Trash2, CheckCircle, Eye, TrendingUp, DollarSign, Clock, CheckCircle2, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { ExpenseForm } from './expenses/ExpenseForm';
@@ -219,9 +223,16 @@ export default function ExpensesManager() {
     setIsDialogOpen(true);
   };
 
+  const [deleteExpenseId, setDeleteExpenseId] = useState<string | null>(null);
+
   const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this expense?')) {
-      deleteMutation.mutate(id);
+    setDeleteExpenseId(id);
+  };
+
+  const confirmDelete = () => {
+    if (deleteExpenseId) {
+      deleteMutation.mutate(deleteExpenseId);
+      setDeleteExpenseId(null);
     }
   };
 
@@ -604,6 +615,21 @@ export default function ExpensesManager() {
         open={isViewDialogOpen}
         onOpenChange={setIsViewDialogOpen}
       />
+
+      <AlertDialog open={!!deleteExpenseId} onOpenChange={() => setDeleteExpenseId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Expense?</AlertDialogTitle>
+            <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

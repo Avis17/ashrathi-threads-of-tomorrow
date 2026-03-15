@@ -54,6 +54,7 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
   const [notes, setNotes] = useState('');
   const [deleteLogId, setDeleteLogId] = useState<string | null>(null);
   const [deleteStaffEntryId, setDeleteStaffEntryId] = useState<string | null>(null);
+  const [deleteStaffTypeIndex, setDeleteStaffTypeIndex] = useState<number | null>(null);
   const [editingLogId, setEditingLogId] = useState<string | null>(null);
   const [editPiecesCut, setEditPiecesCut] = useState('');
   const [sizePieces, setSizePieces] = useState<SizePieces>({});
@@ -809,13 +810,7 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
                                     size="icon"
                                     className="h-8 w-8 text-destructive hover:text-destructive"
                                     onClick={() => {
-                                      const staffOps = operationProgress.filter(
-                                        p => p.operation.toLowerCase() === 'cutting' && p.type_index === log.type_index
-                                      );
-                                      // Delete all staff cutting entries for this type
-                                      staffOps.forEach(op => {
-                                        deleteOperationMutation.mutate(op.id);
-                                      });
+                                      setDeleteStaffTypeIndex(log.type_index);
                                     }}
                                   >
                                     <Trash2 className="h-4 w-4" />
@@ -878,6 +873,35 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
                 if (deleteStaffEntryId) {
                   deleteOperationMutation.mutate(deleteStaffEntryId);
                   setDeleteStaffEntryId(null);
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete All Staff Cutting Entries for a Type */}
+      <AlertDialog open={deleteStaffTypeIndex !== null} onOpenChange={() => setDeleteStaffTypeIndex(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Staff Cutting Entries?</AlertDialogTitle>
+            <AlertDialogDescription>All staff cutting entries for this color will be removed. This action cannot be undone.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deleteStaffTypeIndex !== null) {
+                  const staffOps = operationProgress.filter(
+                    p => p.operation.toLowerCase() === 'cutting' && p.type_index === deleteStaffTypeIndex
+                  );
+                  staffOps.forEach(op => {
+                    deleteOperationMutation.mutate(op.id);
+                  });
+                  setDeleteStaffTypeIndex(null);
                 }
               }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
