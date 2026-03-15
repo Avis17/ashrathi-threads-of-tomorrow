@@ -157,13 +157,14 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
   const staffCuttingProgress = useMemo(() => {
     const cuttingOps = operationProgress.filter(p => p.operation.toLowerCase() === 'cutting');
     // Group by type_index, then by size
-    const byType: Record<number, { sizes: Record<string, { completed: number; mistakes: number; updatedAt: string }>; totalCompleted: number; totalMistakes: number }> = {};
+    const byType: Record<number, { sizes: Record<string, { id: string; completed: number; mistakes: number; updatedAt: string }>; totalCompleted: number; totalMistakes: number }> = {};
     cuttingOps.forEach(op => {
       if (!byType[op.type_index]) {
         byType[op.type_index] = { sizes: {}, totalCompleted: 0, totalMistakes: 0 };
       }
       const sizeKey = op.size || 'Total';
       byType[op.type_index].sizes[sizeKey] = {
+        id: op.id,
         completed: op.completed_pieces,
         mistakes: op.mistake_pieces,
         updatedAt: op.updated_at,
