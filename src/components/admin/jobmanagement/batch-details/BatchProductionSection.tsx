@@ -40,6 +40,34 @@ import { useBatchTypeConfirmed, useUpsertDeliveryStatus, DELIVERY_STATUSES, Deli
 import { differenceInDays, format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 
+// Sortable operation item for drag-and-drop reordering
+function SortableOperationItem({ id, onRemove }: { id: string; onRemove: (id: string) => void }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center gap-1.5 bg-background border rounded-md px-2 py-1 text-sm group"
+    >
+      <span className="cursor-grab text-muted-foreground" {...attributes} {...listeners}>
+        <GripVertical className="h-3.5 w-3.5" />
+      </span>
+      <span className="flex-1">{id}</span>
+      <button
+        className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity text-xs font-bold"
+        onClick={() => onRemove(id)}
+      >
+        ×
+      </button>
+    </div>
+  );
+}
+
 export interface BatchProductionSectionProps {
   batchId: string;
   operations?: string[];
