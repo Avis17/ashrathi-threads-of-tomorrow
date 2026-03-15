@@ -88,6 +88,7 @@ export const BatchProductionSection = ({
   const { data: progressData = [] } = useBatchOperationProgress(batchId);
   const { data: jobWorks = [] } = useBatchJobWorks(batchId);
   const { data: typeData } = useBatchTypeConfirmed(batchId);
+  const confirmedMap = typeData?.confirmedMap ?? {};
   const statusMap = typeData?.statusMap ?? {};
   const actualDeliveryDateMap = typeData?.actualDeliveryDateMap ?? {};
   const deliveryNotesMap = typeData?.deliveryNotesMap ?? {};
@@ -1165,8 +1166,11 @@ export const BatchProductionSection = ({
                         return { ready, mistakes: totalMistakes, missing, lastOp: lastOpWithProgress };
                       };
 
+                      const confirmedPieces = confirmedMap[typeIndex] || 0;
+
                       const renderPartSummary = (label: string, summary: ReturnType<typeof getPartSummary>, colorClass: string) => {
                         if (!summary) return null;
+                        const required = confirmedPieces > 0 ? Math.max(0, confirmedPieces - summary.ready) : 0;
                         return (
                           <div className="flex items-center gap-2 flex-wrap">
                             {label && (
@@ -1186,6 +1190,11 @@ export const BatchProductionSection = ({
                               <span className="text-xs font-medium text-red-500 flex items-center gap-1">
                                 <AlertCircle className="h-3 w-3" />
                                 {summary.missing} missing
+                              </span>
+                            )}
+                            {required > 0 && (
+                              <span className="text-xs font-semibold text-purple-600 flex items-center gap-1">
+                                ⚡ {required} required
                               </span>
                             )}
                             <span className="text-[10px] text-muted-foreground italic">(at {summary.lastOp})</span>
