@@ -13,7 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import {
   CheckCircle, AlertCircle, ChevronDown, ChevronRight,
-  Briefcase, AlertTriangle, Truck, CalendarClock, CalendarCheck, TrendingDown, TrendingUp, CalendarIcon, StickyNote, Settings,
+  Briefcase, AlertTriangle, Truck, CalendarClock, CalendarCheck, TrendingDown, TrendingUp, CalendarIcon, StickyNote, Settings, Layers,
 } from 'lucide-react';
 import { useBatchOperationProgress, useUpsertOperationProgress } from '@/hooks/useBatchOperationProgress';
 import { useBatchJobWorks } from '@/hooks/useJobWorks';
@@ -643,24 +643,45 @@ export const BatchProductionSection = ({
                     </div>
                   )}
 
-                  {/* Operations config at style level */}
+                  {/* Operations config and Set Item toggle at style level */}
                   <div className="flex items-center justify-between px-1">
                     <span className="text-xs text-muted-foreground font-medium">
                       {getTypeOperations(sg.typeIndices[0]).length} operation{getTypeOperations(sg.typeIndices[0]).length !== 1 ? 's' : ''} tracked
                     </span>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-7 text-xs gap-1"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setOpsEditingStyleId(sg.styleId);
-                        setOpsEditingValues([...getTypeOperations(sg.typeIndices[0])]);
-                      }}
-                    >
-                      <Settings className="h-3.5 w-3.5" />
-                      Edit Operations
-                    </Button>
+                    <div className="flex items-center gap-3">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <Switch
+                          checked={rollsData[sg.typeIndices[0]]?.is_set_item || false}
+                          onCheckedChange={async (checked) => {
+                            const updatedRollsData = [...rollsData];
+                            sg.typeIndices.forEach(idx => {
+                              updatedRollsData[idx] = { ...updatedRollsData[idx], is_set_item: checked };
+                            });
+                            await updateBatchMutation.mutateAsync({
+                              id: batchId,
+                              data: { rolls_data: updatedRollsData as any },
+                            });
+                          }}
+                        />
+                        <span className="text-xs font-medium flex items-center gap-1">
+                          <Layers className="h-3.5 w-3.5" />
+                          Set Item
+                        </span>
+                      </label>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 text-xs gap-1"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpsEditingStyleId(sg.styleId);
+                          setOpsEditingValues([...getTypeOperations(sg.typeIndices[0])]);
+                        }}
+                      >
+                        <Settings className="h-3.5 w-3.5" />
+                        Edit Operations
+                      </Button>
+                    </div>
                   </div>
 
                   {opsEditingStyleId === sg.styleId && (
@@ -721,6 +742,361 @@ export const BatchProductionSection = ({
                       const palette = COLOR_PALETTES[(sgIdx * 3 + colorIdx) % COLOR_PALETTES.length];
                       const sizes = getTypeSizes(typeIndex);
                       const hasSizes = sizes.length > 0;
+                      const isSetItem = type?.is_set_item || false;
+
+                      const renderOperationContent = (op: string, partPrefix: string = '') => {
+                        const opKey = partPrefix ? `${typeIndex}-${partPrefix}-${op}` : `${typeIndex}-${op}`;
+                        
+                        // For set items with prefix, filter sizes and progress by prefix
+                        const displaySizes = partPrefix && hasSizes ? sizes : (hasSizes ? sizes : []);
+                        const getPartSizeCompleted = (size: string) => {
+                          const sizeKey = partPrefix ? `${partPrefix}-${size}` : size;
+                          return getSizeCompleted(typeIndex, op, sizeKey);
+                        };
+                        const getPartSizeMistakes = (size: string) => {
+                          const sizeKey = partPrefix ? `${partPrefix}-${size}` : size;
+                          return getSizeMistakes(typeIndex, op, sizeKey);
+                        };
+                        const partTotalCompleted = partPrefix && hasSizes
+                          ? displaySizes.reduce((sum, s) => sum + getPartSizeCompleted(s), 0)
+                          : getOpTotalCompleted(typeIndex, op);
+                        const partTotalMistakes = partPrefix && hasSizes
+                          ? displaySizes.reduce((sum, s) => sum + getPartSizeMistakes(s), 0)
+                          : getOpTotalMistakes(typeIndex, op);
+                        const partCutPieces = typeCutPieces; // same cut count for both parts
+                        const percent = partCutPieces > 0 ? Math.min(Math.round((partTotalCompleted / partCutPieces) * 100), 100) : 0;
+                        const opOpen = isOpOpen(opKey);
+
+                        return (
+                          <Collapsible key={opKey} open={opOpen} onOpenChange={() => toggleOp(opKey)}>
+                            <div className="border rounded-lg overflow-hidden bg-background">
+                              <CollapsibleTrigger className="w-full">
+                                <div className="flex items-center justify-between p-3 hover:bg-muted/20 cursor-pointer">
+                                  <div className="flex items-center gap-2">
+                                    {opOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                                    {percent >= 100 ? (
+                                      <CheckCircle className="h-4 w-4 text-green-500" />
+                                    ) : (
+                                      <div className={`h-4 w-4 rounded-full border-2 ${percent > 0 ? 'border-yellow-500' : 'border-gray-300'}`} />
+                                    )}
+                                    <span className="text-sm font-medium">{op}</span>
+                                  </div>
+                                  <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-2 text-xs">
+                                      <span className="text-green-600 font-medium">✓ {partTotalCompleted}</span>
+                                      {partTotalMistakes > 0 && (
+                                        <span className="text-orange-500 font-medium flex items-center gap-0.5">
+                                          <AlertTriangle className="h-3 w-3" />{partTotalMistakes}
+                                        </span>
+                                      )}
+                                      <span className="text-muted-foreground">/ {partCutPieces}</span>
+                                      {!partPrefix && (aggProgressMap[`${typeIndex}-${op}`]?.notes?.length || 0) > 0 && (
+                                        <StickyNote className="h-3 w-3 text-amber-500" />
+                                      )}
+                                    </div>
+                                    <Badge variant={percent >= 100 ? 'default' : 'outline'} className="text-xs">
+                                      {percent}%
+                                    </Badge>
+                                    <div className="w-16 h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                                      <div className={`h-full rounded-full ${getProgressColor(percent)}`} style={{ width: `${percent}%` }} />
+                                    </div>
+                                  </div>
+                                </div>
+                              </CollapsibleTrigger>
+
+                              <CollapsibleContent>
+                                <div className="border-t px-3 pb-3 pt-2">
+                                  {displaySizes.length > 0 ? (
+                                    <div className="space-y-2">
+                                      <div className="text-xs font-medium text-muted-foreground mb-2">Size-wise Progress</div>
+                                      <div className="grid gap-2">
+                                        {displaySizes.map(size => {
+                                          const cutForSize = cuttingSizeSummary[typeIndex]?.[size] || 0;
+                                          const sizeCompleted = getPartSizeCompleted(size);
+                                          const sizeMistakes = getPartSizeMistakes(size);
+                                          const sizePercent = cutForSize > 0 ? Math.min(Math.round((sizeCompleted / cutForSize) * 100), 100) : 0;
+                                          const actualSizeKey = partPrefix ? `${partPrefix}-${size}` : size;
+                                          const sizeEditKey = `${typeIndex}-${op}-${actualSizeKey}`;
+                                          const isEditingThis = editingKey === sizeEditKey;
+                                          const missing = Math.max(0, cutForSize - sizeCompleted - sizeMistakes);
+
+                                          return (
+                                            <div key={size} className="p-2.5 rounded-lg bg-muted/30 border">
+                                              <div className="flex items-center justify-between mb-1.5">
+                                                <div className="flex items-center gap-2">
+                                                  <span className={cn('text-xs font-bold px-2 py-0.5 rounded', palette.pill)}>{size}</span>
+                                                  <span className="text-xs text-muted-foreground">Cut: {cutForSize}</span>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                  <span className={`text-xs font-bold ${getStatusColor(sizePercent)}`}>{sizePercent}%</span>
+                                                  <div className="w-12 h-1.5 rounded-full bg-gray-200 overflow-hidden">
+                                                    <div className={`h-full rounded-full ${getProgressColor(sizePercent)}`} style={{ width: `${sizePercent}%` }} />
+                                                  </div>
+                                                </div>
+                                              </div>
+                                              
+                                              <div className="flex items-center gap-3 text-xs mb-1.5">
+                                                <span className="text-green-600 font-medium">✓ {sizeCompleted} done</span>
+                                                {sizeMistakes > 0 && (
+                                                  <span className="text-orange-500 font-medium flex items-center gap-0.5">
+                                                    <AlertTriangle className="h-3 w-3" />{sizeMistakes} mistake{sizeMistakes !== 1 ? 's' : ''}
+                                                  </span>
+                                                )}
+                                                {missing > 0 && sizeCompleted > 0 && (
+                                                  <span className="text-red-500 font-medium">{missing} missing</span>
+                                                )}
+                                                {missing === 0 && (sizeCompleted + sizeMistakes) >= cutForSize && sizeCompleted > 0 && (
+                                                  <span className="text-muted-foreground">All accounted</span>
+                                                )}
+                                              </div>
+
+                                              {/* Notes */}
+                                              {(() => {
+                                                const sizeNotes = sizeProgressMap[sizeEditKey]?.notes || [];
+                                                if (sizeNotes.length === 0) return null;
+                                                return (
+                                                  <div className="flex items-start gap-1.5 text-xs text-muted-foreground mb-1.5">
+                                                    <StickyNote className="h-3 w-3 mt-0.5 shrink-0 text-amber-500" />
+                                                    <span className="italic">{sizeNotes.join(' | ')}</span>
+                                                  </div>
+                                                );
+                                              })()}
+
+                                              {op !== 'Cutting' && (isEditingThis ? (
+                                                <div className="space-y-2 pt-1">
+                                                  <div className="flex items-center gap-2">
+                                                    <div className="flex-1">
+                                                      <Label className="text-xs text-muted-foreground mb-1 block">Completed</Label>
+                                                      <Input
+                                                        type="number"
+                                                        min={0}
+                                                        max={cutForSize}
+                                                        value={editValues[sizeEditKey]?.completed || ''}
+                                                        onChange={(e) => setEditValues(prev => ({
+                                                          ...prev,
+                                                          [sizeEditKey]: { ...prev[sizeEditKey], completed: e.target.value }
+                                                        }))}
+                                                        placeholder={`Max: ${cutForSize}`}
+                                                        className="h-7 text-sm"
+                                                        autoFocus
+                                                        onKeyDown={(e) => {
+                                                          if (e.key === 'Enter') handleSaveSize(typeIndex, op, actualSizeKey, cutForSize);
+                                                          if (e.key === 'Escape') setEditingKey(null);
+                                                        }}
+                                                      />
+                                                    </div>
+                                                    <div className="flex-1">
+                                                      <Label className="text-xs text-muted-foreground mb-1 block">Mistakes</Label>
+                                                      <Input
+                                                        type="number"
+                                                        min={0}
+                                                        value={editValues[sizeEditKey]?.mistakes || ''}
+                                                        onChange={(e) => setEditValues(prev => ({
+                                                          ...prev,
+                                                          [sizeEditKey]: { ...prev[sizeEditKey], mistakes: e.target.value }
+                                                        }))}
+                                                        placeholder="0"
+                                                        className="h-7 text-sm"
+                                                        onKeyDown={(e) => {
+                                                          if (e.key === 'Enter') handleSaveSize(typeIndex, op, actualSizeKey, cutForSize);
+                                                          if (e.key === 'Escape') setEditingKey(null);
+                                                        }}
+                                                      />
+                                                    </div>
+                                                  </div>
+                                                  <div className="flex items-center gap-2">
+                                                    <Button size="sm" variant="default" className="h-6 text-xs" onClick={() => handleSaveSize(typeIndex, op, actualSizeKey, cutForSize)} disabled={upsertMutation.isPending}>
+                                                      Save
+                                                    </Button>
+                                                    <Button size="sm" variant="ghost" className="h-6 text-xs" onClick={() => setEditingKey(null)}>
+                                                      Cancel
+                                                    </Button>
+                                                  </div>
+                                                </div>
+                                              ) : (
+                                                <Button
+                                                  size="sm"
+                                                  variant="outline"
+                                                  className="h-6 text-xs mt-1"
+                                                  onClick={() => {
+                                                    setEditingKey(sizeEditKey);
+                                                    setEditValues(prev => ({
+                                                      ...prev,
+                                                      [sizeEditKey]: {
+                                                        completed: sizeCompleted.toString(),
+                                                        mistakes: sizeMistakes.toString(),
+                                                      }
+                                                    }));
+                                                  }}
+                                                >
+                                                  Update
+                                                </Button>
+                                              ))}
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="space-y-2">
+                                      <div className="flex items-center gap-3 text-xs">
+                                        <span className="text-green-600 font-medium">✓ {partTotalCompleted} done</span>
+                                        {partTotalMistakes > 0 && (
+                                          <span className="text-orange-500 font-medium flex items-center gap-1">
+                                            <AlertTriangle className="h-3 w-3" />
+                                            {partTotalMistakes} mistake{partTotalMistakes !== 1 ? 's' : ''}
+                                          </span>
+                                        )}
+                                        {(() => {
+                                          const miss = Math.max(0, partCutPieces - partTotalCompleted - partTotalMistakes);
+                                          if (miss > 0 && partTotalCompleted > 0) return <span className="text-red-500 font-medium">{miss} missing</span>;
+                                          if (miss === 0 && partTotalCompleted > 0) return <span className="text-muted-foreground">All accounted</span>;
+                                          return null;
+                                        })()}
+                                      </div>
+                                      {!partPrefix && (() => {
+                                        const opNotes = aggProgressMap[`${typeIndex}-${op}`]?.notes || [];
+                                        if (opNotes.length === 0) return null;
+                                        return (
+                                          <div className="flex items-start gap-1.5 text-xs text-muted-foreground">
+                                            <StickyNote className="h-3 w-3 mt-0.5 shrink-0 text-amber-500" />
+                                            <span className="italic">{opNotes.join(' | ')}</span>
+                                          </div>
+                                        );
+                                      })()}
+                                      {op !== 'Cutting' && (() => {
+                                        const aggSizeKey = partPrefix ? `${typeIndex}-${op}-${partPrefix}-` : `${typeIndex}-${op}-`;
+                                        const isEditingAgg = editingKey === aggSizeKey;
+                                        if (isEditingAgg) {
+                                          return (
+                                            <div className="space-y-2 pt-1">
+                                              <div className="flex items-center gap-2">
+                                                <div className="flex-1">
+                                                  <Label className="text-xs text-muted-foreground mb-1 block">Completed Pieces</Label>
+                                                  <Input
+                                                    type="number"
+                                                    min={0}
+                                                    max={partCutPieces}
+                                                    value={editValues[aggSizeKey]?.completed || ''}
+                                                    onChange={(e) => setEditValues(prev => ({
+                                                      ...prev,
+                                                      [aggSizeKey]: { ...prev[aggSizeKey], completed: e.target.value }
+                                                    }))}
+                                                    placeholder={`Max: ${partCutPieces}`}
+                                                    className="h-7 text-sm"
+                                                    autoFocus
+                                                    onKeyDown={(e) => {
+                                                      if (e.key === 'Enter') handleSaveSize(typeIndex, op, partPrefix ? `${partPrefix}-` : '', partCutPieces);
+                                                      if (e.key === 'Escape') setEditingKey(null);
+                                                    }}
+                                                  />
+                                                </div>
+                                                <div className="flex-1">
+                                                  <Label className="text-xs text-muted-foreground mb-1 block">Mistake Pieces</Label>
+                                                  <Input
+                                                    type="number"
+                                                    min={0}
+                                                    value={editValues[aggSizeKey]?.mistakes || ''}
+                                                    onChange={(e) => setEditValues(prev => ({
+                                                      ...prev,
+                                                      [aggSizeKey]: { ...prev[aggSizeKey], mistakes: e.target.value }
+                                                    }))}
+                                                    placeholder="0"
+                                                    className="h-7 text-sm"
+                                                    onKeyDown={(e) => {
+                                                      if (e.key === 'Enter') handleSaveSize(typeIndex, op, partPrefix ? `${partPrefix}-` : '', partCutPieces);
+                                                      if (e.key === 'Escape') setEditingKey(null);
+                                                    }}
+                                                  />
+                                                </div>
+                                              </div>
+                                              <div className="flex items-center gap-2">
+                                                <Button size="sm" variant="default" className="h-7 text-xs" onClick={() => handleSaveSize(typeIndex, op, partPrefix ? `${partPrefix}-` : '', partCutPieces)} disabled={upsertMutation.isPending}>
+                                                  Save
+                                                </Button>
+                                                <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setEditingKey(null)}>
+                                                  Cancel
+                                                </Button>
+                                              </div>
+                                            </div>
+                                          );
+                                        }
+                                        return (
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="h-6 text-xs"
+                                            onClick={() => {
+                                              setEditingKey(aggSizeKey);
+                                              setEditValues(prev => ({
+                                                ...prev,
+                                                [aggSizeKey]: {
+                                                  completed: partTotalCompleted.toString(),
+                                                  mistakes: partTotalMistakes.toString(),
+                                                }
+                                              }));
+                                            }}
+                                          >
+                                            Update
+                                          </Button>
+                                        );
+                                      })()}
+                                    </div>
+                                  )}
+                                </div>
+                              </CollapsibleContent>
+                            </div>
+                          </Collapsible>
+                        );
+                      };
+
+                      const renderColorHeader = () => (
+                        <div className={cn('flex items-center justify-between p-4 hover:bg-muted/20 transition-colors cursor-pointer', palette.bg)}>
+                          <div className="flex items-center gap-3">
+                            {colorOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                            <div className="text-left">
+                              <div className="flex items-center gap-2">
+                                <span className={cn('font-semibold text-sm', palette.accent)}>{colorLabel}</span>
+                                {type?.fabric_type && (
+                                  <span className="text-xs text-muted-foreground">· {type.fabric_type}{type.gsm ? ` / ${type.gsm} GSM` : ''}</span>
+                                )}
+                                {isSetItem && (
+                                  <Badge variant="secondary" className="text-xs gap-1">
+                                    <Layers className="h-2.5 w-2.5" /> Set
+                                  </Badge>
+                                )}
+                              </div>
+                              {isJobWorkColor && (
+                                <div className="mt-1">
+                                  <Badge variant="secondary" className="text-xs gap-1 bg-blue-100 text-blue-700 border-blue-300 py-0 h-5">
+                                    <Briefcase className="h-2.5 w-2.5" />
+                                    {assignedCompanies.join(', ')}
+                                  </Badge>
+                                </div>
+                              )}
+                              {hasSizes && (
+                                <div className="flex gap-1 mt-1.5 flex-wrap">
+                                  {sizes.map(size => {
+                                    const cutForSize = cuttingSizeSummary[typeIndex]?.[size] || 0;
+                                    return (
+                                      <span key={size} className={cn('text-xs px-1.5 py-0.5 rounded font-medium', palette.pill)}>
+                                        {size}: {cutForSize}
+                                      </span>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <Badge className={cn('text-xs', palette.pill, 'border-0')}>{typeCutPieces} pcs</Badge>
+                            <span className={`text-xs font-bold ${getStatusColor(typeProgress)}`}>{typeProgress}%</span>
+                            <div className="w-20 h-2 rounded-full bg-gray-100 overflow-hidden">
+                              <div className={`h-full rounded-full ${palette.bar}`} style={{ width: `${typeProgress}%` }} />
+                            </div>
+                          </div>
+                        </div>
+                      );
 
                       return (
                         <Card
@@ -728,353 +1104,51 @@ export const BatchProductionSection = ({
                           className={cn(
                             'overflow-hidden border-l-4',
                             palette.border,
-                            `border-l-${palette.bar.replace('bg-', '')}`,
                             isJobWorkColor && 'ring-1 ring-blue-200'
                           )}
                           style={{ borderLeftColor: palette.bar.includes('blue') ? '#3b82f6' : palette.bar.includes('emerald') ? '#10b981' : palette.bar.includes('violet') ? '#8b5cf6' : palette.bar.includes('amber') ? '#f59e0b' : palette.bar.includes('rose') ? '#f43f5e' : palette.bar.includes('cyan') ? '#06b6d4' : palette.bar.includes('orange') ? '#f97316' : '#14b8a6' }}
                         >
                           <Collapsible open={colorOpen} onOpenChange={() => toggleColor(typeIndex)}>
                             <CollapsibleTrigger className="w-full">
-                              <div className={cn('flex items-center justify-between p-4 hover:bg-muted/20 transition-colors cursor-pointer', palette.bg)}>
-                                <div className="flex items-center gap-3">
-                                  {colorOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                                  <div className="text-left">
-                                    <div className="flex items-center gap-2">
-                                      <span className={cn('font-semibold text-sm', palette.accent)}>{colorLabel}</span>
-                                      {type?.fabric_type && (
-                                        <span className="text-xs text-muted-foreground">· {type.fabric_type}{type.gsm ? ` / ${type.gsm} GSM` : ''}</span>
-                                      )}
-                                    </div>
-                                    {isJobWorkColor && (
-                                      <div className="mt-1">
-                                        <Badge variant="secondary" className="text-xs gap-1 bg-blue-100 text-blue-700 border-blue-300 py-0 h-5">
-                                          <Briefcase className="h-2.5 w-2.5" />
-                                          {assignedCompanies.join(', ')}
-                                        </Badge>
-                                      </div>
-                                    )}
-                                    {hasSizes && (
-                                      <div className="flex gap-1 mt-1.5 flex-wrap">
-                                        {sizes.map(size => {
-                                          const cutForSize = cuttingSizeSummary[typeIndex]?.[size] || 0;
-                                          return (
-                                            <span key={size} className={cn('text-xs px-1.5 py-0.5 rounded font-medium', palette.pill)}>
-                                              {size}: {cutForSize}
-                                            </span>
-                                          );
-                                        })}
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                  <Badge className={cn('text-xs', palette.pill, 'border-0')}>{typeCutPieces} pcs</Badge>
-                                  <span className={`text-xs font-bold ${getStatusColor(typeProgress)}`}>{typeProgress}%</span>
-                                  <div className="w-20 h-2 rounded-full bg-gray-100 overflow-hidden">
-                                    <div className={`h-full rounded-full ${palette.bar}`} style={{ width: `${typeProgress}%` }} />
-                                  </div>
-                                </div>
-                              </div>
+                              {renderColorHeader()}
                             </CollapsibleTrigger>
 
                             <CollapsibleContent>
                               <div className="px-4 pb-4 space-y-3">
                                 {typeCutPieces === 0 ? (
                                   <p className="text-sm text-muted-foreground py-3 text-center">No pieces cut yet. Add cutting entries first.</p>
-                                ) : (
-                                  typeOps.map(op => {
-                                    const opKey = `${typeIndex}-${op}`;
-                                    const totalCompleted = getOpTotalCompleted(typeIndex, op);
-                                    const totalMistakes = getOpTotalMistakes(typeIndex, op);
-                                    const percent = getOpProgress(typeIndex, op, typeCutPieces);
-                                    const opOpen = isOpOpen(opKey);
-
-                                    return (
-                                      <Collapsible key={opKey} open={opOpen} onOpenChange={() => toggleOp(opKey)}>
-                                        <div className="border rounded-lg overflow-hidden bg-background">
-                                          {/* Operation header */}
-                                          <CollapsibleTrigger className="w-full">
-                                            <div className="flex items-center justify-between p-3 hover:bg-muted/20 cursor-pointer">
-                                              <div className="flex items-center gap-2">
-                                                {opOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-                                                {percent >= 100 ? (
-                                                  <CheckCircle className="h-4 w-4 text-green-500" />
-                                                ) : (
-                                                  <div className={`h-4 w-4 rounded-full border-2 ${percent > 0 ? 'border-yellow-500' : 'border-gray-300'}`} />
-                                                )}
-                                                <span className="text-sm font-medium">{op}</span>
-                                              </div>
-                                              <div className="flex items-center gap-3">
-                                                <div className="flex items-center gap-2 text-xs">
-                                                  <span className="text-green-600 font-medium">✓ {totalCompleted}</span>
-                                                  {totalMistakes > 0 && (
-                                                    <span className="text-orange-500 font-medium flex items-center gap-0.5">
-                                                      <AlertTriangle className="h-3 w-3" />{totalMistakes}
-                                                    </span>
-                                                  )}
-                                                  <span className="text-muted-foreground">/ {typeCutPieces}</span>
-                                                  {(aggProgressMap[`${typeIndex}-${op}`]?.notes?.length || 0) > 0 && (
-                                                    <StickyNote className="h-3 w-3 text-amber-500" />
-                                                  )}
-                                                </div>
-                                                <Badge variant={percent >= 100 ? 'default' : 'outline'} className="text-xs">
-                                                  {percent}%
-                                                </Badge>
-                                                <div className="w-16 h-1.5 rounded-full bg-gray-100 overflow-hidden">
-                                                  <div className={`h-full rounded-full ${getProgressColor(percent)}`} style={{ width: `${percent}%` }} />
-                                                </div>
-                                              </div>
+                                ) : isSetItem ? (
+                                  /* Set Item: 2-column layout for Top and Bottom */
+                                  <div className="grid grid-cols-2 gap-4">
+                                    {['Top', 'Bottom'].map(part => (
+                                      <div key={part} className={cn(
+                                        'rounded-lg border p-3 space-y-3',
+                                        part === 'Top' ? 'bg-sky-50/50 border-sky-200 dark:bg-sky-950/20' : 'bg-indigo-50/50 border-indigo-200 dark:bg-indigo-950/20'
+                                      )}>
+                                        <div className="flex items-center gap-2 pb-2 border-b">
+                                          <Badge variant="outline" className={cn(
+                                            'text-xs font-semibold',
+                                            part === 'Top' ? 'border-sky-400 text-sky-700 dark:text-sky-300' : 'border-indigo-400 text-indigo-700 dark:text-indigo-300'
+                                          )}>
+                                            {part}
+                                          </Badge>
+                                          {hasSizes && (
+                                            <div className="flex gap-1 flex-wrap">
+                                              {sizes.map(size => (
+                                                <span key={size} className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium">
+                                                  {size}
+                                                </span>
+                                              ))}
                                             </div>
-                                          </CollapsibleTrigger>
-
-                                          <CollapsibleContent>
-                                            <div className="border-t px-3 pb-3 pt-2">
-                                              {hasSizes ? (
-                                                /* Size-wise breakdown */
-                                                <div className="space-y-2">
-                                                  <div className="text-xs font-medium text-muted-foreground mb-2">Size-wise Progress</div>
-                                                  <div className="grid gap-2">
-                                                    {sizes.map(size => {
-                                                      const cutForSize = cuttingSizeSummary[typeIndex]?.[size] || 0;
-                                                      const sizeCompleted = getSizeCompleted(typeIndex, op, size);
-                                                      const sizeMistakes = getSizeMistakes(typeIndex, op, size);
-                                                      const sizePercent = cutForSize > 0 ? Math.min(Math.round((sizeCompleted / cutForSize) * 100), 100) : 0;
-                                                      const sizeEditKey = `${typeIndex}-${op}-${size}`;
-                                                      const isEditingThis = editingKey === sizeEditKey;
-                                                      const missing = Math.max(0, cutForSize - sizeCompleted - sizeMistakes);
-
-                                                      return (
-                                                        <div key={size} className="p-2.5 rounded-lg bg-muted/30 border">
-                                                          <div className="flex items-center justify-between mb-1.5">
-                                                            <div className="flex items-center gap-2">
-                                                              <span className={cn('text-xs font-bold px-2 py-0.5 rounded', palette.pill)}>{size}</span>
-                                                              <span className="text-xs text-muted-foreground">Cut: {cutForSize}</span>
-                                                            </div>
-                                                            <div className="flex items-center gap-2">
-                                                              <span className={`text-xs font-bold ${getStatusColor(sizePercent)}`}>{sizePercent}%</span>
-                                                              <div className="w-12 h-1.5 rounded-full bg-gray-200 overflow-hidden">
-                                                                <div className={`h-full rounded-full ${getProgressColor(sizePercent)}`} style={{ width: `${sizePercent}%` }} />
-                                                              </div>
-                                                            </div>
-                                                          </div>
-                                                          
-                                                          {/* Progress details */}
-                                                          <div className="flex items-center gap-3 text-xs mb-1.5">
-                                                            <span className="text-green-600 font-medium">✓ {sizeCompleted} done</span>
-                                                            {sizeMistakes > 0 && (
-                                                              <span className="text-orange-500 font-medium flex items-center gap-0.5">
-                                                                <AlertTriangle className="h-3 w-3" />{sizeMistakes} mistake{sizeMistakes !== 1 ? 's' : ''}
-                                                              </span>
-                                                            )}
-                                                            {missing > 0 && sizeCompleted > 0 && (
-                                                              <span className="text-red-500 font-medium">{missing} missing</span>
-                                                            )}
-                                                            {missing === 0 && (sizeCompleted + sizeMistakes) >= cutForSize && sizeCompleted > 0 && (
-                                                              <span className="text-muted-foreground">All accounted</span>
-                                                            )}
-                                                          </div>
-
-                                                          {/* Notes from staff */}
-                                                          {(() => {
-                                                            const sizeNotes = sizeProgressMap[sizeEditKey]?.notes || [];
-                                                            if (sizeNotes.length === 0) return null;
-                                                            return (
-                                                              <div className="flex items-start gap-1.5 text-xs text-muted-foreground mb-1.5">
-                                                                <StickyNote className="h-3 w-3 mt-0.5 shrink-0 text-amber-500" />
-                                                                <span className="italic">{sizeNotes.join(' | ')}</span>
-                                                              </div>
-                                                            );
-                                                          })()}
-
-                                                          {op !== 'Cutting' && (isEditingThis ? (
-                                                            <div className="space-y-2 pt-1">
-                                                              <div className="flex items-center gap-2">
-                                                                <div className="flex-1">
-                                                                  <Label className="text-xs text-muted-foreground mb-1 block">Completed</Label>
-                                                                  <Input
-                                                                    type="number"
-                                                                    min={0}
-                                                                    max={cutForSize}
-                                                                    value={editValues[sizeEditKey]?.completed || ''}
-                                                                    onChange={(e) => setEditValues(prev => ({
-                                                                      ...prev,
-                                                                      [sizeEditKey]: { ...prev[sizeEditKey], completed: e.target.value }
-                                                                    }))}
-                                                                    placeholder={`Max: ${cutForSize}`}
-                                                                    className="h-7 text-sm"
-                                                                    autoFocus
-                                                                    onKeyDown={(e) => {
-                                                                      if (e.key === 'Enter') handleSaveSize(typeIndex, op, size, cutForSize);
-                                                                      if (e.key === 'Escape') setEditingKey(null);
-                                                                    }}
-                                                                  />
-                                                                </div>
-                                                                <div className="flex-1">
-                                                                  <Label className="text-xs text-muted-foreground mb-1 block">Mistakes</Label>
-                                                                  <Input
-                                                                    type="number"
-                                                                    min={0}
-                                                                    value={editValues[sizeEditKey]?.mistakes || ''}
-                                                                    onChange={(e) => setEditValues(prev => ({
-                                                                      ...prev,
-                                                                      [sizeEditKey]: { ...prev[sizeEditKey], mistakes: e.target.value }
-                                                                    }))}
-                                                                    placeholder="0"
-                                                                    className="h-7 text-sm"
-                                                                    onKeyDown={(e) => {
-                                                                      if (e.key === 'Enter') handleSaveSize(typeIndex, op, size, cutForSize);
-                                                                      if (e.key === 'Escape') setEditingKey(null);
-                                                                    }}
-                                                                  />
-                                                                </div>
-                                                              </div>
-                                                              <div className="flex items-center gap-2">
-                                                                <Button size="sm" variant="default" className="h-6 text-xs" onClick={() => handleSaveSize(typeIndex, op, size, cutForSize)} disabled={upsertMutation.isPending}>
-                                                                  Save
-                                                                </Button>
-                                                                <Button size="sm" variant="ghost" className="h-6 text-xs" onClick={() => setEditingKey(null)}>
-                                                                  Cancel
-                                                                </Button>
-                                                              </div>
-                                                            </div>
-                                                          ) : (
-                                                            <Button
-                                                              size="sm"
-                                                              variant="outline"
-                                                              className="h-6 text-xs mt-1"
-                                                              onClick={() => {
-                                                                setEditingKey(sizeEditKey);
-                                                                setEditValues(prev => ({
-                                                                  ...prev,
-                                                                  [sizeEditKey]: {
-                                                                    completed: sizeCompleted.toString(),
-                                                                    mistakes: sizeMistakes.toString(),
-                                                                  }
-                                                                }));
-                                                              }}
-                                                            >
-                                                              Update
-                                                            </Button>
-                                                          ))}
-                                                        </div>
-                                                      );
-                                                    })}
-                                                  </div>
-                                                </div>
-                                              ) : (
-                                                /* No size data — fallback to aggregate */
-                                                <div className="space-y-2">
-                                                  <div className="flex items-center gap-3 text-xs">
-                                                    <span className="text-green-600 font-medium">✓ {totalCompleted} done</span>
-                                                    {totalMistakes > 0 && (
-                                                      <span className="text-orange-500 font-medium flex items-center gap-1">
-                                                        <AlertTriangle className="h-3 w-3" />
-                                                        {totalMistakes} mistake{totalMistakes !== 1 ? 's' : ''}
-                                                      </span>
-                                                    )}
-                                                    {(() => {
-                                                      const miss = Math.max(0, typeCutPieces - totalCompleted - totalMistakes);
-                                                      if (miss > 0 && totalCompleted > 0) return <span className="text-red-500 font-medium">{miss} missing</span>;
-                                                      if (miss === 0 && totalCompleted > 0) return <span className="text-muted-foreground">All accounted</span>;
-                                                      return null;
-                                                    })()}
-                                                  </div>
-                                                  {/* Notes from staff */}
-                                                  {(() => {
-                                                    const opNotes = aggProgressMap[`${typeIndex}-${op}`]?.notes || [];
-                                                    if (opNotes.length === 0) return null;
-                                                    return (
-                                                      <div className="flex items-start gap-1.5 text-xs text-muted-foreground">
-                                                        <StickyNote className="h-3 w-3 mt-0.5 shrink-0 text-amber-500" />
-                                                        <span className="italic">{opNotes.join(' | ')}</span>
-                                                      </div>
-                                                    );
-                                                  })()}
-                                                  {op !== 'Cutting' && (() => {
-                                                    const aggKey = `${typeIndex}-${op}-`;
-                                                    const isEditingAgg = editingKey === aggKey;
-                                                    if (isEditingAgg) {
-                                                      return (
-                                                        <div className="space-y-2 pt-1">
-                                                          <div className="flex items-center gap-2">
-                                                            <div className="flex-1">
-                                                              <Label className="text-xs text-muted-foreground mb-1 block">Completed Pieces</Label>
-                                                              <Input
-                                                                type="number"
-                                                                min={0}
-                                                                max={typeCutPieces}
-                                                                value={editValues[aggKey]?.completed || ''}
-                                                                onChange={(e) => setEditValues(prev => ({
-                                                                  ...prev,
-                                                                  [aggKey]: { ...prev[aggKey], completed: e.target.value }
-                                                                }))}
-                                                                placeholder={`Max: ${typeCutPieces}`}
-                                                                className="h-7 text-sm"
-                                                                autoFocus
-                                                                onKeyDown={(e) => {
-                                                                  if (e.key === 'Enter') handleSaveSize(typeIndex, op, '', typeCutPieces);
-                                                                  if (e.key === 'Escape') setEditingKey(null);
-                                                                }}
-                                                              />
-                                                            </div>
-                                                            <div className="flex-1">
-                                                              <Label className="text-xs text-muted-foreground mb-1 block">Mistake Pieces</Label>
-                                                              <Input
-                                                                type="number"
-                                                                min={0}
-                                                                value={editValues[aggKey]?.mistakes || ''}
-                                                                onChange={(e) => setEditValues(prev => ({
-                                                                  ...prev,
-                                                                  [aggKey]: { ...prev[aggKey], mistakes: e.target.value }
-                                                                }))}
-                                                                placeholder="0"
-                                                                className="h-7 text-sm"
-                                                                onKeyDown={(e) => {
-                                                                  if (e.key === 'Enter') handleSaveSize(typeIndex, op, '', typeCutPieces);
-                                                                  if (e.key === 'Escape') setEditingKey(null);
-                                                                }}
-                                                              />
-                                                            </div>
-                                                          </div>
-                                                          <div className="flex items-center gap-2">
-                                                            <Button size="sm" variant="default" className="h-7 text-xs" onClick={() => handleSaveSize(typeIndex, op, '', typeCutPieces)} disabled={upsertMutation.isPending}>
-                                                              Save
-                                                            </Button>
-                                                            <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setEditingKey(null)}>
-                                                              Cancel
-                                                            </Button>
-                                                          </div>
-                                                        </div>
-                                                      );
-                                                    }
-                                                    return (
-                                                      <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        className="h-6 text-xs"
-                                                        onClick={() => {
-                                                          setEditingKey(aggKey);
-                                                          setEditValues(prev => ({
-                                                            ...prev,
-                                                            [aggKey]: {
-                                                              completed: totalCompleted.toString(),
-                                                              mistakes: totalMistakes.toString(),
-                                                            }
-                                                          }));
-                                                        }}
-                                                      >
-                                                        Update
-                                                      </Button>
-                                                    );
-                                                  })()}
-                                                </div>
-                                              )}
-                                            </div>
-                                          </CollapsibleContent>
+                                          )}
                                         </div>
-                                      </Collapsible>
-                                    );
-                                  })
+                                        {typeOps.map(op => renderOperationContent(op, part))}
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  /* Normal: single column operations */
+                                  typeOps.map(op => renderOperationContent(op))
                                 )}
                               </div>
                             </CollapsibleContent>

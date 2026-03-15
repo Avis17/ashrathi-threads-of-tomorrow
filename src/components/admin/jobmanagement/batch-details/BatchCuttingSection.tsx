@@ -154,16 +154,16 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
         });
       }
     });
-    // Merge staff cutting data for types without cutting logs
+    // Merge staff cutting data for sizes not already tracked by cutting logs
     operationProgress
       .filter(p => p.operation.toLowerCase() === 'cutting')
       .forEach(op => {
         const ti = op.type_index;
-        const hasLogs = cuttingLogs.some(l => l.type_index === ti);
-        if (!hasLogs && op.completed_pieces > 0) {
-          if (!map[ti]) map[ti] = {};
-          const size = op.size || '';
-          if (size) {
+        const size = op.size || '';
+        if (size && op.completed_pieces > 0) {
+          const existingFromLogs = map[ti]?.[size] || 0;
+          if (existingFromLogs === 0) {
+            if (!map[ti]) map[ti] = {};
             map[ti][size] = (map[ti][size] || 0) + op.completed_pieces;
           }
         }
