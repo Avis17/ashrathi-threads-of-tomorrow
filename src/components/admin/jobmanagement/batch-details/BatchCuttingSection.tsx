@@ -743,38 +743,7 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
                             <TableCell className="font-medium">{log.color}</TableCell>
                             <TableCell>
                               {!isStaff && editingLogId === log.id ? (
-                                <div className="flex items-center gap-1">
-                                  <Input
-                                    type="number"
-                                    value={editPiecesCut}
-                                    onChange={(e) => setEditPiecesCut(e.target.value)}
-                                    className="h-8 w-20"
-                                    autoFocus
-                                    onKeyDown={(e) => {
-                                      if (e.key === 'Enter') {
-                                        const val = parseInt(editPiecesCut);
-                                        if (!isNaN(val) && val > 0) {
-                                          updateLogMutation.mutate({ id: log.id, batchId: batch.id, pieces_cut: val });
-                                          setEditingLogId(null);
-                                        }
-                                      } else if (e.key === 'Escape') {
-                                        setEditingLogId(null);
-                                      }
-                                    }}
-                                  />
-                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-green-600" onClick={() => {
-                                    const val = parseInt(editPiecesCut);
-                                    if (!isNaN(val) && val > 0) {
-                                      updateLogMutation.mutate({ id: log.id, batchId: batch.id, pieces_cut: val });
-                                      setEditingLogId(null);
-                                    }
-                                  }}>
-                                    <Check className="h-3.5 w-3.5" />
-                                  </Button>
-                                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditingLogId(null)}>
-                                    <X className="h-3.5 w-3.5" />
-                                  </Button>
-                                </div>
+                                <Badge className="bg-amber-500">{Object.values(editSizePieces).reduce((s, v) => s + (v || 0), 0) || editPiecesCut} pcs (editing…)</Badge>
                               ) : (
                                 <Badge
                                   className={`cursor-pointer ${isStaff ? 'bg-blue-600' : ''}`}
@@ -782,6 +751,7 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
                                     if (!isStaff) {
                                       setEditingLogId(log.id);
                                       setEditPiecesCut(log.pieces_cut.toString());
+                                      setEditSizePieces(sp && typeof sp === 'object' ? { ...(sp as SizePieces) } : {});
                                     }
                                   }}
                                 >
