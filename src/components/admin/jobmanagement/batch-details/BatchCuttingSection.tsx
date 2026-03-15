@@ -809,13 +809,7 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
                                     size="icon"
                                     className="h-8 w-8 text-destructive hover:text-destructive"
                                     onClick={() => {
-                                      const staffOps = operationProgress.filter(
-                                        p => p.operation.toLowerCase() === 'cutting' && p.type_index === log.type_index
-                                      );
-                                      // Delete all staff cutting entries for this type
-                                      staffOps.forEach(op => {
-                                        deleteOperationMutation.mutate(op.id);
-                                      });
+                                      setDeleteStaffTypeIndex(log.type_index);
                                     }}
                                   >
                                     <Trash2 className="h-4 w-4" />
