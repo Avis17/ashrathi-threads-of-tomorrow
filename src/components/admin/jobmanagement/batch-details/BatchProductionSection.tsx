@@ -170,12 +170,14 @@ export const BatchProductionSection = ({
   const getTypeOperations = (typeIndex: number): string[] => {
     const type = rollsData[typeIndex];
     if (type?.operations && Array.isArray(type.operations) && type.operations.length > 0) {
-      // Normalize stored operations to standard names, preserve order
-      const normalized = type.operations.map((op: string) => normalizeOperation(op));
-      // Filter to only standard ops, deduplicate
+      // Normalize standard operations, keep custom ones as-is
       const seen = new Set<string>();
-      return normalized.filter((op: string) => {
-        if (seen.has(op) || !STANDARD_OPERATIONS.includes(op)) return false;
+      return type.operations.map((op: string) => {
+        const normalized = normalizeOperation(op);
+        // If it normalizes to a standard op, use normalized; otherwise keep original
+        return STANDARD_OPERATIONS.includes(normalized) ? normalized : op;
+      }).filter((op: string) => {
+        if (seen.has(op)) return false;
         seen.add(op);
         return true;
       });
