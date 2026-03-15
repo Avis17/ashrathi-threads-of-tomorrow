@@ -43,6 +43,8 @@ export const useDeleteOperationProgress = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['batch-operation-progress'] });
+      queryClient.invalidateQueries({ queryKey: ['batch-cutting-logs'] });
+      queryClient.invalidateQueries({ queryKey: ['job-batches'] });
       toast.success('Entry deleted');
     },
     onError: (error: any) => {
