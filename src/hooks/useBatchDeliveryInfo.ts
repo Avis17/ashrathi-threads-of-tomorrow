@@ -33,7 +33,7 @@ export function useBatchDeliveryInfo(batchId: string) {
       if (error) throw error;
       return (data || []).map(d => ({
         ...d,
-        weight_entries: (d.weight_entries || []) as WeightEntry[],
+        weight_entries: (d.weight_entries || []) as unknown as WeightEntry[],
       })) as BatchDeliveryInfo[];
     },
     enabled: !!batchId,
