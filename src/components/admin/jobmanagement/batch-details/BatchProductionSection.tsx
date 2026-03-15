@@ -135,6 +135,7 @@ export const BatchProductionSection = ({
   const { data: progressData = [] } = useBatchOperationProgress(batchId);
   const { data: jobWorks = [] } = useBatchJobWorks(batchId);
   const { data: typeData } = useBatchTypeConfirmed(batchId);
+  const { data: deliveryInfoList = [] } = useBatchDeliveryInfo(batchId);
   const confirmedMap = typeData?.confirmedMap ?? {};
   const statusMap = typeData?.statusMap ?? {};
   const actualDeliveryDateMap = typeData?.actualDeliveryDateMap ?? {};
@@ -142,6 +143,10 @@ export const BatchProductionSection = ({
   const upsertMutation = useUpsertOperationProgress();
   const upsertStatusMutation = useUpsertDeliveryStatus();
   const updateBatchMutation = useUpdateJobBatch();
+
+  // Build delivery info lookup by style_id
+  const deliveryInfoMap: Record<string, BatchDeliveryInfo> = {};
+  deliveryInfoList.forEach(info => { deliveryInfoMap[info.style_id] = info; });
 
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [editValues, setEditValues] = useState<Record<string, { completed: string; mistakes: string }>>({});
