@@ -1,4 +1,21 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -13,7 +30,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import {
   CheckCircle, AlertCircle, ChevronDown, ChevronRight,
-  Briefcase, AlertTriangle, Truck, CalendarClock, CalendarCheck, TrendingDown, TrendingUp, CalendarIcon, StickyNote, Settings, Layers,
+  Briefcase, AlertTriangle, Truck, CalendarClock, CalendarCheck, TrendingDown, TrendingUp, CalendarIcon, StickyNote, Settings, Layers, GripVertical,
 } from 'lucide-react';
 import { useBatchOperationProgress, useUpsertOperationProgress } from '@/hooks/useBatchOperationProgress';
 import { useBatchJobWorks } from '@/hooks/useJobWorks';
@@ -22,6 +39,34 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { useBatchTypeConfirmed, useUpsertDeliveryStatus, DELIVERY_STATUSES, DeliveryStatus } from '@/hooks/useBatchTypeConfirmed';
 import { differenceInDays, format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
+
+// Sortable operation item for drag-and-drop reordering
+function SortableOperationItem({ id, onRemove }: { id: string; onRemove: (id: string) => void }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center gap-1.5 bg-background border rounded-md px-2 py-1 text-sm group"
+    >
+      <span className="cursor-grab text-muted-foreground" {...attributes} {...listeners}>
+        <GripVertical className="h-3.5 w-3.5" />
+      </span>
+      <span className="flex-1">{id}</span>
+      <button
+        className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity text-xs font-bold"
+        onClick={() => onRemove(id)}
+      >
+        ×
+      </button>
+    </div>
+  );
+}
 
 export interface BatchProductionSectionProps {
   batchId: string;
@@ -107,6 +152,10 @@ export const BatchProductionSection = ({
   const [opsEditingStyleId, setOpsEditingStyleId] = useState<string | null>(null);
   const [opsEditingValues, setOpsEditingValues] = useState<string[]>([]);
   const [customOpInput, setCustomOpInput] = useState('');
+  const opsDndSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
   // Delivery dialog state
   const [deliveryDialogStyle, setDeliveryDialogStyle] = useState<StyleGroup | null>(null);
@@ -695,48 +744,27 @@ export const BatchProductionSection = ({
                   {opsEditingStyleId === sg.styleId && (
                     <div className="border rounded-lg p-3 bg-muted/30 space-y-3 mx-1">
                       <div className="text-sm font-medium">Configure Operations for {sg.styleName}</div>
-                      {/* Standard operations */}
-                      <div className="grid grid-cols-3 gap-2">
-                        {STANDARD_OPERATIONS.map(op => (
-                          <label key={op} className="flex items-center gap-2 cursor-pointer">
-                            <Checkbox
-                              checked={opsEditingValues.includes(op)}
-                              onCheckedChange={(checked) => {
-                                if (checked) {
-                                  // Insert in standard order position, then append customs after
-                                  const standardInList = STANDARD_OPERATIONS.filter(
-                                    o => opsEditingValues.includes(o) || o === op
-                                  );
-                                  const customs = opsEditingValues.filter(o => !STANDARD_OPERATIONS.includes(o));
-                                  setOpsEditingValues([...standardInList, ...customs]);
-                                } else {
-                                  setOpsEditingValues(prev => prev.filter(o => o !== op));
-                                }
-                              }}
-                            />
-                            <span className="text-sm">{op}</span>
-                          </label>
-                        ))}
-                      </div>
-                      {/* Custom operations already added */}
-                      {opsEditingValues.filter(o => !STANDARD_OPERATIONS.includes(o)).length > 0 && (
-                        <div className="space-y-1">
-                          <span className="text-xs text-muted-foreground font-medium">Custom Operations</span>
-                          <div className="flex flex-wrap gap-2">
-                            {opsEditingValues.filter(o => !STANDARD_OPERATIONS.includes(o)).map(op => (
-                              <Badge key={op} variant="secondary" className="text-xs gap-1.5 pr-1">
-                                {op}
-                                <button
-                                  className="ml-1 hover:text-red-500 text-muted-foreground"
-                                  onClick={() => setOpsEditingValues(prev => prev.filter(o => o !== op))}
-                                >
-                                  ×
-                                </button>
-                              </Badge>
-                            ))}
-                          </div>
+                      {/* Add operations: standard checkboxes */}
+                      <div className="space-y-1.5">
+                        <span className="text-xs text-muted-foreground font-medium">Add Operations</span>
+                        <div className="grid grid-cols-3 gap-2">
+                          {STANDARD_OPERATIONS.map(op => (
+                            <label key={op} className="flex items-center gap-2 cursor-pointer">
+                              <Checkbox
+                                checked={opsEditingValues.includes(op)}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    setOpsEditingValues(prev => [...prev, op]);
+                                  } else {
+                                    setOpsEditingValues(prev => prev.filter(o => o !== op));
+                                  }
+                                }}
+                              />
+                              <span className="text-sm">{op}</span>
+                            </label>
+                          ))}
                         </div>
-                      )}
+                      </div>
                       {/* Add custom operation input */}
                       <div className="flex items-center gap-2">
                         <Input
@@ -772,6 +800,36 @@ export const BatchProductionSection = ({
                           + Add
                         </Button>
                       </div>
+                      {/* Sortable selected operations list */}
+                      {opsEditingValues.length > 0 && (
+                        <div className="space-y-1.5">
+                          <span className="text-xs text-muted-foreground font-medium">Operation Order (drag to reorder)</span>
+                          <DndContext
+                            sensors={opsDndSensors}
+                            collisionDetection={closestCenter}
+                            onDragEnd={(event: DragEndEvent) => {
+                              const { active, over } = event;
+                              if (over && active.id !== over.id) {
+                                const oldIdx = opsEditingValues.indexOf(String(active.id));
+                                const newIdx = opsEditingValues.indexOf(String(over.id));
+                                setOpsEditingValues(arrayMove(opsEditingValues, oldIdx, newIdx));
+                              }
+                            }}
+                          >
+                            <SortableContext items={opsEditingValues} strategy={verticalListSortingStrategy}>
+                              <div className="space-y-1">
+                                {opsEditingValues.map((op) => (
+                                  <SortableOperationItem
+                                    key={op}
+                                    id={op}
+                                    onRemove={(id) => setOpsEditingValues(prev => prev.filter(o => o !== id))}
+                                  />
+                                ))}
+                              </div>
+                            </SortableContext>
+                          </DndContext>
+                        </div>
+                      )}
                       <div className="flex items-center gap-2">
                         <Button
                           size="sm"
