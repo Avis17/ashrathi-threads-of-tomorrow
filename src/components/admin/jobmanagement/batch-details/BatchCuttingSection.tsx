@@ -269,9 +269,14 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
       // Combine all size entries for this type into one unified entry
       const totalPieces = ops.reduce((s, o) => s + o.completed_pieces, 0);
       const sp: SizePieces = {};
+      const staffNotes: string[] = [];
       ops.forEach(o => {
         if (o.size && o.completed_pieces > 0) sp[o.size] = o.completed_pieces;
+        if (o.notes) staffNotes.push(o.notes);
       });
+      const combinedNotes = staffNotes.length > 0 
+        ? staffNotes.join(' | ') 
+        : 'From Staff Production Tracker';
       const date = ops[0]?.updated_at ? format(new Date(ops[0].updated_at), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd');
       if (!map[date]) map[date] = [];
       map[date].push({
@@ -280,7 +285,7 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
         color: type?.color || `Type ${ti + 1}`,
         pieces_cut: totalPieces,
         size_pieces: Object.keys(sp).length > 0 ? sp : null,
-        notes: 'From Staff Production Tracker',
+        notes: combinedNotes,
         log_date: date,
         isStaffEntry: true,
         staffBatchId: batch.id,

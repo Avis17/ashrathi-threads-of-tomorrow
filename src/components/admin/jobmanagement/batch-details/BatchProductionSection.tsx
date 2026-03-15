@@ -124,24 +124,26 @@ export const BatchProductionSection = ({
   });
 
   // --- Build size-wise progress maps ---
-  // Key: `${type_index}-${operation}-${size}` => { completed, mistakes }
-  const sizeProgressMap: Record<string, { completed: number; mistakes: number }> = {};
+  // Key: `${type_index}-${operation}-${size}` => { completed, mistakes, notes }
+  const sizeProgressMap: Record<string, { completed: number; mistakes: number; notes: string[] }> = {};
   // Also build aggregate (no size) for backward compat
-  const aggProgressMap: Record<string, { completed: number; mistakes: number }> = {};
+  const aggProgressMap: Record<string, { completed: number; mistakes: number; notes: string[] }> = {};
   
   progressData.forEach(p => {
     const normalizedOp = normalizeOperation(p.operation);
     const sizeKey = `${p.type_index}-${normalizedOp}-${p.size || ''}`;
     if (!sizeProgressMap[sizeKey]) {
-      sizeProgressMap[sizeKey] = { completed: 0, mistakes: 0 };
+      sizeProgressMap[sizeKey] = { completed: 0, mistakes: 0, notes: [] };
     }
     sizeProgressMap[sizeKey].completed += p.completed_pieces;
     sizeProgressMap[sizeKey].mistakes += (p.mistake_pieces || 0);
+    if (p.notes) sizeProgressMap[sizeKey].notes.push(p.notes);
     // Aggregate
     const aggKey = `${p.type_index}-${normalizedOp}`;
-    if (!aggProgressMap[aggKey]) aggProgressMap[aggKey] = { completed: 0, mistakes: 0 };
+    if (!aggProgressMap[aggKey]) aggProgressMap[aggKey] = { completed: 0, mistakes: 0, notes: [] };
     aggProgressMap[aggKey].completed += p.completed_pieces;
     aggProgressMap[aggKey].mistakes += (p.mistake_pieces || 0);
+    if (p.notes) aggProgressMap[aggKey].notes.push(p.notes);
   });
 
   // --- Group rollsData by style ---
@@ -811,6 +813,9 @@ export const BatchProductionSection = ({
                                                     </span>
                                                   )}
                                                   <span className="text-muted-foreground">/ {typeCutPieces}</span>
+                                                  {(aggProgressMap[`${typeIndex}-${op}`]?.notes?.length || 0) > 0 && (
+                                                    <StickyNote className="h-3 w-3 text-amber-500" />
+                                                  )}
                                                 </div>
                                                 <Badge variant={percent >= 100 ? 'default' : 'outline'} className="text-xs">
                                                   {percent}%
@@ -868,6 +873,18 @@ export const BatchProductionSection = ({
                                                               <span className="text-muted-foreground">All accounted</span>
                                                             )}
                                                           </div>
+
+                                                          {/* Notes from staff */}
+                                                          {(() => {
+                                                            const sizeNotes = sizeProgressMap[sizeEditKey]?.notes || [];
+                                                            if (sizeNotes.length === 0) return null;
+                                                            return (
+                                                              <div className="flex items-start gap-1.5 text-xs text-muted-foreground mb-1.5">
+                                                                <StickyNote className="h-3 w-3 mt-0.5 shrink-0 text-amber-500" />
+                                                                <span className="italic">{sizeNotes.join(' | ')}</span>
+                                                              </div>
+                                                            );
+                                                          })()}
 
                                                           {op !== 'Cutting' && (isEditingThis ? (
                                                             <div className="space-y-2 pt-1">
@@ -962,6 +979,17 @@ export const BatchProductionSection = ({
                                                       return null;
                                                     })()}
                                                   </div>
+                                                  {/* Notes from staff */}
+                                                  {(() => {
+                                                    const opNotes = aggProgressMap[`${typeIndex}-${op}`]?.notes || [];
+                                                    if (opNotes.length === 0) return null;
+                                                    return (
+                                                      <div className="flex items-start gap-1.5 text-xs text-muted-foreground">
+                                                        <StickyNote className="h-3 w-3 mt-0.5 shrink-0 text-amber-500" />
+                                                        <span className="italic">{opNotes.join(' | ')}</span>
+                                                      </div>
+                                                    );
+                                                  })()}
                                                   {op !== 'Cutting' && (() => {
                                                     const aggKey = `${typeIndex}-${op}-`;
                                                     const isEditingAgg = editingKey === aggKey;
