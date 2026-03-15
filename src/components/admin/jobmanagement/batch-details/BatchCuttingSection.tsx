@@ -708,6 +708,7 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
                     <Table>
                       <TableHeader>
                         <TableRow>
+                          <TableHead>Source</TableHead>
                           <TableHead>Type</TableHead>
                           <TableHead>Color</TableHead>
                           <TableHead>Pieces</TableHead>
@@ -718,13 +719,23 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
                       </TableHeader>
                       <TableBody>
                         {logs.map((log) => {
-                          const sp = log.size_pieces as SizePieces | null;
+                          const sp = log.size_pieces;
+                          const isStaff = log.isStaffEntry;
                           return (
-                          <TableRow key={log.id}>
+                          <TableRow key={log.id} className={isStaff ? 'bg-blue-50/50 dark:bg-blue-950/10' : ''}>
+                            <TableCell>
+                              {isStaff ? (
+                                <Badge variant="outline" className="text-xs border-blue-300 text-blue-700 dark:text-blue-300">
+                                  <Users className="h-3 w-3 mr-1" /> Staff
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-xs">Admin</Badge>
+                              )}
+                            </TableCell>
                             <TableCell><Badge variant="outline">{log.type_index + 1}</Badge></TableCell>
                             <TableCell className="font-medium">{log.color}</TableCell>
                             <TableCell>
-                              {editingLogId === log.id ? (
+                              {!isStaff && editingLogId === log.id ? (
                                 <div className="flex items-center gap-1">
                                   <Input
                                     type="number"
@@ -758,7 +769,15 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
                                   </Button>
                                 </div>
                               ) : (
-                                <Badge className="cursor-pointer" onClick={() => { setEditingLogId(log.id); setEditPiecesCut(log.pieces_cut.toString()); }}>
+                                <Badge
+                                  className={`cursor-pointer ${isStaff ? 'bg-blue-600' : ''}`}
+                                  onClick={() => {
+                                    if (!isStaff) {
+                                      setEditingLogId(log.id);
+                                      setEditPiecesCut(log.pieces_cut.toString());
+                                    }
+                                  }}
+                                >
                                   {log.pieces_cut} pcs
                                 </Badge>
                               )}
@@ -779,12 +798,33 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
                             <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">{log.notes || '-'}</TableCell>
                             <TableCell>
                               <div className="flex items-center gap-1">
-                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingLogId(log.id); setEditPiecesCut(log.pieces_cut.toString()); }}>
-                                  <Pencil className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteLogId(log.id)}>
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
+                                {isStaff ? (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-destructive hover:text-destructive"
+                                    onClick={() => {
+                                      const staffOps = operationProgress.filter(
+                                        p => p.operation.toLowerCase() === 'cutting' && p.type_index === log.type_index
+                                      );
+                                      // Delete all staff cutting entries for this type
+                                      staffOps.forEach(op => {
+                                        deleteOperationMutation.mutate(op.id);
+                                      });
+                                    }}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                ) : (
+                                  <>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingLogId(log.id); setEditPiecesCut(log.pieces_cut.toString()); }}>
+                                      <Pencil className="h-4 w-4" />
+                                    </Button>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteLogId(log.id)}>
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </>
+                                )}
                               </div>
                             </TableCell>
                           </TableRow>
