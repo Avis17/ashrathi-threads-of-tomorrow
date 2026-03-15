@@ -180,14 +180,16 @@ export const BatchProductionSection = ({
     return STANDARD_OPERATIONS;
   };
 
-  const handleSaveTypeOperations = async (typeIndex: number, newOps: string[]) => {
+  const handleSaveStyleOperations = async (sg: StyleGroup, newOps: string[]) => {
     const updatedRollsData = [...rollsData];
-    updatedRollsData[typeIndex] = { ...updatedRollsData[typeIndex], operations: newOps };
+    sg.typeIndices.forEach(idx => {
+      updatedRollsData[idx] = { ...updatedRollsData[idx], operations: newOps };
+    });
     await updateBatchMutation.mutateAsync({
       id: batchId,
       data: { rolls_data: updatedRollsData as any },
     });
-    setOpsEditingTypeIndex(null);
+    setOpsEditingStyleId(null);
     setOpsEditingValues([]);
   };
 
