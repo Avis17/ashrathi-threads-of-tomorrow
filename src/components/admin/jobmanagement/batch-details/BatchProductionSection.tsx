@@ -169,22 +169,30 @@ export const BatchProductionSection = ({
   };
 
   const getSizeCompleted = (typeIndex: number, op: string, size: string) => {
+    // Cutting is auto-completed from cutting logs
+    if (op === 'Cutting') return cuttingSizeSummary[typeIndex]?.[size] || 0;
     return sizeProgressMap[`${typeIndex}-${op}-${size}`]?.completed || 0;
   };
 
   const getSizeMistakes = (typeIndex: number, op: string, size: string) => {
+    if (op === 'Cutting') return 0;
     return sizeProgressMap[`${typeIndex}-${op}-${size}`]?.mistakes || 0;
   };
 
   const getOpTotalCompleted = (typeIndex: number, op: string) => {
+    // Cutting is auto-completed from cutting logs
+    if (op === 'Cutting') return cuttingSummary[typeIndex] || 0;
     return aggProgressMap[`${typeIndex}-${op}`]?.completed || 0;
   };
 
   const getOpTotalMistakes = (typeIndex: number, op: string) => {
+    if (op === 'Cutting') return 0;
     return aggProgressMap[`${typeIndex}-${op}`]?.mistakes || 0;
   };
 
   const getOpProgress = (typeIndex: number, op: string, typeCutPieces: number) => {
+    // Cutting is always 100% if there are cut pieces
+    if (op === 'Cutting') return typeCutPieces > 0 ? 100 : 0;
     const completed = getOpTotalCompleted(typeIndex, op);
     if (typeCutPieces === 0) return 0;
     return Math.min(Math.round((completed / typeCutPieces) * 100), 100);
