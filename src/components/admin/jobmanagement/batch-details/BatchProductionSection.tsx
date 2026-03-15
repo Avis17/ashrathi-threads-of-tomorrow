@@ -368,13 +368,13 @@ export const BatchProductionSection = ({
     );
   };
 
-  if (operations.length === 0) {
+  if (rollsData.length === 0) {
     return (
       <Card>
         <CardContent className="py-12 text-center">
           <AlertCircle className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-          <p className="text-muted-foreground">No operations configured for this batch.</p>
-          <p className="text-sm text-muted-foreground mt-1">Edit batch details to add operations.</p>
+          <p className="text-muted-foreground">No production data available for this batch.</p>
+          <p className="text-sm text-muted-foreground mt-1">Add fabric types to start tracking production.</p>
         </CardContent>
       </Card>
     );
