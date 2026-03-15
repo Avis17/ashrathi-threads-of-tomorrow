@@ -859,17 +859,16 @@ export const BatchProductionSection = ({
                     const dInfo = deliveryInfoMap[sg.styleId];
                     if (!dInfo || (dInfo.pieces_given === 0 && dInfo.sample_pieces_given === 0 && dInfo.weight_entries.length === 0)) return null;
                     const totalPcs = dInfo.pieces_given + dInfo.sample_pieces_given;
-                    const totalProductWtGrams = dInfo.total_product_weight_grams;
-                    // Calculate fabric weight live from rollsData instead of stored value
-                    const fabricWtGrams = sg.typeIndices.reduce((sum, idx) => {
+                    const totalProductWeightKg = dInfo.total_product_weight_grams;
+                    // Calculate fabric weight live from rollsData in kg
+                    const fabricWeightKg = sg.typeIndices.reduce((sum, idx) => {
                       const type = rollsData[idx];
                       if (!type) return sum;
                       const weightPerRoll = parseFloat(type.weight) || 0;
                       const rolls = parseInt(type.number_of_rolls) || 0;
-                      return sum + weightPerRoll * rolls * 1000;
+                      return sum + (weightPerRoll * rolls);
                     }, 0);
-                    const totalProductWtAllPieces = totalProductWtGrams * totalPcs;
-                    const wastageWt = fabricWtGrams - totalProductWtAllPieces;
+                    const wastageWeightKg = fabricWeightKg - totalProductWeightKg;
                     return (
                       <div className="border rounded-lg p-4 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 space-y-3">
                         <div className="flex items-center gap-2">
@@ -890,8 +889,8 @@ export const BatchProductionSection = ({
                             <div className="text-lg font-bold text-primary">{totalPcs}</div>
                           </div>
                           <div className="bg-background rounded-lg p-3 text-center border">
-                            <div className="text-xs text-muted-foreground">Wt / Piece</div>
-                            <div className="text-lg font-bold">{dInfo.total_product_weight_grams.toFixed(1)}g</div>
+                            <div className="text-xs text-muted-foreground">Product Weight</div>
+                            <div className="text-lg font-bold">{dInfo.total_product_weight_grams.toFixed(1)} kg</div>
                           </div>
                         </div>
                         {dInfo.weight_entries.length > 0 && (
@@ -900,7 +899,7 @@ export const BatchProductionSection = ({
                             <div className="flex flex-wrap gap-2">
                               {dInfo.weight_entries.map((w, i) => (
                                 <Badge key={i} variant="secondary" className="text-xs gap-1">
-                                  {w.size}{w.part !== 'single' ? ` (${w.part})` : ''}: {w.weight_grams}g
+                                  {w.size}{w.part !== 'single' ? ` (${w.part})` : ''}: {w.weight_grams} kg
                                 </Badge>
                               ))}
                             </div>
@@ -909,15 +908,15 @@ export const BatchProductionSection = ({
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 border-t">
                           <div className="bg-background rounded-lg p-3 text-center border">
                             <div className="text-xs text-muted-foreground">Fabric Issued</div>
-                            <div className="text-sm font-bold">{(fabricWtGrams / 1000).toFixed(2)} kg</div>
+                            <div className="text-sm font-bold">{fabricWeightKg.toFixed(2)} kg</div>
                           </div>
                           <div className="bg-background rounded-lg p-3 text-center border">
-                            <div className="text-xs text-muted-foreground">Product Weight ({totalPcs} pcs)</div>
-                            <div className="text-sm font-bold">{(totalProductWtAllPieces / 1000).toFixed(2)} kg</div>
+                            <div className="text-xs text-muted-foreground">Product Weight</div>
+                            <div className="text-sm font-bold">{totalProductWeightKg.toFixed(2)} kg</div>
                           </div>
                           <div className="bg-background rounded-lg p-3 text-center border">
                             <div className="text-xs text-muted-foreground">Wastage</div>
-                            <div className="text-sm font-bold">{(wastageWt / 1000).toFixed(2)} kg</div>
+                            <div className="text-sm font-bold">{wastageWeightKg.toFixed(2)} kg</div>
                           </div>
                           {(() => {
                             const wastagePercent = fabricWtGrams > 0 ? Math.max(0, (wastageWt / fabricWtGrams) * 100) : 0;

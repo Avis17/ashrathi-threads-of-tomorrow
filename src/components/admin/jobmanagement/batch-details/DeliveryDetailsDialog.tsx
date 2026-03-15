@@ -140,8 +140,8 @@ export function DeliveryDetailsDialog({
         pieces_given: piecesGiven,
         sample_pieces_given: samplePiecesGiven,
         weight_entries: weightEntries,
-        total_product_weight_grams: totalProductWeightGrams,
-        total_fabric_weight_grams: styleFabricWeightGrams,
+        total_product_weight_grams: totalProductWeightKg,
+        total_fabric_weight_grams: styleFabricWeightKg,
         fabric_wastage_percent: parseFloat(fabricWastagePercent.toFixed(2)),
       });
       onConfirmDelivery(dateStr, notes || null);
