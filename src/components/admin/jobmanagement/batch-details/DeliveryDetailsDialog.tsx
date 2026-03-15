@@ -61,19 +61,19 @@ export function DeliveryDetailsDialog({
 
   const upsertMutation = useUpsertBatchDeliveryInfo();
 
-  // Calculate total fabric weight for this style's types (sum of weight_per_roll * number_of_rolls for each type)
-  const styleFabricWeightGrams = useMemo(() => {
+  // Calculate total fabric weight for this style's types in kg (sum of weight * number_of_rolls)
+  const styleFabricWeightKg = useMemo(() => {
     if (!styleGroup) return 0;
-    let totalGrams = 0;
+    let totalKg = 0;
     styleGroup.typeIndices.forEach(idx => {
       const type = rollsData[idx];
       if (type) {
         const weightPerRollKg = parseFloat(type.weight) || 0;
         const rolls = parseInt(type.number_of_rolls) || 0;
-        totalGrams += weightPerRollKg * rolls * 1000;
+        totalKg += weightPerRollKg * rolls;
       }
     });
-    return totalGrams;
+    return totalKg;
   }, [styleGroup, rollsData]);
 
   useEffect(() => {
@@ -94,19 +94,16 @@ export function DeliveryDetailsDialog({
 
   const totalPieces = piecesGiven + samplePiecesGiven;
 
-  const totalProductWeightGrams = useMemo(
+  // Note: field name is weight_grams for backward compatibility, but values are entered and treated as kg totals.
+  const totalProductWeightKg = useMemo(
     () => weightEntries.reduce((sum, e) => sum + (e.weight_grams || 0), 0),
     [weightEntries]
   );
 
-  // Total product weight = per-piece weight * total pieces
-  const totalEstimatedProductWeight = totalProductWeightGrams * totalPieces;
-
   const fabricWastagePercent = useMemo(() => {
-    if (styleFabricWeightGrams <= 0 || totalEstimatedProductWeight <= 0) return 0;
-    const wastage = ((styleFabricWeightGrams - totalEstimatedProductWeight) / styleFabricWeightGrams) * 100;
-    return Math.max(0, wastage);
-  }, [styleFabricWeightGrams, totalEstimatedProductWeight]);
+    if (styleFabricWeightKg <= 0) return 0;
+    return ((styleFabricWeightKg - totalProductWeightKg) / styleFabricWeightKg) * 100;
+  }, [styleFabricWeightKg, totalProductWeightKg]);
 
   const effectiveSizes = availableSizes.length > 0 ? availableSizes : DEFAULT_SIZES;
 
