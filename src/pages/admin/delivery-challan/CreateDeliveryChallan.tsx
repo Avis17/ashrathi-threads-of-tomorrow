@@ -312,7 +312,9 @@ export default function CreateDeliveryChallan() {
     ));
   };
 
-  const totalQuantity = items.reduce((sum, item) => sum + (item.quantity || 0), 0);
+  const totalPcs = items.filter(i => i.uom === 'pcs').reduce((sum, item) => sum + (item.quantity || 0), 0);
+  const totalKg = items.filter(i => i.uom === 'kg').reduce((sum, item) => sum + (item.quantity || 0), 0);
+  const totalQuantity = totalPcs + totalKg;
 
   const handleAddJobWorker = async () => {
     if (!newWorker.name) return;
@@ -832,7 +834,15 @@ export default function CreateDeliveryChallan() {
                   <TableCell colSpan={4} className="font-semibold text-right">
                     Total Quantity:
                   </TableCell>
-                  <TableCell className="font-bold text-lg">{totalQuantity}</TableCell>
+                  <TableCell className="font-bold text-lg">
+                    {totalPcs > 0 && totalKg > 0 ? (
+                      <span>{totalPcs} Pieces, {totalKg} Kgs</span>
+                    ) : totalKg > 0 ? (
+                      <span>{totalKg} Kgs</span>
+                    ) : (
+                      <span>{totalPcs} Pieces</span>
+                    )}
+                  </TableCell>
                   <TableCell colSpan={3}></TableCell>
                 </TableRow>
               </TableFooter>
