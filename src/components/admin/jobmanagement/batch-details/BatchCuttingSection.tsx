@@ -142,7 +142,7 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
 
   const totalCutPieces = Object.values(cuttingSummary).reduce((sum, val) => sum + val, 0);
 
-  // Aggregate size breakdown per type index
+  // Aggregate size breakdown per type index (from cutting logs)
   const sizeSummaryByType = useMemo(() => {
     const map: Record<number, SizePieces> = {};
     cuttingLogs.forEach(log => {
@@ -153,8 +153,22 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
         });
       }
     });
+    // Merge staff cutting data for types without cutting logs
+    operationProgress
+      .filter(p => p.operation.toLowerCase() === 'cutting')
+      .forEach(op => {
+        const ti = op.type_index;
+        const hasLogs = cuttingLogs.some(l => l.type_index === ti);
+        if (!hasLogs && op.completed_pieces > 0) {
+          if (!map[ti]) map[ti] = {};
+          const size = op.size || '';
+          if (size) {
+            map[ti][size] = (map[ti][size] || 0) + op.completed_pieces;
+          }
+        }
+      });
     return map;
-  }, [cuttingLogs]);
+  }, [cuttingLogs, operationProgress]);
 
   // Staff cutting progress from batch_operation_progress table
   const staffCuttingProgress = useMemo(() => {
