@@ -105,6 +105,7 @@ export const BatchProductionSection = ({
   // Operations editing state (per style)
   const [opsEditingStyleId, setOpsEditingStyleId] = useState<string | null>(null);
   const [opsEditingValues, setOpsEditingValues] = useState<string[]>([]);
+  const [customOpInput, setCustomOpInput] = useState('');
 
   // Delivery dialog state
   const [deliveryDialogStyle, setDeliveryDialogStyle] = useState<StyleGroup | null>(null);
@@ -169,12 +170,14 @@ export const BatchProductionSection = ({
   const getTypeOperations = (typeIndex: number): string[] => {
     const type = rollsData[typeIndex];
     if (type?.operations && Array.isArray(type.operations) && type.operations.length > 0) {
-      // Normalize stored operations to standard names, preserve order
-      const normalized = type.operations.map((op: string) => normalizeOperation(op));
-      // Filter to only standard ops, deduplicate
+      // Normalize standard operations, keep custom ones as-is
       const seen = new Set<string>();
-      return normalized.filter((op: string) => {
-        if (seen.has(op) || !STANDARD_OPERATIONS.includes(op)) return false;
+      return type.operations.map((op: string) => {
+        const normalized = normalizeOperation(op);
+        // If it normalizes to a standard op, use normalized; otherwise keep original
+        return STANDARD_OPERATIONS.includes(normalized) ? normalized : op;
+      }).filter((op: string) => {
+        if (seen.has(op)) return false;
         seen.add(op);
         return true;
       });
@@ -691,6 +694,7 @@ export const BatchProductionSection = ({
                   {opsEditingStyleId === sg.styleId && (
                     <div className="border rounded-lg p-3 bg-muted/30 space-y-3 mx-1">
                       <div className="text-sm font-medium">Configure Operations for {sg.styleName}</div>
+                      {/* Standard operations */}
                       <div className="grid grid-cols-3 gap-2">
                         {STANDARD_OPERATIONS.map(op => (
                           <label key={op} className="flex items-center gap-2 cursor-pointer">
@@ -698,10 +702,12 @@ export const BatchProductionSection = ({
                               checked={opsEditingValues.includes(op)}
                               onCheckedChange={(checked) => {
                                 if (checked) {
-                                  const newOps = STANDARD_OPERATIONS.filter(
+                                  // Insert in standard order position, then append customs after
+                                  const standardInList = STANDARD_OPERATIONS.filter(
                                     o => opsEditingValues.includes(o) || o === op
                                   );
-                                  setOpsEditingValues(newOps);
+                                  const customs = opsEditingValues.filter(o => !STANDARD_OPERATIONS.includes(o));
+                                  setOpsEditingValues([...standardInList, ...customs]);
                                 } else {
                                   setOpsEditingValues(prev => prev.filter(o => o !== op));
                                 }
@@ -710,6 +716,60 @@ export const BatchProductionSection = ({
                             <span className="text-sm">{op}</span>
                           </label>
                         ))}
+                      </div>
+                      {/* Custom operations already added */}
+                      {opsEditingValues.filter(o => !STANDARD_OPERATIONS.includes(o)).length > 0 && (
+                        <div className="space-y-1">
+                          <span className="text-xs text-muted-foreground font-medium">Custom Operations</span>
+                          <div className="flex flex-wrap gap-2">
+                            {opsEditingValues.filter(o => !STANDARD_OPERATIONS.includes(o)).map(op => (
+                              <Badge key={op} variant="secondary" className="text-xs gap-1.5 pr-1">
+                                {op}
+                                <button
+                                  className="ml-1 hover:text-red-500 text-muted-foreground"
+                                  onClick={() => setOpsEditingValues(prev => prev.filter(o => o !== op))}
+                                >
+                                  ×
+                                </button>
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {/* Add custom operation input */}
+                      <div className="flex items-center gap-2">
+                        <Input
+                          placeholder="Add custom operation (e.g., Embroidery, Printing)"
+                          value={customOpInput}
+                          onChange={(e) => setCustomOpInput(e.target.value)}
+                          className="h-8 text-sm flex-1"
+                          maxLength={50}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              const trimmed = customOpInput.trim();
+                              if (trimmed && !opsEditingValues.some(o => o.toLowerCase() === trimmed.toLowerCase())) {
+                                setOpsEditingValues(prev => [...prev, trimmed]);
+                                setCustomOpInput('');
+                              }
+                            }
+                          }}
+                        />
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 text-xs"
+                          disabled={!customOpInput.trim() || opsEditingValues.some(o => o.toLowerCase() === customOpInput.trim().toLowerCase())}
+                          onClick={() => {
+                            const trimmed = customOpInput.trim();
+                            if (trimmed && !opsEditingValues.some(o => o.toLowerCase() === trimmed.toLowerCase())) {
+                              setOpsEditingValues(prev => [...prev, trimmed]);
+                              setCustomOpInput('');
+                            }
+                          }}
+                        >
+                          + Add
+                        </Button>
                       </div>
                       <div className="flex items-center gap-2">
                         <Button
@@ -724,7 +784,7 @@ export const BatchProductionSection = ({
                           size="sm"
                           variant="ghost"
                           className="h-7 text-xs"
-                          onClick={() => { setOpsEditingStyleId(null); setOpsEditingValues([]); }}
+                          onClick={() => { setOpsEditingStyleId(null); setOpsEditingValues([]); setCustomOpInput(''); }}
                         >
                           Cancel
                         </Button>
