@@ -40,6 +40,18 @@ interface StyleGroup {
 
 const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL'];
 
+const STANDARD_OPERATIONS = ['Cutting', 'Stitching', 'Checking', 'Ironing', 'Packing'];
+
+const normalizeOperation = (op: string): string => {
+  const lower = op.toLowerCase();
+  if (lower.includes('stitching') || lower.includes('singer') || lower.includes('power table') || lower.includes('powertable')) return 'Stitching';
+  if (lower.includes('cutting')) return 'Cutting';
+  if (lower.includes('checking')) return 'Checking';
+  if (lower.includes('ironing')) return 'Ironing';
+  if (lower.includes('packing')) return 'Packing';
+  return op; // fallback
+};
+
 const sortSizes = (sizes: string[]) => {
   return sizes.sort((a, b) => {
     const ai = SIZE_ORDER.indexOf(a.toUpperCase());
