@@ -150,7 +150,29 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
     return map;
   }, [cuttingLogs]);
 
-  // Wastage summaries per type
+  // Staff cutting progress from batch_operation_progress table
+  const staffCuttingProgress = useMemo(() => {
+    const cuttingOps = operationProgress.filter(p => p.operation.toLowerCase() === 'cutting');
+    // Group by type_index, then by size
+    const byType: Record<number, { sizes: Record<string, { completed: number; mistakes: number; updatedAt: string }>; totalCompleted: number; totalMistakes: number }> = {};
+    cuttingOps.forEach(op => {
+      if (!byType[op.type_index]) {
+        byType[op.type_index] = { sizes: {}, totalCompleted: 0, totalMistakes: 0 };
+      }
+      const sizeKey = op.size || 'Total';
+      byType[op.type_index].sizes[sizeKey] = {
+        completed: op.completed_pieces,
+        mistakes: op.mistake_pieces,
+        updatedAt: op.updated_at,
+      };
+      byType[op.type_index].totalCompleted += op.completed_pieces;
+      byType[op.type_index].totalMistakes += op.mistake_pieces;
+    });
+    return byType;
+  }, [operationProgress]);
+
+  const hasStaffCuttingData = Object.keys(staffCuttingProgress).length > 0;
+
   const wastageSummary: Record<number, { pieces: number; actualWeight: number }> = {};
   let totalWastagePieces = 0;
   let totalActualWeight = 0;
