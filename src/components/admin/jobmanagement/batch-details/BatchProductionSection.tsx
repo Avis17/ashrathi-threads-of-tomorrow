@@ -6,16 +6,18 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import {
   CheckCircle, AlertCircle, ChevronDown, ChevronRight,
-  Briefcase, AlertTriangle, Truck, CalendarClock, CalendarCheck, TrendingDown, TrendingUp, CalendarIcon, StickyNote,
+  Briefcase, AlertTriangle, Truck, CalendarClock, CalendarCheck, TrendingDown, TrendingUp, CalendarIcon, StickyNote, Settings,
 } from 'lucide-react';
 import { useBatchOperationProgress, useUpsertOperationProgress } from '@/hooks/useBatchOperationProgress';
 import { useBatchJobWorks } from '@/hooks/useJobWorks';
+import { useUpdateJobBatch } from '@/hooks/useJobBatches';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useBatchTypeConfirmed, useUpsertDeliveryStatus, DELIVERY_STATUSES, DeliveryStatus } from '@/hooks/useBatchTypeConfirmed';
 import { differenceInDays, format, parseISO } from 'date-fns';
@@ -40,7 +42,7 @@ interface StyleGroup {
 
 const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL'];
 
-const STANDARD_OPERATIONS = ['Cutting', 'Stitching', 'Checking', 'Ironing', 'Packing'];
+const STANDARD_OPERATIONS = ['Cutting', 'Stitching', 'Checking', 'Ironing', 'Packing', 'Delivered'];
 
 const normalizeOperation = (op: string): string => {
   const lower = op.toLowerCase();
@@ -49,6 +51,7 @@ const normalizeOperation = (op: string): string => {
   if (lower.includes('checking')) return 'Checking';
   if (lower.includes('ironing')) return 'Ironing';
   if (lower.includes('packing')) return 'Packing';
+  if (lower.includes('delivered')) return 'Delivered';
   return op; // fallback
 };
 
@@ -90,6 +93,7 @@ export const BatchProductionSection = ({
   const deliveryNotesMap = typeData?.deliveryNotesMap ?? {};
   const upsertMutation = useUpsertOperationProgress();
   const upsertStatusMutation = useUpsertDeliveryStatus();
+  const updateBatchMutation = useUpdateJobBatch();
 
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [editValues, setEditValues] = useState<Record<string, { completed: string; mistakes: string }>>({});
@@ -97,6 +101,10 @@ export const BatchProductionSection = ({
   const [openStyles, setOpenStyles] = useState<Record<string, boolean>>({});
   const [openColors, setOpenColors] = useState<Record<number, boolean>>({});
   const [openOps, setOpenOps] = useState<Record<string, boolean>>({});
+
+  // Operations editing state
+  const [opsEditingTypeIndex, setOpsEditingTypeIndex] = useState<number | null>(null);
+  const [opsEditingValues, setOpsEditingValues] = useState<string[]>([]);
 
   // Delivery dialog state
   const [deliveryDialogStyle, setDeliveryDialogStyle] = useState<StyleGroup | null>(null);
@@ -156,8 +164,31 @@ export const BatchProductionSection = ({
   });
 
   // --- Helpers ---
-  const getTypeOperations = (_typeIndex: number): string[] => {
+  const getTypeOperations = (typeIndex: number): string[] => {
+    const type = rollsData[typeIndex];
+    if (type?.operations && Array.isArray(type.operations) && type.operations.length > 0) {
+      // Normalize stored operations to standard names, preserve order
+      const normalized = type.operations.map((op: string) => normalizeOperation(op));
+      // Filter to only standard ops, deduplicate
+      const seen = new Set<string>();
+      return normalized.filter((op: string) => {
+        if (seen.has(op) || !STANDARD_OPERATIONS.includes(op)) return false;
+        seen.add(op);
+        return true;
+      });
+    }
     return STANDARD_OPERATIONS;
+  };
+
+  const handleSaveTypeOperations = async (typeIndex: number, newOps: string[]) => {
+    const updatedRollsData = [...rollsData];
+    updatedRollsData[typeIndex] = { ...updatedRollsData[typeIndex], operations: newOps };
+    await updateBatchMutation.mutateAsync({
+      id: batchId,
+      data: { rolls_data: updatedRollsData as any },
+    });
+    setOpsEditingTypeIndex(null);
+    setOpsEditingValues([]);
   };
 
   const getTypeSizes = (typeIndex: number): string[] => {
@@ -680,6 +711,72 @@ export const BatchProductionSection = ({
 
                             <CollapsibleContent>
                               <div className="px-4 pb-4 space-y-3">
+                                {/* Operations config button */}
+                                <div className="flex items-center justify-between border-b pb-2">
+                                  <span className="text-xs text-muted-foreground font-medium">
+                                    {typeOps.length} operation{typeOps.length !== 1 ? 's' : ''} tracked
+                                  </span>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-7 text-xs gap-1"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setOpsEditingTypeIndex(typeIndex);
+                                      setOpsEditingValues([...typeOps]);
+                                    }}
+                                  >
+                                    <Settings className="h-3.5 w-3.5" />
+                                    Edit Operations
+                                  </Button>
+                                </div>
+
+                                {/* Operations edit dialog */}
+                                {opsEditingTypeIndex === typeIndex && (
+                                  <div className="border rounded-lg p-3 bg-muted/30 space-y-3">
+                                    <div className="text-sm font-medium">Configure Operations for {colorLabel}</div>
+                                    <div className="grid grid-cols-2 gap-2">
+                                      {STANDARD_OPERATIONS.map(op => (
+                                        <label key={op} className="flex items-center gap-2 cursor-pointer">
+                                          <Checkbox
+                                            checked={opsEditingValues.includes(op)}
+                                            onCheckedChange={(checked) => {
+                                              if (checked) {
+                                                // Add in standard order
+                                                const newOps = STANDARD_OPERATIONS.filter(
+                                                  o => opsEditingValues.includes(o) || o === op
+                                                );
+                                                setOpsEditingValues(newOps);
+                                              } else {
+                                                setOpsEditingValues(prev => prev.filter(o => o !== op));
+                                              }
+                                            }}
+                                          />
+                                          <span className="text-sm">{op}</span>
+                                        </label>
+                                      ))}
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <Button
+                                        size="sm"
+                                        className="h-7 text-xs"
+                                        disabled={opsEditingValues.length === 0 || updateBatchMutation.isPending}
+                                        onClick={() => handleSaveTypeOperations(typeIndex, opsEditingValues)}
+                                      >
+                                        {updateBatchMutation.isPending ? 'Saving...' : 'Save'}
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-7 text-xs"
+                                        onClick={() => { setOpsEditingTypeIndex(null); setOpsEditingValues([]); }}
+                                      >
+                                        Cancel
+                                      </Button>
+                                    </div>
+                                  </div>
+                                )}
+
                                 {typeCutPieces === 0 ? (
                                   <p className="text-sm text-muted-foreground py-3 text-center">No pieces cut yet. Add cutting entries first.</p>
                                 ) : (
