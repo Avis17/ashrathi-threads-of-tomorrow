@@ -37,6 +37,8 @@ import { useBatchJobWorks } from '@/hooks/useJobWorks';
 import { useUpdateJobBatch } from '@/hooks/useJobBatches';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useBatchTypeConfirmed, useUpsertDeliveryStatus, DELIVERY_STATUSES, DeliveryStatus } from '@/hooks/useBatchTypeConfirmed';
+import { useBatchDeliveryInfo, BatchDeliveryInfo } from '@/hooks/useBatchDeliveryInfo';
+import { DeliveryDetailsDialog } from './DeliveryDetailsDialog';
 import { differenceInDays, format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 
