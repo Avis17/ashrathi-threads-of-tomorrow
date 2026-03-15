@@ -788,7 +788,7 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
                                   </Button>
                                 ) : (
                                   <>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingLogId(log.id); setEditPiecesCut(log.pieces_cut.toString()); }}>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingLogId(log.id); setEditPiecesCut(log.pieces_cut.toString()); setEditSizePieces(sp && typeof sp === 'object' ? { ...(sp as SizePieces) } : {}); }}>
                                       <Pencil className="h-4 w-4" />
                                     </Button>
                                     <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteLogId(log.id)}>
