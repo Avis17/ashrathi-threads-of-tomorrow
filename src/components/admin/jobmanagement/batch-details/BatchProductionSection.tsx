@@ -805,10 +805,7 @@ export const BatchProductionSection = ({
                         <div className="space-y-1.5">
                           <span className="text-xs text-muted-foreground font-medium">Operation Order (drag to reorder)</span>
                           <DndContext
-                            sensors={useSensors(
-                              useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-                              useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-                            )}
+                            sensors={opsDndSensors}
                             collisionDetection={closestCenter}
                             onDragEnd={(event: DragEndEvent) => {
                               const { active, over } = event;
