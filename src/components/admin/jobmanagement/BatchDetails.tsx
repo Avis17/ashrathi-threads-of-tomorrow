@@ -239,28 +239,7 @@ const BatchDetails = ({ batchId }: BatchDetailsProps) => {
         </TabsContent>
 
         <TabsContent value="info" className="mt-4">
-          <Card>
-            <CardContent className="p-6 space-y-3 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Supplier:</span>
-                <span className="font-medium">{batch.supplier_name || 'N/A'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Lot Number:</span>
-                <span className="font-medium">{batch.lot_number || 'N/A'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Fabric Width:</span>
-                <span className="font-medium">{batch.fabric_width || 'N/A'}</span>
-              </div>
-              {batch.remarks && (
-                <div className="pt-3 border-t">
-                  <div className="text-muted-foreground mb-1">Remarks:</div>
-                  <div className="text-foreground">{batch.remarks}</div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <BatchInfoTab batch={batch} />
         </TabsContent>
       </Tabs>
     </div>
