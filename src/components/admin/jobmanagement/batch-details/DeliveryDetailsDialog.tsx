@@ -256,7 +256,7 @@ export function DeliveryDetailsDialog({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="z-[300]">
-                      {availableSizes.map(s => (
+                      {effectiveSizes.map(s => (
                         <SelectItem key={s} value={s}>{s}</SelectItem>
                       ))}
                     </SelectContent>
