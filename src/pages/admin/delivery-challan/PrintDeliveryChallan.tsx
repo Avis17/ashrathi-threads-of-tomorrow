@@ -60,6 +60,20 @@ export default function PrintDeliveryChallan() {
     ? dc.purposes.map(p => PURPOSE_LABELS[p as keyof typeof PURPOSE_LABELS] || p).join(', ')
     : PURPOSE_LABELS[dc.purpose] || dc.purpose;
 
+  // Compute totals by UOM for print summary
+  const totalPcs = items
+    .filter(item => item.uom === 'pcs')
+    .reduce((sum, item) => sum + (item.quantity || 0), 0);
+  const totalKg = items
+    .filter(item => item.uom === 'kg')
+    .reduce((sum, item) => sum + (item.quantity || 0), 0);
+
+  const totalQuantityWithUnit = totalPcs > 0 && totalKg > 0
+    ? `${totalPcs} Pieces, ${totalKg} Kgs`
+    : totalKg > 0
+      ? `${totalKg} Kgs`
+      : `${totalPcs} Pieces`;
+
   // Dynamic labels based on direction
   const headerTitle = isJobWorkTaken 
     ? 'DELIVERY CHALLAN - JOB WORK RETURN'
