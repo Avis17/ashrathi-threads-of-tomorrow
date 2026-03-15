@@ -99,6 +99,8 @@ const BatchDetailsPage = () => {
   // styleDetailsForm: map from style_id -> { fabric_type, gsm, sizes, planned_start_date, estimated_delivery_date, operations }
   const [styleDetailsForm, setStyleDetailsForm] = useState<Record<string, { fabric_type: string; gsm: string; sizes: string; planned_start_date: string; estimated_delivery_date: string; operations: string[] }> | null>(null);
   const [styleDatePopovers, setStyleDatePopovers] = useState<Record<string, { start: boolean; delivery: boolean }>>({});
+  const [editingFabricIndex, setEditingFabricIndex] = useState<number | null>(null);
+  const [editingFabricForm, setEditingFabricForm] = useState<any>(null);
 
   if (isLoading) {
     return (
