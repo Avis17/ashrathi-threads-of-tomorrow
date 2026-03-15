@@ -871,6 +871,18 @@ export const BatchProductionSection = ({
                                                             )}
                                                           </div>
 
+                                                          {/* Notes from staff */}
+                                                          {(() => {
+                                                            const sizeNotes = sizeProgressMap[sizeEditKey]?.notes || [];
+                                                            if (sizeNotes.length === 0) return null;
+                                                            return (
+                                                              <div className="flex items-start gap-1.5 text-xs text-muted-foreground mb-1.5">
+                                                                <StickyNote className="h-3 w-3 mt-0.5 shrink-0 text-amber-500" />
+                                                                <span className="italic">{sizeNotes.join(' | ')}</span>
+                                                              </div>
+                                                            );
+                                                          })()}
+
                                                           {op !== 'Cutting' && (isEditingThis ? (
                                                             <div className="space-y-2 pt-1">
                                                               <div className="flex items-center gap-2">
