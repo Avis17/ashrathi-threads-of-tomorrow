@@ -855,12 +855,19 @@ export const BatchProductionSection = ({
                   )}
 
                   {/* Delivery Info Card */}
-                  {(() => {
+                   {(() => {
                     const dInfo = deliveryInfoMap[sg.styleId];
                     if (!dInfo || (dInfo.pieces_given === 0 && dInfo.sample_pieces_given === 0 && dInfo.weight_entries.length === 0)) return null;
                     const totalPcs = dInfo.pieces_given + dInfo.sample_pieces_given;
                     const totalProductWt = dInfo.total_product_weight_grams * totalPcs;
-                    const fabricWtGrams = dInfo.total_fabric_weight_grams;
+                    // Calculate fabric weight live from rollsData instead of stored value
+                    const fabricWtGrams = sg.typeIndices.reduce((sum, idx) => {
+                      const type = rollsData[idx];
+                      if (!type) return sum;
+                      const weightPerRoll = parseFloat(type.weight) || 0;
+                      const rolls = parseInt(type.number_of_rolls) || 0;
+                      return sum + weightPerRoll * rolls * 1000;
+                    }, 0);
                     const wastageWt = fabricWtGrams - totalProductWt;
                     return (
                       <div className="border rounded-lg p-4 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 space-y-3">
