@@ -164,8 +164,31 @@ export const BatchProductionSection = ({
   });
 
   // --- Helpers ---
-  const getTypeOperations = (_typeIndex: number): string[] => {
+  const getTypeOperations = (typeIndex: number): string[] => {
+    const type = rollsData[typeIndex];
+    if (type?.operations && Array.isArray(type.operations) && type.operations.length > 0) {
+      // Normalize stored operations to standard names, preserve order
+      const normalized = type.operations.map((op: string) => normalizeOperation(op));
+      // Filter to only standard ops, deduplicate
+      const seen = new Set<string>();
+      return normalized.filter((op: string) => {
+        if (seen.has(op) || !STANDARD_OPERATIONS.includes(op)) return false;
+        seen.add(op);
+        return true;
+      });
+    }
     return STANDARD_OPERATIONS;
+  };
+
+  const handleSaveTypeOperations = async (typeIndex: number, newOps: string[]) => {
+    const updatedRollsData = [...rollsData];
+    updatedRollsData[typeIndex] = { ...updatedRollsData[typeIndex], operations: newOps };
+    await updateBatchMutation.mutateAsync({
+      id: batchId,
+      data: { rolls_data: updatedRollsData as any },
+    });
+    setOpsEditingTypeIndex(null);
+    setOpsEditingValues([]);
   };
 
   const getTypeSizes = (typeIndex: number): string[] => {
