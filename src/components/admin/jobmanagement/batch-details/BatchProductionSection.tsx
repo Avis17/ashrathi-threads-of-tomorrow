@@ -1400,74 +1400,20 @@ export const BatchProductionSection = ({
       })}
 
       {/* Delivery Details Dialog */}
-      <Dialog open={!!deliveryDialogStyle} onOpenChange={(open) => { if (!open) closeDeliveryDialog(); }}>
-        <DialogContent className="sm:max-w-md" onClick={(e) => e.stopPropagation()}>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Truck className="h-5 w-5 text-blue-600" />
-              Delivery Details
-            </DialogTitle>
-            {deliveryDialogStyle && (
-              <p className="text-sm text-muted-foreground">{deliveryDialogStyle.styleName}</p>
-            )}
-          </DialogHeader>
-
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Delivery Date</Label>
-              <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn('w-full justify-start text-left font-normal', !deliveryDialogDate && 'text-muted-foreground')}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {deliveryDialogDate ? format(deliveryDialogDate, 'dd MMM yyyy') : 'Pick a date'}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent
-                  className="w-auto p-0 z-[300]"
-                  align="start"
-                  onInteractOutside={(e) => e.preventDefault()}
-                >
-                  <Calendar
-                    mode="single"
-                    selected={deliveryDialogDate}
-                    onSelect={(date) => {
-                      setDeliveryDialogDate(date);
-                      setCalendarOpen(false);
-                    }}
-                    initialFocus
-                    className="p-3 pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-sm font-medium flex items-center gap-1.5">
-                <StickyNote className="h-3.5 w-3.5" />
-                Delivery Notes
-              </Label>
-              <Textarea
-                placeholder="Add any delivery notes, remarks or observations..."
-                value={deliveryDialogNotes}
-                onChange={(e) => setDeliveryDialogNotes(e.target.value)}
-                rows={3}
-                className="resize-none"
-              />
-            </div>
-          </div>
-
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={closeDeliveryDialog}>Cancel</Button>
-            <Button onClick={handleConfirmDelivery} className="gap-2">
-              <Truck className="h-4 w-4" />
-              Confirm Delivery
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <DeliveryDetailsDialog
+        open={!!deliveryDialogStyle}
+        onOpenChange={(open) => { if (!open) closeDeliveryDialog(); }}
+        styleGroup={deliveryDialogStyle}
+        batchId={batchId}
+        existingDate={deliveryDialogStyle ? getStyleActualDeliveryDate(deliveryDialogStyle) : null}
+        existingNotes={deliveryDialogStyle ? getStyleDeliveryNotes(deliveryDialogStyle) : null}
+        existingDeliveryInfo={deliveryDialogStyle ? (deliveryInfoMap[deliveryDialogStyle.styleId] || null) : null}
+        rollsData={rollsData}
+        totalFabricWeightKg={0}
+        isSetItem={deliveryDialogStyle ? (rollsData[deliveryDialogStyle.typeIndices[0]]?.is_set_item || false) : false}
+        availableSizes={deliveryDialogStyle ? getStyleAvailableSizes(deliveryDialogStyle) : []}
+        onConfirmDelivery={handleConfirmDeliveryFromDialog}
+      />
     </div>
   );
 };
