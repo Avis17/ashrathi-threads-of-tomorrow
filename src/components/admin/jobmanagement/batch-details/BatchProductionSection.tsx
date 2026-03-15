@@ -976,6 +976,17 @@ export const BatchProductionSection = ({
                                                       return null;
                                                     })()}
                                                   </div>
+                                                  {/* Notes from staff */}
+                                                  {(() => {
+                                                    const opNotes = aggProgressMap[`${typeIndex}-${op}`]?.notes || [];
+                                                    if (opNotes.length === 0) return null;
+                                                    return (
+                                                      <div className="flex items-start gap-1.5 text-xs text-muted-foreground">
+                                                        <StickyNote className="h-3 w-3 mt-0.5 shrink-0 text-amber-500" />
+                                                        <span className="italic">{opNotes.join(' | ')}</span>
+                                                      </div>
+                                                    );
+                                                  })()}
                                                   {op !== 'Cutting' && (() => {
                                                     const aggKey = `${typeIndex}-${op}-`;
                                                     const isEditingAgg = editingKey === aggKey;
