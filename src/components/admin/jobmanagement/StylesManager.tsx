@@ -119,6 +119,8 @@ const StylesManager = () => {
             <SelectContent>
               <SelectItem value="all">All Types</SelectItem>
               <SelectItem value="kids">Kids</SelectItem>
+              <SelectItem value="girls">Girls</SelectItem>
+              <SelectItem value="boys">Boys</SelectItem>
               <SelectItem value="women">Women</SelectItem>
               <SelectItem value="men">Men</SelectItem>
             </SelectContent>
