@@ -516,7 +516,7 @@ const BatchForm = ({ onClose }: BatchFormProps) => {
               estimated_delivery_date: '',
               notes: '',
               operations: ['Cutting', 'Stitching(Singer)', 'Checking', 'Ironing', 'Packing'],
-              variations: [{ color: '', fabric_width: '', weight: 0, number_of_rolls: 1 }]
+              variations: [{ color: '', fabric_width: '', weight: 0, number_of_rolls: 1, total_weight: 0 }]
             });
           }}
           className="w-full"
