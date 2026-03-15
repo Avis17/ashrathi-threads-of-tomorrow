@@ -865,7 +865,7 @@ export const BatchProductionSection = ({
                                                       return null;
                                                     })()}
                                                   </div>
-                                                  {(() => {
+                                                  {op !== 'Cutting' && (() => {
                                                     const aggKey = `${typeIndex}-${op}-`;
                                                     const isEditingAgg = editingKey === aggKey;
                                                     if (isEditingAgg) {
