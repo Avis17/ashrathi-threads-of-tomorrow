@@ -58,12 +58,15 @@ export const BatchCuttingSection = ({ batch, rollsData, cuttingLogs, cuttingSumm
   const [editPiecesCut, setEditPiecesCut] = useState('');
   const [sizePieces, setSizePieces] = useState<SizePieces>({});
   const [customSize, setCustomSize] = useState('');
+  const [editingStaffEntryId, setEditingStaffEntryId] = useState<string | null>(null);
+  const [editStaffPieces, setEditStaffPieces] = useState('');
 
   const addLogMutation = useAddCuttingLog();
   const deleteLogMutation = useDeleteCuttingLog();
   const updateLogMutation = useUpdateCuttingLog();
   const { data: wastageEntries } = useBatchCuttingWastage(batch.id);
   const deleteOperationMutation = useDeleteOperationProgress();
+  const upsertProgressMutation = useUpsertOperationProgress();
 
   const COMMON_SIZES = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL'];
 
