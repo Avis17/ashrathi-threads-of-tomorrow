@@ -226,7 +226,7 @@ export default function PrintDeliveryChallan() {
           <div className="total-quantity-section mb-4 flex justify-end">
             <div className="border-2 border-gray-300 px-4 py-1.5 bg-gray-50 print:bg-gray-100">
               <span className="font-semibold text-gray-600 text-xs">Total Quantity: </span>
-              <span className="font-bold text-sm">{dc.total_quantity}</span>
+              <span className="font-bold text-sm">{totalQuantityWithUnit}</span>
             </div>
           </div>
 
