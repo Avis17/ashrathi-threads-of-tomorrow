@@ -30,6 +30,7 @@ interface VariationData {
   fabric_width: string;
   weight: number;
   number_of_rolls: number;
+  total_weight: number;
 }
 
 const BATCH_OPERATIONS = [
@@ -81,7 +82,7 @@ const BatchForm = ({ onClose }: BatchFormProps) => {
         estimated_delivery_date: '',
         notes: '',
         operations: ['Cutting', 'Stitching(Singer)', 'Checking', 'Ironing', 'Packing'],
-        variations: [{ color: '', fabric_width: '', weight: 0, number_of_rolls: 1 }]
+        variations: [{ color: '', fabric_width: '', weight: 0, number_of_rolls: 1, total_weight: 0 }]
       }],
       supplier_name: '',
       company_name: '',
@@ -115,7 +116,7 @@ const BatchForm = ({ onClose }: BatchFormProps) => {
 
   const addVariation = (typeIndex: number) => {
     const currentTypes = [...types];
-    currentTypes[typeIndex].variations.push({ color: '', fabric_width: '', weight: 0, number_of_rolls: 1 });
+    currentTypes[typeIndex].variations.push({ color: '', fabric_width: '', weight: 0, number_of_rolls: 1, total_weight: 0 });
     setValue('types', currentTypes);
   };
 
@@ -422,12 +423,17 @@ const BatchForm = ({ onClose }: BatchFormProps) => {
                           />
                         </div>
                         <div className="space-y-1">
-                          <Label className="text-xs text-muted-foreground">Weight/Roll (kg)</Label>
+                          <Label className="text-xs text-muted-foreground">Total Weight (kg)</Label>
                           <Input
                             type="number"
                             step="0.01"
-                            {...register(`types.${typeIndex}.variations.${varIndex}.weight`, { valueAsNumber: true })}
-                            placeholder="25"
+                            {...register(`types.${typeIndex}.variations.${varIndex}.total_weight`, { valueAsNumber: true, onChange: (e) => {
+                              const totalW = Number(e.target.value) || 0;
+                              const rolls = Number(variation.number_of_rolls) || 0;
+                              const weightPerRoll = rolls > 0 ? totalW / rolls : 0;
+                              setValue(`types.${typeIndex}.variations.${varIndex}.weight`, Number(weightPerRoll.toFixed(4)));
+                            }})}
+                            placeholder="75"
                             className="h-9"
                           />
                         </div>
@@ -436,15 +442,22 @@ const BatchForm = ({ onClose }: BatchFormProps) => {
                           <Input
                             type="number"
                             min="1"
-                            {...register(`types.${typeIndex}.variations.${varIndex}.number_of_rolls`, { valueAsNumber: true })}
+                            {...register(`types.${typeIndex}.variations.${varIndex}.number_of_rolls`, { valueAsNumber: true, onChange: (e) => {
+                              const rolls = Number(e.target.value) || 0;
+                              const totalW = Number(variation.total_weight) || 0;
+                              const weightPerRoll = rolls > 0 ? totalW / rolls : 0;
+                              setValue(`types.${typeIndex}.variations.${varIndex}.weight`, Number(weightPerRoll.toFixed(4)));
+                            }})}
                             placeholder="3"
                             className="h-9"
                           />
                         </div>
                         <div className="space-y-1">
-                          <Label className="text-xs text-muted-foreground">Total</Label>
+                          <Label className="text-xs text-muted-foreground">Weight/Roll (kg)</Label>
                           <div className="h-9 flex items-center px-2 bg-background rounded-md text-sm font-semibold text-primary">
-                            {((Number(variation.weight) || 0) * (Number(variation.number_of_rolls) || 0)).toFixed(2)} kg
+                            {((Number(variation.number_of_rolls) || 0) > 0
+                              ? ((Number(variation.total_weight) || 0) / (Number(variation.number_of_rolls) || 1)).toFixed(2)
+                              : '0.00')} kg
                           </div>
                         </div>
                         <div className="flex gap-1">
@@ -503,7 +516,7 @@ const BatchForm = ({ onClose }: BatchFormProps) => {
               estimated_delivery_date: '',
               notes: '',
               operations: ['Cutting', 'Stitching(Singer)', 'Checking', 'Ironing', 'Packing'],
-              variations: [{ color: '', fabric_width: '', weight: 0, number_of_rolls: 1 }]
+              variations: [{ color: '', fabric_width: '', weight: 0, number_of_rolls: 1, total_weight: 0 }]
             });
           }}
           className="w-full"
