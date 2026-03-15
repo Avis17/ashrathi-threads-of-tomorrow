@@ -124,24 +124,26 @@ export const BatchProductionSection = ({
   });
 
   // --- Build size-wise progress maps ---
-  // Key: `${type_index}-${operation}-${size}` => { completed, mistakes }
-  const sizeProgressMap: Record<string, { completed: number; mistakes: number }> = {};
+  // Key: `${type_index}-${operation}-${size}` => { completed, mistakes, notes }
+  const sizeProgressMap: Record<string, { completed: number; mistakes: number; notes: string[] }> = {};
   // Also build aggregate (no size) for backward compat
-  const aggProgressMap: Record<string, { completed: number; mistakes: number }> = {};
+  const aggProgressMap: Record<string, { completed: number; mistakes: number; notes: string[] }> = {};
   
   progressData.forEach(p => {
     const normalizedOp = normalizeOperation(p.operation);
     const sizeKey = `${p.type_index}-${normalizedOp}-${p.size || ''}`;
     if (!sizeProgressMap[sizeKey]) {
-      sizeProgressMap[sizeKey] = { completed: 0, mistakes: 0 };
+      sizeProgressMap[sizeKey] = { completed: 0, mistakes: 0, notes: [] };
     }
     sizeProgressMap[sizeKey].completed += p.completed_pieces;
     sizeProgressMap[sizeKey].mistakes += (p.mistake_pieces || 0);
+    if (p.notes) sizeProgressMap[sizeKey].notes.push(p.notes);
     // Aggregate
     const aggKey = `${p.type_index}-${normalizedOp}`;
-    if (!aggProgressMap[aggKey]) aggProgressMap[aggKey] = { completed: 0, mistakes: 0 };
+    if (!aggProgressMap[aggKey]) aggProgressMap[aggKey] = { completed: 0, mistakes: 0, notes: [] };
     aggProgressMap[aggKey].completed += p.completed_pieces;
     aggProgressMap[aggKey].mistakes += (p.mistake_pieces || 0);
+    if (p.notes) aggProgressMap[aggKey].notes.push(p.notes);
   });
 
   // --- Group rollsData by style ---
