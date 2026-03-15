@@ -202,6 +202,7 @@ const BatchDetailsPage = () => {
     if (lower.includes('checking')) return 'Checking';
     if (lower.includes('ironing')) return 'Ironing';
     if (lower.includes('packing')) return 'Packing';
+    if (lower.includes('delivered')) return 'Delivered';
     return op;
   };
   
