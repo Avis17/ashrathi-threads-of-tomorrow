@@ -230,7 +230,7 @@ export function DeliveryDetailsDialog({
             <div className="flex items-center justify-between">
               <Label className="text-sm font-medium flex items-center gap-1.5">
                 <Scale className="h-3.5 w-3.5" />
-                Actual Product Weight (per piece)
+                Actual Product Weight (size-wise total in kg)
               </Label>
               <Button variant="outline" size="sm" onClick={addWeightEntry} className="gap-1 h-7 text-xs">
                 <Plus className="h-3 w-3" />
@@ -280,7 +280,7 @@ export function DeliveryDetailsDialog({
                     min={0}
                     step={0.1}
                     className="h-8 text-xs"
-                    placeholder="Weight (g)"
+                    placeholder="Weight (kg)"
                     value={entry.weight_grams || ''}
                     onChange={e => updateWeightEntry(entry.id, 'weight_grams', parseFloat(e.target.value) || 0)}
                   />
@@ -298,14 +298,14 @@ export function DeliveryDetailsDialog({
 
             {weightEntries.length > 0 && (
               <div className="flex items-center justify-between px-3 py-2 bg-muted/50 rounded-lg">
-                <span className="text-sm font-medium">Total Weight / Piece</span>
-                <Badge variant="secondary" className="text-sm">{totalProductWeightGrams.toFixed(1)} g</Badge>
+                <span className="text-sm font-medium">Total Product Weight</span>
+                <Badge variant="secondary" className="text-sm">{totalProductWeightKg.toFixed(1)} kg</Badge>
               </div>
             )}
           </div>
 
           {/* Wastage Calculation Summary */}
-          {totalPieces > 0 && totalProductWeightGrams > 0 && (
+          {totalProductWeightKg > 0 && (
             <div className="space-y-2 p-3 border rounded-lg bg-muted/20">
               <h4 className="text-sm font-semibold flex items-center gap-1.5">
                 <Scale className="h-4 w-4 text-primary" />
@@ -314,15 +314,15 @@ export function DeliveryDetailsDialog({
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div className="flex justify-between p-2 bg-background rounded">
                   <span className="text-muted-foreground">Total Fabric Issued</span>
-                  <span className="font-medium">{(styleFabricWeightGrams / 1000).toFixed(2)} kg</span>
+                  <span className="font-medium">{styleFabricWeightKg.toFixed(2)} kg</span>
                 </div>
                 <div className="flex justify-between p-2 bg-background rounded">
                   <span className="text-muted-foreground">Total Product Weight</span>
-                  <span className="font-medium">{(totalEstimatedProductWeight / 1000).toFixed(2)} kg</span>
+                  <span className="font-medium">{totalProductWeightKg.toFixed(2)} kg</span>
                 </div>
                 <div className="flex justify-between p-2 bg-background rounded">
                   <span className="text-muted-foreground">Wastage Weight</span>
-                  <span className="font-medium">{((styleFabricWeightGrams - totalEstimatedProductWeight) / 1000).toFixed(2)} kg</span>
+                  <span className="font-medium">{(styleFabricWeightKg - totalProductWeightKg).toFixed(2)} kg</span>
                 </div>
                 <div className="flex justify-between p-2 bg-background rounded">
                   <span className="text-muted-foreground">Wastage %</span>

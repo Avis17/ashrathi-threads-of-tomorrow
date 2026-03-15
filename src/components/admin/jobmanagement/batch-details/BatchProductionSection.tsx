@@ -919,7 +919,7 @@ export const BatchProductionSection = ({
                             <div className="text-sm font-bold">{wastageWeightKg.toFixed(2)} kg</div>
                           </div>
                           {(() => {
-                            const wastagePercent = fabricWtGrams > 0 ? Math.max(0, (wastageWt / fabricWtGrams) * 100) : 0;
+                            const wastagePercent = fabricWeightKg > 0 ? (wastageWeightKg / fabricWeightKg) * 100 : 0;
                             return (
                               <div className={cn(
                                 "bg-background rounded-lg p-3 text-center border",
