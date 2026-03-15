@@ -1054,6 +1054,43 @@ export const BatchProductionSection = ({
                         );
                       };
 
+                      // Compute latest production status for this color
+                      const getColorProductionSummary = () => {
+                        const nonCuttingOps = typeOps.filter(op => op !== 'Cutting');
+                        if (nonCuttingOps.length === 0 || typeCutPieces === 0) return null;
+
+                        // Find the last operation that has any progress (the "latest" stage)
+                        let lastOpWithProgress = '';
+                        let lastOpCompleted = 0;
+                        let lastOpMistakes = 0;
+
+                        // Also compute bottleneck (min completed across all non-cutting ops that have progress)
+                        let minCompleted = typeCutPieces;
+                        let totalMistakes = 0;
+
+                        for (const op of nonCuttingOps) {
+                          const completed = getOpTotalCompleted(typeIndex, op);
+                          const mistakes = getOpTotalMistakes(typeIndex, op);
+                          totalMistakes += mistakes;
+                          if (completed > 0 || mistakes > 0) {
+                            lastOpWithProgress = op;
+                            lastOpCompleted = completed;
+                            lastOpMistakes = mistakes;
+                            minCompleted = Math.min(minCompleted, completed);
+                          }
+                        }
+
+                        if (!lastOpWithProgress) return null;
+
+                        // "Ready" = bottleneck completed (pieces through all started ops)
+                        const ready = minCompleted;
+                        const missing = Math.max(0, typeCutPieces - lastOpCompleted - lastOpMistakes);
+
+                        return { ready, mistakes: totalMistakes, missing, lastOp: lastOpWithProgress };
+                      };
+
+                      const prodSummary = getColorProductionSummary();
+
                       const renderColorHeader = () => (
                         <div className={cn('flex items-center justify-between p-4 hover:bg-muted/20 transition-colors cursor-pointer', palette.bg)}>
                           <div className="flex items-center gap-3">
@@ -1088,6 +1125,30 @@ export const BatchProductionSection = ({
                                       </span>
                                     );
                                   })}
+                                </div>
+                              )}
+                              {/* Production Status Summary */}
+                              {prodSummary && (
+                                <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+                                  <span className="text-xs font-medium text-green-600 flex items-center gap-1">
+                                    <CheckCircle className="h-3 w-3" />
+                                    {prodSummary.ready} ready
+                                  </span>
+                                  {prodSummary.mistakes > 0 && (
+                                    <span className="text-xs font-medium text-orange-500 flex items-center gap-1">
+                                      <AlertTriangle className="h-3 w-3" />
+                                      {prodSummary.mistakes} mistakes
+                                    </span>
+                                  )}
+                                  {prodSummary.missing > 0 && (
+                                    <span className="text-xs font-medium text-red-500 flex items-center gap-1">
+                                      <AlertCircle className="h-3 w-3" />
+                                      {prodSummary.missing} missing
+                                    </span>
+                                  )}
+                                  <span className="text-[10px] text-muted-foreground italic">
+                                    (at {prodSummary.lastOp})
+                                  </span>
                                 </div>
                               )}
                             </div>
