@@ -205,7 +205,11 @@ export const BatchProductionSection = ({
 
   const getSizeCompleted = (typeIndex: number, op: string, size: string) => {
     // Cutting is auto-completed from cutting logs
-    if (op === 'Cutting') return cuttingSizeSummary[typeIndex]?.[size] || 0;
+    if (op === 'Cutting') {
+      // Strip Top-/Bottom- prefix for cutting since cutting data uses raw sizes
+      const rawSize = size.replace(/^(Top|Bottom)-/, '');
+      return cuttingSizeSummary[typeIndex]?.[rawSize] || 0;
+    }
     return sizeProgressMap[`${typeIndex}-${op}-${size}`]?.completed || 0;
   };
 
