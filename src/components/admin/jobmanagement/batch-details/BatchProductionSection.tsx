@@ -156,10 +156,8 @@ export const BatchProductionSection = ({
   });
 
   // --- Helpers ---
-  const getTypeOperations = (typeIndex: number): string[] => {
-    const typeOps = rollsData[typeIndex]?.operations;
-    if (Array.isArray(typeOps) && typeOps.length > 0) return typeOps;
-    return operations;
+  const getTypeOperations = (_typeIndex: number): string[] => {
+    return STANDARD_OPERATIONS;
   };
 
   const getTypeSizes = (typeIndex: number): string[] => {
