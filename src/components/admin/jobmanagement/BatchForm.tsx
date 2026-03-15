@@ -30,6 +30,7 @@ interface VariationData {
   fabric_width: string;
   weight: number;
   number_of_rolls: number;
+  total_weight: number;
 }
 
 const BATCH_OPERATIONS = [
