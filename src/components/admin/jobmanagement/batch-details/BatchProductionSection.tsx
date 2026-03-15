@@ -854,6 +854,80 @@ export const BatchProductionSection = ({
                     </div>
                   )}
 
+                  {/* Delivery Info Card */}
+                  {(() => {
+                    const dInfo = deliveryInfoMap[sg.styleId];
+                    if (!dInfo || (dInfo.pieces_given === 0 && dInfo.sample_pieces_given === 0 && dInfo.weight_entries.length === 0)) return null;
+                    const totalPcs = dInfo.pieces_given + dInfo.sample_pieces_given;
+                    const totalProductWt = dInfo.total_product_weight_grams * totalPcs;
+                    const fabricWtGrams = dInfo.total_fabric_weight_grams;
+                    const wastageWt = fabricWtGrams - totalProductWt;
+                    return (
+                      <div className="border rounded-lg p-4 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Truck className="h-4 w-4 text-blue-600" />
+                          <span className="text-sm font-semibold">Delivery & Wastage Summary</span>
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                          <div className="bg-background rounded-lg p-3 text-center border">
+                            <div className="text-xs text-muted-foreground">Pieces Given</div>
+                            <div className="text-lg font-bold">{dInfo.pieces_given}</div>
+                          </div>
+                          <div className="bg-background rounded-lg p-3 text-center border">
+                            <div className="text-xs text-muted-foreground">Sample Pieces</div>
+                            <div className="text-lg font-bold">{dInfo.sample_pieces_given}</div>
+                          </div>
+                          <div className="bg-background rounded-lg p-3 text-center border">
+                            <div className="text-xs text-muted-foreground">Total Pieces</div>
+                            <div className="text-lg font-bold text-primary">{totalPcs}</div>
+                          </div>
+                          <div className="bg-background rounded-lg p-3 text-center border">
+                            <div className="text-xs text-muted-foreground">Wt / Piece</div>
+                            <div className="text-lg font-bold">{dInfo.total_product_weight_grams.toFixed(1)}g</div>
+                          </div>
+                        </div>
+                        {dInfo.weight_entries.length > 0 && (
+                          <div className="space-y-2">
+                            <div className="text-xs font-medium text-muted-foreground">Size-wise Weight Breakdown</div>
+                            <div className="flex flex-wrap gap-2">
+                              {dInfo.weight_entries.map((w, i) => (
+                                <Badge key={i} variant="secondary" className="text-xs gap-1">
+                                  {w.size}{w.part !== 'single' ? ` (${w.part})` : ''}: {w.weight_grams}g
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 border-t">
+                          <div className="bg-background rounded-lg p-3 text-center border">
+                            <div className="text-xs text-muted-foreground">Fabric Issued</div>
+                            <div className="text-sm font-bold">{(fabricWtGrams / 1000).toFixed(2)} kg</div>
+                          </div>
+                          <div className="bg-background rounded-lg p-3 text-center border">
+                            <div className="text-xs text-muted-foreground">Product Weight</div>
+                            <div className="text-sm font-bold">{(totalProductWt / 1000).toFixed(2)} kg</div>
+                          </div>
+                          <div className="bg-background rounded-lg p-3 text-center border">
+                            <div className="text-xs text-muted-foreground">Wastage</div>
+                            <div className="text-sm font-bold">{(wastageWt / 1000).toFixed(2)} kg</div>
+                          </div>
+                          <div className={cn(
+                            "bg-background rounded-lg p-3 text-center border",
+                            dInfo.fabric_wastage_percent > 20 ? 'border-destructive/50' : dInfo.fabric_wastage_percent > 10 ? 'border-amber-400' : 'border-green-400'
+                          )}>
+                            <div className="text-xs text-muted-foreground">Wastage %</div>
+                            <div className={cn(
+                              "text-lg font-bold",
+                              dInfo.fabric_wastage_percent > 20 ? 'text-destructive' : dInfo.fabric_wastage_percent > 10 ? 'text-amber-600' : 'text-green-600'
+                            )}>
+                              {dInfo.fabric_wastage_percent.toFixed(2)}%
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
                   {/* Color/Variant Cards */}
                   <div className="grid gap-4">
                     {sg.typeIndices.map((typeIndex, colorIdx) => {
