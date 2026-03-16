@@ -216,7 +216,7 @@ const BatchesManager = () => {
     <div className="space-y-6">
       {/* Stats Cards */}
       {stats && !isLoading && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-9 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           <Card className="p-3 space-y-1">
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <Package className="h-3.5 w-3.5" />
