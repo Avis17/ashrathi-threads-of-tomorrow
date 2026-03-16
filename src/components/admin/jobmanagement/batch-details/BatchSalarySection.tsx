@@ -166,6 +166,9 @@ export const BatchSalarySection = ({ batchId, rollsData, cuttingSummary, totalCu
         </Card>
       </div>
 
+      {/* Finalized Rates */}
+      <FinalizedRatesCard batchId={batchId} />
+
       {/* Header + Actions */}
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold flex items-center gap-2">
