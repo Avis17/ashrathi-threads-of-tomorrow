@@ -14,6 +14,7 @@ import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { RecordSalaryDialog } from './RecordSalaryDialog';
 import { GiveAdvanceDialog } from './GiveAdvanceDialog';
+import { FinalizedRatesCard } from './FinalizedRatesCard';
 
 interface StyleInfo {
   id: string;
