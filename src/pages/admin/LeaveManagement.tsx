@@ -557,6 +557,21 @@ export default function LeaveManagement() {
                   </Button>
                 </div>
               )}
+              {selectedLeave.status === 'Approved' && (
+                <div className="flex gap-2 pt-2 border-t">
+                  <Button
+                    className="flex-1 gap-1"
+                    variant="destructive"
+                    onClick={() => {
+                      setActionLeave({ leave: selectedLeave, action: 'Rejected' });
+                      setAdminNote('');
+                    }}
+                  >
+                    <XCircle className="h-4 w-4" />
+                    Revoke / Reject
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>
