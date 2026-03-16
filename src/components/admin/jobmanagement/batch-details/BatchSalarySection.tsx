@@ -14,6 +14,7 @@ import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { RecordSalaryDialog } from './RecordSalaryDialog';
 import { GiveAdvanceDialog } from './GiveAdvanceDialog';
+import { FinalizedRatesCard } from './FinalizedRatesCard';
 
 interface StyleInfo {
   id: string;
@@ -164,6 +165,9 @@ export const BatchSalarySection = ({ batchId, rollsData, cuttingSummary, totalCu
           </CardContent>
         </Card>
       </div>
+
+      {/* Finalized Rates */}
+      <FinalizedRatesCard batchId={batchId} />
 
       {/* Header + Actions */}
       <div className="flex items-center justify-between">

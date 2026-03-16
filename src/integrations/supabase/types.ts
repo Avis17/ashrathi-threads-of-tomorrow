@@ -302,6 +302,47 @@ export type Database = {
           },
         ]
       }
+      batch_finalized_rates: {
+        Row: {
+          batch_id: string
+          created_at: string
+          id: string
+          image_url: string | null
+          notes: string | null
+          operation: string
+          rate: number
+          updated_at: string
+        }
+        Insert: {
+          batch_id: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          notes?: string | null
+          operation: string
+          rate?: number
+          updated_at?: string
+        }
+        Update: {
+          batch_id?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          notes?: string | null
+          operation?: string
+          rate?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "batch_finalized_rates_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "job_batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       batch_job_work_operations: {
         Row: {
           amount: number | null
