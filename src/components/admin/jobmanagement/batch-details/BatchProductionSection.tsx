@@ -875,7 +875,7 @@ export const BatchProductionSection = ({
                           <Truck className="h-4 w-4 text-blue-600" />
                           <span className="text-sm font-semibold">Delivery & Wastage Summary</span>
                         </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                           <div className="bg-background rounded-lg p-3 text-center border">
                             <div className="text-xs text-muted-foreground">Pieces Given</div>
                             <div className="text-lg font-bold">{dInfo.pieces_given}</div>
@@ -891,6 +891,12 @@ export const BatchProductionSection = ({
                           <div className="bg-background rounded-lg p-3 text-center border">
                             <div className="text-xs text-muted-foreground">Product Weight</div>
                             <div className="text-lg font-bold">{dInfo.total_product_weight_grams.toFixed(1)} kg</div>
+                          </div>
+                          <div className="bg-background rounded-lg p-3 text-center border">
+                            <div className="text-xs text-muted-foreground">Weight / Piece</div>
+                            <div className="text-lg font-bold text-secondary">
+                              {dInfo.pieces_given > 0 ? ((dInfo.total_product_weight_grams / dInfo.pieces_given) * 1000).toFixed(0) : 0} g
+                            </div>
                           </div>
                         </div>
                         {dInfo.weight_entries.length > 0 && (
