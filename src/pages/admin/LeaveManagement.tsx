@@ -204,12 +204,21 @@ export default function LeaveManagement() {
     onError: (err: any) => toast.error('Failed to approve: ' + err.message),
   });
 
-  // Reject mutation
+  // Reject mutation (also handles revoking previously approved leaves)
   const rejectMutation = useMutation({
     mutationFn: async ({ leave, note }: { leave: LeaveRequest; note: string }) => {
+      // If previously approved, delete the synced absence record
+      if (leave.status === 'Approved' && leave.synced_absence_id) {
+        const { error: delError } = await supabase
+          .from('staff_absences')
+          .delete()
+          .eq('id', leave.synced_absence_id);
+        if (delError) throw new Error('Failed to remove synced absence: ' + delError.message);
+      }
+
       const { error } = await externalSupabase
         .from('leave_requests')
-        .update({ status: 'Rejected', admin_note: note })
+        .update({ status: 'Rejected', admin_note: note, approved_at: null, synced_absence_id: null })
         .eq('id', leave.id);
       if (error) throw error;
     },
@@ -545,6 +554,21 @@ export default function LeaveManagement() {
                   >
                     <XCircle className="h-4 w-4" />
                     Reject
+                  </Button>
+                </div>
+              )}
+              {selectedLeave.status === 'Approved' && (
+                <div className="flex gap-2 pt-2 border-t">
+                  <Button
+                    className="flex-1 gap-1"
+                    variant="destructive"
+                    onClick={() => {
+                      setActionLeave({ leave: selectedLeave, action: 'Rejected' });
+                      setAdminNote('');
+                    }}
+                  >
+                    <XCircle className="h-4 w-4" />
+                    Revoke / Reject
                   </Button>
                 </div>
               )}
