@@ -120,6 +120,8 @@ export function DeliveryDetailsDialog({
     return ((effectiveFabricWeightKg - adjustedProductWeightKg) / effectiveFabricWeightKg) * 100;
   }, [effectiveFabricWeightKg, adjustedProductWeightKg]);
 
+  const effectiveSizes = availableSizes.length > 0 ? availableSizes : DEFAULT_SIZES;
+
   const addWeightEntry = () => {
     setWeightEntries(prev => [
       ...prev,
