@@ -55,9 +55,11 @@ export function DeliveryDetailsDialog({
   const [deliveryDate, setDeliveryDate] = useState<Date | undefined>(undefined);
   const [notes, setNotes] = useState('');
   const [calendarOpen, setCalendarOpen] = useState(false);
-  const [piecesGiven, setPiecesGiven] = useState(0);
-  const [samplePiecesGiven, setSamplePiecesGiven] = useState(0);
-  const [weightEntries, setWeightEntries] = useState<WeightEntry[]>([]);
+   const [piecesGiven, setPiecesGiven] = useState(0);
+   const [samplePiecesGiven, setSamplePiecesGiven] = useState(0);
+   const [weightEntries, setWeightEntries] = useState<WeightEntry[]>([]);
+   const [manualFabricWeight, setManualFabricWeight] = useState<string>('');
+   const [weightAdjustment, setWeightAdjustment] = useState<string>('0');
 
   const upsertMutation = useUpsertBatchDeliveryInfo();
 
