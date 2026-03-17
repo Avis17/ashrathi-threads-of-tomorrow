@@ -18,6 +18,8 @@ export interface BatchDeliveryInfo {
   total_product_weight_grams: number;
   total_fabric_weight_grams: number;
   fabric_wastage_percent: number;
+  manual_fabric_weight_kg: number | null;
+  weight_adjustment_kg: number;
   created_at: string;
   updated_at: string;
 }
