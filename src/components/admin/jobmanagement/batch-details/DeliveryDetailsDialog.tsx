@@ -314,15 +314,67 @@ export function DeliveryDetailsDialog({
             ))}
 
             {weightEntries.length > 0 && (
-              <div className="flex items-center justify-between px-3 py-2 bg-muted/50 rounded-lg">
-                <span className="text-sm font-medium">Total Product Weight</span>
-                <Badge variant="secondary" className="text-sm">{totalProductWeightKg.toFixed(1)} kg</Badge>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between px-3 py-2 bg-muted/50 rounded-lg">
+                  <span className="text-sm font-medium">Total Product Weight</span>
+                  <Badge variant="secondary" className="text-sm">{totalProductWeightKg.toFixed(2)} kg</Badge>
+                </div>
+                {/* Weight Adjustment */}
+                <div className="flex items-center gap-3 px-3 py-2 bg-muted/30 rounded-lg">
+                  <span className="text-sm font-medium whitespace-nowrap">Weight Adjustment</span>
+                  <Input
+                    type="number"
+                    step={0.01}
+                    className="h-8 text-xs w-32 ml-auto"
+                    placeholder="e.g. -0.5 or 1.2"
+                    value={weightAdjustment}
+                    onChange={e => setWeightAdjustment(e.target.value)}
+                  />
+                  <span className="text-xs text-muted-foreground">kg</span>
+                </div>
+                {adjustmentKg !== 0 && (
+                  <div className="flex items-center justify-between px-3 py-2 bg-muted/50 rounded-lg">
+                    <span className="text-sm font-medium">Adjusted Product Weight</span>
+                    <Badge variant="secondary" className="text-sm">{adjustedProductWeightKg.toFixed(2)} kg</Badge>
+                  </div>
+                )}
               </div>
             )}
           </div>
 
+          {/* Total Fabric Issued (editable) */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium flex items-center gap-1.5">
+              <Scale className="h-3.5 w-3.5" />
+              Total Fabric Issued (kg)
+            </Label>
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                min={0}
+                step={0.01}
+                value={manualFabricWeight}
+                onChange={e => setManualFabricWeight(e.target.value)}
+                placeholder="Fabric weight in kg"
+              />
+              {styleFabricWeightKg > 0 && parseFloat(manualFabricWeight) !== styleFabricWeightKg && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs whitespace-nowrap"
+                  onClick={() => setManualFabricWeight(String(styleFabricWeightKg))}
+                >
+                  Reset ({styleFabricWeightKg.toFixed(2)})
+                </Button>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Pre-filled from batch fabric data. Edit if fabric was returned or adjusted.
+            </p>
+          </div>
+
           {/* Wastage Calculation Summary */}
-          {totalProductWeightKg > 0 && (
+          {adjustedProductWeightKg > 0 && effectiveFabricWeightKg > 0 && (
             <div className="space-y-2 p-3 border rounded-lg bg-muted/20">
               <h4 className="text-sm font-semibold flex items-center gap-1.5">
                 <Scale className="h-4 w-4 text-primary" />
@@ -331,15 +383,15 @@ export function DeliveryDetailsDialog({
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div className="flex justify-between p-2 bg-background rounded">
                   <span className="text-muted-foreground">Total Fabric Issued</span>
-                  <span className="font-medium">{styleFabricWeightKg.toFixed(2)} kg</span>
+                  <span className="font-medium">{effectiveFabricWeightKg.toFixed(2)} kg</span>
                 </div>
                 <div className="flex justify-between p-2 bg-background rounded">
-                  <span className="text-muted-foreground">Total Product Weight</span>
-                  <span className="font-medium">{totalProductWeightKg.toFixed(2)} kg</span>
+                  <span className="text-muted-foreground">Adjusted Product Weight</span>
+                  <span className="font-medium">{adjustedProductWeightKg.toFixed(2)} kg</span>
                 </div>
                 <div className="flex justify-between p-2 bg-background rounded">
                   <span className="text-muted-foreground">Wastage Weight</span>
-                  <span className="font-medium">{(styleFabricWeightKg - totalProductWeightKg).toFixed(2)} kg</span>
+                  <span className="font-medium">{(effectiveFabricWeightKg - adjustedProductWeightKg).toFixed(2)} kg</span>
                 </div>
                 <div className="flex justify-between p-2 bg-background rounded">
                   <span className="text-muted-foreground">Wastage %</span>
