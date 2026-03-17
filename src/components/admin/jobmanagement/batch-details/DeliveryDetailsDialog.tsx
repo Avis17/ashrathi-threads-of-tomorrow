@@ -155,9 +155,11 @@ export function DeliveryDetailsDialog({
         pieces_given: piecesGiven,
         sample_pieces_given: samplePiecesGiven,
         weight_entries: weightEntries,
-        total_product_weight_grams: totalProductWeightKg,
-        total_fabric_weight_grams: styleFabricWeightKg,
+        total_product_weight_grams: adjustedProductWeightKg,
+        total_fabric_weight_grams: effectiveFabricWeightKg,
         fabric_wastage_percent: parseFloat(fabricWastagePercent.toFixed(2)),
+        manual_fabric_weight_kg: parseFloat(manualFabricWeight) || null,
+        weight_adjustment_kg: adjustmentKg,
       });
       onConfirmDelivery(dateStr, notes || null);
       toast.success('Delivery details saved');
