@@ -258,12 +258,14 @@ export type Database = {
           created_at: string
           fabric_wastage_percent: number
           id: string
+          manual_fabric_weight_kg: number | null
           pieces_given: number
           sample_pieces_given: number
           style_id: string
           total_fabric_weight_grams: number
           total_product_weight_grams: number
           updated_at: string
+          weight_adjustment_kg: number | null
           weight_entries: Json
         }
         Insert: {
@@ -271,12 +273,14 @@ export type Database = {
           created_at?: string
           fabric_wastage_percent?: number
           id?: string
+          manual_fabric_weight_kg?: number | null
           pieces_given?: number
           sample_pieces_given?: number
           style_id: string
           total_fabric_weight_grams?: number
           total_product_weight_grams?: number
           updated_at?: string
+          weight_adjustment_kg?: number | null
           weight_entries?: Json
         }
         Update: {
@@ -284,12 +288,14 @@ export type Database = {
           created_at?: string
           fabric_wastage_percent?: number
           id?: string
+          manual_fabric_weight_kg?: number | null
           pieces_given?: number
           sample_pieces_given?: number
           style_id?: string
           total_fabric_weight_grams?: number
           total_product_weight_grams?: number
           updated_at?: string
+          weight_adjustment_kg?: number | null
           weight_entries?: Json
         }
         Relationships: [

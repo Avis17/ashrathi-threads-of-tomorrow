@@ -18,6 +18,8 @@ export interface BatchDeliveryInfo {
   total_product_weight_grams: number;
   total_fabric_weight_grams: number;
   fabric_wastage_percent: number;
+  manual_fabric_weight_kg: number | null;
+  weight_adjustment_kg: number;
   created_at: string;
   updated_at: string;
 }
@@ -53,6 +55,8 @@ export function useUpsertBatchDeliveryInfo() {
       total_product_weight_grams: number;
       total_fabric_weight_grams: number;
       fabric_wastage_percent: number;
+      manual_fabric_weight_kg?: number | null;
+      weight_adjustment_kg?: number;
     }) => {
       const { data, error } = await supabase
         .from('batch_delivery_info')
@@ -66,6 +70,8 @@ export function useUpsertBatchDeliveryInfo() {
             total_product_weight_grams: info.total_product_weight_grams,
             total_fabric_weight_grams: info.total_fabric_weight_grams,
             fabric_wastage_percent: info.fabric_wastage_percent,
+            manual_fabric_weight_kg: info.manual_fabric_weight_kg ?? null,
+            weight_adjustment_kg: info.weight_adjustment_kg ?? 0,
             updated_at: new Date().toISOString(),
           },
           { onConflict: 'batch_id,style_id' }
