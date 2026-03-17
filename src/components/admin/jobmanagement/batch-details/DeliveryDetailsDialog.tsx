@@ -86,13 +86,21 @@ export function DeliveryDetailsDialog({
         setPiecesGiven(existingDeliveryInfo.pieces_given);
         setSamplePiecesGiven(existingDeliveryInfo.sample_pieces_given);
         setWeightEntries(existingDeliveryInfo.weight_entries || []);
+        setManualFabricWeight(
+          existingDeliveryInfo.manual_fabric_weight_kg != null
+            ? String(existingDeliveryInfo.manual_fabric_weight_kg)
+            : String(styleFabricWeightKg)
+        );
+        setWeightAdjustment(String(existingDeliveryInfo.weight_adjustment_kg || 0));
       } else {
         setPiecesGiven(0);
         setSamplePiecesGiven(0);
         setWeightEntries([]);
+        setManualFabricWeight(String(styleFabricWeightKg));
+        setWeightAdjustment('0');
       }
     }
-  }, [open, styleGroup, existingDate, existingNotes, existingDeliveryInfo]);
+  }, [open, styleGroup, existingDate, existingNotes, existingDeliveryInfo, styleFabricWeightKg]);
 
   const totalPieces = piecesGiven + samplePiecesGiven;
 
