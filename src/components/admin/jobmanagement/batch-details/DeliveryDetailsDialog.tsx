@@ -110,12 +110,15 @@ export function DeliveryDetailsDialog({
     [weightEntries]
   );
 
-  const fabricWastagePercent = useMemo(() => {
-    if (styleFabricWeightKg <= 0) return 0;
-    return ((styleFabricWeightKg - totalProductWeightKg) / styleFabricWeightKg) * 100;
-  }, [styleFabricWeightKg, totalProductWeightKg]);
+  const adjustmentKg = parseFloat(weightAdjustment) || 0;
+  const adjustedProductWeightKg = totalProductWeightKg + adjustmentKg;
 
-  const effectiveSizes = availableSizes.length > 0 ? availableSizes : DEFAULT_SIZES;
+  const effectiveFabricWeightKg = parseFloat(manualFabricWeight) || 0;
+
+  const fabricWastagePercent = useMemo(() => {
+    if (effectiveFabricWeightKg <= 0) return 0;
+    return ((effectiveFabricWeightKg - adjustedProductWeightKg) / effectiveFabricWeightKg) * 100;
+  }, [effectiveFabricWeightKg, adjustedProductWeightKg]);
 
   const addWeightEntry = () => {
     setWeightEntries(prev => [
