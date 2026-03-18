@@ -12,7 +12,7 @@ import {
   IndianRupee, Plus, Banknote, Trash2, Loader2, TrendingUp, Wallet, Receipt, PiggyBank, ExternalLink, Pencil, Filter, CalendarIcon, X,
 } from 'lucide-react';
 import { useBatchSalaryEntries, useDeleteBatchSalary, BatchSalaryEntry } from '@/hooks/useBatchSalary';
-import { useBatchSalaryAdvances } from '@/hooks/useBatchSalaryAdvances';
+import { useBatchSalaryAdvances, useDeleteBatchSalaryAdvance, BatchSalaryAdvance } from '@/hooks/useBatchSalaryAdvances';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { format, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
