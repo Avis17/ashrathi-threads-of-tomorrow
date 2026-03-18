@@ -81,6 +81,37 @@ export const useCreateBatchSalaryAdvance = () => {
   });
 };
 
+export const useUpdateBatchSalaryAdvance = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, batchId, data }: { id: string; batchId: string; data: Partial<{
+      style_id: string;
+      operation: string;
+      description: string;
+      amount: number;
+      advance_date: string;
+      payment_mode: string;
+      notes: string | null;
+    }> }) => {
+      const { data: result, error } = await supabase
+        .from('batch_salary_advances')
+        .update(data)
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return { result, batchId };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['batch-salary-advances', data.batchId] });
+      toast.success('Advance updated');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to update advance');
+    },
+  });
+};
+
 export const useDeleteBatchSalaryAdvance = () => {
   const queryClient = useQueryClient();
   return useMutation({
