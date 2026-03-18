@@ -98,6 +98,33 @@ export const BatchSalarySection = ({ batchId, rollsData, cuttingSummary, totalCu
   const entryCount = existingEntries.length;
   const advanceCount = allAdvances.length;
 
+  // Unique operations for filter
+  const uniqueOperations = useMemo(() => {
+    const ops = new Set(existingEntries.map(e => e.operation));
+    return Array.from(ops).sort();
+  }, [existingEntries]);
+
+  // Filtered entries
+  const filteredEntries = useMemo(() => {
+    return existingEntries.filter(entry => {
+      if (operationFilter !== 'all' && entry.operation !== operationFilter) return false;
+      if (dateRange?.from) {
+        const entryDate = new Date(entry.updated_at);
+        const from = startOfDay(dateRange.from);
+        const to = dateRange.to ? endOfDay(dateRange.to) : endOfDay(dateRange.from);
+        if (!isWithinInterval(entryDate, { start: from, end: to })) return false;
+      }
+      return true;
+    });
+  }, [existingEntries, operationFilter, dateRange]);
+
+  const hasActiveFilters = operationFilter !== 'all' || !!dateRange?.from;
+
+  const clearFilters = () => {
+    setOperationFilter('all');
+    setDateRange(undefined);
+  };
+
   const getStyleName = (styleId: string) => {
     const s = styles.find(st => st.id === styleId);
     return s ? s.style_code : 'Unknown';
