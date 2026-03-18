@@ -39,12 +39,16 @@ export const BatchSalarySection = ({ batchId, rollsData, cuttingSummary, totalCu
   const [showSalaryDialog, setShowSalaryDialog] = useState(false);
   const [showAdvanceDialog, setShowAdvanceDialog] = useState(false);
   const [editingEntry, setEditingEntry] = useState<BatchSalaryEntry | null>(null);
+  const [editingAdvance, setEditingAdvance] = useState<BatchSalaryAdvance | null>(null);
   const [operationFilter, setOperationFilter] = useState<string>('all');
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const [advOperationFilter, setAdvOperationFilter] = useState<string>('all');
+  const [advDateRange, setAdvDateRange] = useState<DateRange | undefined>(undefined);
 
   const { data: existingEntries = [], isLoading: loadingEntries } = useBatchSalaryEntries(batchId);
   const { data: allAdvances = [], isLoading: loadingAdvances } = useBatchSalaryAdvances(batchId);
   const deleteMutation = useDeleteBatchSalary();
+  const deleteAdvanceMutation = useDeleteBatchSalaryAdvance();
 
   // Build style groups from rolls
   const styleGroups = useMemo(() => {
