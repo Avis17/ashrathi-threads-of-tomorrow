@@ -561,8 +561,9 @@ export default function BillsManagement() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Employee</TableHead>
+                   <TableHead>Date</TableHead>
+                   <TableHead>Time</TableHead>
+                   <TableHead>Employee</TableHead>
                   <TableHead>Code</TableHead>
                   <TableHead>Batch</TableHead>
                   <TableHead>Category</TableHead>
@@ -581,6 +582,9 @@ export default function BillsManagement() {
                     <TableRow key={bill.id} className="group">
                       <TableCell className="text-sm whitespace-nowrap">
                         {format(new Date(displayDate), 'dd MMM yyyy')}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                        {format(new Date(bill.created_at), 'hh:mm a')}
                       </TableCell>
                       <TableCell className="font-medium">{getEmployeeName(bill.staff_id)}</TableCell>
                       <TableCell className="text-xs font-mono text-muted-foreground">{bill.employee_code}</TableCell>
