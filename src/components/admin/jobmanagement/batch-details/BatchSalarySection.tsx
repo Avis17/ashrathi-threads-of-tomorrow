@@ -129,6 +129,32 @@ export const BatchSalarySection = ({ batchId, rollsData, cuttingSummary, totalCu
     setDateRange(undefined);
   };
 
+  // Advance filters
+  const uniqueAdvanceOperations = useMemo(() => {
+    const ops = new Set(allAdvances.map(a => a.operation));
+    return Array.from(ops).sort();
+  }, [allAdvances]);
+
+  const filteredAdvances = useMemo(() => {
+    return allAdvances.filter(adv => {
+      if (advOperationFilter !== 'all' && adv.operation !== advOperationFilter) return false;
+      if (advDateRange?.from) {
+        const advDate = new Date(adv.advance_date);
+        const from = startOfDay(advDateRange.from);
+        const to = advDateRange.to ? endOfDay(advDateRange.to) : endOfDay(advDateRange.from);
+        if (!isWithinInterval(advDate, { start: from, end: to })) return false;
+      }
+      return true;
+    });
+  }, [allAdvances, advOperationFilter, advDateRange]);
+
+  const hasAdvanceFilters = advOperationFilter !== 'all' || !!advDateRange?.from;
+
+  const clearAdvanceFilters = () => {
+    setAdvOperationFilter('all');
+    setAdvDateRange(undefined);
+  };
+
   const getStyleName = (styleId: string) => {
     const s = styles.find(st => st.id === styleId);
     return s ? s.style_code : 'Unknown';
@@ -136,6 +162,10 @@ export const BatchSalarySection = ({ batchId, rollsData, cuttingSummary, totalCu
 
   const handleDelete = async (id: string) => {
     await deleteMutation.mutateAsync({ id, batchId });
+  };
+
+  const handleDeleteAdvance = async (id: string) => {
+    await deleteAdvanceMutation.mutateAsync({ id, batchId });
   };
 
   return (
