@@ -229,6 +229,59 @@ export const BatchSalarySection = ({ batchId, rollsData, cuttingSummary, totalCu
         </div>
       </div>
 
+      {/* Filters */}
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-2">
+          <Filter className="h-4 w-4 text-muted-foreground" />
+          <Select value={operationFilter} onValueChange={setOperationFilter}>
+            <SelectTrigger className="w-[180px] h-9">
+              <SelectValue placeholder="All Operations" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Operations</SelectItem>
+              {uniqueOperations.map(op => (
+                <SelectItem key={op} value={op}>{op}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className={cn("h-9 justify-start text-left font-normal", !dateRange?.from && "text-muted-foreground")}>
+              <CalendarIcon className="h-4 w-4 mr-2" />
+              {dateRange?.from ? (
+                dateRange.to ? (
+                  <>{format(dateRange.from, 'dd/MM/yy')} – {format(dateRange.to, 'dd/MM/yy')}</>
+                ) : format(dateRange.from, 'dd/MM/yy')
+              ) : 'Date Range'}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="range"
+              selected={dateRange}
+              onSelect={setDateRange}
+              numberOfMonths={2}
+              className={cn("p-3 pointer-events-auto")}
+            />
+          </PopoverContent>
+        </Popover>
+
+        {hasActiveFilters && (
+          <Button variant="ghost" size="sm" onClick={clearFilters} className="h-9 text-muted-foreground">
+            <X className="h-4 w-4 mr-1" />
+            Clear
+          </Button>
+        )}
+
+        {hasActiveFilters && (
+          <span className="text-xs text-muted-foreground">
+            Showing {filteredEntries.length} of {existingEntries.length} entries
+          </span>
+        )}
+      </div>
+
       {/* Recorded Entries List */}
       <Card>
         <CardContent className="p-0">
@@ -241,6 +294,11 @@ export const BatchSalarySection = ({ batchId, rollsData, cuttingSummary, totalCu
               <IndianRupee className="h-10 w-10 mx-auto mb-3 opacity-30" />
               <p className="text-sm font-medium">No salary entries recorded yet</p>
               <p className="text-xs mt-1">Click "Record Salary" to add the first entry</p>
+            </div>
+          ) : filteredEntries.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Filter className="h-8 w-8 mx-auto mb-2 opacity-30" />
+              <p className="text-sm">No entries match the current filters</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
