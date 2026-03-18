@@ -561,8 +561,9 @@ export default function BillsManagement() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Employee</TableHead>
+                   <TableHead>Date</TableHead>
+                   <TableHead>Time</TableHead>
+                   <TableHead>Employee</TableHead>
                   <TableHead>Code</TableHead>
                   <TableHead>Batch</TableHead>
                   <TableHead>Category</TableHead>
