@@ -415,6 +415,60 @@ export const BatchSalarySection = ({ batchId, rollsData, cuttingSummary, totalCu
               <Banknote className="h-4 w-4 text-amber-500" />
               Recent Advances ({allAdvances.length})
             </h4>
+
+            {/* Advance Filters */}
+            <div className="flex flex-wrap items-center gap-3 mb-3">
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4 text-muted-foreground" />
+                <Select value={advOperationFilter} onValueChange={setAdvOperationFilter}>
+                  <SelectTrigger className="w-[180px] h-9">
+                    <SelectValue placeholder="All Operations" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Operations</SelectItem>
+                    {uniqueAdvanceOperations.map(op => (
+                      <SelectItem key={op} value={op}>{op}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className={cn("h-9 justify-start text-left font-normal", !advDateRange?.from && "text-muted-foreground")}>
+                    <CalendarIcon className="h-4 w-4 mr-2" />
+                    {advDateRange?.from ? (
+                      advDateRange.to ? (
+                        <>{format(advDateRange.from, 'dd/MM/yy')} – {format(advDateRange.to, 'dd/MM/yy')}</>
+                      ) : format(advDateRange.from, 'dd/MM/yy')
+                    ) : 'Date Range'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="range"
+                    selected={advDateRange}
+                    onSelect={setAdvDateRange}
+                    numberOfMonths={2}
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+
+              {hasAdvanceFilters && (
+                <Button variant="ghost" size="sm" onClick={clearAdvanceFilters} className="h-9 text-muted-foreground">
+                  <X className="h-4 w-4 mr-1" />
+                  Clear
+                </Button>
+              )}
+
+              {hasAdvanceFilters && (
+                <span className="text-xs text-muted-foreground">
+                  Showing {filteredAdvances.length} of {allAdvances.length} advances
+                </span>
+              )}
+            </div>
+
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
@@ -424,39 +478,59 @@ export const BatchSalarySection = ({ batchId, rollsData, cuttingSummary, totalCu
                     <TableHead className="text-right">Amount (₹)</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead>Notes</TableHead>
+                    <TableHead className="w-10"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {allAdvances.slice(0, 10).map(adv => (
-                    <TableRow key={adv.id}>
-                      <TableCell>
-                        <Badge variant="outline" className="text-xs">
-                          {getStyleName(adv.style_id)}
-                        </Badge>
+                  {filteredAdvances.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-6 text-muted-foreground text-sm">
+                        {hasAdvanceFilters ? 'No advances match the current filters' : 'No advances'}
                       </TableCell>
-                      <TableCell className="text-sm">{adv.operation}</TableCell>
-                      <TableCell className="text-right font-medium text-sm text-amber-600">
-                        ₹{Number(adv.amount).toFixed(2)}
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        {format(new Date(adv.advance_date), 'dd/MM/yy')}
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{adv.notes || '—'}</TableCell>
                     </TableRow>
-                  ))}
+                  ) : (
+                    filteredAdvances.map(adv => (
+                      <TableRow key={adv.id}>
+                        <TableCell>
+                          <Badge variant="outline" className="text-xs">
+                            {getStyleName(adv.style_id)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-sm">{adv.operation}</TableCell>
+                        <TableCell className="text-right font-medium text-sm text-amber-600">
+                          ₹{Number(adv.amount).toFixed(2)}
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          {format(new Date(adv.advance_date), 'dd/MM/yy')}
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">{adv.notes || '—'}</TableCell>
+                        <TableCell className="flex gap-1">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7"
+                            onClick={() => {
+                              setEditingAdvance(adv);
+                              setShowAdvanceDialog(true);
+                            }}
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7 text-destructive"
+                            onClick={() => handleDeleteAdvance(adv.id)}
+                            disabled={deleteAdvanceMutation.isPending}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
-              {allAdvances.length > 10 && (
-                <div className="text-center py-2">
-                  <Button
-                    variant="link"
-                    size="sm"
-                    onClick={() => navigate(`/admin/job-management/batch/${batchId}/advances`)}
-                  >
-                    View all {allAdvances.length} advances →
-                  </Button>
-                </div>
-              )}
             </div>
           </CardContent>
         </Card>
@@ -475,9 +549,13 @@ export const BatchSalarySection = ({ batchId, rollsData, cuttingSummary, totalCu
       />
       <GiveAdvanceDialog
         open={showAdvanceDialog}
-        onOpenChange={setShowAdvanceDialog}
+        onOpenChange={(open) => {
+          setShowAdvanceDialog(open);
+          if (!open) setEditingAdvance(null);
+        }}
         batchId={batchId}
         styles={styleOptions}
+        editAdvance={editingAdvance}
       />
     </div>
   );
