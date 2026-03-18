@@ -4,14 +4,19 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
 import {
-  IndianRupee, Plus, Banknote, Trash2, Loader2, TrendingUp, Wallet, Receipt, PiggyBank, ExternalLink, Pencil,
+  IndianRupee, Plus, Banknote, Trash2, Loader2, TrendingUp, Wallet, Receipt, PiggyBank, ExternalLink, Pencil, Filter, CalendarIcon, X,
 } from 'lucide-react';
 import { useBatchSalaryEntries, useDeleteBatchSalary, BatchSalaryEntry } from '@/hooks/useBatchSalary';
 import { useBatchSalaryAdvances } from '@/hooks/useBatchSalaryAdvances';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
-import { format } from 'date-fns';
+import { format, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
+import { DateRange } from 'react-day-picker';
 import { RecordSalaryDialog } from './RecordSalaryDialog';
 import { GiveAdvanceDialog } from './GiveAdvanceDialog';
 import { FinalizedRatesCard } from './FinalizedRatesCard';
