@@ -583,6 +583,9 @@ export default function BillsManagement() {
                       <TableCell className="text-sm whitespace-nowrap">
                         {format(new Date(displayDate), 'dd MMM yyyy')}
                       </TableCell>
+                      <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                        {format(new Date(bill.created_at), 'hh:mm a')}
+                      </TableCell>
                       <TableCell className="font-medium">{getEmployeeName(bill.staff_id)}</TableCell>
                       <TableCell className="text-xs font-mono text-muted-foreground">{bill.employee_code}</TableCell>
                       <TableCell>
