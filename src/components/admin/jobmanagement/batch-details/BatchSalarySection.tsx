@@ -318,7 +318,7 @@ export const BatchSalarySection = ({ batchId, rollsData, cuttingSummary, totalCu
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {existingEntries.map(entry => {
+                  {filteredEntries.map(entry => {
                     const amount = entry.rate_per_piece * entry.quantity;
                     return (
                       <TableRow key={entry.id}>
