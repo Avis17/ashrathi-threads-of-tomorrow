@@ -4,14 +4,19 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
 import {
-  IndianRupee, Plus, Banknote, Trash2, Loader2, TrendingUp, Wallet, Receipt, PiggyBank, ExternalLink, Pencil,
+  IndianRupee, Plus, Banknote, Trash2, Loader2, TrendingUp, Wallet, Receipt, PiggyBank, ExternalLink, Pencil, Filter, CalendarIcon, X,
 } from 'lucide-react';
 import { useBatchSalaryEntries, useDeleteBatchSalary, BatchSalaryEntry } from '@/hooks/useBatchSalary';
 import { useBatchSalaryAdvances } from '@/hooks/useBatchSalaryAdvances';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
-import { format } from 'date-fns';
+import { format, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
+import { DateRange } from 'react-day-picker';
 import { RecordSalaryDialog } from './RecordSalaryDialog';
 import { GiveAdvanceDialog } from './GiveAdvanceDialog';
 import { FinalizedRatesCard } from './FinalizedRatesCard';
@@ -34,6 +39,8 @@ export const BatchSalarySection = ({ batchId, rollsData, cuttingSummary, totalCu
   const [showSalaryDialog, setShowSalaryDialog] = useState(false);
   const [showAdvanceDialog, setShowAdvanceDialog] = useState(false);
   const [editingEntry, setEditingEntry] = useState<BatchSalaryEntry | null>(null);
+  const [operationFilter, setOperationFilter] = useState<string>('all');
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
 
   const { data: existingEntries = [], isLoading: loadingEntries } = useBatchSalaryEntries(batchId);
   const { data: allAdvances = [], isLoading: loadingAdvances } = useBatchSalaryAdvances(batchId);
@@ -90,6 +97,33 @@ export const BatchSalarySection = ({ batchId, rollsData, cuttingSummary, totalCu
   const perPieceCost = existingEntries.reduce((sum, e) => sum + e.rate_per_piece, 0);
   const entryCount = existingEntries.length;
   const advanceCount = allAdvances.length;
+
+  // Unique operations for filter
+  const uniqueOperations = useMemo(() => {
+    const ops = new Set(existingEntries.map(e => e.operation));
+    return Array.from(ops).sort();
+  }, [existingEntries]);
+
+  // Filtered entries
+  const filteredEntries = useMemo(() => {
+    return existingEntries.filter(entry => {
+      if (operationFilter !== 'all' && entry.operation !== operationFilter) return false;
+      if (dateRange?.from) {
+        const entryDate = new Date(entry.updated_at);
+        const from = startOfDay(dateRange.from);
+        const to = dateRange.to ? endOfDay(dateRange.to) : endOfDay(dateRange.from);
+        if (!isWithinInterval(entryDate, { start: from, end: to })) return false;
+      }
+      return true;
+    });
+  }, [existingEntries, operationFilter, dateRange]);
+
+  const hasActiveFilters = operationFilter !== 'all' || !!dateRange?.from;
+
+  const clearFilters = () => {
+    setOperationFilter('all');
+    setDateRange(undefined);
+  };
 
   const getStyleName = (styleId: string) => {
     const s = styles.find(st => st.id === styleId);
@@ -195,6 +229,59 @@ export const BatchSalarySection = ({ batchId, rollsData, cuttingSummary, totalCu
         </div>
       </div>
 
+      {/* Filters */}
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-2">
+          <Filter className="h-4 w-4 text-muted-foreground" />
+          <Select value={operationFilter} onValueChange={setOperationFilter}>
+            <SelectTrigger className="w-[180px] h-9">
+              <SelectValue placeholder="All Operations" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Operations</SelectItem>
+              {uniqueOperations.map(op => (
+                <SelectItem key={op} value={op}>{op}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className={cn("h-9 justify-start text-left font-normal", !dateRange?.from && "text-muted-foreground")}>
+              <CalendarIcon className="h-4 w-4 mr-2" />
+              {dateRange?.from ? (
+                dateRange.to ? (
+                  <>{format(dateRange.from, 'dd/MM/yy')} – {format(dateRange.to, 'dd/MM/yy')}</>
+                ) : format(dateRange.from, 'dd/MM/yy')
+              ) : 'Date Range'}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="range"
+              selected={dateRange}
+              onSelect={setDateRange}
+              numberOfMonths={2}
+              className={cn("p-3 pointer-events-auto")}
+            />
+          </PopoverContent>
+        </Popover>
+
+        {hasActiveFilters && (
+          <Button variant="ghost" size="sm" onClick={clearFilters} className="h-9 text-muted-foreground">
+            <X className="h-4 w-4 mr-1" />
+            Clear
+          </Button>
+        )}
+
+        {hasActiveFilters && (
+          <span className="text-xs text-muted-foreground">
+            Showing {filteredEntries.length} of {existingEntries.length} entries
+          </span>
+        )}
+      </div>
+
       {/* Recorded Entries List */}
       <Card>
         <CardContent className="p-0">
@@ -207,6 +294,11 @@ export const BatchSalarySection = ({ batchId, rollsData, cuttingSummary, totalCu
               <IndianRupee className="h-10 w-10 mx-auto mb-3 opacity-30" />
               <p className="text-sm font-medium">No salary entries recorded yet</p>
               <p className="text-xs mt-1">Click "Record Salary" to add the first entry</p>
+            </div>
+          ) : filteredEntries.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Filter className="h-8 w-8 mx-auto mb-2 opacity-30" />
+              <p className="text-sm">No entries match the current filters</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -226,7 +318,7 @@ export const BatchSalarySection = ({ batchId, rollsData, cuttingSummary, totalCu
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {existingEntries.map(entry => {
+                  {filteredEntries.map(entry => {
                     const amount = entry.rate_per_piece * entry.quantity;
                     return (
                       <TableRow key={entry.id}>
