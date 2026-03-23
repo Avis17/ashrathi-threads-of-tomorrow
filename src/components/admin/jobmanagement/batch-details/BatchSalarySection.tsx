@@ -110,16 +110,18 @@ export const BatchSalarySection = ({ batchId, rollsData, cuttingSummary, totalCu
 
   // Filtered entries
   const filteredEntries = useMemo(() => {
-    return existingEntries.filter(entry => {
-      if (operationFilter !== 'all' && entry.operation !== operationFilter) return false;
-      if (dateRange?.from) {
-        const entryDate = new Date(entry.updated_at);
-        const from = startOfDay(dateRange.from);
-        const to = dateRange.to ? endOfDay(dateRange.to) : endOfDay(dateRange.from);
-        if (!isWithinInterval(entryDate, { start: from, end: to })) return false;
-      }
-      return true;
-    });
+    return existingEntries
+      .filter(entry => {
+        if (operationFilter !== 'all' && entry.operation !== operationFilter) return false;
+        if (dateRange?.from) {
+          const entryDate = new Date(entry.updated_at);
+          const from = startOfDay(dateRange.from);
+          const to = dateRange.to ? endOfDay(dateRange.to) : endOfDay(dateRange.from);
+          if (!isWithinInterval(entryDate, { start: from, end: to })) return false;
+        }
+        return true;
+      })
+      .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
   }, [existingEntries, operationFilter, dateRange]);
 
   const hasActiveFilters = operationFilter !== 'all' || !!dateRange?.from;
