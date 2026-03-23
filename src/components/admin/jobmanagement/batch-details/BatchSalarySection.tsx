@@ -138,16 +138,18 @@ export const BatchSalarySection = ({ batchId, rollsData, cuttingSummary, totalCu
   }, [allAdvances]);
 
   const filteredAdvances = useMemo(() => {
-    return allAdvances.filter(adv => {
-      if (advOperationFilter !== 'all' && adv.operation !== advOperationFilter) return false;
-      if (advDateRange?.from) {
-        const advDate = new Date(adv.advance_date);
-        const from = startOfDay(advDateRange.from);
-        const to = advDateRange.to ? endOfDay(advDateRange.to) : endOfDay(advDateRange.from);
-        if (!isWithinInterval(advDate, { start: from, end: to })) return false;
-      }
-      return true;
-    });
+    return allAdvances
+      .filter(adv => {
+        if (advOperationFilter !== 'all' && adv.operation !== advOperationFilter) return false;
+        if (advDateRange?.from) {
+          const advDate = new Date(adv.advance_date);
+          const from = startOfDay(advDateRange.from);
+          const to = advDateRange.to ? endOfDay(advDateRange.to) : endOfDay(advDateRange.from);
+          if (!isWithinInterval(advDate, { start: from, end: to })) return false;
+        }
+        return true;
+      })
+      .sort((a, b) => new Date(b.advance_date).getTime() - new Date(a.advance_date).getTime());
   }, [allAdvances, advOperationFilter, advDateRange]);
 
   const hasAdvanceFilters = advOperationFilter !== 'all' || !!advDateRange?.from;
