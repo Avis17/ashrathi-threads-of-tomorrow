@@ -787,8 +787,9 @@ export default function CreateDeliveryChallan() {
                     <TableCell>
                       <Input
                         type="number"
+                        step={item.uom === 'kg' ? '0.001' : '1'}
                         value={item.quantity || ''}
-                        onChange={(e) => handleItemChange(item.id, 'quantity', parseInt(e.target.value) || 0)}
+                        onChange={(e) => handleItemChange(item.id, 'quantity', parseFloat(e.target.value) || 0)}
                         placeholder="0"
                         className="border-0 bg-transparent focus:bg-muted/50"
                       />
