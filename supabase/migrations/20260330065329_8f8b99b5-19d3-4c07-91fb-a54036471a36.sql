@@ -1,0 +1,1 @@
+ALTER TABLE public.delivery_challans ALTER COLUMN total_quantity TYPE NUMERIC(10,3) USING total_quantity::NUMERIC(10,3);
