@@ -114,7 +114,7 @@ export const useJobBatches = () => {
         // Extract unique styles from rolls_data
         const rollsData = (b.rolls_data || []) as any[];
         const styleIds = [...new Set(rollsData.map((r: any) => r.style_id).filter(Boolean))] as string[];
-        const batchStyles = styleIds.map(id => styleLookup[id]).filter(Boolean);
+        const batchStyles = styleIds.map(id => ({ id, ...styleLookup[id] })).filter(s => s.style_name);
 
         // Style-wise cutting breakdown
         const styleCutBreakdown = cutByStyleMap[b.id] || {};
