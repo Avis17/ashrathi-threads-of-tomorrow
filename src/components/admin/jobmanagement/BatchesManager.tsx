@@ -382,9 +382,56 @@ const BatchesManager = () => {
                       <div className="space-y-0.5">
                         {(batch.batch_styles || []).length > 0 ? (
                           (batch.batch_styles as any[]).map((s: any, i: number) => (
-                            <div key={i} className="text-sm">
-                              <span className="font-medium">{s.style_name}</span>
-                              <span className="text-xs text-muted-foreground ml-1">({s.style_code})</span>
+                            <div key={i} className="flex items-center gap-1 group">
+                              {editingStyle?.styleId === s.id ? (
+                                <div className="flex items-center gap-1">
+                                  <Input
+                                    value={editingStyle.name}
+                                    onChange={(e) => setEditingStyle({ ...editingStyle, name: e.target.value })}
+                                    className="h-7 w-32 text-sm"
+                                    autoFocus
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') {
+                                        updateStyleMutation.mutate(
+                                          { id: s.id, data: { style_name: editingStyle.name } },
+                                          { onSuccess: () => setEditingStyle(null) }
+                                        );
+                                      }
+                                      if (e.key === 'Escape') setEditingStyle(null);
+                                    }}
+                                  />
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-6 w-6"
+                                    onClick={() => {
+                                      updateStyleMutation.mutate(
+                                        { id: s.id, data: { style_name: editingStyle.name } },
+                                        { onSuccess: () => setEditingStyle(null) }
+                                      );
+                                    }}
+                                    disabled={updateStyleMutation.isPending}
+                                  >
+                                    <Check className="h-3 w-3" />
+                                  </Button>
+                                  <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => setEditingStyle(null)}>
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              ) : (
+                                <>
+                                  <span className="font-medium text-sm">{s.style_name}</span>
+                                  <span className="text-xs text-muted-foreground">({s.style_code})</span>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    onClick={() => setEditingStyle({ styleId: s.id, name: s.style_name })}
+                                  >
+                                    <Pencil className="h-3 w-3" />
+                                  </Button>
+                                </>
+                              )}
                             </div>
                           ))
                         ) : (
