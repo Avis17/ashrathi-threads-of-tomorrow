@@ -72,6 +72,7 @@ export const useUpdateJobStyle = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['job-styles'] });
+      queryClient.invalidateQueries({ queryKey: ['job-batches'] });
       toast.success('Style updated successfully');
     },
     onError: (error: any) => {
