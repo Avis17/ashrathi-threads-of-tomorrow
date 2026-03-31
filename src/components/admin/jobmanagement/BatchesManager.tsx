@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { useJobBatches, useDeleteJobBatch } from '@/hooks/useJobBatches';
+import { useUpdateJobStyle } from '@/hooks/useJobStyles';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import {
   Select,
