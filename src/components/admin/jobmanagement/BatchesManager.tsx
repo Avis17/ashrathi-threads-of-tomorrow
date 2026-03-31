@@ -32,12 +32,14 @@ const BatchesManager = () => {
   const navigate = useNavigate();
   const { data: batches, isLoading } = useJobBatches();
   const deleteBatchMutation = useDeleteJobBatch();
+  const updateStyleMutation = useUpdateJobStyle();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [paymentStatusFilter, setPaymentStatusFilter] = useState('all');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [deleteBatchId, setDeleteBatchId] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [editingStyle, setEditingStyle] = useState<{ styleId: string; name: string } | null>(null);
 
   // Compute overall stats
   const stats = useMemo(() => {
