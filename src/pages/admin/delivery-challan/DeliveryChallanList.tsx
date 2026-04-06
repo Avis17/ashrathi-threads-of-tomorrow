@@ -144,7 +144,7 @@ function DCTable({
                 </TableCell>
                 <TableCell className="capitalize max-w-[150px] truncate" title={getDisplayPurposes(dc)}>{getDisplayPurposes(dc)}</TableCell>
                 <TableCell className="font-mono text-sm">{dc.vehicle_number}</TableCell>
-                <TableCell className="text-right font-semibold">{dc.total_quantity}</TableCell>
+                <TableCell className="text-right font-semibold">{parseFloat(Number(dc.total_quantity).toFixed(2))}</TableCell>
                 <TableCell>
                   <Badge variant="outline" className={statusColors[dc.status]}>{STATUS_LABELS[dc.status]}</Badge>
                 </TableCell>

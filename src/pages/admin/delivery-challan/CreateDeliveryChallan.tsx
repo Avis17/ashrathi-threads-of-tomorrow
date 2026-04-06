@@ -837,9 +837,9 @@ export default function CreateDeliveryChallan() {
                   </TableCell>
                   <TableCell className="font-bold text-lg">
                     {totalPcs > 0 && totalKg > 0 ? (
-                      <span>{totalPcs} Pieces, {totalKg} Kgs</span>
+                      <span>{totalPcs} Pieces, {parseFloat(totalKg.toFixed(2))} Kgs</span>
                     ) : totalKg > 0 ? (
-                      <span>{totalKg} Kgs</span>
+                      <span>{parseFloat(totalKg.toFixed(2))} Kgs</span>
                     ) : (
                       <span>{totalPcs} Pieces</span>
                     )}

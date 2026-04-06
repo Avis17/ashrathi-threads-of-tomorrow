@@ -236,7 +236,7 @@ export default function DeliveryChallanView() {
                   Total Quantity:
                 </TableCell>
                 <TableCell className="text-right font-bold text-lg text-primary">
-                  {dc.total_quantity}
+                  {parseFloat(Number(dc.total_quantity).toFixed(2))}
                 </TableCell>
                 <TableCell colSpan={2}></TableCell>
               </TableRow>
