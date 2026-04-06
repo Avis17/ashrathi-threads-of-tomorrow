@@ -68,10 +68,11 @@ export default function PrintDeliveryChallan() {
     .filter(item => item.uom === 'kg')
     .reduce((sum, item) => sum + (item.quantity || 0), 0);
 
+  const formattedKg = parseFloat(totalKg.toFixed(2));
   const totalQuantityWithUnit = totalPcs > 0 && totalKg > 0
-    ? `${totalPcs} Pieces, ${totalKg} Kgs`
+    ? `${totalPcs} Pieces, ${formattedKg} Kgs`
     : totalKg > 0
-      ? `${totalKg} Kgs`
+      ? `${formattedKg} Kgs`
       : `${totalPcs} Pieces`;
 
   // Dynamic labels based on direction
