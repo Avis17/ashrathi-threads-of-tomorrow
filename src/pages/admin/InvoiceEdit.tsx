@@ -39,6 +39,7 @@ export default function InvoiceEdit() {
   const queryClient = useQueryClient();
 
   const [invoiceDate, setInvoiceDate] = useState('');
+  const [invoiceNumber, setInvoiceNumber] = useState('');
   const [invoiceType, setInvoiceType] = useState('');
   const [customerId, setCustomerId] = useState('');
   const [deliveryAddress, setDeliveryAddress] = useState('');
@@ -118,6 +119,7 @@ export default function InvoiceEdit() {
   useEffect(() => {
     if (invoice) {
       setInvoiceDate(format(new Date(invoice.invoice_date), 'yyyy-MM-dd'));
+      setInvoiceNumber(String(invoice.invoice_number));
       setInvoiceType(invoice.invoice_type);
       setCustomerId(invoice.customer_id);
       setDeliveryAddress(invoice.delivery_address);
@@ -220,6 +222,7 @@ export default function InvoiceEdit() {
         .from('invoices')
         .update({
           invoice_date: invoiceDate,
+          invoice_number: Number(invoiceNumber),
           invoice_type: invoiceType,
           customer_id: customerId.startsWith('jw-') ? null : customerId,
           delivery_address: deliveryAddress,
@@ -325,6 +328,16 @@ export default function InvoiceEdit() {
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="invoice-number">Invoice Number *</Label>
+              <Input
+                id="invoice-number"
+                type="number"
+                value={invoiceNumber}
+                onChange={(e) => setInvoiceNumber(e.target.value)}
+                min="1"
+              />
+            </div>
             <div>
               <Label htmlFor="invoice-date">Invoice Date *</Label>
               <Input
