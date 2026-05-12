@@ -1,0 +1,1 @@
+ALTER TABLE public.invoices DROP CONSTRAINT IF EXISTS invoices_invoice_number_key;
