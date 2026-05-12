@@ -221,7 +221,7 @@ export default function InvoiceEdit() {
         .update({
           invoice_date: invoiceDate,
           invoice_type: invoiceType,
-          customer_id: customerId,
+          customer_id: customerId.startsWith('jw-') ? null : customerId,
           delivery_address: deliveryAddress,
           purchase_order_no: purchaseOrderNo || null,
           number_of_packages: Number(numberOfPackages),
