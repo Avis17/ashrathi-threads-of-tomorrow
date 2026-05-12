@@ -39,6 +39,7 @@ export default function InvoiceEdit() {
   const queryClient = useQueryClient();
 
   const [invoiceDate, setInvoiceDate] = useState('');
+  const [invoiceNumber, setInvoiceNumber] = useState('');
   const [invoiceType, setInvoiceType] = useState('');
   const [customerId, setCustomerId] = useState('');
   const [deliveryAddress, setDeliveryAddress] = useState('');
