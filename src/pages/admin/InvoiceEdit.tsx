@@ -119,6 +119,7 @@ export default function InvoiceEdit() {
   useEffect(() => {
     if (invoice) {
       setInvoiceDate(format(new Date(invoice.invoice_date), 'yyyy-MM-dd'));
+      setInvoiceNumber(String(invoice.invoice_number));
       setInvoiceType(invoice.invoice_type);
       setCustomerId(invoice.customer_id);
       setDeliveryAddress(invoice.delivery_address);
