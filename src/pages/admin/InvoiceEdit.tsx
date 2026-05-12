@@ -329,6 +329,16 @@ export default function InvoiceEdit() {
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
+              <Label htmlFor="invoice-number">Invoice Number *</Label>
+              <Input
+                id="invoice-number"
+                type="number"
+                value={invoiceNumber}
+                onChange={(e) => setInvoiceNumber(e.target.value)}
+                min="1"
+              />
+            </div>
+            <div>
               <Label htmlFor="invoice-date">Invoice Date *</Label>
               <Input
                 id="invoice-date"
