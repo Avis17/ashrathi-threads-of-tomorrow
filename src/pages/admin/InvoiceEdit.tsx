@@ -222,6 +222,7 @@ export default function InvoiceEdit() {
         .from('invoices')
         .update({
           invoice_date: invoiceDate,
+          invoice_number: Number(invoiceNumber),
           invoice_type: invoiceType,
           customer_id: customerId.startsWith('jw-') ? null : customerId,
           delivery_address: deliveryAddress,
